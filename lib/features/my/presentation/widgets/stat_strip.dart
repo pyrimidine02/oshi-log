@@ -1,5 +1,8 @@
-/// EN: Stat strip — three equal tiles showing streak, XP, rank.
-/// KO: 통계 스트립 — 연속 출석·XP·랭킹을 보여주는 동일 너비 3개 타일.
+/// EN: Stat strip — bento stat grid showing the fan passport's collection
+/// counts: a big "visits" tile paired with two stacked compact tiles
+/// (stamps, posts).
+/// KO: 통계 스트립 — 팬 패스포트의 컬렉션 카운트를 보여주는 벤토 통계
+/// 그리드. 큰 "방문" 타일 + 스택된 컴팩트 타일 2개(스탬프, 글).
 library;
 
 import 'package:flutter/material.dart';
@@ -7,20 +10,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/localization/locale_text.dart';
 import '../../../../core/theme/gbt_colors.dart';
-import '../../../../core/theme/gbt_decorations.dart';
 import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';
-import '../../../fan_level/application/fan_level_controller.dart';
+import '../../../../core/widgets/common/gbt_icon_chip.dart';
+import '../../../settings/application/settings_controller.dart';
 
-// EN: Format XP with thousands separators.
-// KO: XP 값에 천 단위 구분자를 삽입합니다.
-String _fmtXp(int xp) => xp.toString().replaceAllMapped(
-  RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-  (m) => '${m[1]},',
-);
-
-/// EN: Three-tile stat strip showing streak, total XP, and rank.
-/// KO: 연속 출석, XP 합계, 랭킹을 표시하는 3타일 통계 스트립.
+/// EN: Bento stat grid — big visits tile (left) + stacked stamps/posts
+/// tiles (right).
+/// KO: 벤토 통계 그리드 — 큰 방문 타일(왼쪽) + 스탬프/글 스택 타일(오른쪽).
 class StatStrip extends ConsumerWidget {
   const StatStrip({super.key, required this.isDark});
 
@@ -28,43 +25,131 @@ class StatStrip extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final profile = ref.watch(fanLevelControllerProvider).valueOrNull;
-    final streak = profile?.consecutiveDays ?? 0;
-    final totalXp = profile?.totalXp ?? 0;
-    final rank = profile?.rank ?? 0;
+    final profile = ref.watch(userProfileControllerProvider).valueOrNull;
+    final visits = profile?.totalVisits ?? 0;
+    final stamps = profile?.uniquePlacesVisited ?? 0;
+    final posts = profile?.postCount ?? 0;
 
-    return Row(
-      children: [
-        Expanded(
-          child: _StatTile(
-            value: '$streak',
-            label: context.l10n(ko: '연속 출석', en: 'Day streak', ja: '連続'),
-            icon: Icons.local_fire_department_rounded,
-            color: isDark ? GBTColors.darkAccent : GBTColors.accent,
-            isDark: isDark,
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: _BigStatTile(
+              value: '$visits',
+              label: context.l10n(ko: '방문', en: 'Visits', ja: '訪問'),
+              caption: context.l10n(
+                ko: '누적 성지 방문 기록',
+                en: 'Total pilgrimage visits',
+                ja: '累計聖地訪問記録',
+              ),
+              icon: Icons.pin_drop_rounded,
+              color: isDark
+                  ? GBTSemanticColors.darkMetadataDistance
+                  : GBTColors.accentTeal,
+              isDark: isDark,
+            ),
           ),
-        ),
-        const SizedBox(width: GBTSpacing.sm),
-        Expanded(
-          child: _StatTile(
-            value: _fmtXp(totalXp),
-            label: 'XP',
-            icon: Icons.bolt_rounded,
-            color: isDark ? GBTColors.darkPrimary : GBTColors.primary,
-            isDark: isDark,
+          const SizedBox(width: GBTSpacing.sm),
+          Expanded(
+            child: Column(
+              children: [
+                Expanded(
+                  child: _StatTile(
+                    value: '$stamps',
+                    label: context.l10n(ko: '스탬프', en: 'Stamps', ja: 'スタンプ'),
+                    icon: Icons.local_activity_rounded,
+                    color: isDark ? GBTColors.darkAccent : GBTColors.accent,
+                    isDark: isDark,
+                  ),
+                ),
+                const SizedBox(height: GBTSpacing.sm),
+                Expanded(
+                  child: _StatTile(
+                    value: '$posts',
+                    label: context.l10n(ko: '글', en: 'Posts', ja: '投稿'),
+                    icon: Icons.edit_note_rounded,
+                    color: isDark
+                        ? GBTColors.darkSecondary
+                        : GBTColors.secondary,
+                    isDark: isDark,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(width: GBTSpacing.sm),
-        Expanded(
-          child: _StatTile(
-            value: rank > 0 ? '#$rank' : '—',
-            label: context.l10n(ko: '랭킹', en: 'Rank', ja: 'ランク'),
-            icon: Icons.emoji_events_outlined,
-            color: isDark ? GBTColors.darkSecondary : GBTColors.secondary,
-            isDark: isDark,
+        ],
+      ),
+    );
+  }
+}
+
+/// EN: Large bento tile — icon + statNumber + trend-style caption, used for
+/// the highest-emphasis metric (visits).
+/// KO: 큰 벤토 타일 — 아이콘 + statNumber + 트렌드 스타일 캡션. 가장 강조되는
+/// 지표(방문)에 사용됩니다.
+class _BigStatTile extends StatelessWidget {
+  const _BigStatTile({
+    required this.value,
+    required this.label,
+    required this.caption,
+    required this.icon,
+    required this.color,
+    required this.isDark,
+  });
+
+  final String value;
+  final String label;
+  final String caption;
+  final IconData icon;
+  final Color color;
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context) {
+    final textPrimary = isDark
+        ? GBTColors.darkTextPrimary
+        : GBTColors.textPrimary;
+    final textTertiary = isDark
+        ? GBTColors.darkTextTertiary
+        : GBTColors.textTertiary;
+
+    return Container(
+      padding: const EdgeInsets.all(GBTSpacing.md),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: isDark ? 0.16 : 0.10),
+        borderRadius: BorderRadius.circular(GBTSpacing.radiusCard),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          GBTIconChip(icon: icon, color: color, size: 40),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                value,
+                style: GBTTypography.statNumber.copyWith(color: textPrimary),
+              ),
+              Text(
+                label,
+                style: GBTTypography.labelMedium.copyWith(
+                  color: textPrimary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: GBTSpacing.xxs),
+              Text(
+                caption,
+                style: GBTTypography.labelSmall.copyWith(color: textTertiary),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -86,51 +171,45 @@ class _StatTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textPrimary =
-        isDark ? GBTColors.darkTextPrimary : GBTColors.textPrimary;
-    final textTertiary =
-        isDark ? GBTColors.darkTextTertiary : GBTColors.textTertiary;
+    final textPrimary = isDark
+        ? GBTColors.darkTextPrimary
+        : GBTColors.textPrimary;
 
     return Container(
       padding: const EdgeInsets.symmetric(
-        vertical: GBTSpacing.md,
-        horizontal: GBTSpacing.sm,
+        vertical: GBTSpacing.sm,
+        horizontal: GBTSpacing.md,
       ),
-      decoration: GBTDecorations.card(isDark: isDark),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: isDark ? 0.14 : 0.08),
+        borderRadius: BorderRadius.circular(GBTSpacing.radiusCard),
+      ),
+      child: Row(
         children: [
-          // EN: Colored icon at top of each tile.
-          // KO: 각 타일 상단의 컬러 아이콘.
-          Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: isDark ? 0.18 : 0.10),
-              shape: BoxShape.circle,
+          GBTIconChip(icon: icon, color: color, size: 30),
+          const SizedBox(width: GBTSpacing.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  value,
+                  style: GBTTypography.statNumber.copyWith(
+                    fontSize: 17,
+                    color: textPrimary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  label,
+                  style: GBTTypography.labelSmall.copyWith(color: color),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
-            child: Icon(icon, size: 17, color: color),
-          ),
-          const SizedBox(height: GBTSpacing.xs),
-          Text(
-            value,
-            style: GBTTypography.titleSmall.copyWith(
-              color: textPrimary,
-              fontWeight: FontWeight.w700,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: GBTTypography.labelSmall.copyWith(
-              color: textTertiary,
-              fontSize: 10,
-            ),
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),

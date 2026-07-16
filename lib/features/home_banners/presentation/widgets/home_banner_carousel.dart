@@ -31,11 +31,17 @@ class HomeBannerCarousel extends ConsumerStatefulWidget {
   final void Function(HomeBanner banner)? onBannerTap;
 
   @override
-  ConsumerState<HomeBannerCarousel> createState() =>
-      _HomeBannerCarouselState();
+  ConsumerState<HomeBannerCarousel> createState() => _HomeBannerCarouselState();
 }
 
 class _HomeBannerCarouselState extends ConsumerState<HomeBannerCarousel> {
+  // EN: Peek fraction so neighboring slides are visible at the edges —
+  //     gives the rail a "parallax-lite" carousel feel instead of a flat
+  //     full-width swap.
+  // KO: 옆 슬라이드가 가장자리에 살짝 보이도록 하는 peek 비율 —
+  //    단순 전체 폭 전환 대신 "parallax-lite" 캐러셀 느낌을 줍니다.
+  static const double _viewportFraction = 0.92;
+
   late final PageController _pageController;
   Timer? _autoAdvanceTimer;
   int _currentPage = 0;
@@ -49,7 +55,7 @@ class _HomeBannerCarouselState extends ConsumerState<HomeBannerCarousel> {
   @override
   void initState() {
     super.initState();
-    _pageController = PageController();
+    _pageController = PageController(viewportFraction: _viewportFraction);
   }
 
   @override
@@ -161,7 +167,7 @@ class _HomeBannerCarouselState extends ConsumerState<HomeBannerCarousel> {
         ),
         decoration: BoxDecoration(
           color: GBTColors.surfaceVariant,
-          borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
+          borderRadius: BorderRadius.circular(GBTSpacing.lg2),
         ),
       ),
     );
@@ -186,9 +192,34 @@ class _HomeBannerCarouselState extends ConsumerState<HomeBannerCarousel> {
             onPageChanged: (index) => _onPageChanged(index, banners),
             itemBuilder: (context, index) {
               final banner = banners[index];
-              return _BannerSlide(
-                banner: banner,
-                onTap: () => _handleBannerTap(context, banner),
+              // EN: Subtle scale-down for off-center slides — the
+              //     "parallax-lite" depth cue paired with the peek
+              //     viewport fraction above. The AnimatedBuilder wraps only
+              //     the Transform so the slide subtree is built once and
+              //     reused across scroll frames.
+              // KO: 중앙에서 벗어난 슬라이드를 살짝 축소 — 위 peek
+              //     비율과 함께 "parallax-lite" 깊이감을 만듭니다.
+              //     AnimatedBuilder가 Transform만 감싸므로 슬라이드 서브트리는
+              //     한 번만 빌드되고 스크롤 프레임 간 재사용됩니다.
+              return AnimatedBuilder(
+                animation: _pageController,
+                builder: (context, child) {
+                  var scale = 1.0;
+                  if (_pageController.hasClients &&
+                      _pageController.position.haveDimensions) {
+                    final page =
+                        _pageController.page ?? _currentPage.toDouble();
+                    scale = (1 - ((page - index).abs() * 0.08)).clamp(
+                      0.92,
+                      1.0,
+                    );
+                  }
+                  return Transform.scale(scale: scale, child: child);
+                },
+                child: _BannerSlide(
+                  banner: banner,
+                  onTap: () => _handleBannerTap(context, banner),
+                ),
               );
             },
           ),
@@ -213,9 +244,7 @@ class _HomeBannerCarouselState extends ConsumerState<HomeBannerCarousel> {
           decoration: BoxDecoration(
             color: isActive
                 ? (isDark ? GBTColors.darkPrimary : GBTColors.primary)
-                : (isDark
-                          ? GBTColors.darkTextTertiary
-                          : GBTColors.textTertiary)
+                : (isDark ? GBTColors.darkTextTertiary : GBTColors.textTertiary)
                       .withValues(alpha: 0.4),
             borderRadius: BorderRadius.circular(4),
           ),
@@ -248,14 +277,18 @@ class _BannerSlide extends StatelessWidget {
     return GestureDetector(
       onTap: isTappable ? onTap : null,
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: GBTSpacing.pageHorizontal,
-        ),
+        // EN: Tighter inner gap than a full page margin — the PageView's
+        //     peek viewport fraction already insets the first/last slide
+        //     from the screen edge.
+        // KO: 전체 페이지 여백보다 좁은 내부 간격 — PageView의 peek
+        //     비율이 이미 첫/마지막 슬라이드를 화면 가장자리에서
+        //     띄워주기 때문입니다.
+        padding: const EdgeInsets.symmetric(horizontal: GBTSpacing.xs2),
         child: Semantics(
           label: banner.title ?? '홈 배너',
           button: isTappable,
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
+            borderRadius: BorderRadius.circular(GBTSpacing.lg2),
             child: Stack(
               fit: StackFit.expand,
               children: [

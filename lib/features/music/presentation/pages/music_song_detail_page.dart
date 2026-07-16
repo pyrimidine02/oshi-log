@@ -12,6 +12,7 @@ import '../../../../core/error/failure.dart';
 import '../../../../core/localization/locale_text.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/gbt_colors.dart';
+import '../../../../core/theme/gbt_decorations.dart';
 import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';
 import '../../../../core/widgets/common/gbt_image.dart';
@@ -19,8 +20,8 @@ import '../../application/music_controller.dart';
 import '../../domain/entities/music_entities.dart';
 
 // ──────────────────────────────────────────────────────────────
-// EN: Music page accent — secondary pink for music/fandom context
-// KO: 음악 페이지 전용 accent — 음악/팬덤 맥락에 맞는 secondary 핑크
+// EN: Music page accent — the shared field-teal secondary token.
+// KO: 음악 페이지 전용 accent — 공통 field-teal 보조 토큰입니다.
 // ──────────────────────────────────────────────────────────────
 Color _musicAccent(bool isDark) =>
     isDark ? GBTColors.darkSecondary : GBTColors.secondary;
@@ -153,6 +154,7 @@ class _MusicSongDetailPageState extends ConsumerState<MusicSongDetailPage>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accent = _musicAccent(isDark);
     final bgColor = isDark ? GBTColors.darkBackground : GBTColors.background;
+    final textScale = MediaQuery.textScalerOf(context).scale(1);
 
     // EN: Fetch album cover when albumId is available.
     // KO: albumId가 있을 때 앨범 커버를 가져옵니다.
@@ -177,7 +179,7 @@ class _MusicSongDetailPageState extends ConsumerState<MusicSongDetailPage>
           headerSliverBuilder: (context, innerBoxIsScrolled) {
             return [
               SliverAppBar(
-                expandedHeight: 360,
+                expandedHeight: textScale >= 1.5 ? 460 : 360,
                 pinned: true,
                 backgroundColor: bgColor,
                 surfaceTintColor: Colors.transparent,
@@ -219,53 +221,65 @@ class _MusicSongDetailPageState extends ConsumerState<MusicSongDetailPage>
                   ),
                 ),
                 bottom: PreferredSize(
-                  preferredSize: const Size.fromHeight(46),
+                  preferredSize: Size.fromHeight(textScale >= 1.5 ? 64 : 48),
                   child: Material(
                     color: bgColor,
-                    child: TabBar(
-                      controller: _tabController,
-                      indicatorColor: accent,
-                      indicatorWeight: 2,
-                      labelColor: accent,
-                      unselectedLabelColor: isDark
-                          ? GBTColors.darkTextSecondary
-                          : GBTColors.textSecondary,
-                      labelStyle: GBTTypography.labelSmall.copyWith(
-                        fontWeight: FontWeight.w700,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        border: Border(
+                          top: BorderSide(
+                            color: isDark
+                                ? GBTColors.darkBorder
+                                : GBTColors.border,
+                          ),
+                          bottom: BorderSide(
+                            color: isDark
+                                ? GBTColors.darkBorder
+                                : GBTColors.border,
+                          ),
+                        ),
                       ),
-                      unselectedLabelStyle: GBTTypography.labelSmall.copyWith(
-                        fontWeight: FontWeight.w500,
+                      child: TabBar(
+                        controller: _tabController,
+                        indicatorColor: accent,
+                        indicatorWeight: 2,
+                        labelColor: accent,
+                        unselectedLabelColor: isDark
+                            ? GBTColors.darkTextSecondary
+                            : GBTColors.textSecondary,
+                        labelStyle: GBTTypography.labelSmall.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                        unselectedLabelStyle: GBTTypography.labelSmall.copyWith(
+                          fontWeight: FontWeight.w500,
+                        ),
+                        tabs: [
+                          Tab(
+                            text: context.l10n(
+                              ko: '가사',
+                              en: 'Lyrics',
+                              ja: '歌詞',
+                            ),
+                          ),
+                          Tab(
+                            text: context.l10n(ko: '정보', en: 'Info', ja: '情報'),
+                          ),
+                          Tab(
+                            text: context.l10n(
+                              ko: '가이드',
+                              en: 'Guide',
+                              ja: 'ガイド',
+                            ),
+                          ),
+                          Tab(
+                            text: context.l10n(
+                              ko: '더보기',
+                              en: 'More',
+                              ja: 'もっと',
+                            ),
+                          ),
+                        ],
                       ),
-                      tabs: [
-                        Tab(
-                          text: context.l10n(
-                            ko: '가사',
-                            en: 'Lyrics',
-                            ja: '歌詞',
-                          ),
-                        ),
-                        Tab(
-                          text: context.l10n(
-                            ko: '정보',
-                            en: 'Info',
-                            ja: '情報',
-                          ),
-                        ),
-                        Tab(
-                          text: context.l10n(
-                            ko: '가이드',
-                            en: 'Guide',
-                            ja: 'ガイド',
-                          ),
-                        ),
-                        Tab(
-                          text: context.l10n(
-                            ko: '더보기',
-                            en: 'More',
-                            ja: 'もっと',
-                          ),
-                        ),
-                      ],
                     ),
                   ),
                 ),
@@ -381,14 +395,8 @@ class _SongHeroBg extends StatelessWidget {
               TextButton(
                 onPressed: onRetry,
                 child: Text(
-                  context.l10n(
-                    ko: '다시 시도',
-                    en: 'Retry',
-                    ja: '再試行',
-                  ),
-                  style: GBTTypography.bodySmall.copyWith(
-                    color: accent,
-                  ),
+                  context.l10n(ko: '다시 시도', en: 'Retry', ja: '再試行'),
+                  style: GBTTypography.bodySmall.copyWith(color: accent),
                 ),
               ),
             ],
@@ -406,8 +414,8 @@ class _SongHeroBg extends StatelessWidget {
   }
 }
 
-/// EN: Shell container for the hero background gradient.
-/// KO: 히어로 배경 그라디언트 셸 컨테이너입니다.
+/// EN: Paper-toned shell for loading and error states in the hero area.
+/// KO: 히어로 영역의 로딩과 오류 상태를 위한 종이 톤 셸.
 class _HeroBgShell extends StatelessWidget {
   const _HeroBgShell({
     required this.isDark,
@@ -425,13 +433,12 @@ class _HeroBgShell extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            accent.withValues(alpha: 0.28),
-            bgColor,
-          ],
+        color: bgColor,
+        border: Border(
+          left: BorderSide(color: accent, width: 3),
+          bottom: BorderSide(
+            color: isDark ? GBTColors.darkBorder : GBTColors.border,
+          ),
         ),
       ),
       child: child,
@@ -477,23 +484,22 @@ class _HeroBgData extends StatelessWidget {
       );
     }
 
-    // ── No-cover layout: gradient bg + vinyl disc placeholder ─────────
-    final textPrimary =
-        isDark ? GBTColors.darkTextPrimary : GBTColors.textPrimary;
-    final textSecondary =
-        isDark ? GBTColors.darkTextSecondary : GBTColors.textSecondary;
+    // ── No-cover layout: paper field note + vinyl placeholder ─────────
+    final textPrimary = isDark
+        ? GBTColors.darkTextPrimary
+        : GBTColors.textPrimary;
+    final textSecondary = isDark
+        ? GBTColors.darkTextSecondary
+        : GBTColors.textSecondary;
 
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            accent.withValues(alpha: 0.32),
-            accent.withValues(alpha: 0.06),
-            bgColor,
-          ],
-          stops: const [0.0, 0.55, 1.0],
+        color: bgColor,
+        border: Border(
+          left: BorderSide(color: accent, width: 3),
+          bottom: BorderSide(
+            color: isDark ? GBTColors.darkBorder : GBTColors.border,
+          ),
         ),
       ),
       child: SafeArea(
@@ -508,6 +514,15 @@ class _HeroBgData extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              Text(
+                'AUDIO FIELD NOTE / TRACK DETAIL',
+                style: GBTTypography.labelSmall.copyWith(
+                  color: accent,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1,
+                ),
+              ),
+              const SizedBox(height: GBTSpacing.sm),
               // EN: Vinyl disc style placeholder — circular gradient with
               //     center dot and music note icon.
               // KO: 바이닐 디스크 스타일 플레이스홀더 — 원형 그라디언트,
@@ -564,8 +579,7 @@ class _HeroBgData extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: accent.withValues(alpha: 0.14),
-                    borderRadius:
-                        BorderRadius.circular(GBTSpacing.radiusFull),
+                    borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
                   ),
                   child: Text(
                     'TITLE',
@@ -593,8 +607,8 @@ class _HeroBgData extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
 
-              // EN: Unit name in accent pink.
-              // KO: 유닛 이름 (핑크 accent).
+              // EN: Unit name in the shared field-teal accent.
+              // KO: 공통 field-teal accent를 사용하는 유닛 이름입니다.
               if ((song.primaryUnitName ?? '').trim().isNotEmpty) ...[
                 const SizedBox(height: 4),
                 Text(
@@ -680,173 +694,190 @@ class _HeroBgWithCover extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // EN: Text on blurred cover always uses white variants for contrast.
-    // KO: 블러 커버 위 텍스트는 대비를 위해 항상 흰색 계열을 사용합니다.
-    // JA: ブラー背景上のテキストはコントラストのため常に白系を使用します。
-    const titleColor = Colors.white;
-    final tertiaryColor = Colors.white.withValues(alpha: 0.65);
+    // EN: Text on blurred cover always uses the inverse text token for
+    // contrast, regardless of light/dark theme.
+    // KO: 블러 커버 위 텍스트는 라이트/다크 테마와 무관하게 항상 대비를 위한
+    // inverse 텍스트 토큰을 사용합니다.
+    // JA: ブラー背景上のテキストはコントラストのため常に反転テキストトークンを使用します。
+    const titleColor = GBTColors.textInverse;
+    final tertiaryColor = GBTColors.textInverse.withValues(alpha: 0.65);
 
     return Stack(
       fit: StackFit.expand,
       children: [
-          // ── Blurred cover background ───────────────────────────
-          // EN: ImageFiltered applies a 20px Gaussian blur to the full image.
-          // KO: ImageFiltered로 전체 이미지에 20px 가우시안 블러를 적용합니다.
-          ImageFiltered(
-            imageFilter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-            child: GBTImage(
-              imageUrl: albumCoverUrl,
-              fit: BoxFit.cover,
-              useShimmer: false,
-              semanticLabel: '',
-            ),
+        // ── Blurred cover background ───────────────────────────
+        // EN: ImageFiltered applies a 20px Gaussian blur to the full image.
+        // KO: ImageFiltered로 전체 이미지에 20px 가우시안 블러를 적용합니다.
+        ImageFiltered(
+          imageFilter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: GBTImage(
+            imageUrl: albumCoverUrl,
+            fit: BoxFit.cover,
+            useShimmer: false,
+            semanticLabel: '',
           ),
+        ),
 
-          // EN: Dark dim overlay — 70% opacity for text legibility.
-          // KO: 텍스트 가독성을 위한 70% 어두운 오버레이.
-          Container(color: Colors.black.withValues(alpha: 0.70)),
+        // EN: Dark dim overlay — 70% opacity for text legibility.
+        // KO: 텍스트 가독성을 위한 70% 어두운 오버레이.
+        Container(color: Colors.black.withValues(alpha: 0.70)),
 
-          // ── Foreground content ─────────────────────────────────
-          SafeArea(
-            bottom: false,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(
-                GBTSpacing.pageHorizontal,
-                GBTSpacing.md,
-                GBTSpacing.pageHorizontal,
-                GBTSpacing.sm,
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // EN: 140×140 album cover card with elevation shadows.
-                  // KO: 그림자 효과가 있는 140×140 앨범 커버 카드.
-                  Container(
-                    width: 140,
-                    height: 140,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(GBTSpacing.radiusLg),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.50),
-                          blurRadius: 24,
-                          offset: const Offset(0, 8),
-                        ),
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.28),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius:
-                          BorderRadius.circular(GBTSpacing.radiusLg),
-                      child: GBTImage(
-                        imageUrl: albumCoverUrl,
-                        fit: BoxFit.cover,
-                        semanticLabel:
-                            '${song.title} album cover',
-                      ),
-                    ),
+        // ── Foreground content ─────────────────────────────────
+        SafeArea(
+          bottom: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              GBTSpacing.pageHorizontal,
+              GBTSpacing.md,
+              GBTSpacing.pageHorizontal,
+              GBTSpacing.sm,
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'AUDIO FIELD NOTE / TRACK DETAIL',
+                  style: GBTTypography.labelSmall.copyWith(
+                    color: GBTColors.textInverse.withValues(alpha: 0.82),
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1,
                   ),
-                  const SizedBox(height: GBTSpacing.sm),
-
-                  // EN: Title track badge.
-                  // KO: 타이틀 트랙 배지.
-                  if (isTitleTrack) ...[
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
+                ),
+                const SizedBox(height: GBTSpacing.sm),
+                // EN: 140×140 album cover card — depth shadows plus a
+                // subtle accent-colored glow for stage-light presence.
+                // KO: 140×140 앨범 커버 카드 — 깊이감 그림자와 스테이지
+                // 라이트 느낌의 미세한 accent 글로우를 함께 적용합니다.
+                Container(
+                  width: 140,
+                  height: 140,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(GBTSpacing.radiusLg),
+                    boxShadow: [
+                      BoxShadow(
+                        color: accent.withValues(alpha: 0.35),
+                        blurRadius: 28,
+                        spreadRadius: 1,
                       ),
-                      decoration: BoxDecoration(
-                        color: accent.withValues(alpha: 0.75),
-                        borderRadius:
-                            BorderRadius.circular(GBTSpacing.radiusFull),
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.50),
+                        blurRadius: 24,
+                        offset: const Offset(0, 8),
                       ),
-                      child: Text(
-                        'TITLE',
-                        style: GBTTypography.caption.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.8,
-                        ),
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.28),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
                       ),
-                    ),
-                    const SizedBox(height: 5),
-                  ],
-
-                  // EN: Song title — headlineSmall to prevent 2-line clipping.
-                  // KO: 곡 제목 — 2줄 잘림 방지를 위해 headlineSmall 사용.
-                  Text(
-                    song.title,
-                    style: GBTTypography.headlineSmall.copyWith(
-                      color: titleColor,
-                      fontWeight: FontWeight.w800,
-                      height: 1.2,
-                    ),
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-
-                  // EN: Unit name in accent pink (w600).
-                  // KO: 유닛 이름 — 핑크 accent, w600.
-                  if ((song.primaryUnitName ?? '').trim().isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      song.primaryUnitName!,
-                      style: GBTTypography.bodySmall.copyWith(
-                        color: accent,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-
-                  // EN: Alternative title — italic, semi-transparent white.
-                  // KO: 대체 제목 — 이탤릭, 반투명 흰색.
-                  if (altTitle != null) ...[
-                    const SizedBox(height: 3),
-                    Text(
-                      altTitle!,
-                      style: GBTTypography.bodySmall.copyWith(
-                        color: tertiaryColor,
-                        fontStyle: FontStyle.italic,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-
-                  const SizedBox(height: GBTSpacing.sm),
-
-                  // EN: BPM + duration chips.
-                  // KO: BPM + 재생시간 칩.
-                  Wrap(
-                    spacing: GBTSpacing.xs,
-                    runSpacing: GBTSpacing.xs,
-                    alignment: WrapAlignment.center,
-                    children: [
-                      if (song.durationMs != null)
-                        _InfoChip(
-                          icon: Icons.schedule_rounded,
-                          label: _formatMs(song.durationMs!),
-                          isDark: true,
-                        ),
-                      if (song.bpm != null)
-                        _InfoChip(
-                          icon: Icons.speed_rounded,
-                          label: 'BPM ${song.bpm}',
-                          isDark: true,
-                        ),
                     ],
                   ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(GBTSpacing.radiusLg),
+                    child: GBTImage(
+                      imageUrl: albumCoverUrl,
+                      fit: BoxFit.cover,
+                      semanticLabel: '${song.title} album cover',
+                    ),
+                  ),
+                ),
+                const SizedBox(height: GBTSpacing.sm),
+
+                // EN: Title track badge.
+                // KO: 타이틀 트랙 배지.
+                if (isTitleTrack) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: accent.withValues(alpha: 0.75),
+                      borderRadius: BorderRadius.circular(
+                        GBTSpacing.radiusFull,
+                      ),
+                    ),
+                    child: Text(
+                      'TITLE',
+                      style: GBTTypography.caption.copyWith(
+                        color: GBTColors.textInverse,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 5),
                 ],
-              ),
+
+                // EN: Song title — headlineSmall to prevent 2-line clipping.
+                // KO: 곡 제목 — 2줄 잘림 방지를 위해 headlineSmall 사용.
+                Text(
+                  song.title,
+                  style: GBTTypography.headlineSmall.copyWith(
+                    color: titleColor,
+                    fontWeight: FontWeight.w800,
+                    height: 1.2,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+
+                // EN: Unit name in accent pink (w600).
+                // KO: 유닛 이름 — 핑크 accent, w600.
+                if ((song.primaryUnitName ?? '').trim().isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    song.primaryUnitName!,
+                    style: GBTTypography.bodySmall.copyWith(
+                      color: accent,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+
+                // EN: Alternative title — italic, semi-transparent white.
+                // KO: 대체 제목 — 이탤릭, 반투명 흰색.
+                if (altTitle != null) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    altTitle!,
+                    style: GBTTypography.bodySmall.copyWith(
+                      color: tertiaryColor,
+                      fontStyle: FontStyle.italic,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+
+                const SizedBox(height: GBTSpacing.sm),
+
+                // EN: BPM + duration chips.
+                // KO: BPM + 재생시간 칩.
+                Wrap(
+                  spacing: GBTSpacing.xs,
+                  runSpacing: GBTSpacing.xs,
+                  alignment: WrapAlignment.center,
+                  children: [
+                    if (song.durationMs != null)
+                      _InfoChip(
+                        icon: Icons.schedule_rounded,
+                        label: _formatMs(song.durationMs!),
+                        isDark: true,
+                      ),
+                    if (song.bpm != null)
+                      _InfoChip(
+                        icon: Icons.speed_rounded,
+                        label: 'BPM ${song.bpm}',
+                        isDark: true,
+                      ),
+                  ],
+                ),
+              ],
             ),
           ),
-        ],
+        ),
+      ],
     );
   }
 }
@@ -919,8 +950,7 @@ class _LyricsTab extends ConsumerWidget {
     final partsState = ref.watch(musicSongPartsProvider(partsKey));
     final callGuideState = ref.watch(musicSongCallGuideProvider(callGuideKey));
 
-    final AsyncValue<MusicSongLiveContext?> liveContextState =
-        eventId == null
+    final AsyncValue<MusicSongLiveContext?> liveContextState = eventId == null
         ? const AsyncData<MusicSongLiveContext?>(null)
         : ref
               .watch(
@@ -964,19 +994,26 @@ class _LyricsTab extends ConsumerWidget {
           ),
           const SizedBox(height: GBTSpacing.md),
 
-          // EN: Integrated lyrics panel with parts + call guide overlay.
-          // KO: 파트 + 콜가이드 오버레이가 있는 통합 가사 패널.
-          _IntegratedLyricsPanel(
-            liveContextState: liveContextState,
-            lyricsState: lyricsState,
-            partsState: partsState,
-            callGuideState: callGuideState,
-            includeRomanized: includeRomanized,
-            includeTranslated: includeTranslated,
-            showMemberParts: showMemberParts,
-            showCallGuide: showCallGuide,
-            isDark: isDark,
-            accent: accent,
+          // EN: Integrated lyrics panel with parts + call guide overlay,
+          // set on a layer-1 surface to lift it off the page background.
+          // KO: 파트 + 콜가이드 오버레이가 있는 통합 가사 패널을 페이지
+          // 배경 위로 띄우기 위해 layer-1 표면 위에 배치합니다.
+          Container(
+            width: double.infinity,
+            padding: GBTSpacing.paddingMd,
+            decoration: GBTDecorations.card(isDark: isDark),
+            child: _IntegratedLyricsPanel(
+              liveContextState: liveContextState,
+              lyricsState: lyricsState,
+              partsState: partsState,
+              callGuideState: callGuideState,
+              includeRomanized: includeRomanized,
+              includeTranslated: includeTranslated,
+              showMemberParts: showMemberParts,
+              showCallGuide: showCallGuide,
+              isDark: isDark,
+              accent: accent,
+            ),
           ),
         ],
       ),
@@ -1013,8 +1050,9 @@ class _InfoTab extends ConsumerWidget {
     final difficultyState = ref.watch(musicSongDifficultyProvider(songKey));
 
     final song = songState.valueOrNull;
-    final textSecondary =
-        isDark ? GBTColors.darkTextSecondary : GBTColors.textSecondary;
+    final textSecondary = isDark
+        ? GBTColors.darkTextSecondary
+        : GBTColors.textSecondary;
 
     // EN: Fetch album title from album detail so the Info tab shows a
     //     human-readable name instead of a raw UUID.
@@ -1058,14 +1096,14 @@ class _InfoTab extends ConsumerWidget {
               // EN: Show resolved album title; fall back to albumId if title
               //     not yet loaded, or '-' when albumId is absent.
               // KO: 앨범 제목 표시. 아직 로드 전이면 albumId, 없으면 '-'.
-              value: albumTitle ??
+              value:
+                  albumTitle ??
                   ((song.albumId ?? '').isNotEmpty ? song.albumId! : '-'),
               isDark: isDark,
             ),
             _MetaRow(
               label: context.l10n(ko: '트랙', en: 'Track', ja: 'トラック'),
-              value:
-                  song.trackNo != null ? 'Track ${song.trackNo}' : '-',
+              value: song.trackNo != null ? 'Track ${song.trackNo}' : '-',
               isDark: isDark,
             ),
             _MetaRow(
@@ -1095,11 +1133,7 @@ class _InfoTab extends ConsumerWidget {
           // KO: 버전 섹션.
           _TabSectionHeader(
             icon: Icons.layers_outlined,
-            title: context.l10n(
-              ko: '버전',
-              en: 'Versions',
-              ja: 'バージョン',
-            ),
+            title: context.l10n(ko: '버전', en: 'Versions', ja: 'バージョン'),
             isDark: isDark,
             accent: accent,
           ),
@@ -1130,21 +1164,15 @@ class _InfoTab extends ConsumerWidget {
           ),
           const SizedBox(height: GBTSpacing.sm),
           difficultyState.when(
-            data: (d) => _DifficultyRow(
-              difficulty: d,
-              isDark: isDark,
-              accent: accent,
-            ),
+            data: (d) =>
+                _DifficultyRow(difficulty: d, isDark: isDark, accent: accent),
             loading: () => const _InlineLoading(),
-            error: (e, _) => _InlineError(
-              message: _errorText(context, e),
-            ),
+            error: (e, _) => _InlineError(message: _errorText(context, e)),
           ),
 
           // EN: Default version code chip if available.
           // KO: 기본 버전 코드 칩 (있을 경우).
-          if (song != null &&
-              (song.defaultVersionCode ?? '').isNotEmpty) ...[
+          if (song != null && (song.defaultVersionCode ?? '').isNotEmpty) ...[
             const SizedBox(height: GBTSpacing.xs),
             Wrap(
               children: [
@@ -1161,9 +1189,10 @@ class _InfoTab extends ConsumerWidget {
           // KO: 가독성을 위한 하단 여백.
           Opacity(
             opacity: 0,
-            child: Text('.', style: GBTTypography.bodySmall.copyWith(
-              color: textSecondary,
-            )),
+            child: Text(
+              '.',
+              style: GBTTypography.bodySmall.copyWith(color: textSecondary),
+            ),
           ),
         ],
       ),
@@ -1228,11 +1257,7 @@ class _GuideTab extends ConsumerWidget {
           // KO: 멤버 파트 섹션.
           _TabSectionHeader(
             icon: Icons.person_rounded,
-            title: context.l10n(
-              ko: '멤버 파트',
-              en: 'Member Parts',
-              ja: 'メンバーパート',
-            ),
+            title: context.l10n(ko: '멤버 파트', en: 'Member Parts', ja: 'メンバーパート'),
             isDark: isDark,
             accent: accent,
           ),
@@ -1258,100 +1283,102 @@ class _GuideTab extends ConsumerWidget {
               }
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: byMember.entries.map((entry) {
-                  final firstSeg = entry.value.first;
-                  final memberName = firstSeg.memberName?.trim();
-                  final display = (memberName != null && memberName.isNotEmpty)
-                      ? memberName
-                      : entry.key == '__none__'
-                      ? context.l10n(
-                          ko: '미지정',
-                          en: 'Unassigned',
-                          ja: '未指定',
-                        )
-                      : entry.key.substring(
-                          0,
-                          entry.key.length >= 6 ? 6 : entry.key.length,
-                        );
-                  final color = entry.key == '__none__'
-                      ? (isDark
-                            ? GBTColors.darkTextTertiary
-                            : GBTColors.textTertiary)
-                      : _memberColorFromId(entry.key, isDark);
+                children: byMember.entries
+                    .map((entry) {
+                      final firstSeg = entry.value.first;
+                      final memberName = firstSeg.memberName?.trim();
+                      final display =
+                          (memberName != null && memberName.isNotEmpty)
+                          ? memberName
+                          : entry.key == '__none__'
+                          ? context.l10n(ko: '미지정', en: 'Unassigned', ja: '未指定')
+                          : entry.key.substring(
+                              0,
+                              entry.key.length >= 6 ? 6 : entry.key.length,
+                            );
+                      final color = entry.key == '__none__'
+                          ? (isDark
+                                ? GBTColors.darkTextTertiary
+                                : GBTColors.textTertiary)
+                          : _memberColorFromId(entry.key, isDark);
 
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: GBTSpacing.sm),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: GBTSpacing.sm),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Container(
-                              width: 8,
-                              height: 8,
-                              decoration: BoxDecoration(
-                                color: color,
-                                shape: BoxShape.circle,
-                              ),
+                            Row(
+                              children: [
+                                Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                    color: color,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: GBTSpacing.xs),
+                                Text(
+                                  display,
+                                  style: GBTTypography.bodySmall.copyWith(
+                                    color: color,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                const SizedBox(width: GBTSpacing.xs),
+                                Text(
+                                  context.l10n(
+                                    ko: '(${entry.value.length}구간)',
+                                    en: '(${entry.value.length} segs)',
+                                    ja: '(${entry.value.length}区間)',
+                                  ),
+                                  style: GBTTypography.caption.copyWith(
+                                    color: isDark
+                                        ? GBTColors.darkTextTertiary
+                                        : GBTColors.textTertiary,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: GBTSpacing.xs),
-                            Text(
-                              display,
-                              style: GBTTypography.bodySmall.copyWith(
-                                color: color,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const SizedBox(width: GBTSpacing.xs),
-                            Text(
-                              context.l10n(
-                                ko: '(${entry.value.length}구간)',
-                                en: '(${entry.value.length} segs)',
-                                ja: '(${entry.value.length}区間)',
-                              ),
-                              style: GBTTypography.caption.copyWith(
-                                color: isDark
-                                    ? GBTColors.darkTextTertiary
-                                    : GBTColors.textTertiary,
-                              ),
+                            const SizedBox(height: 4),
+                            Wrap(
+                              spacing: GBTSpacing.xs,
+                              runSpacing: GBTSpacing.xs,
+                              children: entry.value
+                                  .map((seg) {
+                                    final range =
+                                        '${_formatMs(seg.startMs)}–${_formatMs(seg.endMs)}';
+                                    final label =
+                                        (seg.partType?.trim() ?? '').isNotEmpty
+                                        ? '${seg.partType} · $range'
+                                        : range;
+                                    return Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 3,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: color.withValues(alpha: 0.12),
+                                        borderRadius: BorderRadius.circular(
+                                          GBTSpacing.radiusFull,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        label,
+                                        style: GBTTypography.caption.copyWith(
+                                          color: color,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    );
+                                  })
+                                  .toList(growable: false),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 4),
-                        Wrap(
-                          spacing: GBTSpacing.xs,
-                          runSpacing: GBTSpacing.xs,
-                          children: entry.value.map((seg) {
-                            final range =
-                                '${_formatMs(seg.startMs)}–${_formatMs(seg.endMs)}';
-                            final label = (seg.partType?.trim() ?? '').isNotEmpty
-                                ? '${seg.partType} · $range'
-                                : range;
-                            return Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 3,
-                              ),
-                              decoration: BoxDecoration(
-                                color: color.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(
-                                  GBTSpacing.radiusFull,
-                                ),
-                              ),
-                              child: Text(
-                                label,
-                                style: GBTTypography.caption.copyWith(
-                                  color: color,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            );
-                          }).toList(growable: false),
-                        ),
-                      ],
-                    ),
-                  );
-                }).toList(growable: false),
+                      );
+                    })
+                    .toList(growable: false),
               );
             },
             loading: () => const _InlineLoading(),
@@ -1364,11 +1391,7 @@ class _GuideTab extends ConsumerWidget {
           // KO: 콜가이드 섹션.
           _TabSectionHeader(
             icon: Icons.surround_sound_rounded,
-            title: context.l10n(
-              ko: '콜가이드',
-              en: 'Call Guide',
-              ja: 'コールガイド',
-            ),
+            title: context.l10n(ko: '콜가이드', en: 'Call Guide', ja: 'コールガイド'),
             isDark: isDark,
             accent: accent,
           ),
@@ -1386,25 +1409,29 @@ class _GuideTab extends ConsumerWidget {
                 );
               }
               return Column(
-                children: cues.map((cue) {
-                  // EN: Intensity indicator: numeric intensity >= 3 → strong color.
-                  // KO: 강도 표시 — 숫자 강도 3 이상 시 강한 색상을 사용합니다.
-                  final isHighIntensity = (cue.intensity ?? 0) >= 3;
-                  final cueColor = isHighIntensity ? accent : GBTColors.accentBlue;
-                  final intensityLabel = cue.intensity != null
-                      ? '  ·  lv.${cue.intensity}'
-                      : '';
-                  return _SimpleRow(
-                    title: cue.cueText,
-                    subtitle:
-                        '${_formatMs(cue.startMs)} – ${_formatMs(cue.endMs)}'
-                        '$intensityLabel',
-                    badge: cue.cueType,
-                    icon: Icons.music_note_rounded,
-                    isDark: isDark,
-                    accent: cueColor,
-                  );
-                }).toList(growable: false),
+                children: cues
+                    .map((cue) {
+                      // EN: Intensity indicator: numeric intensity >= 3 → strong color.
+                      // KO: 강도 표시 — 숫자 강도 3 이상 시 강한 색상을 사용합니다.
+                      final isHighIntensity = (cue.intensity ?? 0) >= 3;
+                      final cueColor = isHighIntensity
+                          ? accent
+                          : GBTColors.accentBlue;
+                      final intensityLabel = cue.intensity != null
+                          ? '  ·  lv.${cue.intensity}'
+                          : '';
+                      return _SimpleRow(
+                        title: cue.cueText,
+                        subtitle:
+                            '${_formatMs(cue.startMs)} – ${_formatMs(cue.endMs)}'
+                            '$intensityLabel',
+                        badge: cue.cueType,
+                        icon: Icons.music_note_rounded,
+                        isDark: isDark,
+                        accent: cueColor,
+                      );
+                    })
+                    .toList(growable: false),
               );
             },
             loading: () => const _InlineLoading(),
@@ -1452,11 +1479,11 @@ class _MoreTab extends ConsumerWidget {
 
     final mediaState = ref.watch(musicSongMediaLinksProvider(songKey));
     final creditsState = ref.watch(musicSongCreditsProvider(songKey));
-    final availabilityState =
-        ref.watch(musicSongAvailabilityProvider(availabilityKey));
+    final availabilityState = ref.watch(
+      musicSongAvailabilityProvider(availabilityKey),
+    );
 
-    final AsyncValue<MusicSongLiveContext?> liveContextState =
-        eventId == null
+    final AsyncValue<MusicSongLiveContext?> liveContextState = eventId == null
         ? const AsyncData<MusicSongLiveContext?>(null)
         : ref
               .watch(
@@ -1488,11 +1515,7 @@ class _MoreTab extends ConsumerWidget {
           // KO: 스트리밍 링크 섹션.
           _TabSectionHeader(
             icon: Icons.podcasts_rounded,
-            title: context.l10n(
-              ko: '스트리밍',
-              en: 'Streaming',
-              ja: 'ストリーミング',
-            ),
+            title: context.l10n(ko: '스트리밍', en: 'Streaming', ja: 'ストリーミング'),
             isDark: isDark,
             accent: accent,
           ),
@@ -1550,11 +1573,7 @@ class _MoreTab extends ConsumerWidget {
           // KO: 가용성 섹션.
           _TabSectionHeader(
             icon: Icons.public_rounded,
-            title: context.l10n(
-              ko: '가용성',
-              en: 'Availability',
-              ja: '利用可否',
-            ),
+            title: context.l10n(ko: '가용성', en: 'Availability', ja: '利用可否'),
             isDark: isDark,
             accent: accent,
           ),
@@ -1571,11 +1590,7 @@ class _MoreTab extends ConsumerWidget {
           // KO: 크레딧 섹션.
           _TabSectionHeader(
             icon: Icons.badge_outlined,
-            title: context.l10n(
-              ko: '크레딧',
-              en: 'Credits',
-              ja: 'クレジット',
-            ),
+            title: context.l10n(ko: '크레딧', en: 'Credits', ja: 'クレジット'),
             isDark: isDark,
             accent: accent,
           ),
@@ -1589,11 +1604,7 @@ class _MoreTab extends ConsumerWidget {
                       ja: 'クレジット情報がありません。',
                     ),
                   )
-                : _CreditsList(
-                    groups: groups,
-                    isDark: isDark,
-                    accent: accent,
-                  ),
+                : _CreditsList(groups: groups, isDark: isDark, accent: accent),
             loading: () => const _InlineLoading(),
             error: (e, _) => _InlineError(message: _errorText(context, e)),
           ),
@@ -1626,25 +1637,26 @@ class _MoreTab extends ConsumerWidget {
                   );
                 }
                 return Column(
-                  children: items.map((item) {
-                    return _SetlistRow(
-                      item: item,
-                      isDark: isDark,
-                      accent: accent,
-                      onTap: !item.hasSongLink
-                          ? null
-                          : () => context.goToSongDetail(
-                              item.songId!,
-                              projectId: projectId,
-                              eventId: eventId,
-                            ),
-                    );
-                  }).toList(growable: false),
+                  children: items
+                      .map((item) {
+                        return _SetlistRow(
+                          item: item,
+                          isDark: isDark,
+                          accent: accent,
+                          onTap: !item.hasSongLink
+                              ? null
+                              : () => context.goToSongDetail(
+                                  item.songId!,
+                                  projectId: projectId,
+                                  eventId: eventId,
+                                ),
+                        );
+                      })
+                      .toList(growable: false),
                 );
               },
               loading: () => const _InlineLoading(),
-              error: (e, _) =>
-                  _InlineError(message: _errorText(context, e)),
+              error: (e, _) => _InlineError(message: _errorText(context, e)),
             ),
           ],
         ],
@@ -1673,8 +1685,9 @@ class _TabSectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final divider = isDark ? GBTColors.darkBorder : GBTColors.border;
-    final titleColor =
-        isDark ? GBTColors.darkTextPrimary : GBTColors.textPrimary;
+    final titleColor = isDark
+        ? GBTColors.darkTextPrimary
+        : GBTColors.textPrimary;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1693,10 +1706,7 @@ class _TabSectionHeader extends StatelessWidget {
           ],
         ),
         const SizedBox(height: GBTSpacing.xs),
-        Container(
-          height: 1,
-          color: divider.withValues(alpha: 0.4),
-        ),
+        Container(height: 1, color: divider.withValues(alpha: 0.4)),
       ],
     );
   }
@@ -1719,10 +1729,12 @@ class _MetaRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textSecondary =
-        isDark ? GBTColors.darkTextSecondary : GBTColors.textSecondary;
-    final textPrimary =
-        isDark ? GBTColors.darkTextPrimary : GBTColors.textPrimary;
+    final textSecondary = isDark
+        ? GBTColors.darkTextSecondary
+        : GBTColors.textSecondary;
+    final textPrimary = isDark
+        ? GBTColors.darkTextPrimary
+        : GBTColors.textPrimary;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
@@ -2113,9 +2125,7 @@ class _IntegratedLyricsPanelState extends State<_IntegratedLyricsPanel> {
 
         // Error hints
         if (widget.showMemberParts && widget.partsState.hasError)
-          _InlineError(
-            message: _errorText(context, widget.partsState.error),
-          ),
+          _InlineError(message: _errorText(context, widget.partsState.error)),
         if (widget.showCallGuide && widget.callGuideState.hasError)
           _InlineError(
             message: _errorText(context, widget.callGuideState.error),
@@ -2199,12 +2209,15 @@ class _LyricLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textPrimary =
-        isDark ? GBTColors.darkTextPrimary : GBTColors.textPrimary;
-    final textSecondary =
-        isDark ? GBTColors.darkTextSecondary : GBTColors.textSecondary;
-    final textTertiary =
-        isDark ? GBTColors.darkTextTertiary : GBTColors.textTertiary;
+    final textPrimary = isDark
+        ? GBTColors.darkTextPrimary
+        : GBTColors.textPrimary;
+    final textSecondary = isDark
+        ? GBTColors.darkTextSecondary
+        : GBTColors.textSecondary;
+    final textTertiary = isDark
+        ? GBTColors.darkTextTertiary
+        : GBTColors.textTertiary;
 
     // Resolve member colors for this line
     final lineMemberColors = <Color>[];
@@ -2239,7 +2252,8 @@ class _LyricLine extends StatelessWidget {
           lineMemberColors.length >= 2) {
         gradientColors = lineMemberColors.take(3).toList();
       } else {
-        lyricColor = selColor ??
+        lyricColor =
+            selColor ??
             (lineMemberColors.isNotEmpty
                 ? lineMemberColors.first
                 : textPrimary);
@@ -2278,9 +2292,7 @@ class _LyricLine extends StatelessWidget {
               SizedBox(width: leftBorderColor != null ? GBTSpacing.sm : 0),
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: GBTSpacing.xs,
-                  ),
+                  padding: const EdgeInsets.symmetric(vertical: GBTSpacing.xs),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -2361,7 +2373,8 @@ class _LyricLine extends StatelessWidget {
                                   gradientColors: isGradient
                                       ? lineMemberColors.take(3).toList()
                                       : null,
-                                  isSelected: selectedMemberId != null &&
+                                  isSelected:
+                                      selectedMemberId != null &&
                                       seg.memberId?.trim() == selectedMemberId,
                                   isDark: isDark,
                                   onTap: onPartTap == null
@@ -2418,8 +2431,9 @@ class _LyricsSectionDivider extends StatelessWidget {
         upper.contains('브릿지')) {
       sectionColor = GBTColors.accentBlue;
     } else if (upper.contains('INTRO') || upper.contains('OUTRO')) {
-      sectionColor =
-          isDark ? GBTColors.darkTextTertiary : GBTColors.textTertiary;
+      sectionColor = isDark
+          ? GBTColors.darkTextTertiary
+          : GBTColors.textTertiary;
     } else {
       sectionColor = isDark ? GBTColors.darkPrimary : GBTColors.primary;
     }
@@ -2514,8 +2528,9 @@ class _MemberChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bgInactive =
-        isDark ? GBTColors.darkSurfaceVariant : GBTColors.surfaceVariant;
+    final bgInactive = isDark
+        ? GBTColors.darkSurfaceVariant
+        : GBTColors.surfaceVariant;
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -2525,8 +2540,9 @@ class _MemberChip extends StatelessWidget {
           color: isSelected ? color.withValues(alpha: 0.16) : bgInactive,
           borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
           border: Border.all(
-            color:
-                isSelected ? color.withValues(alpha: 0.55) : Colors.transparent,
+            color: isSelected
+                ? color.withValues(alpha: 0.55)
+                : Colors.transparent,
           ),
         ),
         child: Row(
@@ -2699,58 +2715,64 @@ class _VersionList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textPrimary =
-        isDark ? GBTColors.darkTextPrimary : GBTColors.textPrimary;
-    final textSecondary =
-        isDark ? GBTColors.darkTextSecondary : GBTColors.textSecondary;
-    final surfaceVar =
-        isDark ? GBTColors.darkSurfaceVariant : GBTColors.surfaceVariant;
+    final textPrimary = isDark
+        ? GBTColors.darkTextPrimary
+        : GBTColors.textPrimary;
+    final textSecondary = isDark
+        ? GBTColors.darkTextSecondary
+        : GBTColors.textSecondary;
+    final surfaceVar = isDark
+        ? GBTColors.darkSurfaceVariant
+        : GBTColors.surfaceVariant;
     final accent = _musicAccent(isDark);
 
     return Column(
-      children: versions.map((v) {
-        final details = [
-          if (v.durationMs != null && v.durationMs! > 0) _formatMs(v.durationMs!),
-          if (v.bpm != null && v.bpm! > 0) 'BPM ${v.bpm}',
-          if ((v.key ?? '').isNotEmpty) v.key!,
-          if ((v.timeSignature ?? '').isNotEmpty) v.timeSignature!,
-        ];
-        return Container(
-          margin: const EdgeInsets.only(bottom: GBTSpacing.xs),
-          padding: const EdgeInsets.symmetric(
-            horizontal: GBTSpacing.sm,
-            vertical: GBTSpacing.xs2,
-          ),
-          decoration: BoxDecoration(
-            color: surfaceVar,
-            borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
-          ),
-          child: Row(
-            children: [
-              if (v.isDefault) ...[
-                Icon(Icons.check_circle_rounded, size: 14, color: accent),
-                const SizedBox(width: GBTSpacing.xs),
-              ],
-              Expanded(
-                child: Text(
-                  v.versionCode,
-                  style: GBTTypography.bodySmall.copyWith(
-                    color: v.isDefault ? accent : textPrimary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
+      children: versions
+          .map((v) {
+            final details = [
+              if (v.durationMs != null && v.durationMs! > 0)
+                _formatMs(v.durationMs!),
+              if (v.bpm != null && v.bpm! > 0) 'BPM ${v.bpm}',
+              if ((v.key ?? '').isNotEmpty) v.key!,
+              if ((v.timeSignature ?? '').isNotEmpty) v.timeSignature!,
+            ];
+            return Container(
+              margin: const EdgeInsets.only(bottom: GBTSpacing.xs),
+              padding: const EdgeInsets.symmetric(
+                horizontal: GBTSpacing.sm,
+                vertical: GBTSpacing.xs2,
               ),
-              if (details.isNotEmpty)
-                Text(
-                  details.join(' · '),
-                  style: GBTTypography.labelSmall.copyWith(
-                    color: textSecondary,
+              decoration: BoxDecoration(
+                color: surfaceVar,
+                borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
+              ),
+              child: Row(
+                children: [
+                  if (v.isDefault) ...[
+                    Icon(Icons.check_circle_rounded, size: 14, color: accent),
+                    const SizedBox(width: GBTSpacing.xs),
+                  ],
+                  Expanded(
+                    child: Text(
+                      v.versionCode,
+                      style: GBTTypography.bodySmall.copyWith(
+                        color: v.isDefault ? accent : textPrimary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ),
-                ),
-            ],
-          ),
-        );
-      }).toList(growable: false),
+                  if (details.isNotEmpty)
+                    Text(
+                      details.join(' · '),
+                      style: GBTTypography.labelSmall.copyWith(
+                        color: textSecondary,
+                      ),
+                    ),
+                ],
+              ),
+            );
+          })
+          .toList(growable: false),
     );
   }
 }
@@ -2831,16 +2853,8 @@ class _AvailabilityRow extends StatelessWidget {
         const SizedBox(width: GBTSpacing.xs),
         Text(
           ok
-              ? context.l10n(
-                  ko: '현재 재생 가능',
-                  en: 'Available now',
-                  ja: '現在利用可能',
-                )
-              : context.l10n(
-                  ko: '현재 재생 제한',
-                  en: 'Restricted',
-                  ja: '利用制限中',
-                ),
+              ? context.l10n(ko: '현재 재생 가능', en: 'Available now', ja: '現在利用可能')
+              : context.l10n(ko: '현재 재생 제한', en: 'Restricted', ja: '利用制限中'),
           style: GBTTypography.bodySmall.copyWith(
             color: statusColor,
             fontWeight: FontWeight.w700,
@@ -2850,7 +2864,9 @@ class _AvailabilityRow extends StatelessWidget {
         Text(
           '· ${availability.rightsPolicy}',
           style: GBTTypography.labelSmall.copyWith(
-            color: isDark ? GBTColors.darkTextSecondary : GBTColors.textSecondary,
+            color: isDark
+                ? GBTColors.darkTextSecondary
+                : GBTColors.textSecondary,
           ),
         ),
       ],
@@ -2881,15 +2897,21 @@ class _StreamingLinkRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final surfaceVar =
-        isDark ? GBTColors.darkSurfaceVariant : GBTColors.surfaceVariant;
-    final textSecondary =
-        isDark ? GBTColors.darkTextSecondary : GBTColors.textSecondary;
+    final surfaceVar = isDark
+        ? GBTColors.darkSurfaceVariant
+        : GBTColors.surfaceVariant;
+    final textSecondary = isDark
+        ? GBTColors.darkTextSecondary
+        : GBTColors.textSecondary;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: GBTSpacing.xs),
+      // EN: Pill-shaped streaming/preview button — fully rounded to match
+      // the "play button" language used across the ticket UI.
+      // KO: 스트리밍/미리듣기 버튼 — 티켓 UI 전반의 "재생 버튼" 언어에 맞춰
+      // 완전한 필(pill) 형태로 표현합니다.
       child: InkWell(
-        borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
+        borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
         onTap: onTap,
         child: Ink(
           padding: const EdgeInsets.symmetric(
@@ -2898,7 +2920,8 @@ class _StreamingLinkRow extends StatelessWidget {
           ),
           decoration: BoxDecoration(
             color: surfaceVar,
-            borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
+            borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
+            border: Border.all(color: platformColor.withValues(alpha: 0.24)),
           ),
           child: Row(
             children: [
@@ -2907,7 +2930,7 @@ class _StreamingLinkRow extends StatelessWidget {
                 height: 36,
                 decoration: BoxDecoration(
                   color: platformColor.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
+                  shape: BoxShape.circle,
                 ),
                 child: Icon(icon, size: 18, color: platformColor),
               ),
@@ -2932,11 +2955,7 @@ class _StreamingLinkRow extends StatelessWidget {
                   ],
                 ),
               ),
-              Icon(
-                Icons.chevron_right_rounded,
-                size: 18,
-                color: textSecondary,
-              ),
+              Icon(Icons.chevron_right_rounded, size: 18, color: textSecondary),
             ],
           ),
         ),
@@ -2962,57 +2981,62 @@ class _CreditsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textSecondary =
-        isDark ? GBTColors.darkTextSecondary : GBTColors.textSecondary;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: groups.map((group) {
-        return Padding(
-          padding: const EdgeInsets.only(bottom: GBTSpacing.sm),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+      children: groups
+          .map((group) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: GBTSpacing.sm),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 3,
-                    height: 11,
-                    decoration: BoxDecoration(
-                      color: accent.withValues(alpha: 0.5),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
+                  // EN: Role label pops in the accent color — a clear step above
+                  // the contributor names for scannable credits hierarchy.
+                  // KO: 역할 라벨은 accent 색상으로 강조하여 기여자 이름과의
+                  // 시각적 위계를 명확히 구분합니다.
+                  Row(
+                    children: [
+                      Container(
+                        width: 3,
+                        height: 11,
+                        decoration: BoxDecoration(
+                          color: accent,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      const SizedBox(width: GBTSpacing.xs),
+                      Text(
+                        group.role,
+                        style: GBTTypography.labelSmall.copyWith(
+                          color: accent,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.4,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: GBTSpacing.xs),
+                  const SizedBox(height: 5),
                   Text(
-                    group.role,
-                    style: GBTTypography.labelSmall.copyWith(
-                      color: textSecondary,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.3,
+                    group.contributors
+                        .map((c) {
+                          final type = c.type?.trim();
+                          return (type != null && type.isNotEmpty)
+                              ? '${c.name} ($type)'
+                              : c.name;
+                        })
+                        .join(', '),
+                    style: GBTTypography.bodySmall.copyWith(
+                      color: isDark
+                          ? GBTColors.darkTextPrimary
+                          : GBTColors.textPrimary,
+                      height: 1.5,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 5),
-              Text(
-                group.contributors.map((c) {
-                  final type = c.type?.trim();
-                  return (type != null && type.isNotEmpty)
-                      ? '${c.name} ($type)'
-                      : c.name;
-                }).join(', '),
-                style: GBTTypography.bodySmall.copyWith(
-                  color: isDark
-                      ? GBTColors.darkTextPrimary
-                      : GBTColors.textPrimary,
-                  height: 1.5,
-                ),
-              ),
-            ],
-          ),
-        );
-      }).toList(growable: false),
+            );
+          })
+          .toList(growable: false),
     );
   }
 }
@@ -3036,10 +3060,12 @@ class _SetlistRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textSecondary =
-        isDark ? GBTColors.darkTextSecondary : GBTColors.textSecondary;
-    final surfaceVar =
-        isDark ? GBTColors.darkSurfaceVariant : GBTColors.surfaceVariant;
+    final textSecondary = isDark
+        ? GBTColors.darkTextSecondary
+        : GBTColors.textSecondary;
+    final surfaceVar = isDark
+        ? GBTColors.darkSurfaceVariant
+        : GBTColors.surfaceVariant;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: GBTSpacing.xs),
@@ -3087,8 +3113,7 @@ class _SetlistRow extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: accent.withValues(alpha: 0.12),
-                    borderRadius:
-                        BorderRadius.circular(GBTSpacing.radiusFull),
+                    borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
                   ),
                   child: Text(
                     'Encore',
@@ -3138,10 +3163,12 @@ class _SimpleRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textSecondary =
-        isDark ? GBTColors.darkTextSecondary : GBTColors.textSecondary;
-    final surfaceVar =
-        isDark ? GBTColors.darkSurfaceVariant : GBTColors.surfaceVariant;
+    final textSecondary = isDark
+        ? GBTColors.darkTextSecondary
+        : GBTColors.textSecondary;
+    final surfaceVar = isDark
+        ? GBTColors.darkSurfaceVariant
+        : GBTColors.surfaceVariant;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: GBTSpacing.xs),
@@ -3170,21 +3197,17 @@ class _SimpleRow extends StatelessWidget {
                   ),
                   Text(
                     subtitle,
-                    style: GBTTypography.caption.copyWith(
-                      color: textSecondary,
-                    ),
+                    style: GBTTypography.caption.copyWith(color: textSecondary),
                   ),
                 ],
               ),
             ),
             if ((badge ?? '').isNotEmpty)
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: accent.withValues(alpha: 0.12),
-                  borderRadius:
-                      BorderRadius.circular(GBTSpacing.radiusFull),
+                  borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
                 ),
                 child: Text(
                   badge!,
@@ -3214,12 +3237,15 @@ class _InfoChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final surfaceVar =
-        isDark ? GBTColors.darkSurfaceVariant : GBTColors.surfaceVariant;
-    final textColor =
-        isDark ? GBTColors.darkTextSecondary : GBTColors.textSecondary;
-    final iconColor =
-        isDark ? GBTColors.darkTextTertiary : GBTColors.textTertiary;
+    final surfaceVar = isDark
+        ? GBTColors.darkSurfaceVariant
+        : GBTColors.surfaceVariant;
+    final textColor = isDark
+        ? GBTColors.darkTextSecondary
+        : GBTColors.textSecondary;
+    final iconColor = isDark
+        ? GBTColors.darkTextTertiary
+        : GBTColors.textTertiary;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
@@ -3264,10 +3290,12 @@ class _TogglePill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final inactiveBg =
-        isDark ? GBTColors.darkSurfaceVariant : GBTColors.surfaceVariant;
-    final inactiveText =
-        isDark ? GBTColors.darkTextSecondary : GBTColors.textSecondary;
+    final inactiveBg = isDark
+        ? GBTColors.darkSurfaceVariant
+        : GBTColors.surfaceVariant;
+    final inactiveText = isDark
+        ? GBTColors.darkTextSecondary
+        : GBTColors.textSecondary;
 
     return GestureDetector(
       onTap: onTap,
@@ -3393,11 +3421,7 @@ String _partDisplayLabel(BuildContext context, MusicPartSegment segment) {
   final name = segment.memberName?.trim();
   if (name != null && name.isNotEmpty) return name;
   if (segment.partType?.trim().toUpperCase() == 'UNISON') return 'UNISON';
-  return context.l10n(
-    ko: '미지정 파트',
-    en: 'Unassigned',
-    ja: '未指定パート',
-  );
+  return context.l10n(ko: '미지정 파트', en: 'Unassigned', ja: '未指定パート');
 }
 
 String _formatMs(int ms) {
@@ -3433,13 +3457,17 @@ String _streamingDisplayName(String provider) {
 IconData _streamingIcon(String provider) {
   final l = provider.toLowerCase();
   if (l.contains('spotify')) return Icons.headphones_rounded;
-  if (l.contains('apple') || l.contains('itunes')) return Icons.music_note_rounded;
+  if (l.contains('apple') || l.contains('itunes')) {
+    return Icons.music_note_rounded;
+  }
   return Icons.play_circle_filled_rounded;
 }
 
 Color _streamingColor(String provider) {
   final l = provider.toLowerCase();
   if (l.contains('spotify')) return const Color(0xFF1DB954);
-  if (l.contains('apple') || l.contains('itunes')) return const Color(0xFFFC3C44);
+  if (l.contains('apple') || l.contains('itunes')) {
+    return const Color(0xFFFC3C44);
+  }
   return const Color(0xFFFF0000); // YouTube red
 }

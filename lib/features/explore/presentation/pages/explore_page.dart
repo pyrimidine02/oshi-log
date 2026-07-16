@@ -11,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/localization/locale_text.dart';
 import '../../../../core/theme/gbt_colors.dart';
+import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';
 import '../../../live_events/presentation/pages/live_events_page.dart';
 import '../../../places/presentation/pages/places_map_page.dart';
@@ -165,7 +166,7 @@ class _ExploreModePill extends StatelessWidget {
       animation: controller,
       builder: (context, _) {
         return Padding(
-          padding: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.only(bottom: GBTSpacing.sm2),
           child: Center(
             child: IntrinsicWidth(
               child: Container(
@@ -251,7 +252,6 @@ class _ExploreModePill extends StatelessWidget {
                                     fontWeight: isSelected
                                         ? FontWeight.w700
                                         : FontWeight.w500,
-                                    fontSize: 12,
                                   ),
                                 ),
                               ),

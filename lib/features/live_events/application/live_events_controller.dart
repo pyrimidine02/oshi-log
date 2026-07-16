@@ -27,6 +27,44 @@ const int _kMaxRetries = 2;
 const int _kLiveNavIndex = 1;
 const int _kAttendanceHistoryPageSize = 20;
 
+// EN: Resolves the active project through one reactive boundary. A project key
+//     takes precedence while the stable project ID remains a fallback.
+// KO: 하나의 반응형 경계에서 활성 프로젝트를 결정합니다. 프로젝트 키를
+//     우선하고 안정적인 프로젝트 ID를 대체값으로 사용합니다.
+final _selectedLiveProjectContextProvider = Provider<String?>((ref) {
+  final projectKey = ref.watch(selectedProjectKeyProvider)?.trim();
+  if (projectKey != null && projectKey.isNotEmpty) {
+    return projectKey;
+  }
+  final projectId = ref.watch(selectedProjectIdProvider)?.trim();
+  return projectId == null || projectId.isEmpty ? null : projectId;
+});
+
+/// EN: Chooses the event project matching the active selection, falling back
+///     to the first valid project declared by the event.
+/// KO: 현재 선택과 일치하는 이벤트 프로젝트를 고르고, 없으면 이벤트가 선언한
+///     첫 번째 유효 프로젝트를 사용합니다.
+String? resolveLiveEventProjectContext({
+  required List<String> eventProjectIds,
+  String? selectedProjectKey,
+  String? selectedProjectId,
+}) {
+  final validProjectIds = eventProjectIds
+      .map((projectId) => projectId.trim())
+      .where((projectId) => projectId.isNotEmpty)
+      .toList(growable: false);
+  if (validProjectIds.isEmpty) return null;
+
+  for (final selectedProject in [selectedProjectKey, selectedProjectId]) {
+    final normalizedSelection = selectedProject?.trim();
+    if (normalizedSelection == null || normalizedSelection.isEmpty) continue;
+    for (final eventProjectId in validProjectIds) {
+      if (eventProjectId == normalizedSelection) return eventProjectId;
+    }
+  }
+  return validProjectIds.first;
+}
+
 bool _shouldQueueLiveAttendanceMutationForRetry(Failure failure) {
   return failure is NetworkFailure || failure is AuthFailure;
 }
@@ -36,73 +74,80 @@ class LiveEventsListController
   LiveEventsListController(this._ref) : super(const AsyncLoading()) {
     // EN: Reload when user switches project — different project = different dataset.
     // KO: 프로젝트 변경 시 리로드 — 프로젝트마다 별도 데이터셋.
-    _ref.listen<String?>(selectedProjectKeyProvider, (_, __) {
-      if (!_isLiveTabActive()) return;
-      load(forceRefresh: true);
+    _ref.listen<String?>(_selectedLiveProjectContextProvider, (previous, next) {
+      if (previous == next) return;
+      if (!_isLiveTabActive()) {
+        // EN: Invalidate an in-flight request even while the live tab is hidden.
+        // KO: 라이브 탭이 숨겨진 동안에도 진행 중인 요청을 무효화합니다.
+        _requestGeneration += 1;
+        return;
+      }
+      unawaited(load(forceRefresh: true));
     });
     // EN: Reload when explore tab becomes active (deferred load while on other tabs).
     // KO: 탐방 탭이 활성화되면 리로드 (다른 탭에 있는 동안 지연 로드).
     _ref.listen<int>(currentNavIndexProvider, (previous, next) {
       if (next != _kLiveNavIndex || next == previous) return;
-      load(forceRefresh: true);
+      unawaited(load(forceRefresh: true));
     });
   }
 
   final Ref _ref;
 
-  // EN: Guard flag preventing concurrent load() invocations.
-  // KO: 동시 load() 호출을 방지하는 가드 플래그.
-  bool _loading = false;
+  // EN: Only the latest generation may commit state. Concurrent requests are
+  //     intentional so a project switch never drops the replacement request.
+  // KO: 최신 세대만 상태를 반영할 수 있습니다. 프로젝트 전환 시 새 요청을
+  //     버리지 않도록 동시 요청을 의도적으로 허용합니다.
+  int _requestGeneration = 0;
 
   bool _isLiveTabActive() {
     return _ref.read(currentNavIndexProvider) == _kLiveNavIndex;
   }
 
   Future<void> load({bool forceRefresh = false}) async {
-    // EN: Skip if already loading — listeners can fire in parallel.
-    // KO: 이미 로드 중이면 건너뜁니다 — 리스너들이 동시에 실행될 수 있습니다.
-    if (_loading) return;
-    _loading = true;
-    try {
-      final projectKey = _ref.read(selectedProjectKeyProvider);
-      if (projectKey == null || projectKey.isEmpty) {
-        // EN: Wait for project selection before loading.
-        // KO: 로드 전 프로젝트 선택을 기다립니다.
-        return;
+    final generation = ++_requestGeneration;
+    final projectKey = _ref.read(_selectedLiveProjectContextProvider);
+    if (projectKey == null || projectKey.isEmpty) {
+      if (_isCurrentRequest(generation)) {
+        state = const AsyncData([]);
       }
-
-      state = const AsyncLoading();
-
-      final repository = await _ref.read(liveEventsRepositoryProvider.future);
-
-      // EN: Retry up to _kMaxRetries times on failure with exponential back-off.
-      // KO: 실패 시 지수 백오프로 최대 _kMaxRetries회 재시도합니다.
-      Result<List<LiveEventSummary>>? result;
-      for (var attempt = 0; attempt <= _kMaxRetries; attempt++) {
-        if (attempt > 0) {
-          await Future<void>.delayed(Duration(seconds: attempt));
-          if (!mounted) return;
-          AppLogger.info(
-            'Retrying live events load (attempt $attempt)',
-            tag: 'LiveEventsListController',
-          );
-        }
-        result = await repository.getLiveEvents(
-          projectId: projectKey,
-          forceRefresh: forceRefresh || attempt > 0,
-        );
-        if (result is Success<List<LiveEventSummary>>) break;
-      }
-
-      if (!mounted) return;
-      if (result is Success<List<LiveEventSummary>>) {
-        state = AsyncData(result.data);
-      } else if (result is Err<List<LiveEventSummary>>) {
-        state = AsyncError(result.failure, StackTrace.current);
-      }
-    } finally {
-      _loading = false;
+      return;
     }
+
+    state = const AsyncLoading();
+
+    final repository = await _ref.read(liveEventsRepositoryProvider.future);
+    if (!_isCurrentRequest(generation)) return;
+
+    // EN: Retry up to _kMaxRetries times on failure with exponential back-off.
+    // KO: 실패 시 지수 백오프로 최대 _kMaxRetries회 재시도합니다.
+    Result<List<LiveEventSummary>>? result;
+    for (var attempt = 0; attempt <= _kMaxRetries; attempt++) {
+      if (attempt > 0) {
+        await Future<void>.delayed(Duration(seconds: attempt));
+        if (!_isCurrentRequest(generation)) return;
+        AppLogger.info(
+          'Retrying live events load (attempt $attempt)',
+          tag: 'LiveEventsListController',
+        );
+      }
+      result = await repository.getLiveEvents(
+        projectId: projectKey,
+        forceRefresh: forceRefresh || attempt > 0,
+      );
+      if (!_isCurrentRequest(generation)) return;
+      if (result is Success<List<LiveEventSummary>>) break;
+    }
+
+    if (result is Success<List<LiveEventSummary>>) {
+      state = AsyncData(List.unmodifiable(result.data));
+    } else if (result is Err<List<LiveEventSummary>>) {
+      state = AsyncError(result.failure, StackTrace.current);
+    }
+  }
+
+  bool _isCurrentRequest(int generation) {
+    return mounted && generation == _requestGeneration;
   }
 }
 
@@ -110,26 +155,20 @@ class LiveEventDetailController
     extends StateNotifier<AsyncValue<LiveEventDetail>> {
   LiveEventDetailController(this._ref, this.eventId)
     : super(const AsyncLoading()) {
-    _ref.listen<String?>(selectedProjectKeyProvider, (_, __) {
-      if (mounted) {
-        load(forceRefresh: true);
-      }
-    });
-    _ref.listen<String?>(selectedProjectIdProvider, (_, __) {
-      if (mounted) {
-        load(forceRefresh: true);
-      }
+    _ref.listen<String?>(_selectedLiveProjectContextProvider, (previous, next) {
+      if (previous == next || !mounted) return;
+      unawaited(load(forceRefresh: true));
     });
   }
 
   final Ref _ref;
   final String eventId;
+  int _requestGeneration = 0;
 
   Future<void> load({bool forceRefresh = false}) async {
+    final generation = ++_requestGeneration;
     final resolvedProjectKey = await _resolveProjectKey();
-    if (!mounted) {
-      return;
-    }
+    if (!_isCurrentRequest(generation)) return;
     if (resolvedProjectKey == null || resolvedProjectKey.isEmpty) {
       // EN: Surface explicit error instead of keeping infinite loading.
       // KO: 무한 로딩 상태로 남기지 않고 명시적 에러를 노출합니다.
@@ -143,6 +182,7 @@ class LiveEventDetailController
     state = const AsyncLoading();
 
     final repository = await _ref.read(liveEventsRepositoryProvider.future);
+    if (!_isCurrentRequest(generation)) return;
 
     // EN: Retry up to _kMaxRetries times on failure with exponential back-off.
     // KO: 실패 시 지수 백오프로 최대 _kMaxRetries회 재시도합니다.
@@ -151,7 +191,7 @@ class LiveEventDetailController
     for (var attempt = 0; attempt <= _kMaxRetries; attempt++) {
       if (attempt > 0) {
         await Future<void>.delayed(Duration(seconds: attempt));
-        if (!mounted) return;
+        if (!_isCurrentRequest(generation)) return;
         AppLogger.info(
           'Retrying live event detail load (attempt $attempt)',
           tag: 'LiveEventDetailController',
@@ -162,6 +202,7 @@ class LiveEventDetailController
         eventId: eventId,
         forceRefresh: forceRefresh || attempt > 0,
       );
+      if (!_isCurrentRequest(generation)) return;
       if (result is Success<LiveEventDetail>) break;
     }
 
@@ -176,31 +217,36 @@ class LiveEventDetailController
         eventId: eventId,
         forceRefresh: forceRefresh,
       );
+      if (!_isCurrentRequest(generation)) return;
     }
     if (result is Err<LiveEventDetail>) {
       final fallbackProjectKeys = await _fallbackProjectKeys(
         attemptedProjectKeys,
       );
+      if (!_isCurrentRequest(generation)) return;
       for (final fallbackProjectKey in fallbackProjectKeys) {
         result = await repository.getLiveEventDetail(
           projectId: fallbackProjectKey,
           eventId: eventId,
           forceRefresh: forceRefresh,
         );
+        if (!_isCurrentRequest(generation)) return;
         if (result is Success<LiveEventDetail>) {
           break;
         }
       }
     }
 
-    if (!mounted) {
-      return;
-    }
+    if (!_isCurrentRequest(generation)) return;
     if (result is Success<LiveEventDetail>) {
       state = AsyncData(result.data);
     } else if (result is Err<LiveEventDetail>) {
       state = AsyncError(result.failure, StackTrace.current);
     }
+  }
+
+  bool _isCurrentRequest(int generation) {
+    return mounted && generation == _requestGeneration;
   }
 
   Future<String?> _resolveProjectKey() async {
@@ -438,28 +484,39 @@ class LiveAttendanceViewState {
 }
 
 class LiveAttendanceController extends StateNotifier<LiveAttendanceViewState> {
-  LiveAttendanceController(this._ref, this.eventId)
-    : super(
-        LiveAttendanceViewState(attendance: LiveAttendanceState.none(eventId)),
-      ) {
-    _ref.listen<String?>(selectedProjectKeyProvider, (_, __) {
-      unawaited(load(forceRefresh: true));
-    });
+  LiveAttendanceController(
+    this._ref,
+    this.eventId, {
+    String? explicitProjectKey,
+  }) : _explicitProjectKey = explicitProjectKey?.trim(),
+       super(
+         LiveAttendanceViewState(attendance: LiveAttendanceState.none(eventId)),
+       ) {
+    if (_explicitProjectKey == null || _explicitProjectKey.isEmpty) {
+      _ref.listen<String?>(_selectedLiveProjectContextProvider, (_, __) {
+        unawaited(load(forceRefresh: true));
+      });
+    }
     unawaited(load());
   }
 
   final Ref _ref;
   final String eventId;
+  final String? _explicitProjectKey;
+  int _requestGeneration = 0;
 
   Future<Result<LiveAttendanceState>> load({bool forceRefresh = false}) async {
+    final generation = ++_requestGeneration;
     final projectKey = _resolvedProjectKey();
     if (projectKey == null || projectKey.isEmpty) {
       final empty = LiveAttendanceState.none(eventId);
-      state = state.copyWith(
-        attendance: empty,
-        isSubmitting: false,
-        isLoading: false,
-      );
+      if (_ownsContext(generation, projectKey)) {
+        state = state.copyWith(
+          attendance: empty,
+          isSubmitting: false,
+          isLoading: false,
+        );
+      }
       return Result.success(empty);
     }
 
@@ -470,7 +527,7 @@ class LiveAttendanceController extends StateNotifier<LiveAttendanceViewState> {
       eventId: eventId,
       forceRefresh: forceRefresh,
     );
-    if (!mounted) {
+    if (!_ownsContext(generation, projectKey)) {
       return result;
     }
 
@@ -480,6 +537,9 @@ class LiveAttendanceController extends StateNotifier<LiveAttendanceViewState> {
         projectKey: projectKey,
         eventId: eventId,
       );
+      if (!_ownsContext(generation, projectKey)) {
+        return result;
+      }
       final resolved = pending == null
           ? data
           : _optimisticState(data, pending.attended);
@@ -529,6 +589,7 @@ class LiveAttendanceController extends StateNotifier<LiveAttendanceViewState> {
       );
     }
 
+    final generation = ++_requestGeneration;
     final previous = current;
     final optimistic = _optimisticState(previous, attended);
     state = state.copyWith(attendance: optimistic, isSubmitting: true);
@@ -540,7 +601,7 @@ class LiveAttendanceController extends StateNotifier<LiveAttendanceViewState> {
         eventId: eventId,
         attended: attended,
       );
-      if (!mounted) {
+      if (!_ownsContext(generation, projectKey)) {
         return Result.success(optimistic);
       }
       state = state.copyWith(
@@ -565,6 +626,9 @@ class LiveAttendanceController extends StateNotifier<LiveAttendanceViewState> {
 
     if (result case Success<LiveAttendanceState>(:final data)) {
       await outbox.removePending(projectKey: projectKey, eventId: eventId);
+      if (!_ownsContext(generation, projectKey)) {
+        return result;
+      }
       state = state.copyWith(
         attendance: data,
         isSubmitting: false,
@@ -581,7 +645,7 @@ class LiveAttendanceController extends StateNotifier<LiveAttendanceViewState> {
           eventId: eventId,
           attended: attended,
         );
-        if (!mounted) {
+        if (!_ownsContext(generation, projectKey)) {
           return Result.success(optimistic);
         }
         state = state.copyWith(
@@ -592,10 +656,16 @@ class LiveAttendanceController extends StateNotifier<LiveAttendanceViewState> {
         _ref.invalidate(liveAttendanceHistoryControllerProvider);
         return Result.success(optimistic);
       }
+      if (!_ownsContext(generation, projectKey)) {
+        return Result.failure(failure);
+      }
       state = state.copyWith(attendance: previous, isSubmitting: false);
       return Result.failure(failure);
     }
 
+    if (!_ownsContext(generation, projectKey)) {
+      return result;
+    }
     state = state.copyWith(attendance: previous, isSubmitting: false);
     return result;
   }
@@ -623,15 +693,18 @@ class LiveAttendanceController extends StateNotifier<LiveAttendanceViewState> {
   }
 
   String? _resolvedProjectKey() {
-    final projectKey = _ref.read(selectedProjectKeyProvider);
-    if (projectKey != null && projectKey.isNotEmpty) {
-      return projectKey;
+    if (_explicitProjectKey != null && _explicitProjectKey.isNotEmpty) {
+      return _explicitProjectKey;
     }
-    final projectId = _ref.read(selectedProjectIdProvider);
-    if (projectId != null && projectId.isNotEmpty) {
-      return projectId;
-    }
-    return null;
+    return _ref.read(_selectedLiveProjectContextProvider);
+  }
+
+  // EN: Only the latest operation may update the project scope that started it.
+  // KO: 최신 작업만 자신이 시작된 프로젝트 범위의 상태를 갱신할 수 있습니다.
+  bool _ownsContext(int generation, String? projectKey) {
+    return mounted &&
+        generation == _requestGeneration &&
+        _resolvedProjectKey() == projectKey;
   }
 }
 
@@ -676,12 +749,18 @@ class LiveAttendanceHistoryController
     extends StateNotifier<LiveAttendanceHistoryViewState> {
   LiveAttendanceHistoryController(this._ref)
     : super(const LiveAttendanceHistoryViewState(isInitialLoading: true)) {
+    _ref.listen<String?>(_selectedLiveProjectContextProvider, (previous, next) {
+      if (previous == next) return;
+      unawaited(load(forceRefresh: true));
+    });
     unawaited(load());
   }
 
   final Ref _ref;
+  int _requestGeneration = 0;
 
   Future<void> load({bool forceRefresh = false}) async {
+    final generation = ++_requestGeneration;
     final projectKey = _resolvedProjectKey();
     if (projectKey == null || projectKey.isEmpty) {
       state = const LiveAttendanceHistoryViewState(
@@ -702,6 +781,7 @@ class LiveAttendanceHistoryController
     );
 
     final repository = await _ref.read(liveEventsRepositoryProvider.future);
+    if (!_isCurrentRequest(generation)) return;
     final result = await repository.getLiveAttendanceHistory(
       projectId: projectKey,
       page: 0,
@@ -709,9 +789,7 @@ class LiveAttendanceHistoryController
       forceRefresh: forceRefresh,
     );
 
-    if (!mounted) {
-      return;
-    }
+    if (!_isCurrentRequest(generation)) return;
 
     if (result case Success<LiveAttendanceHistoryPageData>(:final data)) {
       final enriched = await _enrichWithEventDetails(
@@ -720,9 +798,7 @@ class LiveAttendanceHistoryController
         data.items,
         forceRefresh: forceRefresh,
       );
-      if (!mounted) {
-        return;
-      }
+      if (!_isCurrentRequest(generation)) return;
       state = state.copyWith(
         items: _sortByLatest(enriched),
         isInitialLoading: false,
@@ -749,16 +825,17 @@ class LiveAttendanceHistoryController
       return;
     }
 
+    final generation = _requestGeneration;
+    final requestedPage = state.nextPage;
     state = state.copyWith(isLoadingMore: true, clearFailure: true);
     final repository = await _ref.read(liveEventsRepositoryProvider.future);
+    if (!_isCurrentRequest(generation)) return;
     final result = await repository.getLiveAttendanceHistory(
       projectId: projectKey,
-      page: state.nextPage,
+      page: requestedPage,
       size: _kAttendanceHistoryPageSize,
     );
-    if (!mounted) {
-      return;
-    }
+    if (!_isCurrentRequest(generation)) return;
 
     if (result case Success<LiveAttendanceHistoryPageData>(:final data)) {
       final enriched = await _enrichWithEventDetails(
@@ -766,9 +843,7 @@ class LiveAttendanceHistoryController
         projectKey,
         data.items,
       );
-      if (!mounted) {
-        return;
-      }
+      if (!_isCurrentRequest(generation)) return;
       state = state.copyWith(
         items: _sortByLatest([...state.items, ...enriched]),
         isLoadingMore: false,
@@ -826,15 +901,11 @@ class LiveAttendanceHistoryController
   }
 
   String? _resolvedProjectKey() {
-    final projectKey = _ref.read(selectedProjectKeyProvider);
-    if (projectKey != null && projectKey.isNotEmpty) {
-      return projectKey;
-    }
-    final projectId = _ref.read(selectedProjectIdProvider);
-    if (projectId != null && projectId.isNotEmpty) {
-      return projectId;
-    }
-    return null;
+    return _ref.read(_selectedLiveProjectContextProvider);
+  }
+
+  bool _isCurrentRequest(int generation) {
+    return mounted && generation == _requestGeneration;
   }
 }
 
@@ -892,6 +963,22 @@ final liveAttendanceControllerProvider = StateNotifierProvider.autoDispose
       return LiveAttendanceController(ref, eventId);
     });
 
+/// EN: Attendance controller bound to an event's explicit project context.
+/// KO: 이벤트의 명시적인 프로젝트 컨텍스트에 고정된 출석 컨트롤러입니다.
+final liveAttendanceByProjectControllerProvider = StateNotifierProvider
+    .autoDispose
+    .family<
+      LiveAttendanceController,
+      LiveAttendanceViewState,
+      ({String projectId, String eventId})
+    >((ref, context) {
+      return LiveAttendanceController(
+        ref,
+        context.eventId,
+        explicitProjectKey: context.projectId,
+      );
+    });
+
 final liveAttendanceHistoryControllerProvider =
     StateNotifierProvider.autoDispose<
       LiveAttendanceHistoryController,
@@ -903,11 +990,17 @@ final liveAttendanceHistoryControllerProvider =
 /// EN: Selected band IDs for live events filter.
 /// KO: 라이브 이벤트 필터용 선택된 밴드 ID 목록.
 final selectedLiveBandIdsProvider = StateProvider<List<String>>((ref) {
+  // EN: Recreate the filter state whenever the active project changes.
+  // KO: 활성 프로젝트가 바뀔 때마다 필터 상태를 새로 만듭니다.
+  ref.watch(_selectedLiveProjectContextProvider);
   return const [];
 });
 
 /// EN: Selected year for live events client-side filter (null = all years).
 /// KO: 라이브 이벤트 클라이언트 연도 필터 선택값 (null = 전체 연도).
 final selectedLiveEventYearProvider = StateProvider<int?>((ref) {
+  // EN: A year selection only has meaning inside its originating project.
+  // KO: 연도 선택은 선택이 만들어진 프로젝트 안에서만 의미가 있습니다.
+  ref.watch(_selectedLiveProjectContextProvider);
   return null;
 });

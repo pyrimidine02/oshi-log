@@ -1,22 +1,21 @@
-/// EN: Unit detail page — shows unit info header + full member/VA roster.
-/// KO: 유닛 상세 페이지 — 유닛 정보 헤더 + 전체 멤버/성우 로스터.
+/// EN: Unit dossier page with a compact editorial roster.
+/// KO: 컴팩트한 에디토리얼 로스터를 제공하는 유닛 기록 페이지입니다.
 library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/theme/gbt_colors.dart';
-import '../../../../core/theme/gbt_spacing.dart';
-import '../../../../core/theme/gbt_typography.dart';
 import '../../../../core/router/app_router.dart';
+import '../../../../core/theme/theme.dart';
 import '../../../../core/utils/date_utils.dart';
-import '../../../../core/utils/palette_utils.dart';
 import '../../../../core/widgets/feedback/gbt_loading.dart';
+import '../../../../core/widgets/layout/gbt_page_header.dart';
+import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
 import '../../../projects/application/projects_controller.dart';
 import '../../../projects/domain/entities/project_entities.dart';
 
-/// EN: Unit detail page — wiki-style unit profile with member roster.
-/// KO: 유닛 상세 페이지 — 위키 스타일 유닛 프로필 + 멤버 로스터.
+/// EN: Loads the unit contract and keeps routed member navigation intact.
+/// KO: 유닛 계약을 불러오고 기존 멤버 상세 이동을 그대로 유지합니다.
 class UnitDetailPage extends ConsumerWidget {
   const UnitDetailPage({
     super.key,
@@ -39,430 +38,256 @@ class UnitDetailPage extends ConsumerWidget {
         initialUnit ??
         Unit(id: unitIdentifier, code: unitIdentifier, displayName: '유닛');
     final resolvedUnitIdentifier = unit.code.isNotEmpty ? unit.code : unit.id;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final paletteColor = paletteColorFromSeed(unit.displayName);
-    final textPrimary = isDark
-        ? GBTColors.darkTextPrimary
-        : GBTColors.textPrimary;
-    final textSecondary = isDark
-        ? GBTColors.darkTextSecondary
-        : GBTColors.textSecondary;
-    final textTertiary = isDark
-        ? GBTColors.darkTextTertiary
-        : GBTColors.textTertiary;
-    final surfaceVariant = isDark
-        ? GBTColors.darkSurfaceVariant
-        : GBTColors.surfaceVariant;
-
     final membersState = ref.watch(
       unitMembersControllerProvider((projectId, resolvedUnitIdentifier)),
     );
 
     return Scaffold(
-      body: CustomScrollView(
+      appBar: gbtStandardAppBar(context, title: '유닛 기록'),
+      body: UnitDossierView(
+        unit: unit,
+        membersState: membersState,
+        onMemberTap: (member) => context.goToMemberDetail(
+          unit: unit,
+          member: member,
+          projectId: projectId,
+        ),
+      ),
+    );
+  }
+}
+
+/// EN: Displays real unit metadata and a borderless indexed member roster.
+/// KO: 실제 유닛 메타데이터와 테두리 없는 인덱스형 멤버 명부를 표시합니다.
+class UnitDossierView extends StatelessWidget {
+  const UnitDossierView({
+    super.key,
+    required this.unit,
+    required this.membersState,
+    required this.onMemberTap,
+  });
+
+  final Unit unit;
+  final AsyncValue<List<UnitMember>> membersState;
+  final ValueChanged<UnitMember> onMemberTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final metadata = _unitMetadata(unit);
+
+    return Material(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
-          // EN: Collapsible hero header with unit palette color.
-          // KO: 유닛 팔레트 색상 콜랩서블 히어로 헤더.
-          SliverAppBar(
-            expandedHeight: 180,
-            pinned: true,
-            flexibleSpace: FlexibleSpaceBar(
-              centerTitle: false,
-              titlePadding: const EdgeInsets.fromLTRB(
-                GBTSpacing.pageHorizontal,
-                0,
-                GBTSpacing.pageHorizontal,
-                GBTSpacing.md,
-              ),
-              title: Text(
-                unit.displayName,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                ),
-              ),
-              background: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      paletteColor,
-                      paletteColor.withValues(alpha: 0.75),
-                    ],
-                  ),
-                ),
-                child: Align(
-                  alignment: Alignment.center,
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: GBTSpacing.xl),
-                    child: Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.5),
-                          width: 2,
-                        ),
-                      ),
-                      child: Center(
-                        child: Text(
-                          unit.displayName.isNotEmpty
-                              ? unit.displayName[0].toUpperCase()
-                              : '?',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 36,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-
-          // EN: Unit info chips (code badge).
-          // KO: 유닛 정보 칩 (코드 배지).
           SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(
-                GBTSpacing.pageHorizontal,
-                GBTSpacing.md,
-                GBTSpacing.pageHorizontal,
-                GBTSpacing.xs,
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: GBTSpacing.sm,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: paletteColor.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(
-                        GBTSpacing.radiusFull,
-                      ),
-                      border: Border.all(
-                        color: paletteColor.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: Text(
-                      unit.code.isNotEmpty ? unit.code : unit.id,
-                      style: GBTTypography.labelSmall.copyWith(
-                        color: paletteColor,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  if (unit.status != null && unit.status!.isNotEmpty) ...[
-                    const SizedBox(width: GBTSpacing.xs),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: GBTSpacing.sm,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color:
-                            (unit.status == 'ACTIVE'
-                                    ? GBTColors.success
-                                    : GBTColors.textTertiary)
-                                .withValues(alpha: 0.14),
-                        borderRadius: BorderRadius.circular(
-                          GBTSpacing.radiusFull,
-                        ),
-                      ),
-                      child: Text(
-                        unit.status!,
-                        style: GBTTypography.labelSmall.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: unit.status == 'ACTIVE'
-                              ? GBTColors.success
-                              : GBTColors.textTertiary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
+            child: GBTPageHeader(
+              eyebrow: 'UNIT DOSSIER',
+              title: unit.displayName,
+              description: metadata.isEmpty ? null : metadata,
             ),
           ),
-
-          if (unit.description != null && unit.description!.trim().isNotEmpty)
+          if (unit.description?.trim().isNotEmpty == true)
             SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  GBTSpacing.pageHorizontal,
-                  GBTSpacing.sm,
-                  GBTSpacing.pageHorizontal,
-                  0,
-                ),
-                child: Text(
-                  unit.description!.trim(),
-                  style: GBTTypography.bodySmall.copyWith(color: textSecondary),
-                ),
-              ),
+              child: _EditorialNote(text: unit.description!.trim()),
             ),
-
-          // EN: Section header — Members.
-          // KO: 섹션 헤더 — 멤버.
           SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(
-                GBTSpacing.pageHorizontal,
-                GBTSpacing.lg,
-                GBTSpacing.pageHorizontal,
-                GBTSpacing.sm,
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.groups_outlined, size: 16, color: textSecondary),
-                  const SizedBox(width: GBTSpacing.xs),
-                  Text(
-                    '멤버 · 성우',
-                    style: GBTTypography.labelMedium.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: textSecondary,
-                      letterSpacing: 0.3,
-                    ),
-                  ),
-                ],
-              ),
+            child: _DossierSectionHeader(
+              index: '01',
+              eyebrow: 'ROSTER',
+              title: '멤버 · 성우',
+              detail: membersState.valueOrNull == null
+                  ? null
+                  : '${membersState.valueOrNull!.length}명',
             ),
           ),
-
-          // EN: Member cards list loaded from API.
-          // KO: API에서 불러온 멤버 카드 목록.
-          membersState.when(
-            loading: () => SliverToBoxAdapter(
-              child: GBTShimmer(
-                child: Padding(
-                  padding: const EdgeInsets.all(GBTSpacing.md),
-                  child: Column(
-                    children: List.generate(
-                      4,
-                      (_) => Padding(
-                        padding: const EdgeInsets.only(bottom: GBTSpacing.sm),
-                        child: GBTShimmerContainer(
-                          width: double.infinity,
-                          height: 80,
-                          borderRadius: GBTSpacing.radiusMd,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            error: (_, __) => SliverToBoxAdapter(
-              child: Padding(
-                padding: GBTSpacing.paddingPage,
-                child: Text(
-                  '멤버 정보를 불러오지 못했어요',
-                  style: GBTTypography.bodySmall.copyWith(color: textTertiary),
-                ),
+          membersState.when<Widget>(
+            loading: () =>
+                const SliverToBoxAdapter(child: _RosterLoadingState()),
+            error: (_, __) => const SliverToBoxAdapter(
+              child: GBTEmptyState(
+                icon: Icons.sync_problem_outlined,
+                title: '멤버 기록을 불러오지 못했어요',
+                subtitle: '잠시 후 다시 확인해 주세요.',
               ),
             ),
             data: (members) {
               if (members.isEmpty) {
-                return SliverToBoxAdapter(
-                  child: Padding(
-                    padding: GBTSpacing.paddingPage,
-                    child: Text(
-                      '멤버 정보가 없습니다',
-                      style: GBTTypography.bodySmall.copyWith(
-                        color: textTertiary,
-                      ),
-                    ),
+                return const SliverToBoxAdapter(
+                  child: GBTEmptyState(
+                    icon: Icons.groups_outlined,
+                    title: '아직 등록된 멤버가 없어요',
+                    subtitle: '멤버 정보가 추가되면 이 명부에 표시됩니다.',
                   ),
                 );
               }
 
-              final sorted = [...members]
-                ..sort((a, b) {
-                  if (a.order != null && b.order != null) {
-                    return a.order!.compareTo(b.order!);
-                  }
-                  return a.name.compareTo(b.name);
-                });
-
-              return SliverList(
-                delegate: SliverChildBuilderDelegate((context, index) {
-                  final member = sorted[index];
-                  return _MemberCard(
+              final sortedMembers = List<UnitMember>.of(members)
+                ..sort(_compareMembers);
+              return SliverList.builder(
+                itemCount: sortedMembers.length,
+                itemBuilder: (context, index) {
+                  final member = sortedMembers[index];
+                  return _MemberIndexRow(
+                    index: index + 1,
                     member: member,
-                    unit: unit,
-                    projectId: projectId,
-                    paletteColor: paletteColor,
-                    textPrimary: textPrimary,
-                    textSecondary: textSecondary,
-                    textTertiary: textTertiary,
-                    surfaceVariant: surfaceVariant,
-                    isDark: isDark,
+                    onTap: () => onMemberTap(member),
                   );
-                }, childCount: sorted.length),
+                },
               );
             },
           ),
-
-          const SliverToBoxAdapter(child: SizedBox(height: GBTSpacing.xl)),
+          const SliverToBoxAdapter(
+            child: SizedBox(height: GBTSpacing.bottomNavClearance),
+          ),
         ],
       ),
     );
   }
 }
 
-/// EN: Member card row on unit detail page — tappable to open member detail.
-/// KO: 유닛 상세의 멤버 카드 행 — 탭 시 멤버 상세로 이동.
-class _MemberCard extends StatelessWidget {
-  const _MemberCard({
-    required this.member,
-    required this.unit,
-    required this.projectId,
-    required this.paletteColor,
-    required this.textPrimary,
-    required this.textSecondary,
-    required this.textTertiary,
-    required this.surfaceVariant,
-    required this.isDark,
-  });
+String _unitMetadata(Unit unit) {
+  final values = <String>[
+    if (unit.code.trim().isNotEmpty) unit.code.trim(),
+    if (unit.status?.trim().isNotEmpty == true) unit.status!.trim(),
+    if (unit.debutDate?.trim().isNotEmpty == true)
+      '데뷔 ${unit.debutDate!.trim()}',
+  ];
+  return values.join('  ·  ');
+}
 
-  final UnitMember member;
-  final Unit unit;
-  final String projectId;
-  final Color paletteColor;
-  final Color textPrimary;
-  final Color textSecondary;
-  final Color textTertiary;
-  final Color surfaceVariant;
-  final bool isDark;
+int _compareMembers(UnitMember left, UnitMember right) {
+  final leftOrder = left.order;
+  final rightOrder = right.order;
+  if (leftOrder != null && rightOrder != null) {
+    final orderComparison = leftOrder.compareTo(rightOrder);
+    if (orderComparison != 0) return orderComparison;
+  } else if (leftOrder != null) {
+    return -1;
+  } else if (rightOrder != null) {
+    return 1;
+  }
+  return left.name.compareTo(right.name);
+}
+
+/// EN: A left-rule note replaces the former elevated profile card.
+/// KO: 왼쪽 규칙선 메모로 이전의 돌출형 프로필 카드를 대체합니다.
+class _EditorialNote extends StatelessWidget {
+  const _EditorialNote({required this.text});
+
+  final String text;
 
   @override
   Widget build(BuildContext context) {
-    final initial = member.name.isNotEmpty ? member.name[0] : '?';
-
-    return InkWell(
-      onTap: () => context.goToMemberDetail(
-        unit: unit,
-        member: member,
-        projectId: projectId,
+    final theme = Theme.of(context);
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        GBTResponsiveSpacing.pageHorizontal(context),
+        GBTSpacing.lg,
+        GBTResponsiveSpacing.pageHorizontal(context),
+        GBTSpacing.sm,
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: GBTSpacing.pageHorizontal,
-          vertical: GBTSpacing.xs,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          border: Border(
+            left: BorderSide(color: theme.colorScheme.primary, width: 3),
+          ),
         ),
-        child: Container(
-          padding: const EdgeInsets.all(GBTSpacing.md),
-          decoration: BoxDecoration(
-            color: isDark ? GBTColors.darkSurface : GBTColors.surface,
-            borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
-            border: Border.all(
-              color: isDark ? GBTColors.darkBorder : GBTColors.border,
+        child: Padding(
+          padding: const EdgeInsets.only(left: GBTSpacing.md),
+          child: Text(
+            text,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              height: 1.65,
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// EN: Numbered editorial section marker shared within this dossier.
+/// KO: 이 기록 화면 안에서 공유하는 번호형 에디토리얼 섹션 표식입니다.
+class _DossierSectionHeader extends StatelessWidget {
+  const _DossierSectionHeader({
+    required this.index,
+    required this.eyebrow,
+    required this.title,
+    this.detail,
+  });
+
+  final String index;
+  final String eyebrow;
+  final String title;
+  final String? detail;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        GBTResponsiveSpacing.pageHorizontal(context),
+        GBTSpacing.xl,
+        GBTResponsiveSpacing.pageHorizontal(context),
+        0,
+      ),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          border: Border(
+            top: BorderSide(color: colors.outlineVariant, width: 0.8),
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: GBTSpacing.md),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // EN: Member avatar — image or palette initial.
-              // KO: 멤버 아바타 — 이미지 또는 팔레트 이니셜.
-              _AvatarCircle(
-                imageUrl: member.imageUrl,
-                initial: initial,
-                paletteColor: paletteColor,
-                size: 52,
+              SizedBox(
+                width: GBTSpacing.xl,
+                child: Text(
+                  index,
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: colors.primary,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
               ),
-              const SizedBox(width: GBTSpacing.md),
+              const SizedBox(width: GBTSpacing.sm),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // EN: Character name + VA name on same line.
-                    // KO: 캐릭터명 + 성우명 동일 행.
-                    Row(
-                      children: [
-                        Text(
-                          member.name,
-                          style: GBTTypography.bodyMedium.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: textPrimary,
-                          ),
+                    Text(
+                      eyebrow,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: colors.primary,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.1,
+                      ),
+                    ),
+                    const SizedBox(height: GBTSpacing.xs2),
+                    Text(
+                      title,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        color: colors.onSurface,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    if (detail != null) ...[
+                      const SizedBox(height: GBTSpacing.xs),
+                      Text(
+                        detail!,
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: colors.onSurfaceVariant,
                         ),
-                        if (member.voiceActorName != null &&
-                            member.voiceActorName!.isNotEmpty) ...[
-                          const SizedBox(width: GBTSpacing.xs),
-                          Container(
-                            width: 1,
-                            height: 12,
-                            color: textTertiary.withValues(alpha: 0.4),
-                          ),
-                          const SizedBox(width: GBTSpacing.xs),
-                          Icon(
-                            Icons.mic_rounded,
-                            size: 12,
-                            color: paletteColor.withValues(alpha: 0.7),
-                          ),
-                          const SizedBox(width: 2),
-                          Flexible(
-                            child: Text(
-                              member.voiceActorName!,
-                              style: GBTTypography.bodySmall.copyWith(
-                                color: textSecondary,
-                                fontWeight: FontWeight.w500,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: 3),
-                    // EN: Role / instrument tags row.
-                    // KO: 역할 / 악기 태그 행.
-                    Wrap(
-                      spacing: GBTSpacing.xs,
-                      runSpacing: GBTSpacing.xs,
-                      children: [
-                        if (member.instrument != null)
-                          _Tag(label: member.instrument!, color: paletteColor),
-                        if (member.role != null &&
-                            member.role != member.instrument)
-                          _Tag(label: member.role!, color: paletteColor),
-                      ],
-                    ),
-                    // EN: Birthday countdown when within 7 days.
-                    // KO: 7일 이내 생일 카운트다운.
-                    Builder(
-                      builder: (_) {
-                        final days = daysUntilBirthday(member.birthdate);
-                        if (days == null || days > 7) {
-                          return const SizedBox.shrink();
-                        }
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 3),
-                          child: Text(
-                            days == 0 ? '🎂 오늘 생일!' : '🎂 $days일 후 생일',
-                            style: GBTTypography.labelSmall.copyWith(
-                              color: days == 0
-                                  ? GBTColors.secondary
-                                  : GBTColors.accent,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
+                      ),
+                    ],
                   ],
                 ),
               ),
-              Icon(Icons.chevron_right_rounded, color: textTertiary, size: 20),
             ],
           ),
         ),
@@ -471,35 +296,133 @@ class _MemberCard extends StatelessWidget {
   }
 }
 
-/// EN: Avatar circle — shows network image or palette initial fallback.
-/// KO: 아바타 원 — 네트워크 이미지 또는 팔레트 이니셜 폴백.
-class _AvatarCircle extends StatelessWidget {
-  const _AvatarCircle({
-    required this.imageUrl,
-    required this.initial,
-    required this.paletteColor,
-    required this.size,
+/// EN: Borderless roster row with a stable 48dp interaction target.
+/// KO: 안정적인 48dp 상호작용 영역을 가진 테두리 없는 명부 행입니다.
+class _MemberIndexRow extends StatelessWidget {
+  const _MemberIndexRow({
+    required this.index,
+    required this.member,
+    required this.onTap,
   });
 
-  final String? imageUrl;
-  final String initial;
-  final Color paletteColor;
-  final double size;
+  final int index;
+  final UnitMember member;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(color: paletteColor, shape: BoxShape.circle),
-      clipBehavior: Clip.antiAlias,
-      child: Center(
-        child: Text(
-          initial,
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w700,
-            fontSize: size * 0.38,
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final metadata = <String>[
+      if (member.instrument?.trim().isNotEmpty == true)
+        member.instrument!.trim(),
+      if (member.role?.trim().isNotEmpty == true &&
+          member.role!.trim() != member.instrument?.trim())
+        member.role!.trim(),
+    ];
+    final birthdayDays = daysUntilBirthday(member.birthdate);
+
+    return Semantics(
+      button: true,
+      label: [
+        member.name,
+        if (member.voiceActorName?.trim().isNotEmpty == true)
+          'CV ${member.voiceActorName!.trim()}',
+        ...metadata,
+      ].join('. '),
+      child: ExcludeSemantics(
+        child: InkWell(
+          onTap: onTap,
+          child: Container(
+            constraints: const BoxConstraints(
+              minHeight: GBTSpacing.touchTarget,
+            ),
+            margin: EdgeInsets.symmetric(
+              horizontal: GBTResponsiveSpacing.pageHorizontal(context),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: GBTSpacing.md),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(color: colors.outlineVariant, width: 0.8),
+              ),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: GBTSpacing.xl,
+                  child: Text(
+                    index.toString().padLeft(2, '0'),
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: colors.primary,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: GBTSpacing.sm),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        member.name,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: colors.onSurface,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      if (member.characterNameKana?.trim().isNotEmpty ==
+                          true) ...[
+                        const SizedBox(height: GBTSpacing.xs),
+                        Text(
+                          member.characterNameKana!.trim(),
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            color: colors.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                      if (member.voiceActorName?.trim().isNotEmpty == true) ...[
+                        const SizedBox(height: GBTSpacing.sm),
+                        Text(
+                          'CV  ${member.voiceActorName!.trim()}',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colors.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                      if (metadata.isNotEmpty) ...[
+                        const SizedBox(height: GBTSpacing.xs),
+                        Text(
+                          metadata.join('  ·  '),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colors.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                      if (birthdayDays != null && birthdayDays <= 7) ...[
+                        const SizedBox(height: GBTSpacing.xs),
+                        Text(
+                          birthdayDays == 0 ? '오늘 생일' : '생일까지 $birthdayDays일',
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            color: colors.primary,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                SizedBox(
+                  width: GBTSpacing.touchTarget,
+                  height: GBTSpacing.touchTarget,
+                  child: Icon(
+                    Icons.arrow_forward_rounded,
+                    color: colors.onSurfaceVariant,
+                    size: GBTSpacing.iconSm,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -507,27 +430,29 @@ class _AvatarCircle extends StatelessWidget {
   }
 }
 
-/// EN: Compact tag chip.
-/// KO: 컴팩트 태그 칩.
-class _Tag extends StatelessWidget {
-  const _Tag({required this.label, required this.color});
-  final String label;
-  final Color color;
+/// EN: Loading rows preserve the dossier rhythm without card placeholders.
+/// KO: 카드 플레이스홀더 없이 기록 화면의 리듬을 유지하는 로딩 행입니다.
+class _RosterLoadingState extends StatelessWidget {
+  const _RosterLoadingState();
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
-      ),
-      child: Text(
-        label,
-        style: GBTTypography.labelSmall.copyWith(
-          color: color,
-          fontWeight: FontWeight.w600,
-          fontSize: 10,
+    final horizontal = GBTResponsiveSpacing.pageHorizontal(context);
+    return GBTShimmer(
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: horizontal),
+        child: Column(
+          children: List.generate(
+            4,
+            (index) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: GBTSpacing.sm),
+              child: GBTShimmerContainer(
+                width: double.infinity,
+                height: 64,
+                borderRadius: GBTSpacing.radiusXs,
+              ),
+            ),
+          ),
         ),
       ),
     );

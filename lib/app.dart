@@ -184,9 +184,6 @@ class GBTApp extends ConsumerWidget {
         // KO: 테마에 따라 아이콘 밝기를 반전시켜 라이트/다크 모드 모두에서
         //     상태 바·네비게이션 바 아이콘이 잘 보이도록 합니다 (엣지 투 엣지).
         final iconBrightness = isDark ? Brightness.light : Brightness.dark;
-        final platform = Theme.of(context).platform;
-        final maxTextScale = platform == TargetPlatform.android ? 1.6 : 1.3;
-
         return AnnotatedRegion<SystemUiOverlayStyle>(
           value: SystemUiOverlayStyle(
             statusBarColor: Colors.transparent,
@@ -196,30 +193,23 @@ class GBTApp extends ConsumerWidget {
             systemNavigationBarIconBrightness: iconBrightness,
             systemNavigationBarContrastEnforced: false,
           ),
-          child: MediaQuery(
-            // EN: Prevent text scaling beyond 1.3x for accessibility
-            // KO: 접근성을 위해 텍스트 스케일링을 1.3배 이하로 제한
-            data: MediaQuery.of(context).copyWith(
-              textScaler: TextScaler.linear(
-                MediaQuery.of(
-                  context,
-                ).textScaler.scale(1.0).clamp(0.8, maxTextScale),
-              ),
-            ),
-            child: GestureDetector(
-              behavior: HitTestBehavior.translucent,
-              onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-              child: DecoratedBox(
-                decoration: BoxDecoration(gradient: backgroundGradient),
-                child: _DeeplinkBridge(
-                  router: router,
-                  child: InAppNotificationBannerOverlay(
-                    child: _MandatoryConsentGate(
-                      child: _TelemetryLifecycleBridge(
-                        child: _NotificationsLifecycleBridge(
-                          child: _ConnectivityWrapper(
-                            child: child ?? const SizedBox.shrink(),
-                          ),
+          // EN: Preserve the platform TextScaler. Individual layouts adapt
+          // instead of globally reducing the user's accessibility setting.
+          // KO: 운영체제 TextScaler를 그대로 보존합니다. 사용자 접근성 설정을
+          // 전역에서 줄이지 않고 각 레이아웃이 확대 글자에 적응합니다.
+          child: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+            child: DecoratedBox(
+              decoration: BoxDecoration(gradient: backgroundGradient),
+              child: _DeeplinkBridge(
+                router: router,
+                child: InAppNotificationBannerOverlay(
+                  child: _MandatoryConsentGate(
+                    child: _TelemetryLifecycleBridge(
+                      child: _NotificationsLifecycleBridge(
+                        child: _ConnectivityWrapper(
+                          child: child ?? const SizedBox.shrink(),
                         ),
                       ),
                     ),

@@ -12,6 +12,7 @@ import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';
 import '../../../../core/utils/result.dart';
 import '../../../../core/widgets/feedback/gbt_loading.dart';
+import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
 import '../../application/auth_controller.dart';
 import '../../domain/entities/oauth_provider.dart';
 
@@ -113,10 +114,9 @@ class _OAuthCallbackPageState extends ConsumerState<OAuthCallbackPage> {
 
     if (_failure != null) {
       return Scaffold(
-        appBar: AppBar(
-          title: Text(
-            context.l10n(ko: '로그인 실패', en: 'Login failed', ja: 'ログイン失敗'),
-          ),
+        appBar: gbtStandardAppBar(
+          context,
+          title: context.l10n(ko: '로그인 실패', en: 'Login failed', ja: 'ログイン失敗'),
         ),
         body: Center(
           child: Padding(
@@ -150,7 +150,7 @@ class _OAuthCallbackPageState extends ConsumerState<OAuthCallbackPage> {
                 ),
                 const SizedBox(height: GBTSpacing.sm),
                 Text(
-                  _failure!.userMessage,
+                  _failureMessage(context, _failure!),
                   textAlign: TextAlign.center,
                   style: GBTTypography.bodyMedium.copyWith(
                     // EN: Use theme-aware text color for dark mode
@@ -205,4 +205,15 @@ class _OAuthCallbackPageState extends ConsumerState<OAuthCallbackPage> {
       ),
     );
   }
+}
+
+String _failureMessage(BuildContext context, Failure failure) {
+  if (failure.code == 'ACCOUNT_INACTIVE') {
+    return context.l10n(
+      ko: 'X 복구는 아직 지원하지 않습니다. 이 계정에 기존에 연결한 비밀번호, Google 또는 Apple로 복구하고, 없다면 지원팀에 문의해주세요.',
+      en: 'X recovery is not supported yet. Use a password, Google, or Apple credential already linked to this account, or contact support if none is linked.',
+      ja: 'Xでの復元はまだ対応していません。このアカウントに登録済みのパスワード、Google、またはAppleを使用し、なければサポートにお問い合わせください。',
+    );
+  }
+  return failure.userMessage;
 }

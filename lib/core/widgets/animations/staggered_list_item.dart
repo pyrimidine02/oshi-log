@@ -122,7 +122,6 @@ class _StaggeredListItemState extends State<StaggeredListItem>
             curve: GBTAnimations.defaultCurve,
           ),
         );
-
   }
 
   @override
@@ -135,8 +134,9 @@ class _StaggeredListItemState extends State<StaggeredListItem>
         MediaQuery.maybeDisableAnimationsOf(context) ?? false;
     if (_disableAnimations == disableAnimations && _hasScheduled) return;
     _disableAnimations = disableAnimations;
-    _controller.duration =
-        disableAnimations ? Duration.zero : GBTAnimations.normal;
+    _controller.duration = disableAnimations
+        ? Duration.zero
+        : GBTAnimations.normal;
 
     if (disableAnimations) {
       _controller.value = 1.0;

@@ -75,12 +75,12 @@ class GBTImage extends StatelessWidget {
     // EN: Skip memory cache resizing for GIF URLs to preserve animation frames.
     // KO: GIF URL은 애니메이션 프레임 보존을 위해 메모리 캐시 리사이징을 건너뜁니다.
     final isGif = resolvedUrl.toLowerCase().contains('.gif');
-    final cacheWidth =
-        (!isGif && width != null && width!.isFinite) ? width!.toInt() : null;
-    final cacheHeight =
-        (!isGif && height != null && height!.isFinite)
-            ? height!.toInt()
-            : null;
+    final cacheWidth = (!isGif && width != null && width!.isFinite)
+        ? width!.toInt()
+        : null;
+    final cacheHeight = (!isGif && height != null && height!.isFinite)
+        ? height!.toInt()
+        : null;
 
     final baseImage = CachedNetworkImage(
       imageUrl: resolvedUrl,

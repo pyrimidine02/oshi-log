@@ -111,7 +111,6 @@ class _FanLevelContent extends ConsumerStatefulWidget {
 class _FanLevelContentState extends ConsumerState<_FanLevelContent> {
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final profile = widget.profile;
     final scoredActivities =
         profile.recentActivities
@@ -130,19 +129,16 @@ class _FanLevelContentState extends ConsumerState<_FanLevelContent> {
           GBTPageReveal(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _GradeCard(profile: profile),
+              const _FanLevelDocumentHeader(),
               const SizedBox(height: GBTSpacing.lg),
-              Text(
-                context.l10n(
+              _GradeCard(profile: profile),
+              const SizedBox(height: GBTSpacing.xl),
+              _FanLevelSectionHeader(
+                indexLabel: '02 / SCORE INDEX',
+                title: context.l10n(
                   ko: '점수 부여 행위 전체',
                   en: 'All Scored Actions',
                   ja: 'スコア付与行動一覧',
-                ),
-                style: GBTTypography.titleMedium.copyWith(
-                  color: isDark
-                      ? GBTColors.darkTextPrimary
-                      : GBTColors.textPrimary,
-                  fontWeight: FontWeight.w700,
                 ),
               ),
               const SizedBox(height: GBTSpacing.sm),
@@ -152,18 +148,13 @@ class _FanLevelContentState extends ConsumerState<_FanLevelContent> {
                   latestActivity: latestByType[type],
                 ),
               ),
-              const SizedBox(height: GBTSpacing.lg),
-              Text(
-                context.l10n(
+              const SizedBox(height: GBTSpacing.xl),
+              _FanLevelSectionHeader(
+                indexLabel: '03 / LEDGER',
+                title: context.l10n(
                   ko: '점수 획득 내역',
                   en: 'Scored History',
                   ja: '獲得スコア履歴',
-                ),
-                style: GBTTypography.titleMedium.copyWith(
-                  color: isDark
-                      ? GBTColors.darkTextPrimary
-                      : GBTColors.textPrimary,
-                  fontWeight: FontWeight.w700,
                 ),
               ),
               const SizedBox(height: GBTSpacing.sm),
@@ -175,6 +166,105 @@ class _FanLevelContentState extends ConsumerState<_FanLevelContent> {
                 ),
               const SizedBox(height: GBTSpacing.xl),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// EN: Editorial document heading shared by the fan-level ledger sections.
+/// KO: 팬 레벨 대장 섹션을 묶는 에디토리얼 문서 헤더.
+class _FanLevelDocumentHeader extends StatelessWidget {
+  const _FanLevelDocumentHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Semantics(
+      header: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'TRAVEL RECORD / FAN LEVEL',
+            style: GBTTypography.labelSmall.copyWith(
+              color: isDark ? GBTColors.darkPrimary : GBTColors.primary,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.1,
+            ),
+          ),
+          const SizedBox(height: GBTSpacing.xs),
+          Text(
+            context.l10n(
+              ko: '내 활동이 쌓인 여행 기록',
+              en: 'Your travel activity, recorded',
+              ja: '旅の活動を記録',
+            ),
+            style: GBTTypography.headlineSmall.copyWith(
+              color: isDark ? GBTColors.darkTextPrimary : GBTColors.textPrimary,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: GBTSpacing.xs),
+          Text(
+            context.l10n(
+              ko: '방문과 참여로 얻은 XP와 등급 진행도를 확인하세요.',
+              en: 'Review XP and grade progress earned through visits and participation.',
+              ja: '訪問と参加で得たXPとグレード進行度を確認しましょう。',
+            ),
+            style: GBTTypography.bodySmall.copyWith(
+              color: isDark
+                  ? GBTColors.darkTextSecondary
+                  : GBTColors.textSecondary,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// EN: Numbered section heading used by the activity index and history.
+/// KO: 활동 인덱스와 기록에 사용하는 번호 섹션 헤더.
+class _FanLevelSectionHeader extends StatelessWidget {
+  const _FanLevelSectionHeader({required this.indexLabel, required this.title});
+
+  final String indexLabel;
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      padding: const EdgeInsets.only(top: GBTSpacing.sm),
+      decoration: BoxDecoration(
+        border: Border(
+          top: BorderSide(
+            color: isDark ? GBTColors.darkBorder : GBTColors.border,
+          ),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            indexLabel,
+            style: GBTTypography.labelSmall.copyWith(
+              color: isDark
+                  ? GBTColors.darkTextTertiary
+                  : GBTColors.textTertiary,
+              letterSpacing: 0.8,
+            ),
+          ),
+          const SizedBox(height: GBTSpacing.xxs),
+          Text(
+            title,
+            style: GBTTypography.titleMedium.copyWith(
+              color: isDark ? GBTColors.darkTextPrimary : GBTColors.textPrimary,
+              fontWeight: FontWeight.w800,
+            ),
           ),
         ],
       ),
@@ -307,22 +397,23 @@ class _GradeCard extends StatelessWidget {
 
   final FanLevelProfile profile;
 
-  // EN: Returns the accent color for the given grade and brightness.
-  // KO: 주어진 등급과 밝기에 맞는 강조 색상을 반환합니다.
+  // EN: Returns the accent color for the given grade and brightness — a
+  // tier progression through the Journey Ticket palette: neutral (newbie)
+  // → mint → blue → violet → gold → brand magenta (legend, the top tier).
+  // KO: 주어진 등급과 밝기에 맞는 강조 색상 — "여정의 티켓" 팔레트를 따라
+  // 뉴트럴(newbie) → 민트 → 블루 → 바이올렛 → 골드 → 브랜드 마젠타(legend,
+  // 최고 등급)로 이어지는 등급 색상 진행입니다.
   Color _gradeColor(FanGrade grade, bool isDark) {
+    final brightness = isDark ? Brightness.dark : Brightness.light;
     return switch (grade) {
       FanGrade.newbie =>
-        isDark ? const Color(0xFF9CA3AF) : const Color(0xFF6B7280),
-      FanGrade.beginner =>
-        isDark ? const Color(0xFF34D399) : const Color(0xFF059669),
-      FanGrade.enthusiast =>
-        isDark ? const Color(0xFF60A5FA) : const Color(0xFF2563EB),
+        isDark ? GBTColors.darkTextTertiary : GBTColors.textTertiary,
+      FanGrade.beginner => GBTSemanticColors.getDistanceColor(brightness),
+      FanGrade.enthusiast => GBTSemanticColors.getInfoColor(brightness),
       FanGrade.devotee =>
-        isDark ? const Color(0xFFA78BFA) : const Color(0xFF7C3AED),
-      FanGrade.master =>
-        isDark ? const Color(0xFFFBBF24) : const Color(0xFFD97706),
-      FanGrade.legend =>
-        isDark ? const Color(0xFFF87171) : const Color(0xFFDC2626),
+        isDark ? GBTColors.darkSecondary : GBTColors.secondary,
+      FanGrade.master => isDark ? GBTColors.darkAccent : GBTColors.accent,
+      FanGrade.legend => isDark ? GBTColors.darkPrimary : GBTColors.primary,
     };
   }
 
@@ -346,16 +437,24 @@ class _GradeCard extends StatelessWidget {
         padding: const EdgeInsets.all(GBTSpacing.lg),
         decoration: BoxDecoration(
           color: isDark ? GBTColors.darkSurface : GBTColors.surface,
-          borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
-          border: Border.all(
-            color: gradeColor.withValues(alpha: 0.3),
-            width: 1.5,
+          border: Border(
+            left: BorderSide(color: gradeColor, width: 3),
+            top: BorderSide(
+              color: isDark ? GBTColors.darkBorder : GBTColors.border,
+            ),
+            bottom: BorderSide(
+              color: isDark ? GBTColors.darkBorder : GBTColors.border,
+            ),
           ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            Wrap(
+              spacing: GBTSpacing.sm,
+              runSpacing: GBTSpacing.xs,
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 // EN: Grade badge chip
                 // KO: 등급 배지 칩
@@ -376,7 +475,6 @@ class _GradeCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                const Spacer(),
                 Text(
                   context.l10n(
                     ko: '순위 #${profile.rank}',
@@ -392,15 +490,30 @@ class _GradeCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: GBTSpacing.md),
-            // EN: Total XP display
-            // KO: 총 XP 표시
-            Text(
-              '${profile.totalXp} XP',
-              style: GBTTypography.displayMedium.copyWith(
-                color: isDark
-                    ? GBTColors.darkTextPrimary
-                    : GBTColors.textPrimary,
-                fontWeight: FontWeight.w700,
+            // EN: Total XP display — gold stat number, matching the
+            // stamps/ratings accent used across the collection screens.
+            // KO: 총 XP 표시 — 도감·평점 화면에서 쓰는 골드 강조와 맞춘
+            // 스탯 숫자.
+            Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: '${profile.totalXp}',
+                    style: GBTTypography.statNumber.copyWith(
+                      fontSize: 30,
+                      color: isDark ? GBTColors.darkAccent : GBTColors.accent,
+                    ),
+                  ),
+                  TextSpan(
+                    text: ' XP',
+                    style: GBTTypography.titleMedium.copyWith(
+                      color: isDark
+                          ? GBTColors.darkTextSecondary
+                          : GBTColors.textSecondary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: GBTSpacing.xs),
@@ -520,12 +633,12 @@ class _ActivityTile extends StatelessWidget {
                 ],
               ),
             ),
-            // EN: XP earned label
-            // KO: 획득 XP 라벨
+            // EN: XP earned label — gold, matching the total XP accent.
+            // KO: 획득 XP 라벨 — 총 XP 강조와 동일한 골드.
             Text(
               '+${activity.xpEarned} XP',
               style: GBTTypography.labelMedium.copyWith(
-                color: isDark ? GBTColors.darkPrimary : GBTColors.primary,
+                color: isDark ? GBTColors.darkAccent : GBTColors.accent,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -571,8 +684,11 @@ class _ScoredActionTile extends StatelessWidget {
           vertical: GBTSpacing.sm,
         ),
         decoration: BoxDecoration(
-          color: isDark ? GBTColors.darkSurface : GBTColors.surface,
-          borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
+          border: Border(
+            bottom: BorderSide(
+              color: isDark ? GBTColors.darkBorderSubtle : GBTColors.divider,
+            ),
+          ),
         ),
         child: Row(
           children: [
@@ -623,7 +739,7 @@ class _ScoredActionTile extends StatelessWidget {
                     ? (isDark
                           ? GBTColors.darkTextTertiary
                           : GBTColors.textTertiary)
-                    : (isDark ? GBTColors.darkPrimary : GBTColors.primary),
+                    : (isDark ? GBTColors.darkAccent : GBTColors.accent),
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -646,8 +762,14 @@ class _NoScoredActivityState extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(GBTSpacing.md),
       decoration: BoxDecoration(
-        color: isDark ? GBTColors.darkSurface : GBTColors.surface,
-        borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
+        border: Border(
+          top: BorderSide(
+            color: isDark ? GBTColors.darkBorder : GBTColors.border,
+          ),
+          bottom: BorderSide(
+            color: isDark ? GBTColors.darkBorder : GBTColors.border,
+          ),
+        ),
       ),
       child: Text(
         context.l10n(

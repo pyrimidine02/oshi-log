@@ -15,6 +15,7 @@ import '../../domain/entities/register_consent.dart';
 import '../../domain/entities/register_result.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_remote_data_source.dart';
+import '../dto/account_recovery_password_request.dart';
 import '../dto/apple_link_existing_request.dart';
 import '../dto/apple_oauth_request.dart';
 import '../dto/change_password_request.dart';
@@ -79,6 +80,49 @@ class AuthRepositoryImpl implements AuthRepository {
         _inFlightLoginRequests.remove(normalizedUsername);
       }
     }
+  }
+
+  @override
+  Future<Result<AuthTokens>> recoverWithPassword({
+    required String email,
+    required String password,
+  }) async {
+    return _persistTokens(
+      await _remoteDataSource.recoverWithPassword(
+        AccountRecoveryPasswordRequest(
+          email: email.trim().toLowerCase(),
+          password: password,
+        ),
+      ),
+    );
+  }
+
+  @override
+  Future<Result<AuthTokens>> recoverWithGoogle({
+    required String idToken,
+  }) async {
+    return _persistTokens(
+      await _remoteDataSource.recoverWithGoogle(
+        GoogleOAuthRequest(idToken: idToken),
+      ),
+    );
+  }
+
+  @override
+  Future<Result<AuthTokens>> recoverWithApple({
+    required String identityToken,
+    String? email,
+    String? fullName,
+  }) async {
+    return _persistTokens(
+      await _remoteDataSource.recoverWithApple(
+        AppleOAuthRequest(
+          identityToken: identityToken,
+          email: email,
+          fullName: fullName,
+        ),
+      ),
+    );
   }
 
   @override
@@ -258,7 +302,9 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Result<DateTime?>> sendEmailVerification({required String email}) async {
+  Future<Result<DateTime?>> sendEmailVerification({
+    required String email,
+  }) async {
     final result = await _remoteDataSource.sendEmailVerification(
       EmailVerificationRequest(email: email),
     );
@@ -325,7 +371,11 @@ class AuthRepositoryImpl implements AuthRepository {
     required String password,
   }) async {
     final result = await _remoteDataSource.linkExistingWithGoogle(
-      GoogleLinkExistingRequest(idToken: idToken, email: email, password: password),
+      GoogleLinkExistingRequest(
+        idToken: idToken,
+        email: email,
+        password: password,
+      ),
     );
     return _persistTokens(result);
   }

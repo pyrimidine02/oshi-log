@@ -21,6 +21,17 @@ import '../domain/repositories/places_repository.dart';
 
 const int _kPlacesNavIndex = 1;
 
+// EN: Resolves key + ID through one reactive boundary so a project switch
+//     starts one detail request and invalidates the previous generation.
+// KO: 프로젝트 키와 ID를 하나의 반응형 경계에서 해석해 프로젝트 전환 시
+//     상세 요청을 한 번만 시작하고 이전 요청 세대를 무효화합니다.
+final _selectedPlacesProjectContextProvider = Provider<String?>((ref) {
+  final projectKey = ref.watch(selectedProjectKeyProvider)?.trim();
+  if (projectKey != null && projectKey.isNotEmpty) return projectKey;
+  final projectId = ref.watch(selectedProjectIdProvider)?.trim();
+  return projectId == null || projectId.isEmpty ? null : projectId;
+});
+
 bool _isPlacesTabActive(Ref ref) {
   return ref.read(currentNavIndexProvider) == _kPlacesNavIndex;
 }
@@ -29,40 +40,97 @@ class PlacesListController
     extends StateNotifier<AsyncValue<List<PlaceSummary>>> {
   PlacesListController(this._ref) : super(const AsyncLoading()) {
     _ref.listen<String?>(selectedProjectKeyProvider, (_, __) {
-      if (!_isPlacesTabActive(_ref)) {
-        return;
-      }
-      load(forceRefresh: true);
+      _handleProjectChanged();
     });
     _ref.listen<List<String>>(selectedPlaceRegionCodesProvider, (_, __) {
-      if (!_isPlacesTabActive(_ref)) {
+      if (_isApplyingFilterBatch || !_isPlacesTabActive(_ref)) {
         return;
       }
-      load(forceRefresh: true);
+      unawaited(load(forceRefresh: true));
     });
     _ref.listen<List<String>>(selectedPlaceBandIdsProvider, (_, __) {
-      if (!_isPlacesTabActive(_ref)) {
+      if (_isApplyingFilterBatch || !_isPlacesTabActive(_ref)) {
         return;
       }
-      load(forceRefresh: true);
+      unawaited(load(forceRefresh: true));
     });
     _ref.listen<PlaceListMode>(placeListModeProvider, (_, __) {
-      if (!_isPlacesTabActive(_ref)) {
+      if (_isApplyingFilterBatch || !_isPlacesTabActive(_ref)) {
         return;
       }
-      load(forceRefresh: true);
+      unawaited(load(forceRefresh: true));
     });
     _ref.listen<int>(currentNavIndexProvider, (previous, next) {
-      if (next != _kPlacesNavIndex || next == previous) {
+      if (next == previous) {
         return;
       }
-      load(forceRefresh: true);
+      _invalidateRequests();
+      if (next == _kPlacesNavIndex) {
+        unawaited(load(forceRefresh: true));
+      }
     });
   }
 
   final Ref _ref;
+  int _requestGeneration = 0;
+  bool _isApplyingFilterBatch = false;
+  bool _projectReloadScheduled = false;
+
+  /// EN: Clears project-scoped filters without exposing partial combinations.
+  /// KO: 중간 조합을 노출하지 않고 프로젝트 범위 필터를 한 번에 초기화합니다.
+  void resetFilters({bool reload = true}) {
+    _invalidateRequests();
+    _isApplyingFilterBatch = true;
+    try {
+      if (_ref.read(placeListModeProvider) != PlaceListMode.all) {
+        _ref.read(placeListModeProvider.notifier).state = PlaceListMode.all;
+      }
+      if (_ref.read(selectedPlaceRegionCodesProvider).isNotEmpty) {
+        _ref.read(selectedPlaceRegionCodesProvider.notifier).state =
+            const <String>[];
+      }
+      if (_ref.read(selectedPlaceBandIdsProvider).isNotEmpty) {
+        _ref.read(selectedPlaceBandIdsProvider.notifier).state =
+            const <String>[];
+      }
+    } finally {
+      _isApplyingFilterBatch = false;
+    }
+    if (reload && _isPlacesTabActive(_ref)) {
+      unawaited(load(forceRefresh: true));
+    }
+  }
+
+  void _handleProjectChanged() {
+    // EN: A project owns its region and band filters. Reset them synchronously
+    //     before issuing exactly one request for the new project.
+    // KO: 지역/밴드 필터는 프로젝트에 종속됩니다. 새 프로젝트 요청 전에
+    //     동기적으로 초기화하고 정확히 한 번만 요청합니다.
+    resetFilters(reload: false);
+    _scheduleProjectReload();
+  }
+
+  void _scheduleProjectReload() {
+    if (_projectReloadScheduled) return;
+    _projectReloadScheduled = true;
+    scheduleMicrotask(() {
+      _projectReloadScheduled = false;
+      if (mounted && _isPlacesTabActive(_ref)) {
+        unawaited(load(forceRefresh: true));
+      }
+    });
+  }
+
+  void _invalidateRequests() {
+    _requestGeneration += 1;
+  }
+
+  bool _isCurrentRequest(int generation) {
+    return mounted && generation == _requestGeneration;
+  }
 
   Future<void> load({bool forceRefresh = false}) async {
+    final generation = ++_requestGeneration;
     if (!_isPlacesTabActive(_ref)) {
       return;
     }
@@ -86,6 +154,7 @@ class PlacesListController
 
     state = const AsyncLoading();
     final repository = await _ref.read(placesRepositoryProvider.future);
+    if (!_isCurrentRequest(generation)) return;
     final bandIds = _ref.read(selectedPlaceBandIdsProvider);
     final regionCodes = _ref.read(selectedPlaceRegionCodesProvider);
     final listMode = _ref.read(placeListModeProvider);
@@ -97,6 +166,7 @@ class PlacesListController
         regionCodes: regionCodes,
         unitIds: bandIds,
       );
+      if (!_isCurrentRequest(generation)) return;
       if (result is Err<List<PlaceSummary>> &&
           projectId != null &&
           projectId.isNotEmpty &&
@@ -106,12 +176,14 @@ class PlacesListController
           regionCodes: regionCodes,
           unitIds: bandIds,
         );
+        if (!_isCurrentRequest(generation)) return;
       }
     } else {
       if (listMode == PlaceListMode.nearby) {
         try {
           final locationService = _ref.read(locationServiceProvider);
           final location = await locationService.getCurrentLocation();
+          if (!_isCurrentRequest(generation)) return;
           result = await repository.getNearbyPlaces(
             projectId: resolvedProjectKey,
             latitude: location.latitude,
@@ -119,18 +191,21 @@ class PlacesListController
             unitIds: bandIds,
           );
         } catch (error) {
+          if (!_isCurrentRequest(generation)) return;
           final failure = error is Failure
               ? error
               : const UnknownFailure('Failed to resolve current location');
           state = AsyncError(failure, StackTrace.current);
           return;
         }
+        if (!_isCurrentRequest(generation)) return;
       } else {
         result = await repository.getAllPlaces(
           projectId: resolvedProjectKey,
           unitIds: bandIds,
           forceRefresh: forceRefresh,
         );
+        if (!_isCurrentRequest(generation)) return;
         if (result is Err<List<PlaceSummary>> &&
             projectId != null &&
             projectId.isNotEmpty &&
@@ -140,10 +215,12 @@ class PlacesListController
             unitIds: bandIds,
             forceRefresh: forceRefresh,
           );
+          if (!_isCurrentRequest(generation)) return;
         }
       }
     }
 
+    if (!_isCurrentRequest(generation)) return;
     if (result is Success<List<PlaceSummary>>) {
       state = AsyncData(result.data);
     } else if (result is Err<List<PlaceSummary>>) {
@@ -156,28 +233,48 @@ class PlacesRegionOptionsController
     extends StateNotifier<AsyncValue<RegionFilterOptions>> {
   PlacesRegionOptionsController(this._ref) : super(const AsyncLoading()) {
     _ref.listen<String?>(selectedProjectKeyProvider, (_, __) {
-      if (!_isPlacesTabActive(_ref)) {
-        return;
-      }
-      load(forceRefresh: true);
+      _handleProjectChanged();
     });
     _ref.listen<String?>(selectedProjectIdProvider, (_, __) {
-      if (!_isPlacesTabActive(_ref)) {
-        return;
-      }
-      load(forceRefresh: true);
+      _handleProjectChanged();
     });
     _ref.listen<int>(currentNavIndexProvider, (previous, next) {
-      if (next != _kPlacesNavIndex || next == previous) {
+      if (next == previous) {
         return;
       }
-      load(forceRefresh: true);
+      _invalidateRequests();
+      if (next == _kPlacesNavIndex) {
+        unawaited(load(forceRefresh: true));
+      }
     });
   }
 
   final Ref _ref;
+  int _requestGeneration = 0;
+  bool _projectReloadScheduled = false;
+
+  void _handleProjectChanged() {
+    _invalidateRequests();
+    if (_projectReloadScheduled) return;
+    _projectReloadScheduled = true;
+    scheduleMicrotask(() {
+      _projectReloadScheduled = false;
+      if (mounted && _isPlacesTabActive(_ref)) {
+        unawaited(load(forceRefresh: true));
+      }
+    });
+  }
+
+  void _invalidateRequests() {
+    _requestGeneration += 1;
+  }
+
+  bool _isCurrentRequest(int generation) {
+    return mounted && generation == _requestGeneration;
+  }
 
   Future<void> load({bool forceRefresh = false}) async {
+    final generation = ++_requestGeneration;
     if (!_isPlacesTabActive(_ref)) {
       return;
     }
@@ -185,7 +282,9 @@ class PlacesRegionOptionsController
     final projectId = _ref.read(selectedProjectIdProvider);
     if (projectKey == null || projectKey.isEmpty) {
       if (projectId == null || projectId.isEmpty) {
-        state = AsyncData(_emptyRegionFilterOptions);
+        if (_isCurrentRequest(generation)) {
+          state = AsyncData(_emptyRegionFilterOptions);
+        }
         return;
       }
     }
@@ -193,16 +292,20 @@ class PlacesRegionOptionsController
         ? projectKey!
         : projectId!;
     if (resolvedProjectKey.isEmpty) {
-      state = AsyncData(_emptyRegionFilterOptions);
+      if (_isCurrentRequest(generation)) {
+        state = AsyncData(_emptyRegionFilterOptions);
+      }
       return;
     }
 
     state = const AsyncLoading();
     final repository = await _ref.read(placesRepositoryProvider.future);
+    if (!_isCurrentRequest(generation)) return;
     var result = await repository.getRegionFilterOptions(
       projectId: resolvedProjectKey,
       forceRefresh: forceRefresh,
     );
+    if (!_isCurrentRequest(generation)) return;
     if (result is Err<RegionFilterOptions> &&
         projectId != null &&
         projectId.isNotEmpty &&
@@ -211,8 +314,10 @@ class PlacesRegionOptionsController
         projectId: projectId,
         forceRefresh: forceRefresh,
       );
+      if (!_isCurrentRequest(generation)) return;
     }
 
+    if (!_isCurrentRequest(generation)) return;
     if (result is Success<RegionFilterOptions>) {
       state = AsyncData(result.data);
     } else if (result is Err<RegionFilterOptions>) {
@@ -232,26 +337,23 @@ class PlacesRegionOptionsController
 
 class PlaceDetailController extends StateNotifier<AsyncValue<PlaceDetail>> {
   PlaceDetailController(this._ref, this.placeId) : super(const AsyncLoading()) {
-    _ref.listen<String?>(selectedProjectKeyProvider, (_, __) {
-      if (mounted) {
-        load(forceRefresh: true);
-      }
-    });
-    _ref.listen<String?>(selectedProjectIdProvider, (_, __) {
-      if (mounted) {
-        load(forceRefresh: true);
-      }
+    _ref.listen<String?>(_selectedPlacesProjectContextProvider, (
+      previous,
+      next,
+    ) {
+      if (previous == next || !mounted) return;
+      unawaited(load(forceRefresh: true));
     });
   }
 
   final Ref _ref;
   final String placeId;
+  int _requestGeneration = 0;
 
   Future<void> load({bool forceRefresh = false}) async {
+    final generation = ++_requestGeneration;
     final resolvedProjectKey = await _resolveProjectKey();
-    if (!mounted) {
-      return;
-    }
+    if (!_isCurrentRequest(generation)) return;
     if (resolvedProjectKey == null || resolvedProjectKey.isEmpty) {
       // EN: Surface explicit error instead of leaving the detail page in
       // EN: indefinite loading when project context is missing.
@@ -267,12 +369,14 @@ class PlaceDetailController extends StateNotifier<AsyncValue<PlaceDetail>> {
     state = const AsyncLoading();
 
     final repository = await _ref.read(placesRepositoryProvider.future);
+    if (!_isCurrentRequest(generation)) return;
 
     var result = await repository.getPlaceDetail(
       projectId: resolvedProjectKey,
       placeId: placeId,
       forceRefresh: forceRefresh,
     );
+    if (!_isCurrentRequest(generation)) return;
     final attemptedProjectKeys = <String>{resolvedProjectKey};
     final selectedProjectId = _ref.read(selectedProjectIdProvider);
     if (result is Err<PlaceDetail> &&
@@ -285,28 +389,33 @@ class PlaceDetailController extends StateNotifier<AsyncValue<PlaceDetail>> {
         placeId: placeId,
         forceRefresh: forceRefresh,
       );
+      if (!_isCurrentRequest(generation)) return;
     }
     if (result is Err<PlaceDetail>) {
       final fallbackProjectKeys = await _fallbackProjectKeys(
         attemptedProjectKeys,
       );
+      if (!_isCurrentRequest(generation)) return;
       if (fallbackProjectKeys.isNotEmpty) {
         result = await _resolvePlaceDetailFromFallbackProjects(
           repository: repository,
           projectKeys: fallbackProjectKeys,
           forceRefresh: forceRefresh,
         );
+        if (!_isCurrentRequest(generation)) return;
       }
     }
 
-    if (!mounted) {
-      return;
-    }
+    if (!_isCurrentRequest(generation)) return;
     if (result is Success<PlaceDetail>) {
       state = AsyncData(result.data);
     } else if (result is Err<PlaceDetail>) {
       state = AsyncError(result.failure, StackTrace.current);
     }
+  }
+
+  bool _isCurrentRequest(int generation) {
+    return mounted && generation == _requestGeneration;
   }
 
   Future<String?> _resolveProjectKey() async {

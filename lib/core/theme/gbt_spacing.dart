@@ -36,7 +36,7 @@ class GBTSpacing {
   // ========================================
   static const double cardPadding = 16.0;
   static const double cardMargin = 12.0;
-  static const double cardRadius = 12.0;
+  static const double cardRadius = 20.0;
 
   static const double listItemPadding = 16.0;
   static const double listItemSpacing = 12.0;
@@ -66,6 +66,33 @@ class GBTSpacing {
   // ========================================
   static const double appBarHeight = 56.0;
   static const double bottomNavHeight = 64.0;
+
+  /// EN: Grows persistent navigation just enough for the platform text scale
+  /// while preserving the existing silhouette at the default scale.
+  /// KO: 기본 글자 크기에서는 기존 실루엣을 유지하고, 운영체제 글자 확대 시
+  /// 내용이 잘리지 않을 만큼만 고정 내비게이션 높이를 늘립니다.
+  static double scaledBottomNavHeight(
+    BuildContext context, {
+    double baseHeight = bottomNavHeight,
+  }) {
+    final scaledLabelSize = MediaQuery.textScalerOf(context).scale(11);
+    final extraHeight = (scaledLabelSize - 11).clamp(0.0, 16.0);
+    return baseHeight + extraHeight;
+  }
+
+  /// EN: Content clearance for the persistent bottom bar and breathing room.
+  /// KO: 고정 하단 바와 여백을 함께 확보하는 콘텐츠 클리어런스.
+  static const double bottomNavClearance = bottomNavHeight + md;
+
+  /// EN: Includes the device bottom inset in persistent-bar clearance.
+  /// KO: 고정 하단 바 클리어런스에 기기 하단 안전영역을 포함합니다.
+  static double bottomNavClearanceOf(
+    BuildContext context, {
+    double barHeight = bottomNavHeight,
+  }) {
+    return barHeight + MediaQuery.paddingOf(context).bottom + md;
+  }
+
   static const double fabSize = 56.0;
   static const double tabBarHeight = 48.0;
 
@@ -95,6 +122,10 @@ class GBTSpacing {
   static const double radiusSm = 8.0;
   static const double radiusMd = 12.0;
   static const double radiusLg = 16.0;
+
+  /// EN: Card surfaces (2026 large-radius trend) — between lg and xl.
+  /// KO: 카드 표면 (2026 라지 라운드 트렌드) — lg와 xl 사이.
+  static const double radiusCard = 20.0;
   static const double radiusXl = 24.0;
   static const double radiusFull = 9999.0;
 

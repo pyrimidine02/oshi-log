@@ -12,13 +12,14 @@ import '../../../../core/theme/gbt_colors.dart';
 import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';
 import '../../../../core/widgets/common/gbt_image.dart';
+import '../../../../core/widgets/layout/gbt_page_header.dart';
 import '../../application/music_controller.dart';
 import '../../domain/entities/music_entities.dart';
 import '../../../projects/application/projects_controller.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// EN: Pink accent — music / fandom energy.
-// KO: 핑크 액센트 — 음악/팬덤 감성.
+// EN: Harbor teal marks audio metadata within the shared field-notes system.
+// KO: 하버 틸은 공통 필드 노트 시스템에서 오디오 메타데이터를 표시합니다.
 // ─────────────────────────────────────────────────────────────────────────────
 Color _accent(bool isDark) =>
     isDark ? GBTColors.darkSecondary : GBTColors.secondary;
@@ -45,7 +46,9 @@ String _formatMs(int ms) {
 /// EN: Music catalog tab — album grid + track list with segmented switcher.
 /// KO: 악곡 카탈로그 탭 — 세그먼트 스위처로 앨범 그리드·트랙 목록을 탐색합니다.
 class MusicCatalogTab extends ConsumerStatefulWidget {
-  const MusicCatalogTab({super.key});
+  const MusicCatalogTab({super.key, this.showPageHeader = false});
+
+  final bool showPageHeader;
 
   @override
   ConsumerState<MusicCatalogTab> createState() => _MusicCatalogTabState();
@@ -157,9 +160,8 @@ class _MusicCatalogTabState extends ConsumerState<MusicCatalogTab> {
             child: SizedBox(
               height: MediaQuery.of(context).size.height * 0.72,
               child: detailState.when(
-                loading: () => Center(
-                  child: CircularProgressIndicator(color: ac),
-                ),
+                loading: () =>
+                    Center(child: CircularProgressIndicator(color: ac)),
                 error: (e, _) => Center(
                   child: Text(
                     _errorMsg(context, e),
@@ -176,8 +178,7 @@ class _MusicCatalogTabState extends ConsumerState<MusicCatalogTab> {
                   isDark: isDark,
                   accent: ac,
                   projectId: projectId,
-                  onSongTap: (songId) =>
-                      Navigator.of(sheetCtx).pop(songId),
+                  onSongTap: (songId) => Navigator.of(sheetCtx).pop(songId),
                 ),
               ),
             ),
@@ -198,7 +199,22 @@ class _MusicCatalogTabState extends ConsumerState<MusicCatalogTab> {
     final ac = _accent(isDark);
 
     if (projectKey.isEmpty) {
-      return _EmptyProjectHero(isDark: isDark, accent: ac);
+      return Column(
+        children: [
+          if (widget.showPageHeader)
+            GBTPageHeader(
+              eyebrow: 'FIELD GUIDE / AUDIO INDEX',
+              title: context.l10n(
+                ko: '음악 아카이브',
+                en: 'Music archive',
+                ja: '音楽アーカイブ',
+              ),
+            ),
+          Expanded(
+            child: _EmptyProjectHero(isDark: isDark, accent: ac),
+          ),
+        ],
+      );
     }
 
     final albumsState = ref.watch(musicAlbumsControllerProvider(projectKey));
@@ -207,10 +223,9 @@ class _MusicCatalogTabState extends ConsumerState<MusicCatalogTab> {
 
     // EN: Reset filter key if no longer valid
     // KO: 유효하지 않은 필터 키는 초기화
-    final validKey =
-        unitOptions.any((o) => o.key == _selectedUnitKey)
-            ? _selectedUnitKey
-            : null;
+    final validKey = unitOptions.any((o) => o.key == _selectedUnitKey)
+        ? _selectedUnitKey
+        : null;
     if (validKey != _selectedUnitKey && _selectedUnitKey != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) setState(() => _selectedUnitKey = null);
@@ -233,6 +248,23 @@ class _MusicCatalogTabState extends ConsumerState<MusicCatalogTab> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (widget.showPageHeader)
+          GBTPageHeader(
+            eyebrow: 'AUDIO INDEX',
+            title: context.l10n(
+              ko: '음악 아카이브',
+              en: 'Music archive',
+              ja: '音楽アーカイブ',
+            ),
+            description:
+                '${filteredAlbums.length.toString().padLeft(2, '0')} ALBUMS · '
+                '${filteredSongs.length.toString().padLeft(2, '0')} TRACKS',
+          )
+        else
+          _MusicDocumentHeader(
+            albumCount: filteredAlbums.length,
+            songCount: filteredSongs.length,
+          ),
         // ── Segmented view switcher ───────────────────────────────
         Padding(
           padding: const EdgeInsets.fromLTRB(
@@ -303,6 +335,61 @@ class _MusicCatalogTabState extends ConsumerState<MusicCatalogTab> {
 // VIEW SWITCHER
 // ─────────────────────────────────────────────────────────────────────────────
 
+/// EN: Editorial index heading for albums and songs in the active project.
+/// KO: 현재 프로젝트의 앨범과 곡을 위한 에디토리얼 인덱스 헤더.
+class _MusicDocumentHeader extends StatelessWidget {
+  const _MusicDocumentHeader({
+    required this.albumCount,
+    required this.songCount,
+  });
+
+  final int albumCount;
+  final int songCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        GBTSpacing.pageHorizontal,
+        GBTSpacing.lg,
+        GBTSpacing.pageHorizontal,
+        GBTSpacing.sm,
+      ),
+      child: Semantics(
+        header: true,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'AUDIO INDEX / ${albumCount.toString().padLeft(2, '0')} ALBUMS · ${songCount.toString().padLeft(2, '0')} TRACKS',
+              style: GBTTypography.labelSmall.copyWith(
+                color: isDark ? GBTColors.darkPrimary : GBTColors.primary,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.8,
+              ),
+            ),
+            const SizedBox(height: GBTSpacing.xs),
+            Text(
+              context.l10n(
+                ko: '여정을 기억하는 음악',
+                en: 'The music that maps the journey',
+                ja: '旅の記憶をつなぐ音楽',
+              ),
+              style: GBTTypography.titleLarge.copyWith(
+                color: isDark
+                    ? GBTColors.darkTextPrimary
+                    : GBTColors.textPrimary,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _ViewSwitcher extends StatelessWidget {
   const _ViewSwitcher({
     required this.currentIndex,
@@ -322,16 +409,18 @@ class _ViewSwitcher extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = isDark ? GBTColors.darkSurfaceVariant : GBTColors.surfaceVariant;
-    final selectedBg = isDark ? GBTColors.darkSurface : GBTColors.surface;
-
     return Container(
-      height: 40,
+      constraints: const BoxConstraints(minHeight: 48),
       decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
+        border: Border(
+          top: BorderSide(
+            color: isDark ? GBTColors.darkBorder : GBTColors.border,
+          ),
+          bottom: BorderSide(
+            color: isDark ? GBTColors.darkBorder : GBTColors.border,
+          ),
+        ),
       ),
-      padding: const EdgeInsets.all(3),
       child: Row(
         children: [
           _SwitcherItem(
@@ -340,7 +429,6 @@ class _ViewSwitcher extends StatelessWidget {
             selected: currentIndex == 0,
             isDark: isDark,
             accent: accent,
-            selectedBg: selectedBg,
             onTap: () => onChanged(0),
           ),
           _SwitcherItem(
@@ -349,7 +437,6 @@ class _ViewSwitcher extends StatelessWidget {
             selected: currentIndex == 1,
             isDark: isDark,
             accent: accent,
-            selectedBg: selectedBg,
             onTap: () => onChanged(1),
           ),
         ],
@@ -365,7 +452,6 @@ class _SwitcherItem extends StatelessWidget {
     required this.selected,
     required this.isDark,
     required this.accent,
-    required this.selectedBg,
     required this.onTap,
   });
 
@@ -374,7 +460,6 @@ class _SwitcherItem extends StatelessWidget {
   final bool selected;
   final bool isDark;
   final Color accent;
-  final Color selectedBg;
   final VoidCallback onTap;
 
   @override
@@ -384,66 +469,73 @@ class _SwitcherItem extends StatelessWidget {
         : (isDark ? GBTColors.darkTextSecondary : GBTColors.textSecondary);
 
     return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          decoration: BoxDecoration(
-            color: selected ? selectedBg : Colors.transparent,
-            borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
-            boxShadow: selected
-                ? [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.08),
-                      blurRadius: 4,
-                      offset: const Offset(0, 1),
-                    ),
-                  ]
-                : null,
-          ),
-          alignment: Alignment.center,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                label,
-                style: GBTTypography.labelMedium.copyWith(
-                  color: textColor,
-                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+      child: Semantics(
+        button: true,
+        selected: selected,
+        child: InkWell(
+          onTap: onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            constraints: const BoxConstraints(minHeight: 48),
+            padding: const EdgeInsets.symmetric(
+              horizontal: GBTSpacing.xs,
+              vertical: GBTSpacing.sm,
+            ),
+            decoration: BoxDecoration(
+              color: selected
+                  ? accent.withValues(alpha: isDark ? 0.12 : 0.07)
+                  : Colors.transparent,
+              border: Border(
+                bottom: BorderSide(
+                  color: selected ? accent : Colors.transparent,
+                  width: 2,
                 ),
               ),
-              if (count > 0) ...[
-                const SizedBox(width: GBTSpacing.xs),
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 5,
-                    vertical: 1,
-                  ),
-                  decoration: BoxDecoration(
-                    color: selected
-                        ? accent.withValues(alpha: 0.14)
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(
-                      GBTSpacing.radiusFull,
-                    ),
-                  ),
-                  child: Text(
-                    '$count',
-                    style: GBTTypography.labelSmall.copyWith(
-                      color: selected
-                          ? accent
-                          : (isDark
-                                ? GBTColors.darkTextTertiary
-                                : GBTColors.textTertiary),
-                      fontWeight: FontWeight.w700,
-                      fontSize: 10,
-                    ),
+            ),
+            alignment: Alignment.center,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label,
+                  style: GBTTypography.labelMedium.copyWith(
+                    color: textColor,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                   ),
                 ),
+                if (count > 0) ...[
+                  const SizedBox(width: GBTSpacing.xs),
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 1,
+                    ),
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? accent.withValues(alpha: 0.14)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(
+                        GBTSpacing.radiusFull,
+                      ),
+                    ),
+                    child: Text(
+                      '$count',
+                      style: GBTTypography.labelSmall.copyWith(
+                        color: selected
+                            ? accent
+                            : (isDark
+                                  ? GBTColors.darkTextTertiary
+                                  : GBTColors.textTertiary),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),
@@ -484,16 +576,18 @@ class _UnitFilterBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final chipBg =
-        isDark ? GBTColors.darkSurfaceVariant : GBTColors.surfaceVariant;
-    final textSecondary =
-        isDark ? GBTColors.darkTextSecondary : GBTColors.textSecondary;
+    final chipBg = isDark
+        ? GBTColors.darkSurfaceVariant
+        : GBTColors.surfaceVariant;
+    final textSecondary = isDark
+        ? GBTColors.darkTextSecondary
+        : GBTColors.textSecondary;
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
-          _FilterChip(
+          MusicCatalogFilterChip(
             label: context.l10n(ko: '전체', en: 'All', ja: '全体'),
             selected: selectedKey == null,
             isDark: isDark,
@@ -505,7 +599,7 @@ class _UnitFilterBar extends StatelessWidget {
           ...options.map(
             (o) => Padding(
               padding: const EdgeInsets.only(left: GBTSpacing.xs),
-              child: _FilterChip(
+              child: MusicCatalogFilterChip(
                 label: '${o.label}  ${o.count}',
                 selected: selectedKey == o.key,
                 isDark: isDark,
@@ -522,8 +616,11 @@ class _UnitFilterBar extends StatelessWidget {
   }
 }
 
-class _FilterChip extends StatelessWidget {
-  const _FilterChip({
+/// EN: Accessible unit filter used by the music catalog index.
+/// KO: 음악 카탈로그 색인에서 사용하는 접근 가능한 유닛 필터입니다.
+class MusicCatalogFilterChip extends StatelessWidget {
+  const MusicCatalogFilterChip({
+    super.key,
     required this.label,
     required this.selected,
     required this.isDark,
@@ -543,25 +640,30 @@ class _FilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          color: selected ? accent.withValues(alpha: 0.12) : chipBg,
-          borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
-          border: Border.all(
-            color: selected
-                ? accent.withValues(alpha: 0.45)
-                : Colors.transparent,
+    return Semantics(
+      button: true,
+      selected: selected,
+      child: InkWell(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: selected ? accent.withValues(alpha: 0.12) : chipBg,
+            borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
+            border: Border.all(
+              color: selected
+                  ? accent.withValues(alpha: 0.45)
+                  : Colors.transparent,
+            ),
           ),
-        ),
-        child: Text(
-          label,
-          style: GBTTypography.labelSmall.copyWith(
-            color: selected ? accent : textSecondary,
-            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+          child: Text(
+            label,
+            style: GBTTypography.labelSmall.copyWith(
+              color: selected ? accent : textSecondary,
+              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+            ),
           ),
         ),
       ),
@@ -596,8 +698,9 @@ class _AlbumsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textSecondary =
-        isDark ? GBTColors.darkTextSecondary : GBTColors.textSecondary;
+    final textSecondary = isDark
+        ? GBTColors.darkTextSecondary
+        : GBTColors.textSecondary;
 
     if (isLoading) {
       return Center(child: CircularProgressIndicator(color: accent));
@@ -637,6 +740,10 @@ class _AlbumsGrid extends StatelessWidget {
       );
     }
 
+    final media = MediaQuery.of(context);
+    final useSingleColumn =
+        media.size.width < 360 || media.textScaler.scale(1) >= 1.5;
+
     return GridView.builder(
       controller: scrollController,
       padding: const EdgeInsets.fromLTRB(
@@ -645,11 +752,11 @@ class _AlbumsGrid extends StatelessWidget {
         GBTSpacing.pageHorizontal,
         GBTSpacing.xxl,
       ),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: useSingleColumn ? 1 : 2,
         crossAxisSpacing: GBTSpacing.sm,
         mainAxisSpacing: GBTSpacing.md,
-        childAspectRatio: 0.72,
+        childAspectRatio: useSingleColumn ? 1.25 : 0.72,
       ),
       itemCount: albums.length + (isLoadingMore ? 2 : 0),
       itemBuilder: (context, i) {
@@ -684,12 +791,15 @@ class _AlbumCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cardBg =
-        isDark ? GBTColors.darkSurfaceVariant : GBTColors.surfaceVariant;
-    final titleColor =
-        isDark ? GBTColors.darkTextPrimary : GBTColors.textPrimary;
-    final metaColor =
-        isDark ? GBTColors.darkTextSecondary : GBTColors.textSecondary;
+    final cardBg = isDark
+        ? GBTColors.darkSurfaceVariant
+        : GBTColors.surfaceVariant;
+    final titleColor = isDark
+        ? GBTColors.darkTextPrimary
+        : GBTColors.textPrimary;
+    final metaColor = isDark
+        ? GBTColors.darkTextSecondary
+        : GBTColors.textSecondary;
     final hasCover = (album.coverUrl ?? '').trim().isNotEmpty;
     final releaseYear = (album.releaseDate ?? '').trim().isNotEmpty
         ? album.releaseDate!.trim().split('-').first
@@ -727,13 +837,9 @@ class _AlbumCard extends StatelessWidget {
                       else
                         Container(
                           decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                accent.withValues(alpha: 0.18),
-                                accent.withValues(alpha: 0.06),
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
+                            color: accent.withValues(alpha: 0.1),
+                            border: Border(
+                              left: BorderSide(color: accent, width: 3),
                             ),
                           ),
                           child: Center(
@@ -782,7 +888,7 @@ class _AlbumCard extends StatelessWidget {
                             child: Text(
                               album.type.toUpperCase(),
                               style: GBTTypography.caption.copyWith(
-                                color: Colors.white,
+                                color: GBTColors.textInverse,
                                 fontWeight: FontWeight.w800,
                                 fontSize: 9,
                                 letterSpacing: 0.5,
@@ -808,14 +914,13 @@ class _AlbumCard extends StatelessWidget {
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                                 style: GBTTypography.labelMedium.copyWith(
-                                  color: Colors.white,
+                                  color: GBTColors.textInverse,
                                   fontWeight: FontWeight.w700,
                                   height: 1.3,
                                 ),
                               ),
                               const SizedBox(height: 2),
-                              if (releaseYear != null ||
-                                  album.trackCount > 0)
+                              if (releaseYear != null || album.trackCount > 0)
                                 Text(
                                   [
                                     if (releaseYear != null) releaseYear,
@@ -827,8 +932,9 @@ class _AlbumCard extends StatelessWidget {
                                       ),
                                   ].join('  ·  '),
                                   style: GBTTypography.caption.copyWith(
-                                    color: Colors.white
-                                        .withValues(alpha: 0.75),
+                                    color: GBTColors.textInverse.withValues(
+                                      alpha: 0.75,
+                                    ),
                                   ),
                                 ),
                             ],
@@ -952,8 +1058,9 @@ class _SongsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textSecondary =
-        isDark ? GBTColors.darkTextSecondary : GBTColors.textSecondary;
+    final textSecondary = isDark
+        ? GBTColors.darkTextSecondary
+        : GBTColors.textSecondary;
 
     if (isLoading) {
       return Center(child: CircularProgressIndicator(color: accent));
@@ -1009,15 +1116,12 @@ class _SongsList extends StatelessWidget {
             child: Center(child: CircularProgressIndicator(color: accent)),
           );
         }
-        return Padding(
-          padding: const EdgeInsets.only(bottom: GBTSpacing.xs2),
-          child: _SongRow(
-            song: songs[i],
-            rank: i + 1,
-            isDark: isDark,
-            accent: accent,
-            onTap: () => onTap(songs[i]),
-          ),
+        return _SongRow(
+          song: songs[i],
+          rank: i + 1,
+          isDark: isDark,
+          accent: accent,
+          onTap: () => onTap(songs[i]),
         );
       },
     );
@@ -1041,15 +1145,18 @@ class _SongRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cardBg = isDark
-        ? GBTColors.darkSurfaceVariant.withValues(alpha: 0.7)
-        : GBTColors.surfaceVariant;
-    final titleColor =
-        isDark ? GBTColors.darkTextPrimary : GBTColors.textPrimary;
-    final metaColor =
-        isDark ? GBTColors.darkTextSecondary : GBTColors.textSecondary;
+    final titleColor = isDark
+        ? GBTColors.darkTextPrimary
+        : GBTColors.textPrimary;
+    final metaColor = isDark
+        ? GBTColors.darkTextSecondary
+        : GBTColors.textSecondary;
     final isTitleTrack = song.isTitleTrack ?? false;
 
+    // EN: Artist/unit + BPM form the subtitle line; duration is broken out
+    // as its own tabular-figure trailing label for scannable run times.
+    // KO: 아티스트/유닛 + BPM은 서브타이틀 줄로, 재생 시간은 스캔하기 쉽도록
+    // 고정폭 숫자(tabular figures)를 적용한 별도 트레일링 라벨로 분리합니다.
     final metaParts = <String>[];
     if ((song.primaryUnitName ?? '').trim().isNotEmpty) {
       metaParts.add(song.primaryUnitName!.trim());
@@ -1057,15 +1164,13 @@ class _SongRow extends StatelessWidget {
     if (song.bpm != null && song.bpm! > 0) {
       metaParts.add('BPM ${song.bpm}');
     }
-    if (song.durationMs != null && song.durationMs! > 0) {
-      metaParts.add(_formatMs(song.durationMs!));
-    }
+    final durationLabel = (song.durationMs != null && song.durationMs! > 0)
+        ? _formatMs(song.durationMs!)
+        : null;
 
     return Material(
       color: Colors.transparent,
-      borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
       child: InkWell(
-        borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
         onTap: onTap,
         child: Ink(
           padding: const EdgeInsets.symmetric(
@@ -1073,28 +1178,24 @@ class _SongRow extends StatelessWidget {
             vertical: GBTSpacing.sm2,
           ),
           decoration: BoxDecoration(
-            color: cardBg,
-            borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
+            border: Border(
+              bottom: BorderSide(
+                color: isDark ? GBTColors.darkBorderSubtle : GBTColors.divider,
+              ),
+            ),
           ),
           child: Row(
             children: [
-              // EN: 44×44 music art placeholder (trackNo or gradient disc).
+              // EN: 44×44 indexed field marker (track number or music note).
               //     Replaced rank number to avoid implying a popularity order.
-              // KO: 44×44 음악 아트 플레이스홀더 (트랙 번호 또는 그라디언트 디스크).
+              // KO: 44×44 인덱스 필드 마커 (트랙 번호 또는 음표).
               //     순위를 암시하는 숫자를 제거했습니다.
               Container(
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
-                  gradient: LinearGradient(
-                    colors: [
-                      accent.withValues(alpha: 0.20),
-                      accent.withValues(alpha: 0.08),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  color: accent.withValues(alpha: 0.1),
+                  border: Border(left: BorderSide(color: accent, width: 3)),
                 ),
                 alignment: Alignment.center,
                 child: song.trackNo != null
@@ -1163,9 +1264,7 @@ class _SongRow extends StatelessWidget {
                         metaParts.join('  ·  '),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: GBTTypography.caption.copyWith(
-                          color: metaColor,
-                        ),
+                        style: GBTTypography.caption.copyWith(color: metaColor),
                       ),
                     ],
                   ],
@@ -1173,11 +1272,28 @@ class _SongRow extends StatelessWidget {
               ),
               const SizedBox(width: GBTSpacing.xs),
 
+              // EN: Duration as its own tabular-figure label so digits
+              // align vertically down the list.
+              // KO: 숫자가 리스트 전체에서 세로로 정렬되도록 재생 시간을
+              // 별도의 고정폭 숫자 라벨로 표시합니다.
+              if (durationLabel != null) ...[
+                Text(
+                  durationLabel,
+                  style: GBTTypography.labelSmall.copyWith(
+                    color: metaColor,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
+                ),
+                const SizedBox(width: GBTSpacing.xs),
+              ],
+
               // ── Chevron ──────────────────────────────────────
               Icon(
                 Icons.chevron_right_rounded,
                 size: 18,
-                color: isDark ? GBTColors.darkTextTertiary : GBTColors.textTertiary,
+                color: isDark
+                    ? GBTColors.darkTextTertiary
+                    : GBTColors.textTertiary,
               ),
             ],
           ),
@@ -1216,15 +1332,17 @@ class _AlbumSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final metaColor =
-        isDark ? GBTColors.darkTextSecondary : GBTColors.textSecondary;
+    final metaColor = isDark
+        ? GBTColors.darkTextSecondary
+        : GBTColors.textSecondary;
     final divider = isDark ? GBTColors.darkBorder : GBTColors.border;
     final hasCover = (detail.coverUrl ?? '').trim().isNotEmpty;
     final releaseYear = (detail.releaseDate ?? '').trim().isNotEmpty
         ? detail.releaseDate!.trim().split('-').first
         : null;
-    final effectiveTrackCount =
-        detail.tracks.isNotEmpty ? detail.tracks.length : detail.trackCount;
+    final effectiveTrackCount = detail.tracks.isNotEmpty
+        ? detail.tracks.length
+        : detail.trackCount;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1319,7 +1437,7 @@ class _AlbumSheet extends StatelessWidget {
                           child: Text(
                             detail.type.toUpperCase(),
                             style: GBTTypography.caption.copyWith(
-                              color: Colors.white,
+                              color: GBTColors.textInverse,
                               fontWeight: FontWeight.w800,
                               fontSize: 9,
                               letterSpacing: 0.5,
@@ -1334,7 +1452,7 @@ class _AlbumSheet extends StatelessWidget {
                           // EN: Always white on gradient overlay for contrast.
                           // KO: 그라디언트 오버레이 위에서 항상 흰색 사용.
                           color: hasCover
-                              ? Colors.white
+                              ? GBTColors.textInverse
                               : (isDark
                                     ? GBTColors.darkTextPrimary
                                     : GBTColors.textPrimary),
@@ -1386,9 +1504,7 @@ class _AlbumSheet extends StatelessWidget {
                       en: 'No tracks available.',
                       ja: 'トラック情報がありません。',
                     ),
-                    style: GBTTypography.bodySmall.copyWith(
-                      color: metaColor,
-                    ),
+                    style: GBTTypography.bodySmall.copyWith(color: metaColor),
                   ),
                 )
               : ListView.builder(
@@ -1403,9 +1519,8 @@ class _AlbumSheet extends StatelessWidget {
                     // EN: Look up matched song to check isTitleTrack.
                     // KO: 매칭된 곡을 조회해 isTitleTrack 여부를 확인합니다.
                     final matchedSong = songsById[track.songId];
-                    final isTitleTrack =
-                        matchedSong?.isTitleTrack ?? false;
-                    return _SheetTrackRow(
+                    final isTitleTrack = matchedSong?.isTitleTrack ?? false;
+                    return MusicAlbumSheetTrackRow(
                       track: track,
                       isTitleTrack: isTitleTrack,
                       isDark: isDark,
@@ -1424,8 +1539,9 @@ class _AlbumSheet extends StatelessWidget {
 ///     Highlights title tracks with accent color and bold weight.
 /// KO: 앨범 바텀 시트 내 단일 트랙 행.
 ///     타이틀 트랙은 accent 색상과 굵은 폰트로 강조합니다.
-class _SheetTrackRow extends StatelessWidget {
-  const _SheetTrackRow({
+class MusicAlbumSheetTrackRow extends StatelessWidget {
+  const MusicAlbumSheetTrackRow({
+    super.key,
     required this.track,
     required this.isDark,
     required this.accent,
@@ -1441,10 +1557,12 @@ class _SheetTrackRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final titleColor =
-        isDark ? GBTColors.darkTextPrimary : GBTColors.textPrimary;
-    final metaColor =
-        isDark ? GBTColors.darkTextSecondary : GBTColors.textSecondary;
+    final titleColor = isDark
+        ? GBTColors.darkTextPrimary
+        : GBTColors.textPrimary;
+    final metaColor = isDark
+        ? GBTColors.darkTextSecondary
+        : GBTColors.textSecondary;
     // EN: Title tracks get accent-colored track number, regular tracks get
     //     tertiary grey.
     // KO: 타이틀 트랙 번호는 accent, 일반 트랙은 tertiary 회색.
@@ -1458,78 +1576,84 @@ class _SheetTrackRow extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
         onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: GBTSpacing.xs,
-            vertical: GBTSpacing.xs2,
-          ),
-          child: Row(
-            children: [
-              // EN: Track number — accent + w700 for title tracks.
-              // KO: 트랙 번호 — 타이틀 트랙은 accent + w700.
-              SizedBox(
-                width: 28,
-                child: Text(
-                  '${track.trackNo}',
-                  textAlign: TextAlign.center,
-                  style: GBTTypography.bodySmall.copyWith(
-                    color: trackNoColor,
-                    fontWeight:
-                        isTitleTrack ? FontWeight.w700 : FontWeight.w400,
-                  ),
-                ),
-              ),
-              const SizedBox(width: GBTSpacing.xs),
-              Expanded(
-                child: Text(
-                  track.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GBTTypography.bodyMedium.copyWith(
-                    color: onTap != null ? titleColor : metaColor,
-                    // EN: Title tracks use w700, others w500.
-                    // KO: 타이틀 트랙 w700, 일반 w500.
-                    fontWeight:
-                        isTitleTrack ? FontWeight.w700 : FontWeight.w500,
-                  ),
-                ),
-              ),
-              if ((track.versionCode ?? '').trim().isNotEmpty) ...[
-                const SizedBox(width: GBTSpacing.xs),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: accent.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
-                  ),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: GBTSpacing.touchTarget),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: GBTSpacing.xs,
+              vertical: GBTSpacing.xs2,
+            ),
+            child: Row(
+              children: [
+                // EN: Track number — accent + w700 for title tracks.
+                // KO: 트랙 번호 — 타이틀 트랙은 accent + w700.
+                SizedBox(
+                  width: 28,
                   child: Text(
-                    track.versionCode!,
-                    style: GBTTypography.caption.copyWith(
-                      color: accent,
-                      fontWeight: FontWeight.w700,
+                    '${track.trackNo}',
+                    textAlign: TextAlign.center,
+                    style: GBTTypography.bodySmall.copyWith(
+                      color: trackNoColor,
+                      fontWeight: isTitleTrack
+                          ? FontWeight.w700
+                          : FontWeight.w400,
                     ),
                   ),
                 ),
-              ],
-              if (track.durationMs != null && track.durationMs! > 0) ...[
                 const SizedBox(width: GBTSpacing.xs),
-                Text(
-                  _formatMs(track.durationMs!),
-                  style: GBTTypography.caption.copyWith(color: metaColor),
+                Expanded(
+                  child: Text(
+                    track.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GBTTypography.bodyMedium.copyWith(
+                      color: onTap != null ? titleColor : metaColor,
+                      // EN: Title tracks use w700, others w500.
+                      // KO: 타이틀 트랙 w700, 일반 w500.
+                      fontWeight: isTitleTrack
+                          ? FontWeight.w700
+                          : FontWeight.w500,
+                    ),
+                  ),
                 ),
+                if ((track.versionCode ?? '').trim().isNotEmpty) ...[
+                  const SizedBox(width: GBTSpacing.xs),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: accent.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(
+                        GBTSpacing.radiusFull,
+                      ),
+                    ),
+                    child: Text(
+                      track.versionCode!,
+                      style: GBTTypography.caption.copyWith(
+                        color: accent,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+                if (track.durationMs != null && track.durationMs! > 0) ...[
+                  const SizedBox(width: GBTSpacing.xs),
+                  Text(
+                    _formatMs(track.durationMs!),
+                    style: GBTTypography.caption.copyWith(
+                      color: metaColor,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                ],
+                if (onTap != null) ...[
+                  const SizedBox(width: GBTSpacing.xs2),
+                  Icon(Icons.chevron_right_rounded, size: 16, color: metaColor),
+                ],
               ],
-              if (onTap != null) ...[
-                const SizedBox(width: GBTSpacing.xs2),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  size: 16,
-                  color: metaColor,
-                ),
-              ],
-            ],
+            ),
           ),
         ),
       ),
@@ -1549,59 +1673,60 @@ class _EmptyProjectHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textSecondary =
-        isDark ? GBTColors.darkTextSecondary : GBTColors.textSecondary;
+    final textSecondary = isDark
+        ? GBTColors.darkTextSecondary
+        : GBTColors.textSecondary;
 
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(GBTSpacing.xl),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    accent.withValues(alpha: 0.18),
-                    accent.withValues(alpha: 0.06),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: constraints.maxHeight),
+          child: Padding(
+            padding: const EdgeInsets.all(GBTSpacing.xl),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: accent.withValues(alpha: 0.1),
+                    border: Border(left: BorderSide(color: accent, width: 3)),
+                  ),
+                  child: Center(
+                    child: Icon(
+                      Icons.library_music_outlined,
+                      size: 38,
+                      color: accent.withValues(alpha: 0.5),
+                    ),
+                  ),
                 ),
-                borderRadius: BorderRadius.circular(GBTSpacing.radiusXl),
-              ),
-              child: Center(
-                child: Icon(
-                  Icons.library_music_outlined,
-                  size: 38,
-                  color: accent.withValues(alpha: 0.5),
+                const SizedBox(height: GBTSpacing.md),
+                Text(
+                  context.l10n(ko: '뮤직 허브', en: 'Music Hub', ja: 'ミュージックハブ'),
+                  style: GBTTypography.titleSmall.copyWith(
+                    color: isDark
+                        ? GBTColors.darkTextPrimary
+                        : GBTColors.textPrimary,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-              ),
+                const SizedBox(height: GBTSpacing.xs),
+                Text(
+                  context.l10n(
+                    ko: '프로젝트를 선택하면\n앨범·가사·콜가이드를 탐색할 수 있어요.',
+                    en: 'Select a project to explore\nalbums, lyrics, and call guides.',
+                    ja: 'プロジェクトを選択すると\nアルバム・歌詞・コール表を確認できます。',
+                  ),
+                  textAlign: TextAlign.center,
+                  style: GBTTypography.bodySmall.copyWith(
+                    color: textSecondary,
+                    height: 1.5,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: GBTSpacing.md),
-            Text(
-              context.l10n(ko: '뮤직 허브', en: 'Music Hub', ja: 'ミュージックハブ'),
-              style: GBTTypography.titleSmall.copyWith(
-                color: isDark ? GBTColors.darkTextPrimary : GBTColors.textPrimary,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: GBTSpacing.xs),
-            Text(
-              context.l10n(
-                ko: '프로젝트를 선택하면\n앨범·가사·콜가이드를 탐색할 수 있어요.',
-                en: 'Select a project to explore\nalbums, lyrics, and call guides.',
-                ja: 'プロジェクトを選択すると\nアルバム・歌詞・コール表を確認できます。',
-              ),
-              textAlign: TextAlign.center,
-              style: GBTTypography.bodySmall.copyWith(
-                color: textSecondary,
-                height: 1.5,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

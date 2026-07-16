@@ -20,7 +20,9 @@ import '../../../../core/theme/gbt_typography.dart';
 import '../../../../core/utils/result.dart';
 import '../../../../core/widgets/buttons/gbt_button.dart';
 import '../../../../core/widgets/inputs/gbt_text_field.dart';
+import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
 import '../../application/auth_controller.dart';
+import '../widgets/field_auth_components.dart';
 
 /// EN: Prompts the user to merge a new OAuth account with an existing account.
 ///     Supports email+password accounts and social login accounts (Google, Apple).
@@ -159,25 +161,25 @@ class _OAuthMergeExistingPageState
   String _buildErrorMessage(BuildContext context, Failure failure) {
     return switch (failure.code) {
       '401' => context.l10n(
-          ko: '이메일 또는 비밀번호가 올바르지 않습니다',
-          en: 'Incorrect email or password',
-          ja: 'メールアドレスまたはパスワードが正しくありません',
-        ),
+        ko: '이메일 또는 비밀번호가 올바르지 않습니다',
+        en: 'Incorrect email or password',
+        ja: 'メールアドレスまたはパスワードが正しくありません',
+      ),
       'ACCOUNT_NOT_FOUND' => context.l10n(
-          ko: '해당 소셜 계정으로 가입된 계정을 찾을 수 없습니다',
-          en: 'No account found for this social login',
-          ja: 'このソーシャルログインに対応するアカウントが見つかりません',
-        ),
+        ko: '해당 소셜 계정으로 가입된 계정을 찾을 수 없습니다',
+        en: 'No account found for this social login',
+        ja: 'このソーシャルログインに対応するアカウントが見つかりません',
+      ),
       'ACCOUNT_ALREADY_HAS_OAUTH' => context.l10n(
-          ko: '해당 계정에는 이미 다른 소셜 계정이 연결되어 있습니다',
-          en: 'The account already has another social account linked',
-          ja: 'そのアカウントには既に別のソーシャルアカウントが連携されています',
-        ),
+        ko: '해당 계정에는 이미 다른 소셜 계정이 연결되어 있습니다',
+        en: 'The account already has another social account linked',
+        ja: 'そのアカウントには既に別のソーシャルアカウントが連携されています',
+      ),
       '429' => context.l10n(
-          ko: '너무 많이 시도했습니다. 잠시 후 다시 시도해주세요',
-          en: 'Too many attempts. Please try again later',
-          ja: '試行回数が多すぎます。しばらくしてからお試しください',
-        ),
+        ko: '너무 많이 시도했습니다. 잠시 후 다시 시도해주세요',
+        en: 'Too many attempts. Please try again later',
+        ja: '試行回数が多すぎます。しばらくしてからお試しください',
+      ),
       _ => failure.userMessage,
     };
   }
@@ -194,7 +196,8 @@ class _OAuthMergeExistingPageState
     final isControllerLoading = authState.isLoading;
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: gbtStandardAppBar(
+        context,
         automaticallyImplyLeading: false,
         // EN: Show back arrow only when deeper than the initial choice screen.
         // KO: 초기 선택 화면보다 깊은 단계일 때만 뒤로가기 화살표 표시.
@@ -209,9 +212,7 @@ class _OAuthMergeExistingPageState
                 ),
               )
             : null,
-        title: Text(
-          context.l10n(ko: '로그인 완료', en: 'Login Complete', ja: 'ログイン完了'),
-        ),
+        title: context.l10n(ko: '로그인 완료', en: 'Login Complete', ja: 'ログイン完了'),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -220,15 +221,9 @@ class _OAuthMergeExistingPageState
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: GBTSpacing.xl),
-              Icon(
-                Icons.check_circle_outline_rounded,
-                size: 56,
-                color: colorScheme.primary,
-              ),
-              const SizedBox(height: GBTSpacing.lg),
               // EN: Title and subtitle change per view.
               // KO: 제목과 부제목은 뷰에 따라 달라집니다.
-              _buildHeader(context, colorScheme),
+              _buildHeader(context),
               const SizedBox(height: GBTSpacing.xxxl),
               // EN: Body content depends on the current sub-screen.
               // KO: 본문 내용은 현재 하위 화면에 따라 달라집니다.
@@ -240,64 +235,56 @@ class _OAuthMergeExistingPageState
     );
   }
 
-  Widget _buildHeader(BuildContext context, ColorScheme colorScheme) {
+  Widget _buildHeader(BuildContext context) {
     final (title, subtitle) = switch (_view) {
       _MergeView.choice => (
-          context.l10n(
-            ko: '혹시 이전에 가입하신\n계정이 있으신가요?',
-            en: 'Do you have\nan existing account?',
-            ja: '以前に登録した\nアカウントはありますか？',
-          ),
-          context.l10n(
-            ko: '기존 계정과 합치면 이전 활동 내역을 유지할 수 있어요.',
-            en: 'Merging with your existing account preserves your previous activity.',
-            ja: '既存のアカウントと統合すると、以前の活動履歴を保持できます。',
-          ),
+        context.l10n(
+          ko: '혹시 이전에 가입하신\n계정이 있으신가요?',
+          en: 'Do you have\nan existing account?',
+          ja: '以前に登録した\nアカウントはありますか？',
         ),
+        context.l10n(
+          ko: '기존 계정과 합치면 이전 활동 내역을 유지할 수 있어요.',
+          en: 'Merging with your existing account preserves your previous activity.',
+          ja: '既存のアカウントと統合すると、以前の活動履歴を保持できます。',
+        ),
+      ),
       _MergeView.methodChoice => (
-          context.l10n(
-            ko: '어떤 방법으로 확인할까요?',
-            en: 'How would you like to verify?',
-            ja: 'どの方法で確認しますか？',
-          ),
-          context.l10n(
-            ko: '기존 계정으로 로그인해서 소유권을 확인합니다.',
-            en: 'Sign in to your existing account to prove ownership.',
-            ja: '既存のアカウントにログインして所有権を確認します。',
-          ),
+        context.l10n(
+          ko: '어떤 방법으로 확인할까요?',
+          en: 'How would you like to verify?',
+          ja: 'どの方法で確認しますか？',
         ),
+        context.l10n(
+          ko: '기존 계정으로 로그인해서 소유권을 확인합니다.',
+          en: 'Sign in to your existing account to prove ownership.',
+          ja: '既存のアカウントにログインして所有権を確認します。',
+        ),
+      ),
       _MergeView.emailForm => (
-          context.l10n(
-            ko: '기존 계정 정보를 입력해주세요',
-            en: 'Enter your existing account details',
-            ja: '既存アカウントの情報を入力してください',
-          ),
-          context.l10n(
-            ko: '입력하신 계정과 현재 계정이 하나로 합쳐집니다.',
-            en: 'Your existing account and current account will be merged.',
-            ja: '入力したアカウントと現在のアカウントが1つに統合されます。',
-          ),
+        context.l10n(
+          ko: '기존 계정 정보를 입력해주세요',
+          en: 'Enter your existing account details',
+          ja: '既存アカウントの情報を入力してください',
         ),
+        context.l10n(
+          ko: '입력하신 계정과 현재 계정이 하나로 합쳐집니다.',
+          en: 'Your existing account and current account will be merged.',
+          ja: '入力したアカウントと現在のアカウントが1つに統合されます。',
+        ),
+      ),
     };
 
-    return Column(
-      children: [
-        Text(
-          title,
-          style: GBTTypography.headlineMedium.copyWith(
-            color: colorScheme.onSurface,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: GBTSpacing.sm),
-        Text(
-          subtitle,
-          style: GBTTypography.bodyMedium.copyWith(
-            color: colorScheme.onSurfaceVariant,
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ],
+    return FieldAuthHeader(
+      eyebrow: 'ACCOUNT CONTINUITY',
+      title: title,
+      subtitle: subtitle,
+      icon: switch (_view) {
+        _MergeView.choice => Icons.route_outlined,
+        _MergeView.methodChoice => Icons.verified_user_outlined,
+        _MergeView.emailForm => Icons.merge_type_rounded,
+      },
+      centered: true,
     );
   }
 
@@ -308,10 +295,12 @@ class _OAuthMergeExistingPageState
   ) {
     return switch (_view) {
       _MergeView.choice => _buildChoiceView(context),
-      _MergeView.methodChoice =>
-        _buildMethodChoiceView(context, colorScheme, isControllerLoading),
-      _MergeView.emailForm =>
-        _buildEmailFormView(context, isControllerLoading),
+      _MergeView.methodChoice => _buildMethodChoiceView(
+        context,
+        colorScheme,
+        isControllerLoading,
+      ),
+      _MergeView.emailForm => _buildEmailFormView(context, isControllerLoading),
     };
   }
 
@@ -394,11 +383,7 @@ class _OAuthMergeExistingPageState
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: GBTSpacing.sm),
               child: Text(
-                context.l10n(
-                  ko: '또는',
-                  en: 'or',
-                  ja: 'または',
-                ),
+                context.l10n(ko: '또는', en: 'or', ja: 'または'),
                 style: GBTTypography.labelMedium.copyWith(
                   color: GBTColors.textTertiary,
                 ),
@@ -459,11 +444,7 @@ class _OAuthMergeExistingPageState
           // KO: 가시성 토글이 있는 비밀번호 필드.
           GBTTextField(
             controller: _passwordController,
-            label: context.l10n(
-              ko: '비밀번호',
-              en: 'Password',
-              ja: 'パスワード',
-            ),
+            label: context.l10n(ko: '비밀번호', en: 'Password', ja: 'パスワード'),
             obscureText: _obscurePassword,
             keyboardType: TextInputType.visiblePassword,
             textInputAction: TextInputAction.done,

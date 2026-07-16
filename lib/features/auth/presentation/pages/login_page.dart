@@ -16,7 +16,9 @@ import '../../../../core/widgets/common/gbt_page_reveal.dart';
 import '../../../../core/widgets/inputs/gbt_text_field.dart';
 import '../../../../core/router/app_router.dart';
 import '../../application/auth_controller.dart';
+import '../widgets/field_auth_components.dart';
 import '../widgets/oauth_buttons.dart';
+import '../widgets/account_recovery_dialog.dart';
 import 'email_verification_args.dart';
 
 /// EN: Login page widget
@@ -51,7 +53,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         error: (error, _) {
           // EN: EMAIL_NOT_VERIFIED is handled in _handleLogin; suppress generic snackbar.
           // KO: EMAIL_NOT_VERIFIED는 _handleLogin에서 처리하므로 일반 스낵바를 억제합니다.
-          if (error is AuthFailure && error.code == 'EMAIL_NOT_VERIFIED') return;
+          if (error is AuthFailure &&
+              (error.code == 'EMAIL_NOT_VERIFIED' ||
+                  error.code == 'EMAIL_VERIFICATION_REQUIRED')) {
+            return;
+          }
+          if (error is Failure && error.code == 'ACCOUNT_INACTIVE') {
+            return;
+          }
 
           // EN: EMAIL_ACCOUNT_CONFLICT — navigate to conflict resolution page.
           //     The idToken/identityToken is stored in the controller.
@@ -59,7 +68,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           //     idToken/identityToken은 컨트롤러에 저장됩니다.
           if (error is Failure && error.code == 'EMAIL_ACCOUNT_CONFLICT') {
             final email =
-                ref.read(authControllerProvider.notifier).pendingConflictEmail ??
+                ref
+                    .read(authControllerProvider.notifier)
+                    .pendingConflictEmail ??
                 '';
             context.push('/oauth/conflict', extra: email);
             return;
@@ -91,74 +102,19 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               children: [
                 const SizedBox(height: GBTSpacing.xxxl),
 
-                // EN: App logo and title
-                // KO: 앱 로고 및 제목
-                Center(
-                  child: Semantics(
-                    // EN: Group logo and title for screen readers
-                    // KO: 스크린 리더를 위해 로고와 제목을 그룹화
-                    label: context.l10n(
-                      ko: 'Girls Band Tabi - 성지순례의 시작',
-                      en: 'Girls Band Tabi - The start of your pilgrimage',
-                      ja: 'Girls Band Tabi - 聖地巡礼のはじまり',
-                    ),
-                    child: Column(
-                      children: [
-                        Container(
-                          width: 80,
-                          height: 80,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: LinearGradient(
-                              colors: [colorScheme.primary, colorScheme.tertiary],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: colorScheme.primary.withValues(alpha: 0.3),
-                                blurRadius: 16,
-                                spreadRadius: 4,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Semantics(
-                            label: context.l10n(
-                              ko: 'Girls Band Tabi 로고',
-                              en: 'Girls Band Tabi logo',
-                              ja: 'Girls Band Tabi ロゴ',
-                            ),
-                            child: const Center(
-                              child: Icon(
-                                Icons.music_note_rounded,
-                                size: 40,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: GBTSpacing.md),
-                        Text(
-                          'Girls Band Tabi',
-                          style: GBTTypography.headlineMedium.copyWith(
-                            color: colorScheme.onSurface,
-                          ),
-                        ),
-                        const SizedBox(height: GBTSpacing.xs),
-                        Text(
-                          context.l10n(
-                            ko: '성지순례의 시작',
-                            en: 'The start of your pilgrimage',
-                            ja: '聖地巡礼のはじまり',
-                          ),
-                          style: GBTTypography.bodyMedium.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
+                FieldAuthHeader(
+                  eyebrow: 'GIRLS BAND TABI · ACCOUNT',
+                  title: context.l10n(
+                    ko: '여정을 이어가세요',
+                    en: 'Continue your journey',
+                    ja: '旅を続けましょう',
                   ),
+                  subtitle: context.l10n(
+                    ko: '저장한 성지와 일정, 탐방 기록을 한 곳에서 관리하세요.',
+                    en: 'Keep saved places, schedules, and travel records together.',
+                    ja: '保存した聖地・予定・探訪記録をひとつにまとめましょう。',
+                  ),
+                  icon: Icons.route_outlined,
                 ),
 
                 const SizedBox(height: GBTSpacing.xxxl),
@@ -393,13 +349,24 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       } else if (result is Err<void>) {
         // EN: Redirect to email verification pending when account is unverified.
         // KO: 이메일 인증이 완료되지 않은 계정은 인증 대기 화면으로 이동합니다.
-        if (result.failure.code == 'EMAIL_NOT_VERIFIED') {
+        if (result.failure.code == 'EMAIL_NOT_VERIFIED' ||
+            result.failure.code == 'EMAIL_VERIFICATION_REQUIRED') {
           context.pushNamed(
             AppRoutes.emailVerificationPending,
             extra: EmailVerificationArgs(
               email: _usernameController.text.trim(),
             ),
           );
+        } else if (result.failure.code == 'ACCOUNT_INACTIVE') {
+          final confirmed = await showAccountRecoveryDialog(context);
+          if (!mounted || !confirmed) return;
+          final recoveryResult = await controller.recoverWithPassword(
+            email: _usernameController.text.trim(),
+            password: _passwordController.text,
+          );
+          if (mounted && recoveryResult is Success<void>) {
+            context.go('/home');
+          }
         }
       }
     } finally {

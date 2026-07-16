@@ -7,14 +7,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/error/failure.dart';
+import '../../../../core/localization/locale_text.dart';
 import '../../../../core/providers/core_providers.dart';
 import '../../../../core/theme/gbt_colors.dart';
 import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';
 import '../../../../core/utils/result.dart';
 import '../../../../core/widgets/feedback/gbt_loading.dart';
+import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
 import '../../application/settings_controller.dart';
 import '../../domain/entities/notification_settings.dart';
+import '../widgets/field_settings_components.dart';
 
 /// EN: Notification settings page widget.
 /// KO: 알림 설정 페이지 위젯.
@@ -27,7 +30,10 @@ class NotificationSettingsPage extends ConsumerWidget {
 
     if (!isAuthenticated) {
       return Scaffold(
-        appBar: AppBar(title: const Text('알림 설정')),
+        appBar: gbtStandardAppBar(
+          context,
+          title: context.l10n(ko: '알림 설정', en: 'Notifications', ja: '通知設定'),
+        ),
         body: _LoginRequired(onLogin: () => context.push('/login')),
       );
     }
@@ -35,7 +41,10 @@ class NotificationSettingsPage extends ConsumerWidget {
     final state = ref.watch(notificationSettingsControllerProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('알림 설정')),
+      appBar: gbtStandardAppBar(
+        context,
+        title: context.l10n(ko: '알림 설정', en: 'Notifications', ja: '通知設定'),
+      ),
       body: state.when(
         loading: () => const GBTLoading(message: '알림 설정을 불러오는 중...'),
         error: (error, _) {
@@ -102,7 +111,7 @@ class _NotificationSettingsView extends StatelessWidget {
           children: [
             _NotifToggleRow(
               icon: Icons.notifications_active_rounded,
-              iconColor: const Color(0xFFF59E0B),
+              iconColor: GBTColors.warning,
               title: '푸시 알림',
               subtitle: '앱 푸시 알림 수신',
               value: settings.pushEnabled,
@@ -112,7 +121,7 @@ class _NotificationSettingsView extends StatelessWidget {
             ),
             _NotifToggleRow(
               icon: Icons.email_rounded,
-              iconColor: const Color(0xFF3B82F6),
+              iconColor: GBTColors.accentBlue,
               title: '이메일 알림',
               subtitle: '이메일로 알림 수신',
               value: settings.emailEnabled,
@@ -133,7 +142,7 @@ class _NotificationSettingsView extends StatelessWidget {
           children: [
             _NotifToggleRow(
               icon: Icons.event_rounded,
-              iconColor: const Color(0xFF6366F1),
+              iconColor: GBTColors.secondary,
               title: '이벤트',
               subtitle: '다가오는 공연 소식',
               value: settings.liveEventsEnabled,
@@ -146,7 +155,7 @@ class _NotificationSettingsView extends StatelessWidget {
             ),
             _NotifToggleRow(
               icon: Icons.favorite_rounded,
-              iconColor: const Color(0xFFEF4444),
+              iconColor: GBTColors.favorite,
               title: '즐겨찾기',
               subtitle: '즐겨찾기한 장소/콘텐츠 소식',
               value: settings.favoritesEnabled,
@@ -159,7 +168,7 @@ class _NotificationSettingsView extends StatelessWidget {
             ),
             _NotifToggleRow(
               icon: Icons.chat_bubble_rounded,
-              iconColor: const Color(0xFF8B5CF6),
+              iconColor: GBTColors.accent,
               title: '댓글',
               subtitle: '댓글/후기 알림',
               value: settings.commentsEnabled,
@@ -171,7 +180,7 @@ class _NotificationSettingsView extends StatelessWidget {
             ),
             _NotifToggleRow(
               icon: Icons.people_alt_rounded,
-              iconColor: const Color(0xFF10B981),
+              iconColor: GBTColors.success,
               title: '팔로잉 글',
               subtitle: '팔로우한 사용자의 새 글 알림',
               value: settings.followingPostsEnabled,
@@ -197,10 +206,9 @@ class _NotificationSettingsView extends StatelessWidget {
 // ========================================
 
 class _SummaryHeader extends StatelessWidget {
-  const _SummaryHeader({required this.settings, required this.isDark});
+  const _SummaryHeader({required this.settings, required bool isDark});
 
   final NotificationSettings settings;
-  final bool isDark;
 
   @override
   Widget build(BuildContext context) {
@@ -219,81 +227,11 @@ class _SummaryHeader extends StatelessWidget {
         ].where((value) => value).length +
         contentEnabledCount;
 
-    final primaryColor = isDark ? GBTColors.darkPrimary : GBTColors.primary;
-    final surfaceColor = isDark
-        ? GBTColors.darkSurfaceElevated
-        : GBTColors.surface;
-    final borderColor = isDark ? GBTColors.darkBorderSubtle : GBTColors.border;
-    final textPrimary = isDark
-        ? GBTColors.darkTextPrimary
-        : GBTColors.textPrimary;
-    final textSecondary = isDark
-        ? GBTColors.darkTextSecondary
-        : GBTColors.textSecondary;
-
-    return Container(
-      padding: const EdgeInsets.all(GBTSpacing.md),
-      decoration: BoxDecoration(
-        color: surfaceColor,
-        borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
-        border: Border.all(color: borderColor, width: 0.5),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: primaryColor.withValues(alpha: 0.12),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.notifications_rounded,
-              color: primaryColor,
-              size: 22,
-            ),
-          ),
-          const SizedBox(width: GBTSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '알림 환경 설정',
-                  style: GBTTypography.bodyMedium.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '원하는 채널과 콘텐츠 알림만 선택하세요',
-                  style: GBTTypography.labelSmall.copyWith(
-                    color: textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: GBTSpacing.sm,
-              vertical: 3,
-            ),
-            decoration: BoxDecoration(
-              color: primaryColor.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
-            ),
-            child: Text(
-              '활성 $enabledCount',
-              style: GBTTypography.labelSmall.copyWith(
-                color: primaryColor,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
-      ),
+    return FieldSettingsIntro(
+      eyebrow: 'NOTIFICATION ROUTING',
+      title: '활성화된 알림 $enabledCount개',
+      description: '원하는 채널과 콘텐츠 알림만 선택하세요.',
+      icon: Icons.notifications_outlined,
     );
   }
 }
@@ -307,47 +245,15 @@ class _NotifGroupCard extends StatelessWidget {
   const _NotifGroupCard({
     required this.title,
     required this.children,
-    required this.isDark,
+    required bool isDark,
   });
 
   final String title;
   final List<Widget> children;
-  final bool isDark;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(
-            left: GBTSpacing.sm,
-            bottom: GBTSpacing.xs,
-          ),
-          child: Text(
-            title,
-            style: GBTTypography.labelSmall.copyWith(
-              color: isDark
-                  ? GBTColors.darkTextTertiary
-                  : GBTColors.textTertiary,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.5,
-            ),
-          ),
-        ),
-        Container(
-          decoration: BoxDecoration(
-            color: isDark ? GBTColors.darkSurfaceElevated : GBTColors.surface,
-            borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
-            border: Border.all(
-              color: isDark ? GBTColors.darkBorderSubtle : GBTColors.border,
-              width: 0.5,
-            ),
-          ),
-          child: Column(children: children),
-        ),
-      ],
-    );
+    return FieldSettingsSection(title: title, children: children);
   }
 }
 
@@ -359,26 +265,24 @@ class _NotifGroupCard extends StatelessWidget {
 class _NotifToggleRow extends StatelessWidget {
   const _NotifToggleRow({
     required this.icon,
-    required this.iconColor,
+    required Color iconColor,
     required this.title,
     required this.subtitle,
     required this.value,
     required this.onChanged,
     required this.isDark,
     this.semanticLabel,
-    this.isLast = false,
+    bool isLast = false,
     this.enabled = true,
   });
 
   final IconData icon;
-  final Color iconColor;
   final String title;
   final String subtitle;
   final bool value;
   final ValueChanged<bool> onChanged;
   final bool isDark;
   final String? semanticLabel;
-  final bool isLast;
   final bool enabled;
 
   @override
@@ -395,83 +299,63 @@ class _NotifToggleRow extends StatelessWidget {
     final primaryColor = isDark ? GBTColors.darkPrimary : GBTColors.primary;
     final effectiveTextPrimary = enabled ? textPrimary : textDisabled;
     final effectiveTextTertiary = enabled ? textTertiary : textDisabled;
-    final effectiveIconColor = enabled
-        ? iconColor
-        : iconColor.withValues(alpha: 0.45);
-    final effectiveIconBg = enabled
-        ? iconColor.withValues(alpha: 0.12)
-        : iconColor.withValues(alpha: 0.07);
 
-    return Column(
-      children: [
-        Semantics(
-          toggled: value,
-          label: semanticLabel ?? '$title - $subtitle',
-          child: InkWell(
-            onTap: enabled ? () => onChanged(!value) : null,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: GBTSpacing.md,
-                vertical: GBTSpacing.sm + 2,
-              ),
-              child: Row(
-                children: [
-                  // EN: Icon container
-                  // KO: 아이콘 컨테이너
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: effectiveIconBg,
-                      borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
-                    ),
-                    child: Icon(icon, color: effectiveIconColor, size: 20),
+    return Semantics(
+      toggled: value,
+      label: semanticLabel ?? '$title - $subtitle',
+      child: InkWell(
+        onTap: enabled ? () => onChanged(!value) : null,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: GBTSpacing.touchTarget),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: GBTSpacing.xs,
+              vertical: GBTSpacing.sm + 2,
+            ),
+            child: Row(
+              children: [
+                Opacity(
+                  opacity: enabled ? 1 : 0.45,
+                  child: SizedBox(
+                    width: GBTSpacing.xl,
+                    child: Icon(icon, size: 22, color: primaryColor),
                   ),
-                  const SizedBox(width: GBTSpacing.md),
-                  // EN: Title + subtitle
-                  // KO: 제목 + 부제목
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          title,
-                          style: GBTTypography.bodyMedium.copyWith(
-                            color: effectiveTextPrimary,
-                          ),
+                ),
+                const SizedBox(width: GBTSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: GBTTypography.bodyMedium.copyWith(
+                          color: effectiveTextPrimary,
+                          fontWeight: FontWeight.w700,
                         ),
-                        const SizedBox(height: 1),
-                        Text(
-                          subtitle,
-                          style: GBTTypography.labelSmall.copyWith(
-                            color: effectiveTextTertiary,
-                          ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: GBTTypography.bodySmall.copyWith(
+                          color: effectiveTextTertiary,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                  // EN: Custom switch with primary color
-                  // KO: 기본 색상 커스텀 스위치
-                  Switch(
-                    value: value,
-                    onChanged: enabled ? onChanged : null,
-                    activeThumbColor: primaryColor,
-                    activeTrackColor: primaryColor.withValues(alpha: 0.4),
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                ],
-              ),
+                ),
+                const SizedBox(width: GBTSpacing.sm),
+                Switch(
+                  value: value,
+                  onChanged: enabled ? onChanged : null,
+                  activeThumbColor: primaryColor,
+                  activeTrackColor: primaryColor.withValues(alpha: 0.4),
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              ],
             ),
           ),
         ),
-        if (!isLast)
-          Divider(
-            height: 1,
-            indent: GBTSpacing.md + 36 + GBTSpacing.md,
-            endIndent: GBTSpacing.md,
-            color: isDark ? GBTColors.darkBorderSubtle : GBTColors.divider,
-          ),
-      ],
+      ),
     );
   }
 }

@@ -70,7 +70,7 @@ class GBTEventCardCarousel extends StatelessWidget {
           child: AspectRatio(
             aspectRatio: 2 / 3,
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
+              borderRadius: BorderRadius.circular(GBTSpacing.radiusCard),
               child: Stack(
                 fit: StackFit.expand,
                 children: [
@@ -83,6 +83,22 @@ class GBTEventCardCarousel extends StatelessWidget {
                   const DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: GBTColors.carouselCardOverlayGradient,
+                    ),
+                  ),
+
+                  // EN: Glass-feel top edge hairline highlight.
+                  // KO: 글래스 느낌의 상단 엣지 헤어라인 하이라이트.
+                  const Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    child: SizedBox(
+                      height: 1,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: GBTDecorations.glassTopHairline,
+                        ),
+                      ),
                     ),
                   ),
 

@@ -30,10 +30,9 @@ class FanActivityDto {
           json['xp_earned'] as int? ??
           json['points'] as int? ??
           0,
-      earnedAt: DateTime.tryParse(
-            json['earnedAt'] as String? ??
-                json['earned_at'] as String? ??
-                '',
+      earnedAt:
+          DateTime.tryParse(
+            json['earnedAt'] as String? ?? json['earned_at'] as String? ?? '',
           ) ??
           DateTime.now(),
       description: json['description'] as String?,
@@ -87,12 +86,10 @@ class FanLevelProfileDto {
     final currentLevel = json['currentLevel'] as Map<String, dynamic>?;
     final nextLevel = json['nextLevel'] as Map<String, dynamic>?;
     return FanLevelProfileDto(
-      userId:
-          json['userId'] as String? ?? json['user_id'] as String? ?? '',
+      userId: json['userId'] as String? ?? json['user_id'] as String? ?? '',
       // EN: Grade code lives in currentLevel.code (e.g. "NEWBIE").
       // KO: 등급 코드는 currentLevel.code에 있습니다 (예: "NEWBIE").
-      grade:
-          currentLevel?['code'] as String? ?? json['grade'] as String?,
+      grade: currentLevel?['code'] as String? ?? json['grade'] as String?,
       // EN: API uses 'totalPoints'; fall back to camelCase/snake_case variants.
       // KO: API는 'totalPoints' 필드를 사용합니다.
       totalXp:
@@ -160,59 +157,6 @@ class FanLevelProfileDto {
   );
 }
 
-/// EN: DTO for the result of an XP-earning in-app activity.
-/// KO: 앱 내 활동 XP 획득 결과 DTO.
-class EarnXpResultDto {
-  const EarnXpResultDto({
-    required this.awarded,
-    required this.xpEarned,
-    required this.totalPoints,
-    this.currentLevel,
-    this.leveledUp = false,
-    this.newLevel,
-    this.skipReason,
-  });
-
-  /// EN: Deserializes an [EarnXpResultDto] from a raw JSON map.
-  /// KO: 원시 JSON 맵에서 [EarnXpResultDto]를 역직렬화합니다.
-  factory EarnXpResultDto.fromJson(Map<String, dynamic> json) {
-    final currentLevel = json['currentLevel'] as Map<String, dynamic>?;
-    final newLevel = json['newLevel'] as Map<String, dynamic>?;
-    return EarnXpResultDto(
-      awarded: json['awarded'] as bool? ?? false,
-      xpEarned: json['xpEarned'] as int? ?? 0,
-      totalPoints:
-          json['totalPoints'] as int? ?? json['newTotalXp'] as int? ?? 0,
-      currentLevel: currentLevel,
-      leveledUp: json['leveledUp'] as bool? ?? false,
-      newLevel: newLevel,
-      skipReason: json['skipReason'] as String?,
-    );
-  }
-
-  final bool awarded;
-  final int xpEarned;
-  final int totalPoints;
-  final Map<String, dynamic>? currentLevel;
-  final bool leveledUp;
-  final Map<String, dynamic>? newLevel;
-  final String? skipReason;
-
-  /// EN: Converts this DTO to its domain [EarnXpResult] entity.
-  /// KO: 이 DTO를 도메인 [EarnXpResult] 엔티티로 변환합니다.
-  EarnXpResult toEntity() => EarnXpResult(
-    awarded: awarded,
-    xpEarned: xpEarned,
-    totalPoints: totalPoints,
-    currentGrade: FanGrade.fromString(currentLevel?['code'] as String?),
-    leveledUp: leveledUp,
-    newGrade: leveledUp
-        ? FanGrade.fromString(newLevel?['code'] as String?)
-        : null,
-    skipReason: skipReason,
-  );
-}
-
 /// EN: DTO for the result of a daily check-in.
 /// KO: 일일 출석 체크 결과 DTO.
 class CheckInResultDto {
@@ -245,8 +189,7 @@ class CheckInResultDto {
           json['newTotalXp'] as int? ??
           json['new_total_xp'] as int? ??
           0,
-      newGrade:
-          json['newGrade'] as String? ?? json['new_grade'] as String?,
+      newGrade: json['newGrade'] as String? ?? json['new_grade'] as String?,
       // EN: API uses 'consecutiveDays'.
       // KO: API는 'consecutiveDays' 필드를 사용합니다.
       streakDays:
@@ -255,9 +198,7 @@ class CheckInResultDto {
           json['streak_days'] as int? ??
           1,
       didLevelUp:
-          json['didLevelUp'] as bool? ??
-          json['did_level_up'] as bool? ??
-          false,
+          json['didLevelUp'] as bool? ?? json['did_level_up'] as bool? ?? false,
       bonusMessage: json['bonusMessage'] as String?,
     );
   }

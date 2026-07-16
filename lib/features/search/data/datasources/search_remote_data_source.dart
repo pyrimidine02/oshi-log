@@ -19,6 +19,8 @@ class SearchRemoteDataSource {
   Future<Result<List<SearchItemDto>>> search({
     required String query,
     List<String> types = const [],
+    String? projectId,
+    List<String> unitIds = const [],
     int page = 0,
     int size = 20,
   }) {
@@ -30,12 +32,21 @@ class SearchRemoteDataSource {
         .map((type) => type.trim())
         .where((type) => type.isNotEmpty)
         .toList();
+    final normalizedProjectId = projectId?.trim();
+    final normalizedUnitIds = unitIds
+        .map((unitId) => unitId.trim())
+        .where((unitId) => unitId.isNotEmpty)
+        .toList(growable: false);
 
     return _apiClient.get<List<SearchItemDto>>(
       ApiEndpoints.search,
       queryParameters: {
         'q': query,
         if (normalizedTypes.isNotEmpty) 'types': normalizedTypes.join(','),
+        if (normalizedProjectId != null && normalizedProjectId.isNotEmpty)
+          'projectId': normalizedProjectId,
+        if (normalizedUnitIds.isNotEmpty)
+          'unitIds': normalizedUnitIds.join(','),
         'page': page,
         'size': size.clamp(1, 50),
       },

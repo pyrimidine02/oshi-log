@@ -90,12 +90,11 @@ class GBTPlaceCard extends StatelessWidget {
         child: AnimatedContainer(
           duration: GBTAnimations.normal,
           curve: GBTAnimations.defaultCurve,
-          // EN: Borderless neutral surface — no shadow, no border
-          // KO: 테두리 없는 뉴트럴 표면 — 그림자·테두리 제거
-          decoration: BoxDecoration(
-            color: isDark ? GBTColors.darkSurface : GBTColors.surface,
-            borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
-          ),
+          // EN: Image-first card shell — 16px radius, border-subtle depth
+          // instead of a heavy shadow.
+          // KO: 이미지 우선 카드 셸 — 16px 반지름, 무거운 그림자 대신
+          // border-subtle로 깊이감 표현.
+          decoration: GBTDecorations.imageCard(isDark: isDark),
           clipBehavior: Clip.antiAlias,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -114,19 +113,28 @@ class GBTPlaceCard extends StatelessWidget {
                       child: _buildImage(isDark),
                     ),
                   ),
-                  // EN: Bottom gradient for depth
-                  // KO: 깊이감을 위한 하단 그라디언트
-                  Positioned.fill(
+                  // EN: Top scrim so the verified/favorite badges stay legible
+                  // over any photo.
+                  // KO: 인증·즐겨찾기 배지가 어떤 사진 위에서도 가독성을
+                  // 유지하도록 하는 상단 스크림.
+                  const Positioned.fill(
                     child: DecoratedBox(
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Colors.transparent,
-                            Colors.transparent,
-                            Colors.black.withValues(alpha: 0.04),
-                          ],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
+                        gradient: GBTDecorations.imageTopScrim,
+                      ),
+                    ),
+                  ),
+                  // EN: Glass-feel top edge hairline highlight.
+                  // KO: 글래스 느낌의 상단 엣지 헤어라인 하이라이트.
+                  const Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    child: SizedBox(
+                      height: 1,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: GBTDecorations.glassTopHairline,
                         ),
                       ),
                     ),

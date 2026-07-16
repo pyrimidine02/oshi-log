@@ -27,6 +27,7 @@ class CalendarPage extends ConsumerStatefulWidget {
 
 class _CalendarPageState extends ConsumerState<CalendarPage> {
   late DateTime _selectedMonth;
+  DateTime? _selectedDate;
 
   @override
   void initState() {
@@ -38,23 +39,33 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
   void _prevMonth() {
     setState(() {
       _selectedMonth = DateTime(_selectedMonth.year, _selectedMonth.month - 1);
+      _selectedDate = null;
     });
   }
 
   void _nextMonth() {
     setState(() {
       _selectedMonth = DateTime(_selectedMonth.year, _selectedMonth.month + 1);
+      _selectedDate = null;
+    });
+  }
+
+  void _selectDate(DateTime? date) {
+    setState(() {
+      // EN: Tapping the already-selected day clears the filter.
+      // KO: 이미 선택된 날짜를 다시 탭하면 필터가 해제됩니다.
+      _selectedDate = (date != null && _selectedDate == date) ? null : date;
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final projectId = ref.watch(selectedProjectKeyProvider);
+    final projectKey = ref.watch(selectedProjectKeyProvider);
     final query = (
       year: _selectedMonth.year,
       month: _selectedMonth.month,
-      projectId: projectId?.isNotEmpty == true ? projectId : null,
+      projectKey: projectKey?.isNotEmpty == true ? projectKey : null,
     );
     final eventsAsync = ref.watch(calendarEventsProvider(query));
 
@@ -98,7 +109,42 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
                       ),
                       icon: Icons.event_busy_outlined,
                     )
-                  : _EventList(events: events),
+                  : ListView(
+                      padding: EdgeInsets.zero,
+                      children: [
+                        // EN: Month grid — event-type dots, today filled in
+                        // primary, selected day gets a secondary ring.
+                        // KO: 월간 그리드 — 이벤트 타입 도트, 오늘은 primary로
+                        // 채워지고 선택일은 secondary 링으로 표시됩니다.
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(
+                            GBTSpacing.pageHorizontal,
+                            GBTSpacing.md,
+                            GBTSpacing.pageHorizontal,
+                            GBTSpacing.xs,
+                          ),
+                          child: _MonthGrid(
+                            visibleMonth: _selectedMonth,
+                            events: events,
+                            selectedDate: _selectedDate,
+                            onSelectDate: _selectDate,
+                          ),
+                        ),
+                        const Divider(height: 1),
+                        _EventList(
+                          events: _selectedDate == null
+                              ? events
+                              : events
+                                    .where(
+                                      (event) => _isSameDate(
+                                        event.date,
+                                        _selectedDate!,
+                                      ),
+                                    )
+                                    .toList(),
+                        ),
+                      ],
+                    ),
             ),
           ),
         ],
@@ -207,8 +253,10 @@ class _CalendarShimmer extends StatelessWidget {
 // KO: 이벤트 목록 — 날짜별로 이벤트 그룹화
 // ──────────────────────────────────────────────────────────────
 
-/// EN: Scrollable list of events grouped by date.
-/// KO: 날짜별로 그룹화된 이벤트의 스크롤 가능한 목록입니다.
+/// EN: Event list grouped by date, laid out as compact cards under the
+/// month grid above. Lives inside the page's outer scroll view.
+/// KO: 월간 그리드 아래에 컴팩트 카드로 배치되는, 날짜별로 그룹화된
+/// 이벤트 목록입니다. 페이지의 외부 스크롤 뷰 안에 위치합니다.
 class _EventList extends StatelessWidget {
   const _EventList({required this.events});
 
@@ -226,17 +274,18 @@ class _EventList extends StatelessWidget {
 
     final dateKeys = grouped.keys.toList();
 
-    return ListView.builder(
+    return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: GBTSpacing.pageHorizontal,
         vertical: GBTSpacing.sm,
       ),
-      itemCount: dateKeys.length,
-      itemBuilder: (context, index) {
-        final dateLabel = dateKeys[index];
-        final dayEvents = grouped[dateLabel]!;
-        return _DateSection(dateLabel: dateLabel, events: dayEvents);
-      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (final dateLabel in dateKeys)
+            _DateSection(dateLabel: dateLabel, events: grouped[dateLabel]!),
+        ],
+      ),
     );
   }
 }
@@ -295,25 +344,6 @@ class _EventTile extends StatelessWidget {
 
   final CalendarEvent event;
 
-  Color _typeColor(CalendarEventType type, bool isDark) {
-    return switch (type) {
-      CalendarEventType.characterBirthday =>
-        isDark ? const Color(0xFFEC4899) : const Color(0xFFDB2777),
-      CalendarEventType.voiceActorBirthday =>
-        isDark ? const Color(0xFFA78BFA) : const Color(0xFF7C3AED),
-      CalendarEventType.release =>
-        isDark ? const Color(0xFF34D399) : const Color(0xFF059669),
-      CalendarEventType.live =>
-        isDark ? const Color(0xFFFBBF24) : const Color(0xFFD97706),
-      CalendarEventType.ticketSale =>
-        isDark ? const Color(0xFF60A5FA) : const Color(0xFF2563EB),
-      CalendarEventType.streaming =>
-        isDark ? const Color(0xFF38BDF8) : const Color(0xFF0284C7),
-      CalendarEventType.general =>
-        isDark ? GBTColors.darkTextSecondary : GBTColors.textSecondary,
-    };
-  }
-
   IconData _typeIcon(CalendarEventType type) {
     return switch (type) {
       CalendarEventType.characterBirthday => Icons.cake_outlined,
@@ -369,7 +399,7 @@ class _EventTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final color = _typeColor(event.type, isDark);
+    final color = _eventTypeColor(event.type, isDark);
     final typeLabel = _typeLabel(event.type, context);
 
     return Semantics(
@@ -410,6 +440,249 @@ class _EventTile extends StatelessWidget {
               style: GBTTypography.bodySmall.copyWith(color: color),
             ),
             dense: true,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ──────────────────────────────────────────────────────────────
+// EN: Shared event-type color mapping (used by the grid dots and tiles)
+// KO: 그리드 도트와 타일이 함께 사용하는 이벤트 타입 색상 매핑
+// ──────────────────────────────────────────────────────────────
+
+Color _eventTypeColor(CalendarEventType type, bool isDark) {
+  return switch (type) {
+    CalendarEventType.characterBirthday =>
+      isDark ? const Color(0xFFEC4899) : const Color(0xFFDB2777),
+    CalendarEventType.voiceActorBirthday =>
+      isDark ? const Color(0xFFA78BFA) : const Color(0xFF7C3AED),
+    CalendarEventType.release =>
+      isDark ? const Color(0xFF34D399) : const Color(0xFF059669),
+    CalendarEventType.live =>
+      isDark ? const Color(0xFFFBBF24) : const Color(0xFFD97706),
+    CalendarEventType.ticketSale =>
+      isDark ? const Color(0xFF60A5FA) : const Color(0xFF2563EB),
+    CalendarEventType.streaming =>
+      isDark ? const Color(0xFF38BDF8) : const Color(0xFF0284C7),
+    CalendarEventType.general =>
+      isDark ? GBTColors.darkTextSecondary : GBTColors.textSecondary,
+  };
+}
+
+bool _isSameDate(DateTime a, DateTime b) {
+  return a.year == b.year && a.month == b.month && a.day == b.day;
+}
+
+// ──────────────────────────────────────────────────────────────
+// EN: Month grid — day cells with event-type dots
+// KO: 월간 그리드 — 이벤트 타입 도트가 있는 일자 셀
+// ──────────────────────────────────────────────────────────────
+
+/// EN: A 7-column month grid. Today is a filled primary circle, the
+/// selected day gets a secondary ring, and each day with events shows up
+/// to three small dots colored by event type.
+/// KO: 7열 월간 그리드입니다. 오늘은 primary로 채워진 원, 선택일은
+/// secondary 링으로 표시되며, 이벤트가 있는 날은 타입별 색상의 작은
+/// 도트를 최대 3개까지 보여줍니다.
+class _MonthGrid extends StatelessWidget {
+  const _MonthGrid({
+    required this.visibleMonth,
+    required this.events,
+    required this.selectedDate,
+    required this.onSelectDate,
+  });
+
+  final DateTime visibleMonth;
+  final List<CalendarEvent> events;
+  final DateTime? selectedDate;
+  final ValueChanged<DateTime?> onSelectDate;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final daysInMonth = DateUtils.getDaysInMonth(
+      visibleMonth.year,
+      visibleMonth.month,
+    );
+    final firstWeekday = DateTime(
+      visibleMonth.year,
+      visibleMonth.month,
+      1,
+    ).weekday;
+    final leadingEmpty = firstWeekday % 7;
+    final totalCells = leadingEmpty + daysInMonth;
+    final rows = (totalCells / 7).ceil();
+    final totalSlots = rows * 7;
+
+    // EN: Group events by day-of-month for quick dot lookup.
+    // KO: 도트를 빠르게 조회하기 위해 이벤트를 일자별로 그룹화합니다.
+    final eventsByDay = <int, List<CalendarEvent>>{};
+    for (final event in events) {
+      if (event.date.year == visibleMonth.year &&
+          event.date.month == visibleMonth.month) {
+        eventsByDay.putIfAbsent(event.date.day, () => []).add(event);
+      }
+    }
+
+    final weekdayLabels = [
+      context.l10n(ko: '일', en: 'S', ja: '日'),
+      context.l10n(ko: '월', en: 'M', ja: '月'),
+      context.l10n(ko: '화', en: 'T', ja: '火'),
+      context.l10n(ko: '수', en: 'W', ja: '水'),
+      context.l10n(ko: '목', en: 'T', ja: '木'),
+      context.l10n(ko: '금', en: 'F', ja: '金'),
+      context.l10n(ko: '토', en: 'S', ja: '土'),
+    ];
+
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            for (final label in weekdayLabels)
+              Expanded(
+                child: Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  style: GBTTypography.labelSmall.copyWith(
+                    color: isDark
+                        ? GBTColors.darkTextTertiary
+                        : GBTColors.textTertiary,
+                  ),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: GBTSpacing.xs),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: totalSlots,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 7,
+            mainAxisSpacing: 2,
+            crossAxisSpacing: 2,
+            childAspectRatio: 1,
+          ),
+          itemBuilder: (context, index) {
+            final dayNumber = index - leadingEmpty + 1;
+            if (dayNumber < 1 || dayNumber > daysInMonth) {
+              return const SizedBox.shrink();
+            }
+            final date = DateTime(
+              visibleMonth.year,
+              visibleMonth.month,
+              dayNumber,
+            );
+            final dayEvents = eventsByDay[dayNumber] ?? const <CalendarEvent>[];
+            final dotColors = <Color>{
+              for (final event in dayEvents)
+                _eventTypeColor(event.type, isDark),
+            }.take(3).toList(growable: false);
+
+            return _CalendarGridCell(
+              day: dayNumber,
+              isToday: _isSameDate(date, DateTime.now()),
+              isSelected:
+                  selectedDate != null && _isSameDate(date, selectedDate!),
+              dotColors: dotColors,
+              onTap: dayEvents.isEmpty ? null : () => onSelectDate(date),
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+/// EN: A single day cell in the month grid.
+/// KO: 월간 그리드의 단일 일자 셀입니다.
+class _CalendarGridCell extends StatelessWidget {
+  const _CalendarGridCell({
+    required this.day,
+    required this.isToday,
+    required this.isSelected,
+    required this.dotColors,
+    required this.onTap,
+  });
+
+  final int day;
+  final bool isToday;
+  final bool isSelected;
+  final List<Color> dotColors;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primary = isDark ? GBTColors.darkPrimary : GBTColors.primary;
+    final secondary = isDark ? GBTColors.darkSecondary : GBTColors.secondary;
+    final textColor = isToday
+        ? GBTColors.textInverse
+        : (isDark ? GBTColors.darkTextPrimary : GBTColors.textPrimary);
+
+    return Semantics(
+      label:
+          '$day일'
+          '${dotColors.isNotEmpty ? ', 이벤트 있음' : ''}'
+          '${isToday ? ', 오늘' : ''}'
+          '${isSelected ? ', 선택됨' : ''}',
+      button: onTap != null,
+      selected: isSelected,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
+          onTap: onTap,
+          child: Container(
+            margin: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              // EN: Today gets a solid filled primary circle.
+              // KO: 오늘은 primary로 채워진 원으로 표시됩니다.
+              color: isToday ? primary : Colors.transparent,
+              // EN: A selected (non-today) day gets a secondary ring.
+              // KO: 선택된 날(오늘이 아닌 경우)은 secondary 링으로 표시됩니다.
+              border: (isSelected && !isToday)
+                  ? Border.all(color: secondary, width: 1.5)
+                  : null,
+            ),
+            alignment: Alignment.center,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  '$day',
+                  style: GBTTypography.bodySmall.copyWith(
+                    color: textColor,
+                    fontWeight: isToday || isSelected
+                        ? FontWeight.w700
+                        : FontWeight.w400,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                if (dotColors.isNotEmpty)
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      for (final color in dotColors)
+                        Container(
+                          width: 4,
+                          height: 4,
+                          margin: const EdgeInsets.symmetric(horizontal: 1),
+                          decoration: BoxDecoration(
+                            color: isToday ? GBTColors.textInverse : color,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                    ],
+                  )
+                else
+                  const SizedBox(height: 4),
+              ],
+            ),
           ),
         ),
       ),

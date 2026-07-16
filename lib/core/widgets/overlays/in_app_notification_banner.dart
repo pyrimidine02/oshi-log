@@ -58,12 +58,10 @@ class _InAppNotificationBannerOverlayState
   void initState() {
     super.initState();
     _animController = AnimationController(vsync: this, duration: _animDuration);
-    _slideAnim = Tween<Offset>(
-      begin: const Offset(0, -1),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(parent: _animController, curve: Curves.easeOutCubic),
-    );
+    _slideAnim = Tween<Offset>(begin: const Offset(0, -1), end: Offset.zero)
+        .animate(
+          CurvedAnimation(parent: _animController, curve: Curves.easeOutCubic),
+        );
   }
 
   @override
@@ -92,9 +90,7 @@ class _InAppNotificationBannerOverlayState
     _isDismissing = true;
     _animController.reverse().then((_) {
       if (!mounted) return;
-      ref
-          .read(inAppNotificationQueueProvider.notifier)
-          .dismissCurrent();
+      ref.read(inAppNotificationQueueProvider.notifier).dismissCurrent();
       setState(() {
         _current = null;
         _isDismissing = false;
@@ -136,8 +132,7 @@ class _InAppNotificationBannerOverlayState
   IconData _iconForType(String? type) {
     return switch (type) {
       'POST_CREATED' => Icons.article_outlined,
-      'COMMENT_CREATED' || 'COMMENT_REPLY_CREATED' =>
-        Icons.chat_bubble_outline,
+      'COMMENT_CREATED' || 'COMMENT_REPLY_CREATED' => Icons.chat_bubble_outline,
       _ => Icons.notifications_outlined,
     };
   }
@@ -159,10 +154,10 @@ class _InAppNotificationBannerOverlayState
   ) {
     final typeColor = _colorForType(entry.type);
     final typeIcon = _iconForType(entry.type);
-    final surfaceColor =
-        isDark ? GBTColors.darkSurface : GBTColors.surface;
-    final textSecondaryColor =
-        isDark ? GBTColors.darkTextSecondary : GBTColors.textSecondary;
+    final surfaceColor = isDark ? GBTColors.darkSurface : GBTColors.surface;
+    final textSecondaryColor = isDark
+        ? GBTColors.darkTextSecondary
+        : GBTColors.textSecondary;
 
     return SafeArea(
       bottom: false,
@@ -177,8 +172,7 @@ class _InAppNotificationBannerOverlayState
           onTap: () => _onTap(entry),
           child: Material(
             elevation: GBTSpacing.elevationMd,
-            borderRadius:
-                BorderRadius.circular(GBTSpacing.radiusLg),
+            borderRadius: BorderRadius.circular(GBTSpacing.radiusLg),
             color: surfaceColor,
             child: Padding(
               padding: const EdgeInsets.all(GBTSpacing.sm2),
@@ -253,14 +247,14 @@ class _InAppNotificationBannerOverlayState
 
     // EN: Watch queue — when new item arrives, show banner if idle.
     // KO: 큐를 감시합니다 — 새 항목이 오면 유휴 상태일 때 배너를 표시합니다.
-    ref.listen<List<InAppNotificationEntry>>(
-      inAppNotificationQueueProvider,
-      (_, next) {
-        if (next.isNotEmpty && _current == null && !_isDismissing) {
-          _showEntry(next.first);
-        }
-      },
-    );
+    ref.listen<List<InAppNotificationEntry>>(inAppNotificationQueueProvider, (
+      _,
+      next,
+    ) {
+      if (next.isNotEmpty && _current == null && !_isDismissing) {
+        _showEntry(next.first);
+      }
+    });
 
     return Stack(
       children: [

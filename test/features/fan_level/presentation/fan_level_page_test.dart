@@ -23,15 +23,6 @@ class _FakeFanLevelRepository implements FanLevelRepository {
   Future<Result<CheckInResult>> checkIn() async {
     return const Result.failure(UnknownFailure('not used in this test'));
   }
-
-  @override
-  Future<Result<EarnXpResult>> earnXp(
-    String activityType,
-    String entityId, {
-    String? projectId,
-  }) async {
-    return const Result.failure(UnknownFailure('not used in this test'));
-  }
 }
 
 void main() {
@@ -96,4 +87,47 @@ void main() {
     expect(find.text('+0 XP'), findsNothing);
     expect(find.text('Bookmark Added'), findsNothing);
   });
+
+  testWidgets(
+    'uses the field-notes document hierarchy at 320dp and 200 percent text',
+    (tester) async {
+      tester.view.physicalSize = const Size(640, 1280);
+      tester.view.devicePixelRatio = 2;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final profile = FanLevelProfile(
+        userId: 'user-1',
+        grade: FanGrade.enthusiast,
+        totalXp: 420,
+        currentLevelXp: 120,
+        nextLevelXp: 800,
+        rank: 7,
+        recentActivities: const [],
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            fanLevelRepositoryProvider.overrideWithValue(
+              _FakeFanLevelRepository(profile),
+            ),
+          ],
+          child: MaterialApp(
+            locale: const Locale('ko'),
+            theme: ThemeData.dark(),
+            home: MediaQuery(
+              data: const MediaQueryData(textScaler: TextScaler.linear(2)),
+              child: const FanLevelPage(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('TRAVEL RECORD / FAN LEVEL'), findsOneWidget);
+      expect(find.text('Fan Level'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
 }

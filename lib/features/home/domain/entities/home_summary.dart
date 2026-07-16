@@ -165,6 +165,7 @@ class HomeEventItem {
     required this.id,
     required this.title,
     required this.dateLabel,
+    required this.startsAt,
     this.posterUrl,
     this.ticketUrl,
     this.isLive = false,
@@ -173,6 +174,7 @@ class HomeEventItem {
   final String id;
   final String title;
   final String dateLabel;
+  final DateTime startsAt;
   final String? posterUrl;
   final String? ticketUrl;
   final bool isLive;
@@ -182,6 +184,7 @@ class HomeEventItem {
       id: dto.id,
       title: dto.title,
       dateLabel: _formatDate(dto.showStartTime),
+      startsAt: dto.showStartTime,
       posterUrl: dto.bannerUrl == null ? null : resolveMediaUrl(dto.bannerUrl!),
       ticketUrl: dto.ticketUrl,
       isLive: false,

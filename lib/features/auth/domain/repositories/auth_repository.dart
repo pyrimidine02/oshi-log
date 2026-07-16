@@ -16,6 +16,25 @@ abstract class AuthRepository {
     required String password,
   });
 
+  /// EN: Restore an inactive password account with explicit user consent.
+  /// KO: 사용자의 명시적 동의 후 비활성 비밀번호 계정을 복구합니다.
+  Future<Result<AuthTokens>> recoverWithPassword({
+    required String email,
+    required String password,
+  });
+
+  /// EN: Restore an inactive Google account with a fresh provider token.
+  /// KO: 새 공급자 토큰으로 비활성 Google 계정을 복구합니다.
+  Future<Result<AuthTokens>> recoverWithGoogle({required String idToken});
+
+  /// EN: Restore an inactive Apple account with fresh provider credentials.
+  /// KO: 새 공급자 자격 증명으로 비활성 Apple 계정을 복구합니다.
+  Future<Result<AuthTokens>> recoverWithApple({
+    required String identityToken,
+    String? email,
+    String? fullName,
+  });
+
   /// EN: Register a new account.
   ///     Returns [RegisterResult] indicating whether email verification is needed.
   ///     When [RegisterResult.verificationRequired] is false, tokens are already

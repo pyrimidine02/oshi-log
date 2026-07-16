@@ -8,6 +8,7 @@ import '../../../../core/theme/gbt_colors.dart';
 import '../../../../core/theme/gbt_decorations.dart';
 import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';
+import '../../../../core/widgets/common/gbt_icon_chip.dart';
 
 /// EN: Tappable action cell with icon, label, and subtitle for 2-column grids.
 /// KO: 2열 그리드용 아이콘·라벨·서브타이틀이 있는 탭 가능한 액션 셀.
@@ -31,33 +32,31 @@ class ActionCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textPrimary =
-        isDark ? GBTColors.darkTextPrimary : GBTColors.textPrimary;
-    final textTertiary =
-        isDark ? GBTColors.darkTextTertiary : GBTColors.textTertiary;
+    final textPrimary = isDark
+        ? GBTColors.darkTextPrimary
+        : GBTColors.textPrimary;
+    final textTertiary = isDark
+        ? GBTColors.darkTextTertiary
+        : GBTColors.textTertiary;
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
+        borderRadius: BorderRadius.circular(GBTSpacing.radiusCard),
         child: Container(
           padding: const EdgeInsets.all(GBTSpacing.md),
-          decoration: GBTDecorations.card(isDark: isDark),
+          // EN: Override default card radius with the 2026 bento radius.
+          // KO: 기본 카드 반지름을 2026 벤토 반지름으로 재정의.
+          decoration: GBTDecorations.card(isDark: isDark).copyWith(
+            borderRadius: BorderRadius.circular(GBTSpacing.radiusCard),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // EN: Colored icon container — visual anchor for the action.
-              // KO: 색상 아이콘 컨테이너 — 액션의 시각적 앵커.
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: isDark ? 0.18 : 0.12),
-                  borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
-                ),
-                child: Icon(icon, color: color, size: 22),
-              ),
+              // EN: Gradient icon chip — visual anchor for the action.
+              // KO: 그라디언트 아이콘 칩 — 액션의 시각적 앵커.
+              GBTIconChip(icon: icon, color: color, size: 44),
               const SizedBox(height: GBTSpacing.sm),
               Text(
                 label,

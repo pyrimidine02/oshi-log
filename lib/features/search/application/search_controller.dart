@@ -34,9 +34,15 @@ class SearchController extends StateNotifier<AsyncValue<List<SearchItem>>> {
 
     state = const AsyncLoading();
     repository.cancelInFlightSearch();
+    final projectId = _ref.read(selectedProjectIdProvider);
+    final unitIds = List<String>.unmodifiable(
+      _ref.read(selectedUnitIdsProvider),
+    );
     final result = await repository.search(
       query: trimmed,
       types: types,
+      projectId: projectId,
+      unitIds: unitIds,
       forceRefresh: forceRefresh,
     );
     if (requestId != _activeRequestId) {

@@ -7,35 +7,73 @@ import 'package:intl/intl.dart';
 import '../../data/dto/search_discovery_dto.dart';
 import '../../data/dto/search_item_dto.dart';
 
-enum SearchItemType { place, liveEvent, news, post, unit, project, unknown }
+enum SearchItemType {
+  place,
+  liveEvent,
+  news,
+  post,
+  unit,
+  project,
+  voiceActor,
+  artist,
+  anime,
+  user,
+  unknown,
+}
 
 class SearchItem {
   const SearchItem({
     required this.id,
     required this.title,
     required this.type,
+    required this.sourceId,
     this.subtitle,
     this.imageUrl,
     this.category,
     this.publishedAt,
+    this.projectId,
+    this.canonicalKey,
+    this.navigationTargetType,
+    this.navigationRoute,
   });
 
   final String id;
   final String title;
   final SearchItemType type;
+  final String sourceId;
   final String? subtitle;
   final String? imageUrl;
   final String? category;
   final DateTime? publishedAt;
+  final String? projectId;
+  final String? canonicalKey;
+  final String? navigationTargetType;
+  final String? navigationRoute;
 
   String get dateLabel {
     if (publishedAt == null) return '';
     return DateFormat('yyyy.MM.dd').format(publishedAt!.toLocal());
   }
 
-  factory SearchItem.fromDto(SearchItemDto dto) {
+  String? get projectKey {
+    if (type != SearchItemType.project) {
+      return null;
+    }
+    const prefix = 'project:';
+    final key = canonicalKey?.trim();
+    if (key == null || !key.startsWith(prefix)) {
+      return null;
+    }
+    final value = key.substring(prefix.length).trim();
+    return value.isEmpty ? null : value;
+  }
+
+  factory SearchItem.fromDto(SearchItemDto dto, {String? projectId}) {
     final item = dto.item;
     final id = _string(item, ['id', 'itemId', 'targetId']) ?? '';
+    final navigation = _stringMap(item['navigation']);
+    final sourceId =
+        _string(item, ['sourceId']) ?? _string(navigation, ['targetId']) ?? id;
     final title = _string(item, ['title', 'name', 'headline']) ?? '검색 결과';
     final subtitle = _string(item, ['subtitle', 'summary', 'description']);
     final imageUrl = _string(item, [
@@ -50,17 +88,35 @@ class SearchItem {
     return SearchItem(
       id: id,
       title: title,
-      type: _mapType(dto.type),
+      type: _mapType(dto.type, item),
+      sourceId: sourceId,
       subtitle: subtitle,
       imageUrl: imageUrl,
       category: category,
       publishedAt: publishedAt,
+      projectId: _string(item, ['projectId']) ?? projectId,
+      canonicalKey: _string(item, ['canonicalKey']),
+      navigationTargetType: _string(navigation, ['targetType']),
+      navigationRoute: _string(navigation, ['route']),
     );
   }
 }
 
-SearchItemType _mapType(String? raw) {
+SearchItemType _mapType(String? raw, Map<String, dynamic> item) {
   final value = raw?.toLowerCase() ?? '';
+  if (value == 'fan_subject' || value == 'fan-subject') {
+    return switch (_string(item, ['subjectType'])?.toUpperCase()) {
+      'PROJECT' => SearchItemType.project,
+      'UNIT' => SearchItemType.unit,
+      'VOICE_ACTOR' => SearchItemType.voiceActor,
+      'ARTIST' => SearchItemType.artist,
+      'ANIME' => SearchItemType.anime,
+      _ => SearchItemType.unknown,
+    };
+  }
+  if (value == 'user' || value == 'users') {
+    return SearchItemType.user;
+  }
   if (value == 'places' ||
       value.contains('place') ||
       value.contains('location')) {
@@ -78,10 +134,29 @@ SearchItemType _mapType(String? raw) {
   if (value.contains('unit') || value.contains('band')) {
     return SearchItemType.unit;
   }
+  if (value.contains('voice_actor') || value.contains('voice-actor')) {
+    return SearchItemType.voiceActor;
+  }
+  if (value.contains('artist') || value.contains('musician')) {
+    return SearchItemType.artist;
+  }
+  if (value.contains('anime') || value.contains('animation')) {
+    return SearchItemType.anime;
+  }
   if (value.contains('project')) {
     return SearchItemType.project;
   }
   return SearchItemType.unknown;
+}
+
+Map<String, dynamic> _stringMap(Object? value) {
+  if (value is Map<String, dynamic>) {
+    return value;
+  }
+  if (value is Map) {
+    return value.map((key, value) => MapEntry(key.toString(), value));
+  }
+  return const <String, dynamic>{};
 }
 
 class SearchPopularKeyword {

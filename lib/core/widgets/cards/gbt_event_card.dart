@@ -122,7 +122,7 @@ class GBTEventCard extends StatelessWidget {
             color: isDark ? GBTColors.darkSurface : GBTColors.surface,
             borderRadius: resolvedHighlightColor == null
                 ? null
-                : BorderRadius.circular(GBTSpacing.radiusMd),
+                : BorderRadius.circular(GBTSpacing.radiusCard),
             border: resolvedHighlightColor == null
                 ? Border(
                     bottom: BorderSide(
@@ -529,7 +529,11 @@ class GBTFeaturedEventCard extends StatelessWidget {
         child: AnimatedContainer(
           duration: GBTAnimations.normal,
           curve: GBTAnimations.defaultCurve,
-          decoration: GBTDecorations.cardElevated(isDark: isDark),
+          // EN: 2026 large-radius (radiusCard) on this image-first card shell.
+          // KO: 이 이미지 우선 카드 셸에 2026 라지 라운드(radiusCard) 적용.
+          decoration: GBTDecorations.cardElevated(isDark: isDark).copyWith(
+            borderRadius: BorderRadius.circular(GBTSpacing.radiusCard),
+          ),
           clipBehavior: Clip.antiAlias,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -606,6 +610,21 @@ class GBTFeaturedEventCard extends StatelessWidget {
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           stops: const [0.4, 1.0],
+                        ),
+                      ),
+                    ),
+                  ),
+                  // EN: Glass-feel top edge hairline highlight.
+                  // KO: 글래스 느낌의 상단 엣지 헤어라인 하이라이트.
+                  const Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    child: SizedBox(
+                      height: 1,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: GBTDecorations.glassTopHairline,
                         ),
                       ),
                     ),

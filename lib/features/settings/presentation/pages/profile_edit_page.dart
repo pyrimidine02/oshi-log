@@ -1,10 +1,9 @@
-/// EN: Profile edit page — iOS-settings style, consistent with SettingsPage.
-/// KO: 프로필 편집 페이지 — SettingsPage와 동일한 iOS 설정 스타일.
+/// EN: Profile edit page using the passport-inspired field identity document.
+/// KO: 여권 모티프의 필드 신원 정보 문서를 사용하는 프로필 편집 페이지입니다.
 library;
 
 import 'dart:io';
 
-import 'package:crop_your_image/crop_your_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,20 +14,22 @@ import 'package:path/path.dart' as p;
 
 import '../../../../core/constants/profile_media_constants.dart';
 import '../../../../core/error/failure.dart';
+import '../../../../core/localization/locale_text.dart';
 import '../../../../core/providers/core_providers.dart';
 import '../../../../core/theme/gbt_colors.dart';
 import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';
 import '../../../../core/utils/result.dart';
 import '../../../../core/utils/sensitive_text_utils.dart';
-import '../../../../core/widgets/common/gbt_image.dart';
 import '../../../../core/widgets/dialogs/gbt_adaptive_dialog.dart';
 import '../../../../core/widgets/feedback/gbt_loading.dart';
-import '../../../../core/widgets/legal/legal_policy_links_section.dart';
+import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
 import '../../../uploads/application/uploads_controller.dart';
 import '../../../uploads/utils/webp_image_converter.dart';
 import '../../application/settings_controller.dart';
 import '../../domain/entities/user_profile.dart';
+import '../widgets/profile_edit_identity_document.dart';
+import '../widgets/profile_image_crop_dialog.dart';
 
 /// EN: Profile edit page widget.
 /// KO: 프로필 편집 페이지 위젯.
@@ -183,7 +184,10 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
 
     if (!isAuthenticated) {
       return Scaffold(
-        appBar: AppBar(title: const Text('프로필 수정')),
+        appBar: gbtStandardAppBar(
+          context,
+          title: context.l10n(ko: '프로필 수정', en: 'Edit profile', ja: 'プロフィール編集'),
+        ),
         body: _LoginRequired(onLogin: () => context.push('/login')),
       );
     }
@@ -201,8 +205,13 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
       child: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         child: Scaffold(
-          appBar: AppBar(
-            title: const Text('프로필 수정'),
+          appBar: gbtStandardAppBar(
+            context,
+            title: context.l10n(
+              ko: '프로필 수정',
+              en: 'Edit profile',
+              ja: 'プロフィール編集',
+            ),
             actions: [
               Semantics(
                 button: true,
@@ -324,7 +333,7 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
       final croppedBytes = await showDialog<Uint8List?>(
         context: context,
         barrierDismissible: false,
-        builder: (_) => _AndroidInAppCropDialog(
+        builder: (_) => ProfileImageCropDialog(
           title: title,
           imageBytes: sourceBytes,
           aspectRatio: aspectRatio,
@@ -543,8 +552,8 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
 }
 
 // ========================================
-// EN: Main profile form — iOS-settings layout matching SettingsPage
-// KO: 메인 프로필 폼 — SettingsPage와 동일한 iOS 설정 레이아웃
+// EN: Profile form adapter for the passport-inspired identity document.
+// KO: 여권 모티프 신원 정보 문서를 연결하는 프로필 폼 어댑터입니다.
 // ========================================
 class _ProfileForm extends StatelessWidget {
   const _ProfileForm({
@@ -581,874 +590,29 @@ class _ProfileForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return RefreshIndicator(
+    final joinedDate = profile.createdAt
+        .toLocal()
+        .toIso8601String()
+        .split('T')
+        .first;
+    return ProfileEditIdentityDocument(
       onRefresh: onRefresh,
-      child: ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        padding: const EdgeInsets.symmetric(
-          horizontal: GBTSpacing.md,
-          vertical: GBTSpacing.sm,
-        ),
-        children: [
-          // ── 이미지 섹션 ──────────────────────────────────────
-          _SectionHeader('이미지', isDark: isDark),
-          const SizedBox(height: GBTSpacing.xs),
-          _ImageSectionCard(
-            coverUrl: coverUrl,
-            avatarUrl: avatarUrl,
-            isUploadingCover: isUploadingCover,
-            isUploadingAvatar: isUploadingAvatar,
-            hasPendingCover: hasPendingCover,
-            hasPendingAvatar: hasPendingAvatar,
-            onChangeCover: onChangeCover,
-            onChangeAvatar: onChangeAvatar,
-            isDark: isDark,
-          ),
-
-          // ── 기본 정보 섹션 ────────────────────────────────────
-          const SizedBox(height: GBTSpacing.lg),
-          _SectionHeader('기본 정보', isDark: isDark),
-          const SizedBox(height: GBTSpacing.xs),
-          _BasicInfoCard(
-            displayNameController: displayNameController,
-            bioController: bioController,
-            maxDisplayNameLength: maxDisplayNameLength,
-            maxBioLength: maxBioLength,
-            isDark: isDark,
-          ),
-
-          // ── 계정 정보 섹션 (읽기 전용) ─────────────────────
-          const SizedBox(height: GBTSpacing.lg),
-          _SectionHeader('계정 정보', isDark: isDark),
-          const SizedBox(height: GBTSpacing.xs),
-          _AccountInfoCard(profile: profile, isDark: isDark),
-
-          const SizedBox(height: GBTSpacing.lg),
-          _SectionHeader('약관 및 정책', isDark: isDark),
-          const SizedBox(height: GBTSpacing.xs),
-          const LegalPolicyLinksSection(),
-
-          SizedBox(
-            height: GBTSpacing.xl + MediaQuery.of(context).padding.bottom,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ========================================
-// EN: Section header — matches SettingsPage _SettingsGroup label style
-// KO: 섹션 헤더 — SettingsPage _SettingsGroup 라벨 스타일 동일
-// ========================================
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader(this.title, {required this.isDark});
-
-  final String title;
-  final bool isDark;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(left: GBTSpacing.xs2),
-      child: Text(
-        title,
-        style: GBTTypography.labelSmall.copyWith(
-          color: isDark ? GBTColors.darkTextTertiary : GBTColors.textTertiary,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0.5,
-        ),
-      ),
-    );
-  }
-}
-
-// ========================================
-// EN: Section card container — matches _SettingsGroup card style exactly
-// KO: 섹션 카드 컨테이너 — _SettingsGroup 카드 스타일과 완전히 동일
-// ========================================
-class _SectionCard extends StatelessWidget {
-  const _SectionCard({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? GBTColors.darkSurfaceElevated : GBTColors.surface,
-        borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
-        border: Border.all(
-          color: isDark ? GBTColors.darkBorderSubtle : GBTColors.border,
-          width: 0.5,
-        ),
-      ),
-      child: child,
-    );
-  }
-}
-
-// ========================================
-// EN: Image section card — cover preview + avatar row
-// KO: 이미지 섹션 카드 — 커버 미리보기 + 아바타 행
-// ========================================
-class _ImageSectionCard extends StatelessWidget {
-  const _ImageSectionCard({
-    required this.coverUrl,
-    required this.avatarUrl,
-    required this.isUploadingCover,
-    required this.isUploadingAvatar,
-    required this.hasPendingCover,
-    required this.hasPendingAvatar,
-    required this.onChangeCover,
-    required this.onChangeAvatar,
-    required this.isDark,
-  });
-
-  final String? coverUrl;
-  final String? avatarUrl;
-  final bool isUploadingCover;
-  final bool isUploadingAvatar;
-  final bool hasPendingCover;
-  final bool hasPendingAvatar;
-  final VoidCallback onChangeCover;
-  final VoidCallback onChangeAvatar;
-  final bool isDark;
-
-  @override
-  Widget build(BuildContext context) {
-    final dividerColor = isDark
-        ? GBTColors.darkBorderSubtle
-        : GBTColors.divider;
-
-    return _SectionCard(
-      child: Column(
-        children: [
-          // EN: Cover photo tap area — rounded top corners
-          // KO: 커버 사진 탭 영역 — 상단 모서리 둥글게
-          Semantics(
-            button: true,
-            label: '배경 이미지 변경',
-            child: _CoverTile(
-              coverUrl: coverUrl,
-              isUploading: isUploadingCover,
-              hasPending: hasPendingCover,
-              onTap: isUploadingCover ? null : onChangeCover,
-              isDark: isDark,
-            ),
-          ),
-          Divider(height: 1, color: dividerColor),
-          // EN: Avatar row — settings-row style
-          // KO: 아바타 행 — 설정 행 스타일
-          _AvatarTile(
-            avatarUrl: avatarUrl,
-            isUploading: isUploadingAvatar,
-            hasPending: hasPendingAvatar,
-            onTap: isUploadingAvatar ? null : onChangeAvatar,
-            isDark: isDark,
-            isLast: true,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ========================================
-// EN: Cover photo tile — rounded top, camera overlay, pending badge
-// KO: 커버 사진 타일 — 상단 둥글기, 카메라 오버레이, 대기 뱃지
-// ========================================
-class _CoverTile extends StatelessWidget {
-  const _CoverTile({
-    required this.coverUrl,
-    required this.isUploading,
-    required this.hasPending,
-    required this.onTap,
-    required this.isDark,
-  });
-
-  final String? coverUrl;
-  final bool isUploading;
-  final bool hasPending;
-  final VoidCallback? onTap;
-  final bool isDark;
-
-  @override
-  Widget build(BuildContext context) {
-    final hasImage = coverUrl != null && coverUrl!.isNotEmpty;
-    const topRadius = BorderRadius.only(
-      topLeft: Radius.circular(GBTSpacing.radiusMd),
-      topRight: Radius.circular(GBTSpacing.radiusMd),
-    );
-
-    return GestureDetector(
-      onTap: onTap,
-      child: ClipRRect(
-        borderRadius: topRadius,
-        child: AspectRatio(
-          aspectRatio: profileCoverAspectRatio,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              // EN: Cover image or placeholder gradient
-              // KO: 커버 이미지 또는 플레이스홀더 그라디언트
-              if (hasImage)
-                GBTImage(
-                  imageUrl: coverUrl!,
-                  width: double.infinity,
-                  height: double.infinity,
-                  fit: BoxFit.cover,
-                  semanticLabel: '배경 이미지',
-                )
-              else
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: isDark
-                          ? [
-                              GBTColors.darkSurfaceVariant,
-                              GBTColors.darkSurfaceElevated,
-                            ]
-                          : [
-                              GBTColors.surfaceVariant,
-                              GBTColors.surfaceAlternate,
-                            ],
-                    ),
-                  ),
-                ),
-
-              // EN: Overlay with camera chip — always visible, not distracting
-              // KO: 카메라 칩 오버레이 — 항상 노출, 시각적으로 방해되지 않게
-              if (!isUploading)
-                Container(
-                  color: Colors.black.withValues(alpha: 0.18),
-                  child: Center(
-                    child: _CameraChip(label: hasImage ? '배경 변경' : '배경 추가'),
-                  ),
-                )
-              else
-                Container(
-                  color: Colors.black.withValues(alpha: 0.45),
-                  child: const Center(
-                    child: SizedBox(
-                      width: 28,
-                      height: 28,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.5,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-
-              // EN: Pending upload dot — top right
-              // KO: 저장 대기 점 — 우상단
-              if (hasPending && !isUploading)
-                Positioned(
-                  top: GBTSpacing.sm,
-                  right: GBTSpacing.sm,
-                  child: _PendingDot(),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ========================================
-// EN: Camera chip — icon + label pill button on cover/avatar
-// KO: 카메라 칩 — 커버/아바타 위 아이콘+라벨 필 버튼
-// ========================================
-class _CameraChip extends StatelessWidget {
-  const _CameraChip({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: GBTSpacing.sm,
-        vertical: GBTSpacing.xs,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.52),
-        borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.camera_alt_rounded, size: 13, color: Colors.white),
-          const SizedBox(width: GBTSpacing.xxs + 1),
-          Text(
-            label,
-            style: GBTTypography.labelSmall.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ========================================
-// EN: Avatar settings-row tile — consistent with _SettingsRow pattern
-// KO: 아바타 설정 행 타일 — _SettingsRow 패턴과 동일
-// ========================================
-class _AvatarTile extends StatelessWidget {
-  const _AvatarTile({
-    required this.avatarUrl,
-    required this.isUploading,
-    required this.hasPending,
-    required this.onTap,
-    required this.isDark,
-    this.isLast = false,
-  });
-
-  final String? avatarUrl;
-  final bool isUploading;
-  final bool hasPending;
-  final VoidCallback? onTap;
-  final bool isDark;
-  final bool isLast;
-
-  @override
-  Widget build(BuildContext context) {
-    final textPrimary = isDark
-        ? GBTColors.darkTextPrimary
-        : GBTColors.textPrimary;
-    final textTertiary = isDark
-        ? GBTColors.darkTextTertiary
-        : GBTColors.textTertiary;
-    final hasImage = avatarUrl != null && avatarUrl!.isNotEmpty;
-
-    return Semantics(
-      button: true,
-      label: '프로필 사진 변경',
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: isLast
-            ? const BorderRadius.only(
-                bottomLeft: Radius.circular(GBTSpacing.radiusMd),
-                bottomRight: Radius.circular(GBTSpacing.radiusMd),
-              )
-            : null,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: GBTSpacing.md,
-            vertical: GBTSpacing.sm + 4,
-          ),
-          child: Row(
-            children: [
-              // EN: Avatar thumbnail with loading/pending overlay
-              // KO: 로딩/대기 오버레이가 있는 아바타 썸네일
-              Stack(
-                children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isDark
-                          ? GBTColors.darkSurfaceVariant
-                          : GBTColors.surfaceVariant,
-                    ),
-                    child: hasImage
-                        ? ClipOval(
-                            child: GBTImage(
-                              imageUrl: avatarUrl!,
-                              width: 44,
-                              height: 44,
-                              fit: BoxFit.cover,
-                              semanticLabel: '프로필 이미지',
-                            ),
-                          )
-                        : Icon(
-                            Icons.person_rounded,
-                            size: 24,
-                            color: textTertiary,
-                          ),
-                  ),
-                  if (isUploading)
-                    Positioned.fill(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.4),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Center(
-                          child: SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  if (hasPending && !isUploading)
-                    Positioned(right: 0, bottom: 0, child: _PendingDot()),
-                ],
-              ),
-              const SizedBox(width: GBTSpacing.md),
-              // EN: Label column
-              // KO: 레이블 컬럼
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '프로필 사진',
-                      style: GBTTypography.bodyMedium.copyWith(
-                        color: textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 1),
-                    Text(
-                      isUploading ? '업로드 중...' : '갤러리에서 변경',
-                      style: GBTTypography.labelSmall.copyWith(
-                        color: textTertiary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(Icons.chevron_right_rounded, size: 18, color: textTertiary),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ========================================
-// EN: Basic info card — name (inline) + bio (stacked), no visible borders
-// KO: 기본 정보 카드 — 이름(인라인) + 소개(스택), 테두리 없는 입력
-// ========================================
-class _BasicInfoCard extends StatelessWidget {
-  const _BasicInfoCard({
-    required this.displayNameController,
-    required this.bioController,
-    required this.maxDisplayNameLength,
-    required this.maxBioLength,
-    required this.isDark,
-  });
-
-  final TextEditingController displayNameController;
-  final TextEditingController bioController;
-  final int maxDisplayNameLength;
-  final int maxBioLength;
-  final bool isDark;
-
-  @override
-  Widget build(BuildContext context) {
-    final dividerColor = isDark
-        ? GBTColors.darkBorderSubtle
-        : GBTColors.divider;
-    final textPrimary = isDark
-        ? GBTColors.darkTextPrimary
-        : GBTColors.textPrimary;
-    final textSecondary = isDark
-        ? GBTColors.darkTextSecondary
-        : GBTColors.textSecondary;
-    final textTertiary = isDark
-        ? GBTColors.darkTextTertiary
-        : GBTColors.textTertiary;
-    final focusedColor = isDark ? GBTColors.darkPrimary : GBTColors.primary;
-
-    return _SectionCard(
-      child: Column(
-        children: [
-          // EN: Display name — label left, text field right (iOS-style inline)
-          // KO: 표시 이름 — 왼쪽 라벨, 오른쪽 텍스트 필드 (iOS 스타일 인라인)
-          Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: GBTSpacing.md,
-              vertical: GBTSpacing.sm + 4,
-            ),
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 88,
-                  child: Text(
-                    '표시 이름',
-                    style: GBTTypography.bodyMedium.copyWith(
-                      color: textPrimary,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: TextField(
-                    controller: displayNameController,
-                    maxLength: maxDisplayNameLength,
-                    textAlign: TextAlign.end,
-                    textInputAction: TextInputAction.next,
-                    style: GBTTypography.bodyMedium.copyWith(
-                      color: textSecondary,
-                    ),
-                    decoration: InputDecoration(
-                      hintText: '닉네임 입력',
-                      hintStyle: GBTTypography.bodyMedium.copyWith(
-                        color: textTertiary,
-                      ),
-                      filled: false,
-                      border: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      focusedBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: focusedColor, width: 1.5),
-                      ),
-                      counterText: '',
-                      isDense: true,
-                      contentPadding: EdgeInsets.zero,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Divider(height: 1, indent: GBTSpacing.md, color: dividerColor),
-          // EN: Bio — label + counter on top, multiline field below
-          // KO: 소개 — 상단 라벨+카운터, 하단 멀티라인 필드
-          Padding(
-            padding: const EdgeInsets.all(GBTSpacing.md),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      '소개',
-                      style: GBTTypography.bodyMedium.copyWith(
-                        color: textPrimary,
-                      ),
-                    ),
-                    const Spacer(),
-                    ListenableBuilder(
-                      listenable: bioController,
-                      builder: (context, _) => Text(
-                        '${bioController.text.length}/$maxBioLength',
-                        style: GBTTypography.labelSmall.copyWith(
-                          color: textTertiary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: GBTSpacing.xs2),
-                TextField(
-                  controller: bioController,
-                  maxLength: maxBioLength,
-                  maxLines: null,
-                  minLines: 3,
-                  style: GBTTypography.bodyMedium.copyWith(
-                    color: textSecondary,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: '나를 간단히 소개해 보세요',
-                    hintStyle: GBTTypography.bodyMedium.copyWith(
-                      color: textTertiary,
-                    ),
-                    filled: false,
-                    border: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                    counterText: '',
-                    isDense: true,
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ========================================
-// EN: Account info card — read-only rows matching _SettingsRow style
-// KO: 계정 정보 카드 — _SettingsRow 스타일의 읽기 전용 행
-// ========================================
-class _AccountInfoCard extends StatelessWidget {
-  const _AccountInfoCard({required this.profile, required this.isDark});
-
-  final UserProfile profile;
-  final bool isDark;
-
-  @override
-  Widget build(BuildContext context) {
-    final dividerColor = isDark
-        ? GBTColors.darkBorderSubtle
-        : GBTColors.divider;
-
-    return _SectionCard(
-      child: Column(
-        children: [
-          _AccountInfoRow(
-            icon: Icons.mail_outline_rounded,
-            iconBgColor: const Color(0xFF3B82F6),
-            label: '이메일',
-            value: maskEmail(profile.email),
-            isDark: isDark,
-          ),
-          Divider(
-            height: 1,
-            indent: GBTSpacing.md + 36 + GBTSpacing.md,
-            endIndent: GBTSpacing.md,
-            color: dividerColor,
-          ),
-          _AccountInfoRow(
-            icon: Icons.verified_user_outlined,
-            iconBgColor: const Color(0xFF10B981),
-            label: '권한',
-            value:
-                '${profile.accountRole} · ${profile.effectiveAccessLevelLabel}',
-            isDark: isDark,
-            isLast: true,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ========================================
-// EN: Account info row — mirrors _SettingsRow but without InkWell (read-only)
-// KO: 계정 정보 행 — InkWell 없는 읽기 전용 _SettingsRow 미러
-// ========================================
-class _AccountInfoRow extends StatelessWidget {
-  const _AccountInfoRow({
-    required this.icon,
-    required this.iconBgColor,
-    required this.label,
-    required this.value,
-    required this.isDark,
-    this.isLast = false,
-  });
-
-  final IconData icon;
-  final Color iconBgColor;
-  final String label;
-  final String value;
-  final bool isDark;
-  final bool isLast;
-
-  @override
-  Widget build(BuildContext context) {
-    final textPrimary = isDark
-        ? GBTColors.darkTextPrimary
-        : GBTColors.textPrimary;
-    final textTertiary = isDark
-        ? GBTColors.darkTextTertiary
-        : GBTColors.textTertiary;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: GBTSpacing.md,
-        vertical: GBTSpacing.sm + 4,
-      ),
-      child: Row(
-        children: [
-          // EN: Colored icon container — same as _SettingsRow 36x36
-          // KO: 컬러 아이콘 컨테이너 — _SettingsRow 36x36과 동일
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: iconBgColor.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
-            ),
-            child: Icon(icon, color: iconBgColor, size: 20),
-          ),
-          const SizedBox(width: GBTSpacing.md),
-          // EN: Label
-          // KO: 라벨
-          Text(
-            label,
-            style: GBTTypography.bodyMedium.copyWith(color: textPrimary),
-          ),
-          const Spacer(),
-          // EN: Value (right-aligned, muted)
-          // KO: 값 (우측 정렬, 회색 처리)
-          Text(
-            value,
-            style: GBTTypography.bodySmall.copyWith(color: textTertiary),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ========================================
-// EN: Android in-app crop dialog — avoids native activity crashes while
-//     preserving interactive crop UX.
-// KO: Android 인앱 크롭 다이얼로그 — 네이티브 Activity 크래시를 피하면서
-//     상호작용 크롭 UX를 유지합니다.
-// ========================================
-class _AndroidInAppCropDialog extends StatefulWidget {
-  const _AndroidInAppCropDialog({
-    required this.title,
-    required this.imageBytes,
-    required this.aspectRatio,
-  });
-
-  final String title;
-  final Uint8List imageBytes;
-  final double aspectRatio;
-
-  @override
-  State<_AndroidInAppCropDialog> createState() =>
-      _AndroidInAppCropDialogState();
-}
-
-class _AndroidInAppCropDialogState extends State<_AndroidInAppCropDialog> {
-  final CropController _cropController = CropController();
-  bool _isCropping = false;
-
-  void _startCrop() {
-    if (_isCropping) return;
-    setState(() => _isCropping = true);
-    _cropController.crop();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final surface = isDark ? GBTColors.darkSurface : GBTColors.surface;
-    final border = isDark ? GBTColors.darkBorderSubtle : GBTColors.border;
-    final textPrimary = isDark
-        ? GBTColors.darkTextPrimary
-        : GBTColors.textPrimary;
-
-    return Dialog(
-      backgroundColor: surface,
-      insetPadding: const EdgeInsets.symmetric(
-        horizontal: GBTSpacing.md,
-        vertical: GBTSpacing.lg,
-      ),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(GBTSpacing.radiusLg),
-      ),
-      child: SizedBox(
-        height: MediaQuery.sizeOf(context).height * 0.76,
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                GBTSpacing.sm,
-                GBTSpacing.sm,
-                GBTSpacing.sm,
-                GBTSpacing.xs,
-              ),
-              child: Row(
-                children: [
-                  TextButton(
-                    onPressed: _isCropping
-                        ? null
-                        : () => Navigator.of(context).pop(),
-                    child: const Text('취소'),
-                  ),
-                  Expanded(
-                    child: Text(
-                      widget.title,
-                      textAlign: TextAlign.center,
-                      style: GBTTypography.titleSmall.copyWith(
-                        color: textPrimary,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: _isCropping ? null : _startCrop,
-                    child: _isCropping
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Text('적용'),
-                  ),
-                ],
-              ),
-            ),
-            Divider(height: 1, color: border),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(GBTSpacing.sm),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
-                  child: Crop(
-                    image: widget.imageBytes,
-                    controller: _cropController,
-                    aspectRatio: widget.aspectRatio,
-                    interactive: true,
-                    fixCropRect: true,
-                    radius: GBTSpacing.radiusSm,
-                    baseColor: Colors.black,
-                    maskColor: Colors.black.withValues(alpha: 0.55),
-                    onStatusChanged: (status) {
-                      if (!mounted) return;
-                      if (status != CropStatus.cropping && _isCropping) {
-                        setState(() => _isCropping = false);
-                      }
-                    },
-                    onCropped: (result) {
-                      if (!mounted) return;
-                      switch (result) {
-                        case CropSuccess(:final croppedImage):
-                          Navigator.of(context).pop(croppedImage);
-                        case CropFailure():
-                          Navigator.of(context).pop(Uint8List(0));
-                      }
-                    },
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ========================================
-// EN: Pending dot — small orange indicator for unsaved uploads
-// KO: 저장 대기 점 — 업로드 대기 중 주황색 인디케이터
-// ========================================
-class _PendingDot extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 10,
-      height: 10,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: GBTColors.warning,
-        border: Border.all(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? GBTColors.darkSurfaceElevated
-              : GBTColors.surface,
-          width: 1.5,
-        ),
-      ),
+      displayNameController: displayNameController,
+      bioController: bioController,
+      avatarUrl: avatarUrl,
+      coverUrl: coverUrl,
+      maxDisplayNameLength: maxDisplayNameLength,
+      maxBioLength: maxBioLength,
+      maskedEmail: maskEmail(profile.email),
+      accessLabel:
+          '${profile.accountRole} / ${profile.effectiveAccessLevelLabel}',
+      memberSinceLabel: joinedDate,
+      hasPendingAvatar: hasPendingAvatar,
+      hasPendingCover: hasPendingCover,
+      isUploadingAvatar: isUploadingAvatar,
+      isUploadingCover: isUploadingCover,
+      onChangeAvatar: onChangeAvatar,
+      onChangeCover: onChangeCover,
     );
   }
 }

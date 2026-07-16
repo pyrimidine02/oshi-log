@@ -142,10 +142,12 @@ class LiveAttendanceStateDto {
     required this.attended,
     required this.status,
     required this.canUndo,
+    this.attendanceId,
     this.verificationMethod,
     this.attendedAt,
   });
 
+  final String? attendanceId;
   final String liveEventId;
   final bool attended;
   final String status;
@@ -157,11 +159,9 @@ class LiveAttendanceStateDto {
     final status = (json['status'] as String? ?? 'NONE').toUpperCase();
     final attendedValue = json['attended'];
     return LiveAttendanceStateDto(
+      attendanceId: _nonEmptyStringOrNull(json['attendanceId'] ?? json['id']),
       liveEventId:
-          json['liveEventId'] as String? ??
-          json['eventId'] as String? ??
-          json['id'] as String? ??
-          '',
+          json['liveEventId'] as String? ?? json['eventId'] as String? ?? '',
       attended: attendedValue == null
           ? status != 'NONE'
           : _boolOrFallback(attendedValue, false),
@@ -174,6 +174,7 @@ class LiveAttendanceStateDto {
 
   Map<String, dynamic> toJson() {
     return {
+      if (attendanceId != null) 'id': attendanceId,
       'liveEventId': liveEventId,
       'attended': attended,
       'status': status,
@@ -240,4 +241,9 @@ bool _boolOrFallback(dynamic value, bool fallback) {
     }
   }
   return fallback;
+}
+
+String? _nonEmptyStringOrNull(dynamic value) {
+  final normalized = value?.toString().trim();
+  return normalized == null || normalized.isEmpty ? null : normalized;
 }

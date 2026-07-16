@@ -37,8 +37,7 @@ final fanLevelRepositoryProvider = Provider<FanLevelRepository>((ref) {
 ///     Loads on construction and exposes [refresh] and [checkIn] mutations.
 /// KO: 일일 출석 체크 지원을 포함한 팬 레벨 프로필을 관리합니다.
 ///     생성 시 로드하며, [refresh]와 [checkIn] 변이를 제공합니다.
-class FanLevelNotifier
-    extends StateNotifier<AsyncValue<FanLevelProfile?>> {
+class FanLevelNotifier extends StateNotifier<AsyncValue<FanLevelProfile?>> {
   FanLevelNotifier(this._repository) : super(const AsyncValue.loading()) {
     _load();
   }
@@ -73,36 +72,11 @@ class FanLevelNotifier
   Future<CheckInResult?> checkIn() async {
     final result = await _repository.checkIn();
     if (!mounted) return null;
-    final checkInResult = result.when(
-      success: (r) => r,
-      failure: (_) => null,
-    );
+    final checkInResult = result.when(success: (r) => r, failure: (_) => null);
     if (checkInResult != null) {
       await _load();
     }
     return checkInResult;
-  }
-
-  /// EN: Records an in-app activity and grants XP, then refreshes the profile.
-  ///     Returns [EarnXpResult] on success, or null on failure (e.g. already granted).
-  /// KO: 앱 내 활동을 기록하고 XP를 부여한 후 프로필을 새로 불러옵니다.
-  ///     성공 시 [EarnXpResult]를 반환하고, 실패 시 null을 반환합니다.
-  Future<EarnXpResult?> earnXp(
-    String activityType,
-    String entityId, {
-    String? projectId,
-  }) async {
-    final result = await _repository.earnXp(
-      activityType,
-      entityId,
-      projectId: projectId,
-    );
-    if (!mounted) return null;
-    final earnResult = result.when(success: (r) => r, failure: (_) => null);
-    if (earnResult != null) {
-      await _load();
-    }
-    return earnResult;
   }
 }
 
@@ -115,11 +89,14 @@ class FanLevelNotifier
 ///     Auto-disposed so fan level data is refreshed each time the page opens.
 /// KO: [FanLevelNotifier]를 위한 자동 해제 프로바이더.
 ///     페이지가 열릴 때마다 팬 레벨 데이터를 새로 불러오도록 autoDispose를 사용합니다.
-final fanLevelControllerProvider = StateNotifierProvider.autoDispose<
-    FanLevelNotifier, AsyncValue<FanLevelProfile?>>((ref) {
-  final repository = ref.watch(fanLevelRepositoryProvider);
-  return FanLevelNotifier(repository);
-});
+final fanLevelControllerProvider =
+    StateNotifierProvider.autoDispose<
+      FanLevelNotifier,
+      AsyncValue<FanLevelProfile?>
+    >((ref) {
+      final repository = ref.watch(fanLevelRepositoryProvider);
+      return FanLevelNotifier(repository);
+    });
 
 // =============================================================================
 // EN: Internal placeholder notifiers for loading / error repository states.
@@ -151,14 +128,6 @@ class _NopFanLevelRepository implements FanLevelRepository {
 
   @override
   Future<Result<CheckInResult>> checkIn() async =>
-      const Result.failure(UnknownFailure('not initialized'));
-
-  @override
-  Future<Result<EarnXpResult>> earnXp(
-    String activityType,
-    String entityId, {
-    String? projectId,
-  }) async =>
       const Result.failure(UnknownFailure('not initialized'));
 }
 

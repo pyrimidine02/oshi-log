@@ -8,6 +8,7 @@ import '../../../../core/utils/result.dart';
 import '../../domain/entities/oauth_provider.dart';
 import '../dto/apple_link_existing_request.dart';
 import '../dto/apple_oauth_request.dart';
+import '../dto/account_recovery_password_request.dart';
 import '../dto/change_password_request.dart';
 import '../dto/change_password_response.dart';
 import '../dto/connect_apple_request.dart';
@@ -39,6 +40,38 @@ class AuthRemoteDataSource {
   Future<Result<TokenResponse>> login(LoginRequest request) {
     return _apiClient.post<TokenResponse>(
       ApiEndpoints.login,
+      data: request.toJson(),
+      fromJson: (json) => TokenResponse.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  /// EN: Restores an inactive password account after explicit user consent.
+  /// KO: 사용자가 명시적으로 동의한 후 비활성 비밀번호 계정을 복구합니다.
+  Future<Result<TokenResponse>> recoverWithPassword(
+    AccountRecoveryPasswordRequest request,
+  ) {
+    return _apiClient.post<TokenResponse>(
+      ApiEndpoints.accountRecoveryPassword,
+      data: request.toJson(),
+      fromJson: (json) => TokenResponse.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  /// EN: Restores an inactive Google account after provider verification.
+  /// KO: Google 소유권 확인 후 비활성 계정을 복구합니다.
+  Future<Result<TokenResponse>> recoverWithGoogle(GoogleOAuthRequest request) {
+    return _apiClient.post<TokenResponse>(
+      ApiEndpoints.accountRecoveryGoogle,
+      data: request.toJson(),
+      fromJson: (json) => TokenResponse.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  /// EN: Restores an inactive Apple account after provider verification.
+  /// KO: Apple 소유권 확인 후 비활성 계정을 복구합니다.
+  Future<Result<TokenResponse>> recoverWithApple(AppleOAuthRequest request) {
+    return _apiClient.post<TokenResponse>(
+      ApiEndpoints.accountRecoveryApple,
       data: request.toJson(),
       fromJson: (json) => TokenResponse.fromJson(json as Map<String, dynamic>),
     );
@@ -273,11 +306,14 @@ class AuthRemoteDataSource {
         }
         if (json is Map<String, dynamic>) {
           final items =
-              json['policies'] ?? json['items'] ?? json['data'] ?? json['content'];
+              json['policies'] ??
+              json['items'] ??
+              json['data'] ??
+              json['content'];
           if (items is List) {
-            return items
-                .whereType<Map<String, dynamic>>()
-                .toList(growable: false);
+            return items.whereType<Map<String, dynamic>>().toList(
+              growable: false,
+            );
           }
         }
         return const <Map<String, dynamic>>[];

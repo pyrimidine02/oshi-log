@@ -25,17 +25,14 @@ class HomeBannerDto {
       // EN: Accept both camelCase and snake_case from the server.
       // KO: 서버에서 camelCase와 snake_case를 모두 허용합니다.
       imageUrl:
-          json['imageUrl'] as String? ??
-          json['image_url'] as String? ??
-          '',
+          json['imageUrl'] as String? ?? json['image_url'] as String? ?? '',
       title: json['title'] as String?,
       subtitle: json['subtitle'] as String?,
       actionType:
           json['actionType'] as String? ?? json['action_type'] as String?,
       actionValue:
           json['actionValue'] as String? ?? json['action_value'] as String?,
-      sortOrder:
-          json['sortOrder'] as int? ?? json['sort_order'] as int? ?? 0,
+      sortOrder: json['sortOrder'] as int? ?? json['sort_order'] as int? ?? 0,
     );
   }
 

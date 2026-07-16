@@ -6,10 +6,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/localization/locale_text.dart';
+import '../../../../core/theme/gbt_colors.dart';
 import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';
 import '../../../../core/utils/result.dart';
 import '../../../../core/widgets/feedback/gbt_loading.dart';
+import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
 import '../../application/settings_controller.dart';
 import '../../domain/entities/consent_history.dart';
 
@@ -21,10 +23,9 @@ class ConsentHistoryPage extends ConsumerWidget {
     final state = ref.watch(consentHistoryProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          context.l10n(ko: '동의 이력', en: 'Consent history', ja: '同意履歴'),
-        ),
+      appBar: gbtStandardAppBar(
+        context,
+        title: context.l10n(ko: '동의 이력', en: 'Consent history', ja: '同意履歴'),
       ),
       body: RefreshIndicator(
         onRefresh: () async {
@@ -82,7 +83,10 @@ class ConsentHistoryPage extends ConsumerWidget {
               padding: const EdgeInsets.all(GBTSpacing.md),
               itemBuilder: (context, index) =>
                   _ConsentHistoryTile(item: items[index]),
-              separatorBuilder: (_, _) => const SizedBox(height: GBTSpacing.sm),
+              separatorBuilder: (context, _) => Divider(
+                height: GBTSpacing.lg,
+                color: Theme.of(context).dividerColor,
+              ),
               itemCount: items.length,
             );
           },
@@ -113,15 +117,10 @@ class _ConsentHistoryTile extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Container(
-      padding: const EdgeInsets.all(GBTSpacing.md),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
-        border: Border.all(
-          color: colorScheme.outlineVariant.withValues(alpha: 0.5),
-          width: 0.5,
-        ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: GBTSpacing.xs,
+        vertical: GBTSpacing.sm,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -132,7 +131,7 @@ class _ConsentHistoryTile extends StatelessWidget {
                 item.agreed ? Icons.check_circle_rounded : Icons.cancel_rounded,
                 size: 16,
                 color: item.agreed
-                    ? (isDark ? Colors.lightGreenAccent : Colors.green)
+                    ? (isDark ? GBTColors.darkSecondary : GBTColors.success)
                     : colorScheme.error,
               ),
               const SizedBox(width: GBTSpacing.xs),

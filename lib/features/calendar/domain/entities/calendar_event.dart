@@ -36,14 +36,16 @@ enum CalendarEventType {
   /// EN: Creates a [CalendarEventType] from a raw string value.
   /// KO: 원시 문자열 값으로 [CalendarEventType]을 생성합니다.
   static CalendarEventType fromString(String? raw) {
-    return switch (raw?.toLowerCase()) {
-      'character_birthday' || 'characterbirthday' =>
-        CalendarEventType.characterBirthday,
-      'voice_actor_birthday' || 'voiceactorbirthday' =>
-        CalendarEventType.voiceActorBirthday,
+    return switch (raw?.trim().toLowerCase()) {
+      'birthday_character' ||
+      'character_birthday' ||
+      'characterbirthday' => CalendarEventType.characterBirthday,
+      'birthday_voice_actor' ||
+      'voice_actor_birthday' ||
+      'voiceactorbirthday' => CalendarEventType.voiceActorBirthday,
       'release' => CalendarEventType.release,
       'live' => CalendarEventType.live,
-      'ticket_sale' || 'ticketsale' => CalendarEventType.ticketSale,
+      'ticket' || 'ticket_sale' || 'ticketsale' => CalendarEventType.ticketSale,
       'streaming' => CalendarEventType.streaming,
       _ => CalendarEventType.general,
     };

@@ -7,12 +7,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/localization/locale_text.dart';
 import '../../../../core/router/app_router.dart';
-import '../../../../core/theme/gbt_colors.dart';
 import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';
 import '../../../../core/widgets/common/gbt_image.dart';
-import '../../../../core/widgets/feedback/gbt_loading.dart';
-import '../../../../core/widgets/navigation/gbt_app_bar_icon_button.dart';
+import '../../../../core/widgets/feedback/gbt_empty_state.dart';
 import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
 import '../../application/local_post_bookmarks_controller.dart';
 
@@ -29,13 +27,6 @@ class PostBookmarksPage extends ConsumerWidget {
       appBar: gbtStandardAppBar(
         context,
         title: context.l10n(ko: '북마크한 글', en: 'Bookmarks', ja: 'ブックマーク'),
-        actions: [
-          GBTAppBarIconButton(
-            icon: Icons.refresh,
-            tooltip: context.l10n(ko: '새로고침', en: 'Refresh', ja: '更新'),
-            onPressed: () {},
-          ),
-        ],
       ),
       body: posts.isEmpty
           ? ListView(
@@ -45,141 +36,120 @@ class PostBookmarksPage extends ConsumerWidget {
                 const SizedBox(height: GBTSpacing.sm),
                 GBTEmptyState(
                   icon: Icons.bookmark_border_rounded,
-                  message: context.l10n(
-                    ko: '북마크한 글이 없습니다.\n게시글 하단 북마크 버튼을 눌러 저장하세요.',
-                    en: 'No bookmarked posts.\nTap the bookmark button on a post to save it.',
-                    ja: 'ブックマークした投稿がありません。\n投稿下部のブックマークボタンで保存できます。',
+                  title: context.l10n(
+                    ko: '북마크한 글이 없습니다',
+                    en: 'No bookmarked posts',
+                    ja: 'ブックマークした投稿がありません',
+                  ),
+                  subtitle: context.l10n(
+                    ko: '게시글 하단 북마크 버튼을 눌러 저장하세요.',
+                    en: 'Tap the bookmark button on a post to save it.',
+                    ja: '投稿下部のブックマークボタンで保存できます。',
                   ),
                 ),
               ],
             )
-          : ListView.builder(
+          : ListView.separated(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(
-                GBTSpacing.pageHorizontal,
-                GBTSpacing.sm,
-                GBTSpacing.pageHorizontal,
-                GBTSpacing.xl,
-              ),
+              padding: const EdgeInsets.only(bottom: GBTSpacing.xl),
               itemCount: posts.length,
               itemBuilder: (context, index) {
                 final item = posts[index];
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: GBTSpacing.sm),
-                  child: _BookmarkedPostCard(
-                    item: item,
-                    onTap: () {
-                      if (item.postId.isEmpty) return;
-                      context.goToPostDetail(
-                        item.postId,
-                        projectCode: item.projectCode,
-                      );
-                    },
-                  ),
+                return BookmarkedPostRow(
+                  item: item,
+                  onTap: () {
+                    if (item.postId.isEmpty) return;
+                    context.goToPostDetail(
+                      item.postId,
+                      projectCode: item.projectCode,
+                    );
+                  },
                 );
               },
+              separatorBuilder: (_, __) => const Divider(
+                height: 1,
+                indent: 96,
+                endIndent: GBTSpacing.pageHorizontal,
+              ),
             ),
     );
   }
 }
 
-class _BookmarkedPostCard extends StatelessWidget {
-  const _BookmarkedPostCard({required this.item, required this.onTap});
+class BookmarkedPostRow extends StatelessWidget {
+  const BookmarkedPostRow({super.key, required this.item, required this.onTap});
 
   final LocalBookmarkedPost item;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark
-        ? GBTColors.darkTextPrimary
-        : GBTColors.textPrimary;
-    final textTertiary = isDark
-        ? GBTColors.darkTextTertiary
-        : GBTColors.textTertiary;
-    final surfaceColor = isDark ? GBTColors.darkSurfaceElevated : Colors.white;
-    final borderColor = isDark ? GBTColors.darkBorder : GBTColors.border;
+    final colors = Theme.of(context).colorScheme;
 
     return Semantics(
       label:
           '${context.l10n(ko: "북마크", en: "Bookmark", ja: "ブックマーク")}: ${item.title.isNotEmpty ? item.title : context.l10n(ko: "게시글", en: "Post", ja: "投稿")}',
       button: true,
-      child: Material(
-        color: surfaceColor,
-        borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: Container(
-            decoration: BoxDecoration(
-              border: Border.all(color: borderColor, width: 0.5),
-              borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
-            ),
-            child: Row(
-              children: [
-                if (item.thumbnailUrl != null &&
-                    item.thumbnailUrl!.isNotEmpty) ...[
-                  ClipRRect(
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(GBTSpacing.radiusMd - 1),
-                      bottomLeft: Radius.circular(GBTSpacing.radiusMd - 1),
-                    ),
-                    child: GBTImage(
-                      imageUrl: item.thumbnailUrl!,
-                      width: 72,
-                      height: 72,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ] else ...[
-                  Container(
-                    width: 72,
-                    height: 72,
-                    decoration: BoxDecoration(
-                      color: (isDark
-                          ? GBTColors.darkSurfaceVariant
-                          : GBTColors.surfaceVariant),
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(GBTSpacing.radiusMd - 1),
-                        bottomLeft: Radius.circular(GBTSpacing.radiusMd - 1),
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: GBTSpacing.pageHorizontal,
+            vertical: GBTSpacing.sm2,
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
+                child:
+                    item.thumbnailUrl != null && item.thumbnailUrl!.isNotEmpty
+                    ? GBTImage(
+                        imageUrl: item.thumbnailUrl!,
+                        width: 64,
+                        height: 64,
+                        fit: BoxFit.cover,
+                      )
+                    : ColoredBox(
+                        color: colors.surfaceContainerHighest,
+                        child: SizedBox(
+                          width: 64,
+                          height: 64,
+                          child: Icon(
+                            Icons.bookmark_outline_rounded,
+                            size: 24,
+                            color: colors.onSurfaceVariant,
+                          ),
+                        ),
                       ),
+              ),
+              const SizedBox(width: GBTSpacing.md),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: GBTSpacing.xs),
+                  child: Text(
+                    item.title.isNotEmpty
+                        ? item.title
+                        : context.l10n(ko: '게시글', en: 'Post', ja: '投稿'),
+                    style: GBTTypography.bodyMedium.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: colors.onSurface,
                     ),
-                    child: Icon(
-                      Icons.chat_bubble_rounded,
-                      size: 28,
-                      color: textTertiary.withValues(alpha: 0.5),
-                    ),
-                  ),
-                ],
-                const SizedBox(width: GBTSpacing.md),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: GBTSpacing.md,
-                    ),
-                    child: Text(
-                      item.title.isNotEmpty
-                          ? item.title
-                          : context.l10n(ko: '게시글', en: 'Post', ja: '投稿'),
-                      style: GBTTypography.bodyMedium.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: textPrimary,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const SizedBox(width: GBTSpacing.sm),
-                Icon(
+              ),
+              const SizedBox(width: GBTSpacing.sm),
+              Padding(
+                padding: const EdgeInsets.only(top: GBTSpacing.lg2),
+                child: Icon(
                   Icons.chevron_right_rounded,
                   size: 20,
-                  color: textTertiary,
+                  color: colors.onSurfaceVariant,
                 ),
-                const SizedBox(width: GBTSpacing.sm),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

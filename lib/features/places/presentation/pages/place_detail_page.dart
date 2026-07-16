@@ -16,6 +16,7 @@ import '../../../../core/utils/result.dart';
 import '../../../../core/widgets/common/gbt_image.dart';
 import '../../../../core/widgets/common/gbt_linkified_text.dart';
 import '../../../../core/widgets/feedback/gbt_loading.dart';
+import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
 import '../../../favorites/application/favorites_controller.dart';
 import '../../../favorites/domain/entities/favorite_entities.dart';
 import '../../../projects/application/projects_controller.dart';
@@ -46,35 +47,50 @@ class PlaceDetailPage extends ConsumerWidget {
     }
 
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: gbtStandardAppBar(
+        context,
+        title: context.l10n(ko: '장소 기록', en: 'Place record', ja: '場所記録'),
+      ),
       // EN: Sticky verify CTA — enabled once data is loaded.
       // KO: 고정 인증 CTA — 데이터 로드 완료 후 활성화.
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            GBTSpacing.md,
-            GBTSpacing.sm,
-            GBTSpacing.md,
-            GBTSpacing.sm,
-          ),
-          child: FilledButton.icon(
-            onPressed: state.hasValue
-                ? () => _showVerificationSheet(
-                    context,
-                    ref,
-                    placeId,
-                    placeName: state.valueOrNull?.name,
-                  )
-                : null,
-            icon: const Icon(Icons.location_on_rounded),
-            label: Text(
-              context.l10n(
-                ko: '이곳에 다녀왔어요',
-                en: 'I visited here',
-                ja: 'ここに行ってきました',
-              ),
+      bottomNavigationBar: DecoratedBox(
+        decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          border: Border(
+            top: BorderSide(
+              color: Theme.of(context).colorScheme.outlineVariant,
             ),
-            style: FilledButton.styleFrom(
-              minimumSize: const Size(double.infinity, 52),
+          ),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              GBTSpacing.md,
+              GBTSpacing.sm,
+              GBTSpacing.md,
+              GBTSpacing.sm,
+            ),
+            child: FilledButton.icon(
+              onPressed: state.hasValue
+                  ? () => _showVerificationSheet(
+                      context,
+                      ref,
+                      placeId,
+                      placeName: state.valueOrNull?.name,
+                    )
+                  : null,
+              icon: const Icon(Icons.location_on_rounded),
+              label: Text(
+                context.l10n(
+                  ko: '이곳에 다녀왔어요',
+                  en: 'I visited here',
+                  ja: 'ここに行ってきました',
+                ),
+              ),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size(double.infinity, 52),
+              ),
             ),
           ),
         ),
@@ -92,10 +108,10 @@ class PlaceDetailPage extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // EN: Header image placeholder (300px — matches expandedHeight)
-                        // KO: 헤더 이미지 플레이스홀더 (300px — expandedHeight 일치)
+                        // EN: Compact media placeholder for the field record.
+                        // KO: 필드 기록용 컴팩트 미디어 플레이스홀더입니다.
                         Container(
-                          height: 300,
+                          height: 184,
                           color: isDark
                               ? GBTColors.darkSurfaceVariant
                               : GBTColors.surfaceVariant,
@@ -173,9 +189,6 @@ class PlaceDetailPage extends ConsumerWidget {
     final secondaryColor = isDark
         ? GBTColors.darkTextSecondary
         : GBTColors.textSecondary;
-    final tertiaryColor = isDark
-        ? GBTColors.darkTextTertiary
-        : GBTColors.textTertiary;
     final selection = ref.watch(projectSelectionControllerProvider);
     final favoritesState = ref.watch(favoritesControllerProvider);
     final isFavorite = favoritesState.maybeWhen(
@@ -198,156 +211,94 @@ class PlaceDetailPage extends ConsumerWidget {
         : (place.heroImageUrl != null ? [place.heroImageUrl!] : <String>[]);
 
     return [
-      SliverAppBar(
-        expandedHeight: 300,
-        pinned: true,
-        flexibleSpace: FlexibleSpaceBar(
-          background: galleryImages.isNotEmpty
-              ? _PhotoGallery(
-                  imageUrls: galleryImages,
-                  placeId: place.id,
-                  placeName: place.name,
-                )
-              : Container(
-                  color: isDark
-                      ? GBTColors.darkSurfaceVariant
-                      : GBTColors.surfaceVariant,
-                  child: Center(
-                    child: Icon(
-                      Icons.image_outlined,
-                      size: 64,
-                      color: isDark
-                          ? GBTColors.darkTextTertiary
-                          : GBTColors.textTertiary,
+      SliverToBoxAdapter(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            PlaceDetailDocumentHeader(
+              name: place.name,
+              address: place.address,
+              visitLabel: context.l10n(
+                ko: '${place.visitCount ?? 0}명 방문',
+                en: '${place.visitCount ?? 0} visits',
+                ja: '${place.visitCount ?? 0}人が訪問',
+              ),
+              favoriteLabel: context.l10n(
+                ko: '${place.favoriteCount ?? 0}명 관심',
+                en: '${place.favoriteCount ?? 0} interested',
+                ja: '${place.favoriteCount ?? 0}人がお気に入り',
+              ),
+              favoriteTooltip: isFavorite
+                  ? context.l10n(
+                      ko: '즐겨찾기 해제',
+                      en: 'Remove favorite',
+                      ja: 'お気に入り解除',
+                    )
+                  : context.l10n(
+                      ko: '즐겨찾기 추가',
+                      en: 'Add favorite',
+                      ja: 'お気に入り追加',
                     ),
-                  ),
-                ),
-        ),
-        // EN: Overlay icon buttons — dark backdrop for readability on any photo.
-        // KO: 오버레이 아이콘 버튼 — 어떤 사진에서도 가독성을 위한 어두운 배경.
-        actions: [
-          _OverlayIconButton(
-            icon: isFavorite ? Icons.star_rounded : Icons.star_border_rounded,
-            tooltip: isFavorite
-                ? context.l10n(
-                    ko: '즐겨찾기 해제',
-                    en: 'Remove favorite',
-                    ja: 'お気に入り解除',
-                  )
-                : context.l10n(
-                    ko: '즐겨찾기 추가',
-                    en: 'Add favorite',
-                    ja: 'お気に入り追加',
-                  ),
-            onPressed: () {
-              ref
+              isFavorite: isFavorite,
+              onFavorite: () => ref
                   .read(favoritesControllerProvider.notifier)
                   .toggleFavorite(
                     entityId: place.id,
                     type: FavoriteType.place,
                     isCurrentlyFavorite: isFavorite,
-                  );
-            },
-          ),
-          _OverlayIconButton(
-            icon: Icons.share_outlined,
-            tooltip: context.l10n(ko: '장소 공유', en: 'Share place', ja: '場所を共有'),
-            onPressed: () {
-              // EN: TODO: Share place
-              // KO: TODO: 장소 공유
-            },
-          ),
-        ],
-      ),
-      SliverToBoxAdapter(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+                  ),
+              directionsLabel: context.l10n(
+                ko: '길안내',
+                en: 'Directions',
+                ja: '経路案内',
+              ),
+              onDirections: place.directions?.hasProviders ?? false
+                  ? () => showPlaceDirectionsSheet(
+                      context,
+                      placeName: place.name,
+                      directions: place.directions!,
+                    )
+                  : null,
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                GBTSpacing.md,
+                0,
+                GBTSpacing.md,
+                GBTSpacing.lg,
+              ),
+              child: SizedBox(
+                height: 184,
+                width: double.infinity,
+                child: galleryImages.isNotEmpty
+                    ? _PhotoGallery(
+                        imageUrls: galleryImages,
+                        placeId: place.id,
+                        placeName: place.name,
+                      )
+                    : DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surfaceContainer,
+                          border: Border.all(
+                            color: Theme.of(context).colorScheme.outlineVariant,
+                          ),
+                        ),
+                        child: Icon(
+                          Icons.image_outlined,
+                          size: 40,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+              ),
+            ),
             Padding(
               padding: GBTSpacing.paddingPage,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    place.name,
-                    style: GBTTypography.headlineSmall,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: GBTSpacing.xs),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.location_on_outlined,
-                        size: 14,
-                        color: tertiaryColor,
-                      ),
-                      const SizedBox(width: GBTSpacing.xs),
-                      Expanded(
-                        child: Text(
-                          place.address,
-                          style: GBTTypography.bodySmall.copyWith(
-                            color: secondaryColor,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (place.directions?.hasProviders ?? false) ...[
-                    const SizedBox(height: GBTSpacing.sm),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: FilledButton.tonalIcon(
-                        onPressed: () => showPlaceDirectionsSheet(
-                          context,
-                          placeName: place.name,
-                          directions: place.directions!,
-                        ),
-                        icon: const Icon(Icons.near_me_rounded, size: 18),
-                        label: Text(
-                          context.l10n(ko: '길안내', en: 'Directions', ja: '経路案内'),
-                        ),
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: GBTSpacing.md),
-                  // EN: Quick stats — visit and favorite counts.
-                  // KO: 빠른 통계 — 방문 수와 즐겨찾기 수.
-                  Row(
-                    children: [
-                      _QuickStatBadge(
-                        icon: Icons.people_outline_rounded,
-                        label: context.l10n(
-                          ko: '${place.visitCount ?? 0}명 방문',
-                          en: '${place.visitCount ?? 0} visits',
-                          ja: '${place.visitCount ?? 0}人が訪問',
-                        ),
-                        isDark: isDark,
-                      ),
-                      const SizedBox(width: GBTSpacing.sm),
-                      _QuickStatBadge(
-                        icon: Icons.star_outline_rounded,
-                        label: context.l10n(
-                          ko: '${place.favoriteCount ?? 0}명 관심',
-                          en: '${place.favoriteCount ?? 0} interested',
-                          ja: '${place.favoriteCount ?? 0}人がお気に入り',
-                        ),
-                        isDark: isDark,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: GBTSpacing.lg),
-                  const Divider(),
-                  const SizedBox(height: GBTSpacing.lg),
-                  // EN: Description section.
-                  // KO: 소개 섹션.
-                  Text(
-                    context.l10n(ko: '소개', en: 'About', ja: '紹介'),
-                    style: GBTTypography.titleMedium.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                  _RecordSectionHeader(
+                    indexLabel: '01',
+                    title: context.l10n(ko: '소개', en: 'About', ja: '紹介'),
                   ),
                   const SizedBox(height: GBTSpacing.sm),
                   Text(
@@ -361,49 +312,31 @@ class PlaceDetailPage extends ConsumerWidget {
                       color: secondaryColor,
                     ),
                   ),
-                  const SizedBox(height: GBTSpacing.lg),
-                  // EN: Place category horizontal chip scroll.
-                  // KO: 장소 분류 가로 스크롤 칩.
-                  Text(
-                    context.l10n(
+                  const SizedBox(height: GBTSpacing.xl),
+                  _RecordSectionHeader(
+                    indexLabel: '02',
+                    title: context.l10n(
                       ko: '장소 분류',
                       en: 'Place categories',
                       ja: '場所カテゴリー',
-                    ),
-                    style: GBTTypography.titleMedium.copyWith(
-                      fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: GBTSpacing.sm),
                 ],
               ),
             ),
-            // EN: Horizontal scroll chip row — avoids Wrap line breaks.
-            // KO: 가로 스크롤 칩 행 — Wrap 줄 바꿈 방지.
             if (place.tags.isNotEmpty || place.types.isNotEmpty)
-              SizedBox(
-                height: 40,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: GBTSpacing.md,
-                  ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: GBTSpacing.md),
+                child: Wrap(
+                  spacing: GBTSpacing.sm,
+                  runSpacing: GBTSpacing.xs,
                   children:
                       (place.tags.isNotEmpty
                               ? place.tags
                               : place.types.map(_formatPlaceType))
-                          .map(
-                            (label) => Padding(
-                              padding: const EdgeInsets.only(
-                                right: GBTSpacing.xs,
-                              ),
-                              child: Chip(
-                                label: Text(label),
-                                visualDensity: VisualDensity.compact,
-                              ),
-                            ),
-                          )
-                          .toList(),
+                          .map((label) => _FieldTag(label: label))
+                          .toList(growable: false),
                 ),
               )
             else
@@ -425,13 +358,13 @@ class PlaceDetailPage extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: GBTSpacing.lg),
-                  // EN: Related bands section.
-                  // KO: 관련 밴드 섹션.
-                  Text(
-                    context.l10n(ko: '관련 밴드', en: 'Related bands', ja: '関連バンド'),
-                    style: GBTTypography.titleMedium.copyWith(
-                      fontWeight: FontWeight.w600,
+                  const SizedBox(height: GBTSpacing.xl),
+                  _RecordSectionHeader(
+                    indexLabel: '03',
+                    title: context.l10n(
+                      ko: '관련 밴드',
+                      en: 'Related bands',
+                      ja: '関連バンド',
                     ),
                   ),
                   const SizedBox(height: GBTSpacing.sm),
@@ -487,26 +420,23 @@ class PlaceDetailPage extends ConsumerWidget {
                           runSpacing: GBTSpacing.xs,
                           children: units
                               .map(
-                                (unit) => Chip(
-                                  label: Text(
-                                    unit.displayName.isNotEmpty
-                                        ? unit.displayName
-                                        : unit.code,
-                                  ),
-                                  visualDensity: VisualDensity.compact,
+                                (unit) => _FieldTag(
+                                  label: unit.displayName.isNotEmpty
+                                      ? unit.displayName
+                                      : unit.code,
                                 ),
                               )
                               .toList(),
                         );
                       },
                     ),
-                  const SizedBox(height: GBTSpacing.lg),
-                  // EN: Guide section.
-                  // KO: 가이드 섹션.
-                  Text(
-                    context.l10n(ko: '장소 가이드', en: 'Place guides', ja: '場所ガイド'),
-                    style: GBTTypography.titleMedium.copyWith(
-                      fontWeight: FontWeight.w600,
+                  const SizedBox(height: GBTSpacing.xl),
+                  _RecordSectionHeader(
+                    indexLabel: '04',
+                    title: context.l10n(
+                      ko: '장소 가이드',
+                      en: 'Place guides',
+                      ja: '場所ガイド',
                     ),
                   ),
                   const SizedBox(height: GBTSpacing.sm),
@@ -517,17 +447,13 @@ class PlaceDetailPage extends ConsumerWidget {
                         .read(placeGuidesControllerProvider(place.id).notifier)
                         .load(forceRefresh: true),
                   ),
-                  const SizedBox(height: GBTSpacing.lg),
-                  // EN: Reviews section.
-                  // KO: 방문 후기 섹션.
-                  Text(
-                    context.l10n(
+                  const SizedBox(height: GBTSpacing.xl),
+                  _RecordSectionHeader(
+                    indexLabel: '05',
+                    title: context.l10n(
                       ko: '방문 후기',
                       en: 'Visit reviews',
                       ja: '訪問レビュー',
-                    ),
-                    style: GBTTypography.titleMedium.copyWith(
-                      fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: GBTSpacing.sm),
@@ -540,7 +466,16 @@ class PlaceDetailPage extends ConsumerWidget {
                         )
                         .load(forceRefresh: true),
                   ),
-                  const SizedBox(height: GBTSpacing.lg),
+                  const SizedBox(height: GBTSpacing.xl),
+                  _RecordSectionHeader(
+                    indexLabel: '06',
+                    title: context.l10n(
+                      ko: '기록 기여자',
+                      en: 'Record contributors',
+                      ja: '記録協力者',
+                    ),
+                  ),
+                  const SizedBox(height: GBTSpacing.sm),
                   // EN: Contributors credit — who registered and edited this place.
                   // KO: 기여자 크레딧 — 이 장소를 등록하고 수정한 사람을 표시합니다.
                   ContributorsCreditWidget(
@@ -555,6 +490,241 @@ class PlaceDetailPage extends ConsumerWidget {
         ),
       ),
     ];
+  }
+}
+
+/// EN: Compact editorial identity block for a place field record.
+/// KO: 장소 필드 기록을 위한 컴팩트한 에디토리얼 식별 블록입니다.
+class PlaceDetailDocumentHeader extends StatelessWidget {
+  const PlaceDetailDocumentHeader({
+    super.key,
+    required this.name,
+    required this.address,
+    required this.visitLabel,
+    required this.favoriteLabel,
+    required this.favoriteTooltip,
+    required this.isFavorite,
+    required this.onFavorite,
+    required this.directionsLabel,
+    this.onDirections,
+  });
+
+  final String name;
+  final String address;
+  final String visitLabel;
+  final String favoriteLabel;
+  final String favoriteTooltip;
+  final bool isFavorite;
+  final VoidCallback onFavorite;
+  final String directionsLabel;
+  final VoidCallback? onDirections;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
+    return Container(
+      key: const ValueKey('place-detail-document-header'),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: colors.outlineVariant)),
+      ),
+      padding: const EdgeInsets.fromLTRB(
+        GBTSpacing.md,
+        GBTSpacing.md,
+        GBTSpacing.md,
+        GBTSpacing.md,
+      ),
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(width: 3, color: colors.primary),
+            const SizedBox(width: GBTSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'PLACE RECORD',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: colors.primary,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                  const SizedBox(height: GBTSpacing.xxs),
+                  Text(
+                    name,
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      color: colors.onSurface,
+                      fontWeight: FontWeight.w800,
+                      height: 1.12,
+                    ),
+                  ),
+                  if (address.isNotEmpty) ...[
+                    const SizedBox(height: GBTSpacing.xs),
+                    Text(
+                      address,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colors.onSurfaceVariant,
+                        height: 1.45,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: GBTSpacing.sm),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _FieldStat(
+                        icon: Icons.directions_walk_rounded,
+                        label: visitLabel,
+                      ),
+                      const SizedBox(height: GBTSpacing.xs),
+                      _FieldStat(
+                        icon: Icons.bookmark_border_rounded,
+                        label: favoriteLabel,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: GBTSpacing.sm),
+                  Wrap(
+                    spacing: GBTSpacing.sm,
+                    runSpacing: GBTSpacing.sm,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      if (onDirections != null)
+                        FilledButton.icon(
+                          onPressed: onDirections,
+                          icon: const Icon(Icons.near_me_outlined, size: 18),
+                          label: Text(directionsLabel),
+                          style: FilledButton.styleFrom(
+                            minimumSize: const Size(48, 48),
+                          ),
+                        ),
+                      IconButton.outlined(
+                        onPressed: onFavorite,
+                        tooltip: favoriteTooltip,
+                        icon: Icon(
+                          isFavorite
+                              ? Icons.bookmark_rounded
+                              : Icons.bookmark_border_rounded,
+                        ),
+                        style: IconButton.styleFrom(
+                          minimumSize: const Size(48, 48),
+                          foregroundColor: colors.primary,
+                          side: BorderSide(color: colors.outlineVariant),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FieldStat extends StatelessWidget {
+  const _FieldStat({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 16, color: colors.primary),
+        const SizedBox(width: GBTSpacing.xs),
+        Expanded(
+          child: Text(
+            label,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: colors.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _RecordSectionHeader extends StatelessWidget {
+  const _RecordSectionHeader({required this.indexLabel, required this.title});
+
+  final String indexLabel;
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.only(bottom: GBTSpacing.sm),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: colors.outlineVariant)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 32,
+            child: Text(
+              indexLabel,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: colors.primary,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.8,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              title,
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: colors.onSurface,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FieldTag extends StatelessWidget {
+  const _FieldTag({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.only(bottom: GBTSpacing.xxs),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: theme.colorScheme.primary, width: 1.5),
+        ),
+      ),
+      child: Text(
+        label,
+        style: theme.textTheme.labelMedium?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
   }
 }
 
@@ -643,25 +813,8 @@ class _PhotoGalleryState extends State<_PhotoGallery> {
             return child;
           },
         ),
-        // EN: Bottom gradient for indicator readability.
-        // KO: 표시기 가독성을 위한 하단 그라데이션.
-        Positioned.fill(
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.transparent,
-                  Colors.black.withValues(alpha: 0.35),
-                ],
-                stops: const [0.55, 1.0],
-              ),
-            ),
-          ),
-        ),
-        // EN: Page count pill — top-right corner.
-        // KO: 페이지 수 알약 배지 — 우상단 모서리.
+        // EN: Page count uses the page surface, not a photo overlay gradient.
+        // KO: 사진 오버레이 그라데이션 대신 페이지 표면으로 장수를 표시합니다.
         Positioned(
           top: GBTSpacing.md,
           right: GBTSpacing.md,
@@ -671,13 +824,15 @@ class _PhotoGalleryState extends State<_PhotoGallery> {
               vertical: GBTSpacing.xxs,
             ),
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.55),
-              borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
+              color: Theme.of(context).colorScheme.surface,
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outlineVariant,
+              ),
             ),
             child: Text(
               '${_currentPage + 1}/${images.length}',
               style: GBTTypography.labelSmall.copyWith(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.primary,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -701,8 +856,8 @@ class _PhotoGalleryState extends State<_PhotoGallery> {
                 height: 6,
                 decoration: BoxDecoration(
                   color: _currentPage == index
-                      ? Colors.white
-                      : Colors.white.withValues(alpha: 0.5),
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).colorScheme.outlineVariant,
                   borderRadius: BorderRadius.circular(3),
                 ),
               ),
@@ -710,99 +865,6 @@ class _PhotoGalleryState extends State<_PhotoGallery> {
           ),
         ),
       ],
-    );
-  }
-}
-
-// ========================================
-// EN: Overlay AppBar icon button (Naver Maps / Yelp style)
-// KO: 오버레이 AppBar 아이콘 버튼 (네이버 지도 / 옐프 스타일)
-// ========================================
-
-class _OverlayIconButton extends StatelessWidget {
-  const _OverlayIconButton({
-    required this.icon,
-    required this.tooltip,
-    required this.onPressed,
-  });
-
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(right: GBTSpacing.xs),
-      child: IconButton(
-        onPressed: onPressed,
-        tooltip: tooltip,
-        style: IconButton.styleFrom(
-          foregroundColor: Colors.white,
-          backgroundColor: const Color(0x5C000000),
-          minimumSize: const Size(38, 38),
-          padding: const EdgeInsets.all(8),
-        ),
-        icon: Icon(icon),
-      ),
-    );
-  }
-}
-
-// ========================================
-// EN: Quick stat badge
-// KO: 빠른 통계 배지
-// ========================================
-
-class _QuickStatBadge extends StatelessWidget {
-  const _QuickStatBadge({
-    required this.icon,
-    required this.label,
-    required this.isDark,
-  });
-
-  final IconData icon;
-  final String label;
-  final bool isDark;
-
-  @override
-  Widget build(BuildContext context) {
-    final bgColor = isDark
-        ? GBTColors.darkSurfaceVariant
-        : GBTColors.surfaceVariant;
-    final fgColor = isDark
-        ? GBTColors.darkTextSecondary
-        : GBTColors.textSecondary;
-
-    return Semantics(
-      label: label,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
-          boxShadow: [
-            BoxShadow(
-              color: isDark
-                  ? Colors.black26
-                  : Colors.black.withValues(alpha: 0.05),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 14, color: fgColor),
-            const SizedBox(width: GBTSpacing.xs),
-            Text(
-              label,
-              style: GBTTypography.labelSmall.copyWith(color: fgColor),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
@@ -869,7 +931,7 @@ class _GuideSection extends StatelessWidget {
           physics: const NeverScrollableScrollPhysics(),
           padding: EdgeInsets.zero,
           itemCount: guides.length,
-          separatorBuilder: (_, __) => const SizedBox(height: GBTSpacing.sm),
+          separatorBuilder: (_, __) => const Divider(height: 1),
           itemBuilder: (context, index) {
             final guide = guides[index];
             return _GuideCard(guide: guide, isDark: isDark, index: index);
@@ -895,9 +957,6 @@ class _GuideCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bgColor = isDark
-        ? GBTColors.darkSurfaceVariant
-        : GBTColors.surfaceVariant;
     final secondaryColor = isDark
         ? GBTColors.darkTextSecondary
         : GBTColors.textSecondary;
@@ -911,29 +970,19 @@ class _GuideCard extends StatelessWidget {
         en: 'Guide: ${guide.title.isNotEmpty ? guide.title : 'Guide'}',
         ja: 'ガイド: ${guide.title.isNotEmpty ? guide.title : 'ガイド'}',
       ),
-      child: Container(
-        padding: const EdgeInsets.all(GBTSpacing.md),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
-        ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: GBTSpacing.md),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: (isDark ? GBTColors.darkPrimary : GBTColors.primary)
-                    .withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
-              ),
-              alignment: Alignment.center,
+            SizedBox(
+              width: 32,
               child: Text(
-                '${index + 1}',
-                style: GBTTypography.titleSmall.copyWith(
+                '${index + 1}'.padLeft(2, '0'),
+                style: GBTTypography.labelSmall.copyWith(
                   color: isDark ? GBTColors.darkPrimary : GBTColors.primary,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.7,
                 ),
               ),
             ),
@@ -1090,7 +1139,7 @@ class _CommentSectionState extends ConsumerState<_CommentSection> {
           physics: const NeverScrollableScrollPhysics(),
           padding: EdgeInsets.zero,
           itemCount: comments.length,
-          separatorBuilder: (_, __) => const SizedBox(height: GBTSpacing.sm),
+          separatorBuilder: (_, __) => const Divider(height: 1),
           itemBuilder: (context, index) {
             final comment = comments[index];
             final canDelete =
@@ -1221,22 +1270,6 @@ class _ReviewCard extends StatelessWidget {
   final bool canDelete;
   final VoidCallback onDelete;
 
-  // EN: Deterministic avatar color from authorId hashCode.
-  // KO: authorId 해시코드로 결정적 아바타 색상.
-  static const _avatarPalette = [
-    Color(0xFF6366F1),
-    Color(0xFF3B82F6),
-    Color(0xFFEC4899),
-    Color(0xFFF59E0B),
-    Color(0xFF10B981),
-    Color(0xFF8B5CF6),
-  ];
-
-  Color get _avatarColor {
-    return _avatarPalette[comment.authorId.hashCode.abs() %
-        _avatarPalette.length];
-  }
-
   String get _authorInitial {
     if (comment.authorId.isNotEmpty) {
       return comment.authorId[0].toUpperCase();
@@ -1246,9 +1279,6 @@ class _ReviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bgColor = isDark
-        ? GBTColors.darkSurfaceVariant
-        : GBTColors.surfaceVariant;
     final tertiaryColor = isDark
         ? GBTColors.darkTextTertiary
         : GBTColors.textTertiary;
@@ -1256,12 +1286,8 @@ class _ReviewCard extends StatelessWidget {
         ? context.l10n(ko: '방문자', en: 'Visitor', ja: '訪問者')
         : context.l10n(ko: '익명 방문자', en: 'Anonymous visitor', ja: '匿名の訪問者');
 
-    return Container(
-      padding: const EdgeInsets.all(GBTSpacing.md),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: GBTSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1273,8 +1299,12 @@ class _ReviewCard extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: _avatarColor,
+                  color: (isDark ? GBTColors.darkPrimary : GBTColors.primary)
+                      .withValues(alpha: 0.12),
                   shape: BoxShape.circle,
+                  border: Border.all(
+                    color: isDark ? GBTColors.darkPrimary : GBTColors.primary,
+                  ),
                 ),
                 alignment: Alignment.center,
                 child: Text(
@@ -1282,7 +1312,7 @@ class _ReviewCard extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: Colors.white,
+                    color: isDark ? GBTColors.darkPrimary : GBTColors.primary,
                     height: 1,
                   ),
                 ),

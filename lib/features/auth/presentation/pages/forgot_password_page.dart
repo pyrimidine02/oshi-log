@@ -13,7 +13,9 @@ import '../../../../core/theme/gbt_typography.dart';
 import '../../../../core/utils/result.dart';
 import '../../../../core/widgets/buttons/gbt_button.dart';
 import '../../../../core/widgets/inputs/gbt_text_field.dart';
+import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
 import '../../application/auth_controller.dart';
+import '../widgets/field_auth_components.dart';
 
 /// EN: Page where the user enters their email to request a password-reset link.
 /// KO: 비밀번호 재설정 링크를 요청하기 위해 이메일을 입력하는 페이지.
@@ -56,9 +58,12 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
         ref.watch(authControllerProvider).isLoading || _isSubmitting;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          context.l10n(ko: '비밀번호 찾기', en: 'Forgot Password', ja: 'パスワードを忘れた場合'),
+      appBar: gbtStandardAppBar(
+        context,
+        title: context.l10n(
+          ko: '비밀번호 찾기',
+          en: 'Forgot Password',
+          ja: 'パスワードを忘れた場合',
         ),
       ),
       body: SafeArea(
@@ -83,15 +88,19 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const SizedBox(height: GBTSpacing.lg),
-          Text(
-            context.l10n(
-              ko: '가입한 이메일 주소를 입력하면\n비밀번호 재설정 링크를 보내드립니다.',
-              en: 'Enter your registered email address\nand we will send you a reset link.',
-              ja: '登録したメールアドレスを入力すると\nパスワードリセットのリンクをお送りします。',
+          FieldAuthHeader(
+            eyebrow: 'ACCOUNT RECOVERY',
+            title: context.l10n(
+              ko: '다시 여정에 접속하세요',
+              en: 'Find your way back',
+              ja: '旅に戻りましょう',
             ),
-            style: GBTTypography.bodyMedium.copyWith(
-              color: colorScheme.onSurfaceVariant,
+            subtitle: context.l10n(
+              ko: '가입한 이메일로 비밀번호 재설정 링크를 보내드립니다.',
+              en: 'We will send a password reset link to your registered email.',
+              ja: '登録メールにパスワード再設定リンクをお送りします。',
             ),
+            icon: Icons.mark_email_unread_outlined,
           ),
           const SizedBox(height: GBTSpacing.xl),
 
@@ -150,7 +159,10 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
             child: TextButton(
               onPressed: () => context.push('/reset-password'),
               style: TextButton.styleFrom(
-                minimumSize: const Size(GBTSpacing.touchTarget, GBTSpacing.touchTarget),
+                minimumSize: const Size(
+                  GBTSpacing.touchTarget,
+                  GBTSpacing.touchTarget,
+                ),
               ),
               child: Text(
                 context.l10n(
@@ -219,7 +231,10 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
               _emailController.clear();
             }),
             style: TextButton.styleFrom(
-              minimumSize: const Size(GBTSpacing.touchTarget, GBTSpacing.touchTarget),
+              minimumSize: const Size(
+                GBTSpacing.touchTarget,
+                GBTSpacing.touchTarget,
+              ),
             ),
             child: Text(
               context.l10n(

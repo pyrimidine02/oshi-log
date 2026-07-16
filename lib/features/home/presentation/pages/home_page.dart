@@ -22,15 +22,19 @@ import '../../../../core/theme/gbt_typography.dart';
 import '../../../../core/widgets/animations/staggered_list_item.dart';
 import '../../../../core/widgets/cards/gbt_event_card_carousel.dart';
 import '../../../../core/widgets/cards/gbt_place_card_carousel.dart';
+import '../../../../core/widgets/common/gbt_icon_chip.dart';
 import '../../../../core/widgets/common/gbt_image.dart';
-import '../../../../core/widgets/feedback/gbt_loading.dart';
+import '../../../../core/widgets/feedback/gbt_empty_state.dart';
+import '../../../../core/widgets/feedback/gbt_loading.dart' hide GBTEmptyState;
 import '../../../../core/widgets/layout/gbt_carousel_section.dart';
+import '../../../../core/widgets/layout/gbt_glass_panel.dart';
 import '../../../../core/widgets/layout/gbt_greeting_header.dart';
 import '../../../../core/widgets/navigation/gbt_app_bar_icon_button.dart';
 import '../../../../core/widgets/navigation/gbt_profile_action.dart';
 import '../../../ads/domain/entities/ad_slot_entities.dart';
 import '../../../profile_banner/application/banner_controller.dart';
 import '../../../ads/presentation/widgets/hybrid_sponsored_slot.dart';
+import '../../../home_banners/presentation/widgets/home_banner_carousel.dart';
 import '../../../projects/application/projects_controller.dart';
 import '../../../projects/domain/entities/project_entities.dart';
 import '../../../projects/presentation/widgets/project_selector.dart';
@@ -134,18 +138,27 @@ class _HomePageState extends ConsumerState<HomePage> {
               )
             : null,
         actions: [
-          GBTAppBarIconButton(
-            icon: Icons.search,
-            iconColor: appBarActionIconColor,
-            onPressed: () => context.goToSearch(),
-            tooltip: context.l10n(ko: '검색', en: 'Search', ja: '検索'),
-          ),
-          GBTAppBarIconButton(
-            icon: Icons.notifications_outlined,
-            iconColor: appBarActionIconColor,
-            onPressed: () => context.push('/notifications'),
-            tooltip: context.l10n(ko: '알림', en: 'Notifications', ja: '通知'),
-          ),
+          // EN: Search/notifications live in the floating glass pill over the
+          // greeting gradient while unscrolled; the AppBar only needs them
+          // once that pill has scrolled out of view, to avoid duplicate
+          // affordances on screen at once.
+          // KO: 스크롤 전에는 검색/알림이 인사말 그라디언트 위 플로팅 글래스
+          // 필에 있음. 필이 화면 밖으로 스크롤된 뒤에만 AppBar에도 노출해
+          // 화면에 동일 기능이 중복 표시되지 않도록 합니다.
+          if (_isScrolled) ...[
+            GBTAppBarIconButton(
+              icon: Icons.search,
+              iconColor: appBarActionIconColor,
+              onPressed: () => context.goToSearch(),
+              tooltip: context.l10n(ko: '검색', en: 'Search', ja: '検索'),
+            ),
+            GBTAppBarIconButton(
+              icon: Icons.notifications_outlined,
+              iconColor: appBarActionIconColor,
+              onPressed: () => context.push('/notifications'),
+              tooltip: context.l10n(ko: '알림', en: 'Notifications', ja: '通知'),
+            ),
+          ],
           if (!_isScrolled)
             GBTProfileAction(
               avatarUrl: avatarUrl,
@@ -357,54 +370,118 @@ class _HomePageState extends ConsumerState<HomePage> {
   }) {
     final featuredLive = _pickFeaturedLive(summary.trendingLiveEvents);
     final headerImageUrl = _pickHeaderImage(summary, featuredLive);
+    final topPadding = MediaQuery.of(context).padding.top;
 
     return CustomScrollView(
       controller: _scrollController,
       physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
-        // 1. GBTGreetingHeader — greeting area
-        // KO: GBTGreetingHeader — 인사말 영역
+        // 1. GBTGreetingHeader — greeting area, with a floating glass
+        //    search/notification pill layered over the gradient.
+        // KO: GBTGreetingHeader — 인사말 영역. 그라디언트 위에 플로팅
+        //    글래스 검색/알림 필을 겹쳐 배치.
         SliverToBoxAdapter(
-          child: GBTGreetingHeader(
-            userName: nickname,
-            backgroundImageUrl: headerImageUrl,
-            userBannerUrl: userBannerUrl,
-            featuredTitle: featuredLive?.title,
-            featuredDate: featuredLive?.dateLabel,
-            featuredPosterUrl: featuredLive?.posterUrl,
-            onFeaturedTap: featuredLive == null
-                ? null
-                : () {
-                    unawaited(
-                      ref
-                          .read(analyticsServiceProvider)
-                          .logLiveEventView(
-                            featuredLive.id,
-                            eventName: featuredLive.title,
-                          ),
-                    );
-                    context.goToEventDetail(featuredLive.id);
-                  },
-            onCustomizeTap: isAuthenticated
-                ? () => context.push('/banner-picker')
-                : null,
+          child: Stack(
+            children: [
+              GBTGreetingHeader(
+                userName: nickname,
+                backgroundImageUrl: headerImageUrl,
+                userBannerUrl: userBannerUrl,
+                featuredTitle: featuredLive?.title,
+                featuredDate: featuredLive?.dateLabel,
+                featuredPosterUrl: featuredLive?.posterUrl,
+                onFeaturedTap: featuredLive == null
+                    ? null
+                    : () {
+                        unawaited(
+                          ref
+                              .read(analyticsServiceProvider)
+                              .logLiveEventView(
+                                featuredLive.id,
+                                eventName: featuredLive.title,
+                              ),
+                        );
+                        context.goToEventDetail(featuredLive.id);
+                      },
+                onCustomizeTap: isAuthenticated
+                    ? () => context.push('/banner-picker')
+                    : null,
+              ),
+              Positioned(
+                top: topPadding + kToolbarHeight + GBTSpacing.sm,
+                left: GBTSpacing.pageHorizontal,
+                right: GBTSpacing.pageHorizontal,
+                child: _GreetingGlassPill(
+                  onSearchTap: () => context.goToSearch(),
+                  onNotificationsTap: () => context.push('/notifications'),
+                ),
+              ),
+            ],
           ),
         ),
 
-        // 2. ProjectSelector — edge-to-edge pill row
+        // 2. Project switcher — the scope selector sits directly under the
+        //    header WITH a label, so users understand it filters the whole
+        //    page before they reach the content it scopes (Weverse pattern).
+        // KO: 프로젝트 스위처 — 스코프 셀렉터를 라벨과 함께 헤더 바로 아래
+        //    배치. 필터 대상 콘텐츠보다 먼저 스코프를 선언합니다 (위버스
+        //    패턴).
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.only(top: GBTSpacing.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: GBTSpacing.pageHorizontal,
+                  ),
+                  child: Text(
+                    context.l10n(
+                      ko: '지금 보는 밴드',
+                      en: 'Now following',
+                      ja: '今見ているバンド',
+                    ),
+                    style: GBTTypography.labelMedium.copyWith(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? GBTColors.darkTextSecondary
+                          : GBTColors.textSecondary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: GBTSpacing.sm),
+                const ProjectSelector(),
+              ],
+            ),
+          ),
+        ),
+
+        // 3. Bento quick-action grid — a large "near you" tile plus three
+        //    compact shortcuts (guide book, calendar, live), replacing the
+        //    monotony of a single carousel with an anchor grid.
+        // KO: 벤토 퀵 액션 그리드 — 큰 "내 주변" 타일 + 도감/캘린더/라이브
+        //    축약 타일 3개. 단조로운 캐러셀 대신 벤토 앵커를 배치합니다.
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              GBTSpacing.pageHorizontal,
+              GBTSpacing.lg,
+              GBTSpacing.pageHorizontal,
+              0,
+            ),
+            child: const _QuickActionBento(),
+          ),
+        ),
+
+        // EN: Full-bleed promo banner rail — breaks the rhythm between the
+        //     bento grid above and the content rails below.
+        // KO: 전체 폭 프로모 배너 레일 — 위쪽 벤토 그리드와 아래 콘텐츠
+        //     레일 사이에서 리듬을 환기합니다.
         const SliverToBoxAdapter(
           child: Padding(
             padding: EdgeInsets.only(top: GBTSpacing.lg),
-            child: ProjectSelector(),
-          ),
-        ),
-
-        // EN: Single native sponsored slot on home to keep exposure light.
-        // KO: 노출 부담을 줄이기 위해 홈에는 네이티브 스폰서 슬롯 1개만 배치.
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.only(top: GBTSpacing.md),
-            child: _HomeSponsoredSlot(onTap: () => context.go('/explore')),
+            child: HomeBannerCarousel(),
           ),
         ),
 
@@ -415,7 +492,8 @@ class _HomePageState extends ConsumerState<HomePage> {
             child: Padding(
               padding: const EdgeInsets.only(top: GBTSpacing.xl),
               child: GBTEmptyState(
-                message: context.l10n(
+                icon: Icons.auto_awesome_mosaic_outlined,
+                title: context.l10n(
                   ko: '표시할 홈 콘텐츠가 없습니다',
                   en: 'No home content available',
                   ja: '表示できるホームコンテンツがありません',
@@ -430,7 +508,8 @@ class _HomePageState extends ConsumerState<HomePage> {
             child: Padding(
               padding: const EdgeInsets.only(top: GBTSpacing.xl),
               child: GBTEmptyState(
-                message: context.l10n(
+                icon: Icons.filter_alt_off_outlined,
+                title: context.l10n(
                   ko: '조건에 맞는 최신 항목이 없습니다',
                   en: 'No recent items match current conditions',
                   ja: '条件に合う最新項目がありません',
@@ -439,7 +518,10 @@ class _HomePageState extends ConsumerState<HomePage> {
             ),
           ),
 
-        // 4. Recommended places carousel
+        // 4. Near-you places band — visually distinct tinted rail (mint/teal
+        //    accent) instead of a plain rail, to vary section rhythm.
+        // KO: 내 주변 성지 밴드 — 리듬 변화를 위해 민트/틸 톤 배경을 입힌
+        //    시각적으로 구분되는 레일.
         if (summary.recommendedPlaces.isNotEmpty) ...[
           SliverToBoxAdapter(
             child: SizedBox(
@@ -447,38 +529,44 @@ class _HomePageState extends ConsumerState<HomePage> {
             ),
           ),
           SliverToBoxAdapter(
-            child: GBTCarouselSection(
-              title: context.l10n(
-                ko: '추천 장소',
-                en: 'Recommended Places',
-                ja: 'おすすめスポット',
+            child: _NearbyPlacesBand(
+              child: GBTCarouselSection(
+                // EN: Honest label — this rail is recommendation data, not
+                //     GPS-based; "near you" belongs to the bento map tile.
+                // KO: 정직한 라벨 — 이 레일은 추천 데이터이지 GPS 기반이
+                //     아니므로 "내 주변"은 벤토 지도 타일에만 사용합니다.
+                title: context.l10n(
+                  ko: '추천 성지',
+                  en: 'Recommended',
+                  ja: 'おすすめ聖地',
+                ),
+                itemCount: summary.recommendedPlaces.length,
+                itemHeight: 220,
+                onSeeAll: () => context.go('/explore'),
+                itemBuilder: (context, index) {
+                  final place = summary.recommendedPlaces[index];
+                  return GBTPlaceCardCarousel(
+                    placeId: place.id,
+                    name: place.name,
+                    location:
+                        place.location ??
+                        context.l10n(
+                          ko: '방문 ${place.visitCount}회',
+                          en: '${place.visitCount} visits',
+                          ja: '${place.visitCount}回訪問',
+                        ),
+                    imageUrl: place.imageUrl,
+                    onTap: () {
+                      unawaited(
+                        ref
+                            .read(analyticsServiceProvider)
+                            .logPlaceVisit(place.id, placeName: place.name),
+                      );
+                      context.goToPlaceDetail(place.id);
+                    },
+                  );
+                },
               ),
-              itemCount: summary.recommendedPlaces.length,
-              itemHeight: 220,
-              onSeeAll: () => context.go('/explore'),
-              itemBuilder: (context, index) {
-                final place = summary.recommendedPlaces[index];
-                return GBTPlaceCardCarousel(
-                  placeId: place.id,
-                  name: place.name,
-                  location:
-                      place.location ??
-                      context.l10n(
-                        ko: '방문 ${place.visitCount}회',
-                        en: '${place.visitCount} visits',
-                        ja: '${place.visitCount}回訪問',
-                      ),
-                  imageUrl: place.imageUrl,
-                  onTap: () {
-                    unawaited(
-                      ref
-                          .read(analyticsServiceProvider)
-                          .logPlaceVisit(place.id, placeName: place.name),
-                    );
-                    context.goToPlaceDetail(place.id);
-                  },
-                );
-              },
             ),
           ),
         ],
@@ -520,6 +608,17 @@ class _HomePageState extends ConsumerState<HomePage> {
             ),
           ),
         ],
+
+        // EN: Single native sponsored slot — demoted BELOW the primary
+        //     content rails per KR home convention (ads never above content).
+        // KO: 네이티브 스폰서 슬롯 1개 — 한국 홈 컨벤션에 따라 주요 콘텐츠
+        //     레일 아래로 강등 (광고는 콘텐츠 위에 두지 않음).
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.only(top: GBTSpacing.lg),
+            child: _HomeSponsoredSlot(onTap: () => context.go('/explore')),
+          ),
+        ),
 
         // 6. Latest news — compact borderless list
         if (summary.latestNews.isNotEmpty) ...[
@@ -631,6 +730,273 @@ class _HomeSponsoredSlot extends StatelessWidget {
         onTap: onTap,
       ),
       margin: const EdgeInsets.symmetric(horizontal: GBTSpacing.pageHorizontal),
+    );
+  }
+}
+
+/// EN: Floating glass pill layered over the greeting gradient — carries the
+/// search and notifications affordances while the AppBar is fully
+/// transparent (single glass surface, perf-conscious).
+/// KO: 인사말 그라디언트 위에 얹힌 플로팅 글래스 필 — AppBar가 완전히
+/// 투명한 동안 검색/알림 기능을 담당합니다 (단일 글래스 표면, 성능 고려).
+class _GreetingGlassPill extends StatelessWidget {
+  const _GreetingGlassPill({
+    required this.onSearchTap,
+    required this.onNotificationsTap,
+  });
+
+  final VoidCallback onSearchTap;
+  final VoidCallback onNotificationsTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GBTGlassPanel(
+      borderRadius: GBTSpacing.radiusFull,
+      tintOpacity: 0.2,
+      padding: const EdgeInsets.symmetric(horizontal: GBTSpacing.md),
+      child: Row(
+        children: [
+          Expanded(
+            child: Semantics(
+              button: true,
+              label: context.l10n(ko: '검색', en: 'Search', ja: '検索'),
+              child: InkWell(
+                onTap: onSearchTap,
+                borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: GBTSpacing.sm),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.search, color: Colors.white, size: 18),
+                      const SizedBox(width: GBTSpacing.xs),
+                      Flexible(
+                        child: Text(
+                          context.l10n(
+                            ko: '탐비 검색',
+                            en: 'Search Tabi',
+                            ja: 'タビを検索',
+                          ),
+                          style: GBTTypography.bodySmall.copyWith(
+                            color: Colors.white.withValues(alpha: 0.85),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Semantics(
+            button: true,
+            label: context.l10n(ko: '알림', en: 'Notifications', ja: '通知'),
+            child: InkWell(
+              onTap: onNotificationsTap,
+              borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
+              child: const Padding(
+                padding: EdgeInsets.all(GBTSpacing.sm),
+                child: Icon(
+                  Icons.notifications_outlined,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// EN: Bento quick-action grid — one large "near you" tile + three compact
+/// shortcuts (guide book, calendar, live). Tinted layer surfaces, not glass —
+/// this section sits in a scrollable list context.
+/// KO: 벤토 퀵 액션 그리드 — 큰 "내 주변" 타일 1개 + 도감/캘린더/라이브
+/// 축약 타일 3개. 리스트 컨텍스트이므로 글래스 대신 틴트 레이어 표면 사용.
+class _QuickActionBento extends StatelessWidget {
+  const _QuickActionBento();
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Column(
+      children: [
+        _BentoTile(
+          icon: Icons.map_rounded,
+          label: context.l10n(ko: '내 주변 성지', en: 'Near You', ja: '近くの聖地'),
+          color: GBTColors.accentTeal,
+          isDark: isDark,
+          large: true,
+          onTap: () => context.go('/explore'),
+        ),
+        const SizedBox(height: GBTSpacing.sm),
+        Row(
+          children: [
+            Expanded(
+              child: _BentoTile(
+                icon: Icons.photo_album_rounded,
+                label: context.l10n(ko: '도감', en: 'Guide', ja: '図鑑'),
+                color: isDark ? GBTColors.darkPrimary : GBTColors.primary,
+                isDark: isDark,
+                onTap: () => context.push('/zukan'),
+              ),
+            ),
+            const SizedBox(width: GBTSpacing.sm),
+            Expanded(
+              child: _BentoTile(
+                icon: Icons.calendar_month_rounded,
+                label: context.l10n(ko: '캘린더', en: 'Calendar', ja: 'カレンダー'),
+                color: isDark ? GBTColors.darkAccent : GBTColors.accent,
+                isDark: isDark,
+                onTap: () => context.push('/calendar'),
+              ),
+            ),
+            const SizedBox(width: GBTSpacing.sm),
+            Expanded(
+              child: _BentoTile(
+                icon: Icons.live_tv_rounded,
+                label: context.l10n(ko: '라이브', en: 'Live', ja: 'ライブ'),
+                color: GBTColors.live,
+                isDark: isDark,
+                onTap: () => context.go('/explore?tab=1'),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// EN: Single bento tile — the large variant lays out icon + label + chevron
+/// horizontally; the compact variant stacks icon above label for narrow
+/// grid cells.
+/// KO: 벤토 타일 단일 컴포넌트 — large 변형은 아이콘+라벨+화살표를 가로로,
+/// 컴팩트 변형은 좁은 그리드 셀에 맞춰 아이콘/라벨을 세로로 배치합니다.
+class _BentoTile extends StatelessWidget {
+  const _BentoTile({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.isDark,
+    required this.onTap,
+    this.large = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+  final bool isDark;
+  final VoidCallback onTap;
+  final bool large;
+
+  @override
+  Widget build(BuildContext context) {
+    final textColor = isDark
+        ? GBTColors.darkTextPrimary
+        : GBTColors.textPrimary;
+
+    // EN: Neutral surface + hairline border — color lives only in the icon
+    //     chip so the grid reads crafted instead of pastel-washed.
+    // KO: 뉴트럴 표면 + 헤어라인 보더 — 컬러는 아이콘 칩에만 두어 그리드가
+    //     파스텔 범벅 대신 정제된 인상을 주도록 합니다.
+    final surfaceColor = isDark
+        ? GBTColors.darkSurfaceVariant
+        : GBTColors.surface;
+    final borderColor = isDark
+        ? GBTColors.darkBorderSubtle
+        : GBTColors.border.withValues(alpha: 0.6);
+
+    return Semantics(
+      button: true,
+      label: label,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(GBTSpacing.radiusCard),
+          child: Container(
+            // EN: minHeight (not a fixed height) — the tile grows with large
+            //     accessibility text scales instead of overflowing.
+            // KO: 고정 높이 대신 minHeight — 접근성 텍스트 스케일이 커져도
+            //     오버플로우 없이 타일이 늘어납니다.
+            constraints: BoxConstraints(minHeight: large ? 88 : 96),
+            padding: const EdgeInsets.all(GBTSpacing.md),
+            decoration: BoxDecoration(
+              color: surfaceColor,
+              borderRadius: BorderRadius.circular(GBTSpacing.radiusCard),
+              border: Border.all(color: borderColor, width: 0.8),
+            ),
+            child: large
+                ? Row(
+                    children: [
+                      GBTIconChip(icon: icon, color: color, size: 44),
+                      const SizedBox(width: GBTSpacing.md2),
+                      Expanded(
+                        child: Text(
+                          label,
+                          style: GBTTypography.titleMedium.copyWith(
+                            color: textColor,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        color: isDark
+                            ? GBTColors.darkTextTertiary
+                            : GBTColors.textTertiary,
+                      ),
+                    ],
+                  )
+                : Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      GBTIconChip(icon: icon, color: color, size: 40),
+                      const SizedBox(height: GBTSpacing.xs2),
+                      Text(
+                        label,
+                        style: GBTTypography.labelMedium.copyWith(
+                          color: textColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// EN: Soft mint-tinted band wrapping the "near you" places rail — the one
+///     section on the page that intentionally breaks the plain-white rail
+///     pattern used by every other carousel.
+/// KO: "내 주변 성지" 레일을 감싸는 부드러운 민트 톤 밴드 — 다른 모든
+///     캐러셀이 사용하는 흰 배경 레일 패턴을 의도적으로 깨는 유일한 섹션.
+class _NearbyPlacesBand extends StatelessWidget {
+  const _NearbyPlacesBand({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final tint = GBTColors.accentTeal.withValues(alpha: isDark ? 0.10 : 0.06);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: GBTSpacing.lg),
+      color: tint,
+      child: child,
     );
   }
 }

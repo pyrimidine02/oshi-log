@@ -16,6 +16,7 @@ import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';
 import '../../../../core/utils/result.dart';
 import '../../../../core/widgets/buttons/gbt_button.dart';
+import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
 import '../../application/auth_controller.dart';
 import 'email_verification_args.dart';
 
@@ -69,8 +70,10 @@ class _EmailVerificationPendingPageState
       setState(() => _cooldownRemaining = 0);
       return;
     }
-    final secondsLeft =
-        resendAvailableAt.difference(now).inSeconds.clamp(0, 3600);
+    final secondsLeft = resendAvailableAt
+        .difference(now)
+        .inSeconds
+        .clamp(0, 3600);
     setState(() => _cooldownRemaining = secondsLeft);
     _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) {
@@ -123,9 +126,9 @@ class _EmailVerificationPendingPageState
               en: 'Resend failed. Please try again later.',
               ja: '再送に失敗しました。しばらく経ってから再試行してください。',
             );
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
     }
   }
 
@@ -230,8 +233,7 @@ class _EmailVerificationPendingPageState
       ),
       'EMAIL_VERIFICATION_ALREADY_USED' => context.l10n(
         ko: '이미 사용된 인증 코드입니다. 이미 인증이 완료되었을 수 있습니다.',
-        en:
-            'This code has already been used. Verification may already be complete.',
+        en: 'This code has already been used. Verification may already be complete.',
         ja: 'すでに使用済みの認証コードです。すでに認証が完了している可能性があります。',
       ),
       'EMAIL_VERIFICATION_MAX_ATTEMPTS' => context.l10n(
@@ -264,27 +266,19 @@ class _EmailVerificationPendingPageState
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(
-          context.l10n(
-            ko: '이미 인증 완료',
-            en: 'Already Verified',
-            ja: '認証済み',
-          ),
+          context.l10n(ko: '이미 인증 완료', en: 'Already Verified', ja: '認証済み'),
         ),
         content: Text(
           context.l10n(
             ko: '이미 사용된 인증 코드입니다. 인증이 이미 완료되었을 수 있습니다.\n로그인 화면으로 이동하시겠습니까?',
-            en:
-                'This code has already been used. Verification may already be complete.\nGo to the login screen?',
-            ja:
-                'すでに使用済みの認証コードです。認証が完了している可能性があります。\nログイン画面に移動しますか？',
+            en: 'This code has already been used. Verification may already be complete.\nGo to the login screen?',
+            ja: 'すでに使用済みの認証コードです。認証が完了している可能性があります。\nログイン画面に移動しますか？',
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: Text(
-              context.l10n(ko: '취소', en: 'Cancel', ja: 'キャンセル'),
-            ),
+            child: Text(context.l10n(ko: '취소', en: 'Cancel', ja: 'キャンセル')),
           ),
           TextButton(
             onPressed: () {
@@ -307,18 +301,17 @@ class _EmailVerificationPendingPageState
     final expiresAt = widget.args.verificationExpiresAt;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          context.l10n(ko: '이메일 인증', en: 'Email Verification', ja: 'メール認証'),
+      appBar: gbtStandardAppBar(
+        context,
+        title: context.l10n(
+          ko: '이메일 인증',
+          en: 'Email Verification',
+          ja: 'メール認証',
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.go('/login'),
-          tooltip: context.l10n(
-            ko: '로그인으로 이동',
-            en: 'Go to login',
-            ja: 'ログインへ',
-          ),
+          tooltip: context.l10n(ko: '로그인으로 이동', en: 'Go to login', ja: 'ログインへ'),
         ),
       ),
       body: SafeArea(
@@ -337,10 +330,7 @@ class _EmailVerificationPendingPageState
                   duration: const Duration(milliseconds: 600),
                   curve: Curves.elasticOut,
                   builder: (context, value, child) {
-                    return Transform.scale(
-                      scale: value,
-                      child: child,
-                    );
+                    return Transform.scale(scale: value, child: child);
                   },
                   child: Container(
                     width: 72,
@@ -382,12 +372,9 @@ class _EmailVerificationPendingPageState
               // KO: 이메일 주소 포함 설명
               Text(
                 context.l10n(
-                  ko:
-                      '${widget.args.email} 으로 발송된 메일의 링크를 클릭하여 인증을 완료해주세요.\n인증 완료 후 로그인할 수 있습니다.',
-                  en:
-                      'Click the link sent to ${widget.args.email} to complete verification.\nYou can log in after verification.',
-                  ja:
-                      '${widget.args.email} に送信されたメール内のリンクをクリックして認証を完了してください。\n認証後にログインできます。',
+                  ko: '${widget.args.email} 으로 발송된 메일의 링크를 클릭하여 인증을 완료해주세요.\n인증 완료 후 로그인할 수 있습니다.',
+                  en: 'Click the link sent to ${widget.args.email} to complete verification.\nYou can log in after verification.',
+                  ja: '${widget.args.email} に送信されたメール内のリンクをクリックして認証を完了してください。\n認証後にログインできます。',
                 ),
                 style: GBTTypography.bodyMedium.copyWith(
                   color: isDark
@@ -564,11 +551,7 @@ class _EmailVerificationPendingPageState
                   const SizedBox(width: GBTSpacing.sm),
                   Expanded(
                     child: GBTButton(
-                      label: context.l10n(
-                        ko: '인증하기',
-                        en: 'Verify',
-                        ja: '認証する',
-                      ),
+                      label: context.l10n(ko: '인증하기', en: 'Verify', ja: '認証する'),
                       icon: Icons.arrow_forward_rounded,
                       iconPosition: IconPosition.trailing,
                       isLoading: _isVerifying,

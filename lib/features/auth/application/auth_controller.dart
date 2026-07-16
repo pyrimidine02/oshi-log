@@ -62,6 +62,12 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
   /// KO: EMAIL_ACCOUNT_CONFLICT 플로우 중 임시 보관되는 OAuth 자격증명.
   _PendingOAuthConflict? _pendingConflict;
 
+  /// EN: Fresh provider proof retained only for an explicitly confirmed
+  ///     inactive-account recovery attempt.
+  /// KO: 명시적으로 확인된 비활성 계정 복구 시도에만 사용할
+  ///     최신 제공자 소유권 증명을 임시 보관합니다.
+  _PendingInactiveRecovery? _pendingInactiveRecovery;
+
   /// EN: Login with username/password.
   /// KO: 사용자명/비밀번호 로그인.
   Future<Result<void>> login({
@@ -71,6 +77,24 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
     state = const AsyncLoading();
     final result = await _repository.login(
       username: username,
+      password: password,
+    );
+    return _handleAuthResult(
+      result,
+      analyticsType: _AuthAnalyticsType.login,
+      analyticsMethod: 'password',
+    );
+  }
+
+  /// EN: Restore an inactive password account after explicit user consent.
+  /// KO: 사용자의 명시적 동의 후 비활성 비밀번호 계정을 복구합니다.
+  Future<Result<void>> recoverWithPassword({
+    required String email,
+    required String password,
+  }) async {
+    state = const AsyncLoading();
+    final result = await _repository.recoverWithPassword(
+      email: email,
       password: password,
     );
     return _handleAuthResult(
@@ -267,6 +291,7 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
   ///     UI가 충돌 해결 화면으로 이동할 수 있도록 합니다.
   Future<Result<void>> loginWithGoogle() async {
     state = const AsyncLoading();
+    _pendingInactiveRecovery = null;
     final tokenResult = await _nativeSocialLoginService.signInWithGoogle();
     if (tokenResult is Err<String>) {
       state = AsyncError(tokenResult.failure, StackTrace.current);
@@ -278,6 +303,12 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
     // EN: Detect EMAIL_ACCOUNT_CONFLICT and store idToken for link-existing flow.
     // KO: EMAIL_ACCOUNT_CONFLICT 감지 시 link-existing 플로우를 위해 idToken을 저장합니다.
     final authFailure = authResult.failureOrNull;
+    if (authFailure?.code == 'ACCOUNT_INACTIVE') {
+      _pendingInactiveRecovery = _PendingInactiveRecovery(
+        provider: OAuthProvider.google,
+        token: idToken,
+      );
+    }
     if (authFailure != null && authFailure.code == 'EMAIL_ACCOUNT_CONFLICT') {
       var conflictEmail = '';
       if (authFailure is ValidationFailure) {
@@ -297,6 +328,29 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
     );
   }
 
+  /// EN: Restore an inactive Google account with the fresh proof obtained by
+  ///     the immediately preceding login attempt.
+  /// KO: 바로 앞선 로그인 시도에서 얻은 최신 Google 소유권 증명으로
+  ///     비활성 계정을 복구합니다.
+  Future<Result<void>> recoverWithGoogle() async {
+    state = const AsyncLoading();
+    final pending = _takeInactiveRecovery(OAuthProvider.google);
+    if (pending == null) {
+      const failure = ValidationFailure(
+        'Google recovery proof is missing or expired.',
+        code: 'recovery_proof_missing',
+      );
+      state = AsyncError(failure, StackTrace.current);
+      return Result.failure(failure);
+    }
+    final result = await _repository.recoverWithGoogle(idToken: pending.token);
+    return _handleAuthResult(
+      result,
+      analyticsType: _AuthAnalyticsType.login,
+      analyticsMethod: OAuthProvider.google.id,
+    );
+  }
+
   /// EN: Native Apple Sign-In — calls Apple SDK then exchanges identityToken with backend.
   ///     Returns [AuthFailure] with code 'sign_in_cancelled' if user dismisses the sheet.
   ///     On EMAIL_ACCOUNT_CONFLICT (409), stores pending credentials for link-existing flow.
@@ -305,6 +359,7 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
   ///     EMAIL_ACCOUNT_CONFLICT(409) 시 link-existing 플로우를 위해 pending 자격증명을 저장합니다.
   Future<Result<void>> loginWithApple() async {
     state = const AsyncLoading();
+    _pendingInactiveRecovery = null;
     final credentialResult = await _nativeSocialLoginService.signInWithApple();
     if (credentialResult is Err<AppleSignInCredentials>) {
       state = AsyncError(credentialResult.failure, StackTrace.current);
@@ -321,6 +376,14 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
     // EN: Detect EMAIL_ACCOUNT_CONFLICT and store credentials for link-existing flow.
     // KO: EMAIL_ACCOUNT_CONFLICT 감지 시 link-existing 플로우를 위해 자격증명을 저장합니다.
     final appleAuthFailure = authResult.failureOrNull;
+    if (appleAuthFailure?.code == 'ACCOUNT_INACTIVE') {
+      _pendingInactiveRecovery = _PendingInactiveRecovery(
+        provider: OAuthProvider.apple,
+        token: credentials.identityToken,
+        email: credentials.email,
+        fullName: credentials.fullName,
+      );
+    }
     if (appleAuthFailure != null &&
         appleAuthFailure.code == 'EMAIL_ACCOUNT_CONFLICT') {
       var conflictEmail = '';
@@ -341,6 +404,39 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
       analyticsType: _AuthAnalyticsType.login,
       analyticsMethod: OAuthProvider.apple.id,
     );
+  }
+
+  /// EN: Restore an inactive Apple account with the fresh proof obtained by
+  ///     the immediately preceding login attempt.
+  /// KO: 바로 앞선 로그인 시도에서 얻은 최신 Apple 소유권 증명으로
+  ///     비활성 계정을 복구합니다.
+  Future<Result<void>> recoverWithApple() async {
+    state = const AsyncLoading();
+    final pending = _takeInactiveRecovery(OAuthProvider.apple);
+    if (pending == null) {
+      const failure = ValidationFailure(
+        'Apple recovery proof is missing or expired.',
+        code: 'recovery_proof_missing',
+      );
+      state = AsyncError(failure, StackTrace.current);
+      return Result.failure(failure);
+    }
+    final result = await _repository.recoverWithApple(
+      identityToken: pending.token,
+      email: pending.email,
+      fullName: pending.fullName,
+    );
+    return _handleAuthResult(
+      result,
+      analyticsType: _AuthAnalyticsType.login,
+      analyticsMethod: OAuthProvider.apple.id,
+    );
+  }
+
+  _PendingInactiveRecovery? _takeInactiveRecovery(OAuthProvider provider) {
+    final pending = _pendingInactiveRecovery;
+    _pendingInactiveRecovery = null;
+    return pending?.provider == provider ? pending : null;
   }
 
   /// EN: Change password while authenticated.
@@ -560,7 +656,9 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
     }
     final idToken = (tokenResult as Success<String>).data;
     state = const AsyncLoading();
-    final result = await _repository.connectExistingWithGoogle(idToken: idToken);
+    final result = await _repository.connectExistingWithGoogle(
+      idToken: idToken,
+    );
     return _handleAuthResult(result);
   }
 
@@ -885,6 +983,22 @@ class _PendingOAuthConflict {
   final String conflictEmail;
 
   final String? appleEmail;
+  final String? fullName;
+}
+
+/// EN: In-memory, single-use proof for explicit inactive-account recovery.
+/// KO: 명시적 비활성 계정 복구용 메모리 내 1회성 소유권 증명.
+class _PendingInactiveRecovery {
+  const _PendingInactiveRecovery({
+    required this.provider,
+    required this.token,
+    this.email,
+    this.fullName,
+  });
+
+  final OAuthProvider provider;
+  final String token;
+  final String? email;
   final String? fullName;
 }
 

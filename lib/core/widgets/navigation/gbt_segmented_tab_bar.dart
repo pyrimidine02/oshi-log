@@ -21,7 +21,7 @@ class GBTSegmentedTabBar extends StatelessWidget {
     this.height,
     this.borderRadius = GBTSpacing.radiusMd,
     this.indicatorBorderRadius = GBTSpacing.radiusSm + 1,
-    this.indicatorShadow = true,
+    this.indicatorShadow = false,
     this.labelStyle,
     this.unselectedLabelStyle,
     this.labelPadding,
@@ -44,92 +44,66 @@ class GBTSegmentedTabBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final isAndroid = theme.platform == TargetPlatform.android;
     final activeColor = isDark ? GBTColors.darkPrimary : GBTColors.primary;
     final resolvedLabelStyle = (labelStyle ?? GBTTypography.labelLarge)
-        .copyWith(fontWeight: FontWeight.w600, fontSize: isAndroid ? 15 : null);
+        .copyWith(fontWeight: FontWeight.w700);
     final resolvedUnselectedLabelStyle =
-        (unselectedLabelStyle ?? labelStyle ?? GBTTypography.labelLarge)
-            .copyWith(fontSize: isAndroid ? 15 : null);
-    final resolvedPadding = isAndroid
-        ? const EdgeInsets.symmetric(horizontal: 4, vertical: 4)
-        : padding;
-    final resolvedLabelPadding = isAndroid
-        ? const EdgeInsets.symmetric(horizontal: GBTSpacing.md)
-        : labelPadding;
-    final containerRadius = isAndroid ? borderRadius + 4 : borderRadius;
-    final indicatorRadius = isAndroid
-        ? indicatorBorderRadius + 2
-        : indicatorBorderRadius;
+        unselectedLabelStyle ?? labelStyle ?? GBTTypography.labelLarge;
 
     final segmented = ConstrainedBox(
       constraints: const BoxConstraints(minHeight: GBTSpacing.minTouchTarget),
       child: Container(
         margin: margin ?? const EdgeInsets.symmetric(horizontal: GBTSpacing.md),
-        padding: resolvedPadding,
+        padding: padding,
+        // EN: A quiet paper track keeps local modes distinct from global
+        // bottom navigation without introducing glass or floating depth.
+        // KO: 차분한 페이퍼 트랙으로 로컬 모드를 전역 하단 내비게이션과
+        // 구분하되 글래스나 떠 있는 깊이감은 추가하지 않습니다.
         decoration: BoxDecoration(
-          color: isAndroid
-              ? (isDark
-                    ? GBTColors.darkSurfaceElevated
-                    : GBTColors.surface.withValues(alpha: 0.95))
-              : (isDark
-                    ? GBTColors.darkSurfaceVariant
-                    : GBTColors.surfaceVariant),
-          borderRadius: BorderRadius.circular(containerRadius),
+          color: isDark
+              ? GBTColors.darkSurfaceVariant
+              : GBTColors.surfaceVariant.withValues(alpha: 0.72),
+          borderRadius: BorderRadius.circular(borderRadius),
           border: Border.all(
-            color: isDark
-                ? GBTColors.darkBorder
-                : GBTColors.border.withValues(alpha: 0.8),
+            color: isDark ? GBTColors.darkBorderSubtle : GBTColors.divider,
+            width: 0.8,
           ),
-          boxShadow: isAndroid
-              ? [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: isDark ? 0.24 : 0.08),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : null,
         ),
         child: TabBar(
           controller: controller,
           isScrollable: isScrollable,
-          overlayColor: WidgetStateProperty.resolveWith((states) {
-            if (!isAndroid) return null;
-            if (states.contains(WidgetState.pressed)) {
-              return activeColor.withValues(alpha: 0.12);
-            }
-            if (states.contains(WidgetState.hovered)) {
-              return activeColor.withValues(alpha: 0.08);
-            }
-            return null;
-          }),
           indicator: BoxDecoration(
-            color: activeColor.withValues(
-              alpha: isAndroid ? (isDark ? 0.28 : 0.2) : (isDark ? 0.22 : 0.14),
-            ),
-            borderRadius: BorderRadius.circular(indicatorRadius),
-            border: Border.all(
-              color: activeColor.withValues(
-                alpha: isAndroid
-                    ? (isDark ? 0.58 : 0.36)
-                    : (isDark ? 0.5 : 0.32),
-              ),
-              width: 1,
-            ),
+            color: isDark
+                ? activeColor.withValues(alpha: 0.18)
+                : GBTColors.primaryLight,
+            borderRadius: BorderRadius.circular(indicatorBorderRadius),
+            border: isDark
+                ? Border.all(
+                    color: activeColor.withValues(alpha: 0.36),
+                    width: 0.8,
+                  )
+                : null,
             boxShadow: indicatorShadow
                 ? [
                     BoxShadow(
-                      color: activeColor.withValues(
-                        alpha: isAndroid ? 0.22 : 0.18,
-                      ),
-                      blurRadius: isAndroid ? 12 : 10,
-                      offset: const Offset(0, 3),
+                      color: activeColor.withValues(alpha: 0.10),
+                      blurRadius: 6,
+                      offset: const Offset(0, 1),
                     ),
                   ]
                 : null,
           ),
           indicatorSize: TabBarIndicatorSize.tab,
+          // EN: Elastic slide gives the pill a soft, liquid-glass squash/stretch
+          // as it moves between tabs. The transition's actual duration follows
+          // the owning TabController (Flutter default ~300ms, close to the
+          // ~200ms feel requested) — TabBar has no per-widget duration override.
+          // KO: 엘라스틱 슬라이드는 필이 탭 사이를 이동할 때 부드러운 리퀴드
+          // 글래스 squash/stretch 느낌을 줍니다. 실제 전환 시간은 컨트롤러를
+          // 소유한 TabController를 따릅니다 (Flutter 기본 ~300ms로 요청된
+          // ~200ms 느낌에 근접) — TabBar는 위젯 단위 duration 오버라이드를
+          // 제공하지 않습니다.
+          indicatorAnimation: TabIndicatorAnimation.elastic,
           dividerColor: Colors.transparent,
           labelColor: activeColor,
           unselectedLabelColor: isDark
@@ -137,7 +111,7 @@ class GBTSegmentedTabBar extends StatelessWidget {
               : GBTColors.textTertiary,
           labelStyle: resolvedLabelStyle,
           unselectedLabelStyle: resolvedUnselectedLabelStyle,
-          labelPadding: resolvedLabelPadding,
+          labelPadding: labelPadding,
           tabs: tabs,
         ),
       ),

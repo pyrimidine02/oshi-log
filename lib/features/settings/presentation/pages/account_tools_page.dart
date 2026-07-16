@@ -8,14 +8,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/error/failure.dart';
+import '../../../../core/localization/locale_text.dart';
 import '../../../../core/security/user_access_level.dart';
 import '../../../../core/theme/gbt_colors.dart';
 import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';
 import '../../../../core/utils/result.dart';
+import '../../../../core/widgets/common/gbt_icon_chip.dart';
 import '../../../../core/widgets/common/gbt_image.dart';
 import '../../../../core/widgets/feedback/gbt_loading.dart';
 import '../../../../core/widgets/navigation/gbt_segmented_tab_bar.dart';
+import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
 import '../../../settings/application/settings_controller.dart';
 import '../../../settings/domain/entities/account_tools.dart';
 import '../../../settings/domain/entities/user_profile.dart';
@@ -104,8 +107,9 @@ class _AccountToolsPageState extends ConsumerState<AccountToolsPage>
     final appealsState = ref.watch(verificationAppealsControllerProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('계정 도구'),
+      appBar: gbtStandardAppBar(
+        context,
+        title: context.l10n(ko: '계정 도구', en: 'Account tools', ja: 'アカウントツール'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
@@ -127,7 +131,7 @@ class _AccountToolsPageState extends ConsumerState<AccountToolsPage>
             ),
             child: GBTSegmentedTabBar(
               controller: _tabController,
-              height: 42,
+              height: GBTSpacing.touchTarget,
               tabs: const [
                 Tab(text: '차단'),
                 Tab(text: '권한 요청'),
@@ -323,7 +327,6 @@ class _BlockItemRow extends StatelessWidget {
     final surfaceColor = isDark
         ? GBTColors.darkSurfaceElevated
         : GBTColors.surface;
-    final borderColor = isDark ? GBTColors.darkBorderSubtle : GBTColors.border;
     final textPrimary = isDark
         ? GBTColors.darkTextPrimary
         : GBTColors.textPrimary;
@@ -333,11 +336,7 @@ class _BlockItemRow extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.all(GBTSpacing.md),
-      decoration: BoxDecoration(
-        color: surfaceColor,
-        borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
-        border: Border.all(color: borderColor, width: 0.5),
-      ),
+      color: surfaceColor,
       child: Row(
         children: [
           // EN: User avatar
@@ -397,12 +396,10 @@ class _BlockItemRow extends StatelessWidget {
           OutlinedButton(
             onPressed: onUnblock,
             style: OutlinedButton.styleFrom(
-              minimumSize: const Size(0, 36),
+              minimumSize: const Size(0, GBTSpacing.touchTarget),
               padding: const EdgeInsets.symmetric(horizontal: GBTSpacing.sm),
-              side: BorderSide(
-                color: const Color(0xFFEF4444).withValues(alpha: 0.4),
-              ),
-              foregroundColor: const Color(0xFFEF4444),
+              side: BorderSide(color: GBTColors.error.withValues(alpha: 0.4)),
+              foregroundColor: GBTColors.error,
             ),
             child: const Text('해제'),
           ),
@@ -443,7 +440,6 @@ class _AccessLevelTab extends StatelessWidget {
     final surfaceColor = isDark
         ? GBTColors.darkSurfaceElevated
         : GBTColors.surface;
-    final borderColor = isDark ? GBTColors.darkBorderSubtle : GBTColors.border;
     final textPrimary = isDark
         ? GBTColors.darkTextPrimary
         : GBTColors.textPrimary;
@@ -487,32 +483,16 @@ class _AccessLevelTab extends StatelessWidget {
               );
               return Container(
                 padding: const EdgeInsets.all(GBTSpacing.md),
-                decoration: BoxDecoration(
-                  color: surfaceColor,
-                  borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
-                  border: Border.all(color: borderColor, width: 0.5),
-                ),
+                color: surfaceColor,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        Container(
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            color: const Color(
-                              0xFF6366F1,
-                            ).withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(
-                              GBTSpacing.radiusSm,
-                            ),
-                          ),
-                          child: const Icon(
-                            Icons.verified_user_rounded,
-                            size: 18,
-                            color: Color(0xFF6366F1),
-                          ),
+                        const GBTIconChip(
+                          icon: Icons.verified_user_rounded,
+                          color: GBTColors.secondary,
+                          size: 32,
                         ),
                         const SizedBox(width: GBTSpacing.sm),
                         Text(
@@ -560,7 +540,7 @@ class _AccessLevelTab extends StatelessWidget {
                         width: double.infinity,
                         padding: const EdgeInsets.all(GBTSpacing.sm),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                          color: GBTColors.success.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(
                             GBTSpacing.radiusSm,
                           ),
@@ -568,7 +548,7 @@ class _AccessLevelTab extends StatelessWidget {
                         child: Text(
                           '현재 계정은 이미 요청 가능한 권한 이상을 보유하고 있습니다.',
                           style: GBTTypography.bodySmall.copyWith(
-                            color: const Color(0xFF10B981),
+                            color: GBTColors.success,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -729,7 +709,6 @@ class _PermissionRequestCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final borderColor = isDark ? GBTColors.darkBorderSubtle : GBTColors.border;
     final textPrimary = isDark
         ? GBTColors.darkTextPrimary
         : GBTColors.textPrimary;
@@ -740,10 +719,6 @@ class _PermissionRequestCard extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(GBTSpacing.sm),
-      decoration: BoxDecoration(
-        border: Border.all(color: borderColor, width: 0.5),
-        borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -773,7 +748,7 @@ class _PermissionRequestCard extends StatelessWidget {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                      color: GBTColors.success.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(
                         GBTSpacing.radiusFull,
                       ),
@@ -781,7 +756,7 @@ class _PermissionRequestCard extends StatelessWidget {
                     child: Text(
                       '보유중',
                       style: GBTTypography.labelSmall.copyWith(
-                        color: const Color(0xFF10B981),
+                        color: GBTColors.success,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -806,7 +781,6 @@ class _ProjectRoleRequestCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final borderColor = isDark ? GBTColors.darkBorderSubtle : GBTColors.border;
     final textPrimary = isDark
         ? GBTColors.darkTextPrimary
         : GBTColors.textPrimary;
@@ -818,10 +792,6 @@ class _ProjectRoleRequestCard extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(GBTSpacing.sm),
-      decoration: BoxDecoration(
-        border: Border.all(color: borderColor, width: 0.5),
-        borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -889,7 +859,7 @@ class _ProjectRoleRequestCard extends StatelessWidget {
                 TextButton(
                   onPressed: onCancel,
                   style: TextButton.styleFrom(
-                    minimumSize: const Size(0, 30),
+                    minimumSize: const Size(0, GBTSpacing.touchTarget),
                     padding: const EdgeInsets.symmetric(
                       horizontal: GBTSpacing.sm,
                     ),
@@ -962,7 +932,6 @@ class _AppealsTab extends StatelessWidget {
     final surfaceColor = isDark
         ? GBTColors.darkSurfaceElevated
         : GBTColors.surface;
-    final borderColor = isDark ? GBTColors.darkBorderSubtle : GBTColors.border;
     final textPrimary = isDark
         ? GBTColors.darkTextPrimary
         : GBTColors.textPrimary;
@@ -995,30 +964,16 @@ class _AppealsTab extends StatelessWidget {
           // KO: 제출 폼 카드
           Container(
             padding: const EdgeInsets.all(GBTSpacing.md),
-            decoration: BoxDecoration(
-              color: surfaceColor,
-              borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
-              border: Border.all(color: borderColor, width: 0.5),
-            ),
+            color: surfaceColor,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(
-                          GBTSpacing.radiusSm,
-                        ),
-                      ),
-                      child: const Icon(
-                        Icons.gavel_rounded,
-                        size: 18,
-                        color: Color(0xFFF59E0B),
-                      ),
+                    const GBTIconChip(
+                      icon: Icons.gavel_rounded,
+                      color: GBTColors.warning,
+                      size: 32,
                     ),
                     const SizedBox(width: GBTSpacing.sm),
                     Text(
@@ -1167,7 +1122,6 @@ class _AppealItemRow extends StatelessWidget {
     final surfaceColor = isDark
         ? GBTColors.darkSurfaceElevated
         : GBTColors.surface;
-    final borderColor = isDark ? GBTColors.darkBorderSubtle : GBTColors.border;
     final textPrimary = isDark
         ? GBTColors.darkTextPrimary
         : GBTColors.textPrimary;
@@ -1180,11 +1134,7 @@ class _AppealItemRow extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.all(GBTSpacing.md),
-      decoration: BoxDecoration(
-        color: surfaceColor,
-        borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
-        border: Border.all(color: borderColor, width: 0.5),
-      ),
+      color: surfaceColor,
       child: Row(
         children: [
           Expanded(
@@ -1248,10 +1198,10 @@ class _StatusBadge extends StatelessWidget {
     };
 
     final color = switch (normalized) {
-      'APPROVED' => const Color(0xFF10B981),
-      'REJECTED' => const Color(0xFFEF4444),
-      'IN_REVIEW' => const Color(0xFF3B82F6),
-      _ => const Color(0xFFF59E0B),
+      'APPROVED' => GBTColors.success,
+      'REJECTED' => GBTColors.error,
+      'IN_REVIEW' => GBTColors.accentBlue,
+      _ => GBTColors.warning,
     };
 
     return Container(
@@ -1299,7 +1249,6 @@ class _SelectionField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final enabled = onTap != null;
-    final borderColor = isDark ? GBTColors.darkBorder : GBTColors.border;
     final textPrimary = isDark
         ? GBTColors.darkTextPrimary
         : GBTColors.textPrimary;
@@ -1318,8 +1267,11 @@ class _SelectionField extends StatelessWidget {
             vertical: GBTSpacing.sm,
           ),
           decoration: BoxDecoration(
-            border: Border.all(color: borderColor, width: 0.5),
-            borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
+            border: Border(
+              bottom: BorderSide(
+                color: isDark ? GBTColors.darkBorder : GBTColors.divider,
+              ),
+            ),
           ),
           child: Row(
             children: [

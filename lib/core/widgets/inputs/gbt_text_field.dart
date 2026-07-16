@@ -149,7 +149,7 @@ class GBTTextField extends StatefulWidget {
 class _GBTTextFieldState extends State<GBTTextField> {
   bool _isObscured = true;
   String? _previousErrorText;
-  
+
   FocusNode? _internalFocusNode;
   bool _isFocused = false;
 
@@ -236,12 +236,17 @@ class _GBTTextFieldState extends State<GBTTextField> {
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeOutCirc,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
+              // EN: Radius matches the themed input border (GBTSpacing.radiusLg)
+              // so the focus glow traces the field's actual rounded corners.
+              // KO: 테마 입력 테두리 반지름(GBTSpacing.radiusLg)과 일치시켜
+              // 포커스 글로우가 필드의 실제 둥근 모서리를 따라가도록 합니다.
+              borderRadius: BorderRadius.circular(GBTSpacing.radiusLg),
               boxShadow: _isFocused
                   ? [
                       BoxShadow(
-                        color: (isDark ? GBTColors.darkPrimary : GBTColors.primary)
-                            .withValues(alpha: 0.25),
+                        color:
+                            (isDark ? GBTColors.darkPrimary : GBTColors.primary)
+                                .withValues(alpha: 0.25),
                         blurRadius: 12,
                         spreadRadius: 2,
                       ),
@@ -266,7 +271,9 @@ class _GBTTextFieldState extends State<GBTTextField> {
               onFieldSubmitted: widget.onSubmitted,
               onTap: widget.onTap,
               style: GBTTypography.bodyMedium.copyWith(
-                color: isDark ? GBTColors.darkTextPrimary : GBTColors.textPrimary,
+                color: isDark
+                    ? GBTColors.darkTextPrimary
+                    : GBTColors.textPrimary,
               ),
               decoration: InputDecoration(
                 hintText: widget.hint,

@@ -17,12 +17,4 @@ abstract class FanLevelRepository {
   /// EN: Performs the daily check-in and returns the result.
   /// KO: 일일 출석 체크를 수행하고 결과를 반환합니다.
   Future<Result<CheckInResult>> checkIn();
-
-  /// EN: Records an in-app activity and grants XP to the authenticated user.
-  /// KO: 앱 내 활동을 기록하고 인증된 사용자에게 XP를 부여합니다.
-  Future<Result<EarnXpResult>> earnXp(
-    String activityType,
-    String entityId, {
-    String? projectId,
-  });
 }

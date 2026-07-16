@@ -10,14 +10,17 @@ import '../../../../core/error/failure.dart';
 import '../../../../core/localization/locale_text.dart';
 import '../../../../core/providers/core_providers.dart';
 import '../../../../core/storage/local_storage.dart';
+import '../../../../core/theme/gbt_colors.dart';
 import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';
 import '../../../../core/utils/result.dart';
 import '../../../../core/widgets/dialogs/gbt_adaptive_dialog.dart';
+import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
 import '../../../../core/widgets/sheets/gbt_bottom_sheet.dart';
 import '../../../auth/application/auth_controller.dart';
 import '../../application/settings_controller.dart';
 import '../../domain/entities/privacy_rights.dart';
+import '../widgets/field_settings_components.dart';
 
 class PrivacyRightsPage extends ConsumerStatefulWidget {
   const PrivacyRightsPage({super.key});
@@ -369,13 +372,12 @@ class _PrivacyRightsPageState extends ConsumerState<PrivacyRightsPage> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
-        appBar: AppBar(
-          title: Text(
-            context.l10n(
-              ko: '개인정보 및 권리행사',
-              en: 'Privacy and rights',
-              ja: 'プライバシーと権利行使',
-            ),
+        appBar: gbtStandardAppBar(
+          context,
+          title: context.l10n(
+            ko: '개인정보 및 권리행사',
+            en: 'Privacy and rights',
+            ja: 'プライバシーと権利行使',
           ),
         ),
         body: const Center(child: CircularProgressIndicator()),
@@ -383,13 +385,12 @@ class _PrivacyRightsPageState extends ConsumerState<PrivacyRightsPage> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          context.l10n(
-            ko: '개인정보 및 권리행사',
-            en: 'Privacy and rights',
-            ja: 'プライバシーと権利行使',
-          ),
+      appBar: gbtStandardAppBar(
+        context,
+        title: context.l10n(
+          ko: '개인정보 및 권리행사',
+          en: 'Privacy and rights',
+          ja: 'プライバシーと権利行使',
         ),
       ),
       body: ListView(
@@ -524,7 +525,7 @@ class _PrivacyRightsPageState extends ConsumerState<PrivacyRightsPage> {
                   contentPadding: EdgeInsets.zero,
                   leading: const Icon(
                     Icons.delete_forever_outlined,
-                    color: Colors.red,
+                    color: GBTColors.error,
                   ),
                   title: Text(
                     context.l10n(
@@ -532,7 +533,7 @@ class _PrivacyRightsPageState extends ConsumerState<PrivacyRightsPage> {
                       en: 'Delete account',
                       ja: 'アカウント削除',
                     ),
-                    style: const TextStyle(color: Colors.red),
+                    style: const TextStyle(color: GBTColors.error),
                   ),
                   trailing: _isDeletingAccount
                       ? const SizedBox(
@@ -617,9 +618,9 @@ class _PrivacyRequestRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final statusColor = switch (item.status.toUpperCase()) {
-      'COMPLETED' => Colors.green,
+      'COMPLETED' => GBTColors.success,
       'REJECTED' => Theme.of(context).colorScheme.error,
-      'IN_REVIEW' => Colors.orange,
+      'IN_REVIEW' => GBTColors.warningDark,
       _ => Theme.of(context).colorScheme.primary,
     };
     return Padding(
@@ -674,31 +675,14 @@ class _SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(GBTSpacing.md),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
-        border: Border.all(
-          color: Theme.of(
-            context,
-          ).colorScheme.outlineVariant.withValues(alpha: 0.6),
-          width: 0.5,
+    return FieldSettingsSection(
+      title: title,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: GBTSpacing.xs),
+          child: child,
         ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: GBTTypography.titleSmall.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: GBTSpacing.sm),
-          child,
-        ],
-      ),
+      ],
     );
   }
 }

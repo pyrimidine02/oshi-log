@@ -22,7 +22,7 @@ final calendarRepositoryProvider = Provider<CalendarRepository>((ref) {
 
 /// EN: Query parameters for fetching calendar events.
 /// KO: 캘린더 이벤트 조회 쿼리 파라미터.
-typedef CalendarEventsQuery = ({int year, int month, String? projectId});
+typedef CalendarEventsQuery = ({int year, int month, String? projectKey});
 
 /// EN: Family provider — loads events for a specific year/month.
 /// EN: Returns empty list on 404 (no events yet); throws on other failures.
@@ -30,19 +30,19 @@ typedef CalendarEventsQuery = ({int year, int month, String? projectId});
 /// KO: 404(이벤트 없음)는 빈 목록 반환, 그 외 실패는 throw합니다.
 final calendarEventsProvider = FutureProvider.autoDispose
     .family<List<CalendarEvent>, CalendarEventsQuery>((ref, query) async {
-  final repo = ref.watch(calendarRepositoryProvider);
-  final result = await repo.fetchEvents(
-    year: query.year,
-    month: query.month,
-    projectId: query.projectId,
-  );
-  return result.when(
-    success: (events) => events,
-    failure: (f) {
-      // EN: 404 means no events this month — return empty list, not an error.
-      // KO: 404는 해당 월에 이벤트가 없는 것이므로 에러가 아닌 빈 목록을 반환합니다.
-      if (f is NotFoundFailure) return const <CalendarEvent>[];
-      throw f;
-    },
-  );
-});
+      final repo = ref.watch(calendarRepositoryProvider);
+      final result = await repo.fetchEvents(
+        year: query.year,
+        month: query.month,
+        projectKey: query.projectKey,
+      );
+      return result.when(
+        success: (events) => events,
+        failure: (f) {
+          // EN: 404 means no events this month — return empty list, not an error.
+          // KO: 404는 해당 월에 이벤트가 없는 것이므로 에러가 아닌 빈 목록을 반환합니다.
+          if (f is NotFoundFailure) return const <CalendarEvent>[];
+          throw f;
+        },
+      );
+    });

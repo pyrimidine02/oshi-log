@@ -1,5 +1,5 @@
-/// EN: GBT (Girls Band Tabi) color system — neutral-first, brand-accent palette
-/// KO: GBT (Girls Band Tabi) 색상 시스템 — 뉴트럴 기반, 브랜드 액센트 팔레트
+/// EN: GBT color system — an urban travel field-notes palette.
+/// KO: GBT 색상 시스템 — 도시 여행 필드 노트 팔레트.
 library;
 
 import 'dart:math' as math;
@@ -12,111 +12,117 @@ class GBTColors {
   GBTColors._();
 
   // ========================================
-  // EN: Primary Brand Colors (professional social blue reference)
-  // KO: 기본 브랜드 색상 (프로페셔널 소셜 블루 레퍼런스)
+  // EN: Field-notes anchors. The original GBT blue remains the primary
+  //     navigation and action color; warm paper keeps the editorial tone.
+  // KO: 필드 노트 기준색. 기존 GBT 블루를 탐색·행동의 주색으로 유지하고,
+  //     따뜻한 종이색으로 에디토리얼 분위기를 만듭니다.
   // ========================================
-  static const Color primary = Color(0xFF0A66C2);
+  static const Color fieldPaper = Color(0xFFF7F4EE);
+  static const Color fieldPaperRaised = Color(0xFFFFFDF8);
+  static const Color fieldInk = Color(0xFF17202A);
+  static const Color fieldBlue = Color(0xFF0A66C2);
+  static const Color fieldTeal = Color(0xFF2B7773);
+  static const Color fieldMapLine = Color(0xFF336C8D);
+
+  static const Color primary = fieldBlue;
   static const Color primaryLight = Color(0xFFE8F3FF);
   static const Color primaryHover = Color(0xFF004182);
   static const Color primaryPressed = Color(0xFF003A75);
   static const Color primaryMuted = Color(0xFFD2E9FF);
 
-  // EN: Secondary (Pink — girl group energy)
-  // KO: 보조 (핑크 — 걸그룹 에너지)
-  static const Color secondary = Color(0xFFEC4899);
-  static const Color secondaryLight = Color(0xFFFCE7F3);
-  static const Color secondaryHover = Color(0xFFDB2777);
-  static const Color secondaryPressed = Color(0xFFBE185D);
+  // EN: Harbor teal supports places, visits, and route metadata.
+  // KO: 하버 틸은 장소, 방문, 이동 경로 메타데이터를 지원합니다.
+  static const Color secondary = fieldTeal;
+  static const Color secondaryLight = Color(0xFFDDEDEA);
+  static const Color secondaryHover = Color(0xFF235F5C);
+  static const Color secondaryPressed = Color(0xFF1B4D4A);
 
   // ========================================
-  // EN: Accent Colors (Music/Fandom themed)
-  // KO: 강조 색상 (음악/팬덤 테마)
+  // EN: Accent Colors (itinerary, map, and visited states)
+  // KO: 강조 색상 (일정, 지도, 방문 상태)
   // ========================================
-  static const Color accent = Color(0xFFF59E0B); // Amber — highlights
-  static const Color accentBlue = Color(0xFF3B82F6); // Blue — information
-  static const Color accentTeal = Color(0xFF14B8A6); // Teal — visits/places
+  static const Color accent = Color(0xFFB97813);
+  static const Color accentBlue = fieldMapLine;
+  static const Color accentTeal = fieldTeal;
 
   // ========================================
-  // EN: Text Colors (pure neutral — no purple tint)
-  // KO: 텍스트 색상 (순수 뉴트럴 — 보라 틴트 제거)
+  // EN: Text Colors (ink-based editorial hierarchy)
+  // KO: 텍스트 색상 (먹색 기반 에디토리얼 위계)
   // ========================================
-  static const Color textPrimary = Color(0xFF212121);
-  static const Color textSecondary = Color(0xFF757575);
-  static const Color textTertiary = Color(0xFF9E9E9E);
-  static const Color textDisabled = Color(0xFFBDBDBD);
+  static const Color textPrimary = fieldInk;
+  static const Color textSecondary = Color(0xFF586367);
+  static const Color textTertiary = Color(0xFF7D8689);
+  static const Color textDisabled = Color(0xFFA9ADAA);
   static const Color textInverse = Color(0xFFFFFFFF);
 
   // ========================================
-  // EN: Surface Colors (pure neutral)
-  // KO: 표면 색상 (순수 뉴트럴)
+  // EN: Surface Colors (warm paper, not sterile white)
+  // KO: 표면 색상 (차가운 흰색이 아닌 따뜻한 종이색)
   // ========================================
-  static const Color background = Color(0xFFFAFAFA);
-  static const Color surface = Color(0xFFFFFFFF);
-  static const Color surfaceVariant = Color(0xFFF5F5F5);
-  static const Color surfaceAlternate = Color(0xFFEEEEEE);
+  static const Color background = fieldPaper;
+  static const Color surface = fieldPaperRaised;
+  static const Color surfaceVariant = Color(0xFFEFE8DE);
+  static const Color surfaceAlternate = Color(0xFFE6DDD0);
   // EN: App-level background layers for consistent page chrome.
   // KO: 페이지 크롬 통일을 위한 앱 레벨 배경 레이어.
-  static const Color appBackground = Color(0xFFF9F9F9);
-  static const Color appBackgroundTopTint = Color(0xFFF3F5F7);
+  static const Color appBackground = fieldPaper;
+  static const Color appBackgroundTopTint = Color(0xFFEEE7DC);
 
   // ========================================
   // EN: Border & Divider Colors (neutral)
   // KO: 테두리 및 구분선 색상 (뉴트럴)
   // ========================================
-  static const Color border = Color(0xFFE0E0E0);
+  static const Color border = Color(0xFFD8CFC3);
   static const Color borderFocused = primary;
-  static const Color divider = Color(0xFFE0E0E0);
+  static const Color divider = Color(0xFFE3DBD0);
 
   // ========================================
   // EN: Semantic Colors (Status)
   // KO: 의미적 색상 (상태)
   // ========================================
-  static const Color success = Color(0xFF10B981);
-  static const Color successLight = Color(0xFFD1FAE5);
-  static const Color successDark = Color(0xFF059669);
+  static const Color success = Color(0xFF2F7D5C);
+  static const Color successLight = Color(0xFFDDEDE4);
+  static const Color successDark = Color(0xFF235F46);
 
-  static const Color warning = Color(0xFFF59E0B);
-  static const Color warningLight = Color(0xFFFEF3C7);
-  static const Color warningDark = Color(0xFFD97706);
+  static const Color warning = accent;
+  static const Color warningLight = Color(0xFFF4E8CE);
+  static const Color warningDark = Color(0xFF8F5A0B);
 
-  static const Color error = Color(0xFFEF4444);
-  static const Color errorLight = Color(0xFFFEE2E2);
-  static const Color errorDark = Color(0xFFDC2626);
+  static const Color error = Color(0xFFB93D35);
+  static const Color errorLight = Color(0xFFF5DFDC);
+  static const Color errorDark = Color(0xFF922F29);
 
-  static const Color info = Color(0xFF3B82F6);
-  static const Color infoLight = Color(0xFFDBEAFE);
-  static const Color infoDark = Color(0xFF2563EB);
+  static const Color info = fieldMapLine;
+  static const Color infoLight = Color(0xFFDDE9EF);
+  static const Color infoDark = Color(0xFF285672);
 
   // ========================================
-  // EN: Dark Mode Colors (Spotify-style pure black OLED)
-  // KO: 다크 모드 색상 (Spotify 스타일 순수 블랙 OLED)
+  // EN: Dark Mode Colors (night-travel journal)
+  // KO: 다크 모드 색상 (야간 여행 저널)
   // ========================================
-  static const Color darkBackground = Color(0xFF000000);
-  static const Color darkSurface = Color(0xFF121212);
-  static const Color darkSurfaceVariant = Color(0xFF1E1E1E);
-  static const Color darkSurfaceElevated = Color(0xFF2C2C2C);
+  static const Color darkBackground = Color(0xFF0F1516);
+  static const Color darkSurface = Color(0xFF171F20);
+  static const Color darkSurfaceVariant = Color(0xFF222C2D);
+  static const Color darkSurfaceElevated = Color(0xFF2B3637);
   // EN: Dark app-level background layers to reduce pure-black visual fatigue.
   // KO: 순수 블랙 피로도를 줄이기 위한 다크 앱 레벨 배경 레이어.
-  static const Color darkAppBackground = Color(0xFF0A101A);
-  static const Color darkAppBackgroundTopTint = Color(0xFF14243B);
-  static const Color darkTextPrimary = Color(0xFFF5F5F5);
-  static const Color darkTextSecondary = Color(0xFFB0B0B0);
-  // EN: Passes WCAG AA (4.5:1) on darkSurface (#121212).
-  // KO: darkSurface (#121212) 위에서 WCAG AA(4.5:1) 충족.
-  static const Color darkTextTertiary = Color(0xFF808080);
-  // EN: Dark primary pastel — light enough for dark surfaces.
-  // KO: 다크 모드 기본 파스텔 — 다크 표면 위에서도 충분히 밝게.
+  static const Color darkAppBackground = darkBackground;
+  static const Color darkAppBackgroundTopTint = Color(0xFF172122);
+  static const Color darkTextPrimary = Color(0xFFF8F2E8);
+  static const Color darkTextSecondary = Color(0xFFC1C7C3);
+  static const Color darkTextTertiary = Color(0xFF929B98);
   static const Color darkPrimary = Color(0xFF8AB4FF);
-  static const Color darkSecondary = Color(0xFFF472B6);
-  static const Color darkAccent = Color(0xFFFBBF24);
-  static const Color darkBorder = Color(0xFF2C2C2C);
-  static const Color darkBorderSubtle = Color(0xFF1E1E1E);
+  static const Color darkPrimaryContainer = Color(0xFF173A67);
+  static const Color darkSecondary = Color(0xFF7FD0C9);
+  static const Color darkAccent = Color(0xFFF1C36B);
+  static const Color darkBorder = Color(0xFF344142);
+  static const Color darkBorderSubtle = Color(0xFF263132);
 
   // ========================================
   // EN: Interactive Colors
   // KO: 인터랙티브 색상
   // ========================================
-  static const Color ripple = Color(0x142F7DFF);
+  static const Color ripple = Color(0x240A66C2);
   static const Color overlay = Color(0x80000000);
   static const Color scrim = Color(0x52000000);
 
@@ -124,10 +130,10 @@ class GBTColors {
   // EN: Special Purpose Colors
   // KO: 특수 목적 색상
   // ========================================
-  static const Color favorite = Color(0xFFEF4444);
-  static const Color verified = Color(0xFF10B981);
-  static const Color live = Color(0xFFEF4444);
-  static const Color rating = Color(0xFFF59E0B);
+  static const Color favorite = primary;
+  static const Color verified = success;
+  static const Color live = error;
+  static const Color rating = accent;
 
   // ========================================
   // EN: Gradient Definitions
@@ -145,18 +151,18 @@ class GBTColors {
     end: Alignment.bottomCenter,
   );
 
-  /// EN: Greeting header gradient — solid indigo (light mode)
-  /// KO: 인사말 헤더 그라디언트 — 단색 인디고 (라이트 모드)
+  /// EN: Reserved brand gradient for compact feature art.
+  /// KO: 작은 기능 아트에만 사용하는 브랜드 그라디언트.
   static const LinearGradient greetingGradient = LinearGradient(
     colors: [primary, primaryHover],
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
   );
 
-  /// EN: Greeting header gradient — solid deep indigo (dark mode)
-  /// KO: 인사말 헤더 그라디언트 — 단색 딥 인디고 (다크 모드)
+  /// EN: Dark counterpart for compact feature art.
+  /// KO: 작은 기능 아트용 다크 대응 그라디언트.
   static const LinearGradient darkGreetingGradient = LinearGradient(
-    colors: [Color(0xFF0A66C2), Color(0xFF004182)],
+    colors: [Color(0xFF356EB8), Color(0xFF173A67)],
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
   );
@@ -190,10 +196,10 @@ class GBTColors {
 
   // EN: Shimmer colors for loading placeholders (neutral)
   // KO: 로딩 플레이스홀더를 위한 쉬머 색상 (뉴트럴)
-  static const Color shimmerBase = Color(0xFFE0E0E0);
-  static const Color shimmerHighlight = Color(0xFFF5F5F5);
-  static const Color darkShimmerBase = Color(0xFF1E1E1E);
-  static const Color darkShimmerHighlight = Color(0xFF2C2C2C);
+  static const Color shimmerBase = Color(0xFFE5DDD1);
+  static const Color shimmerHighlight = Color(0xFFF8F3EB);
+  static const Color darkShimmerBase = Color(0xFF222C2D);
+  static const Color darkShimmerHighlight = Color(0xFF344142);
 }
 
 /// EN: Color accessibility validator for WCAG compliance
@@ -225,8 +231,14 @@ class GBTColorValidator {
   /// EN: Get contrasting text color for given background
   /// KO: 주어진 배경에 대한 대비 텍스트 색상 반환
   static Color getContrastingTextColor(Color background) {
-    final luminance = background.computeLuminance();
-    return luminance > 0.5 ? GBTColors.textPrimary : GBTColors.textInverse;
+    final inkRatio = calculateContrastRatio(GBTColors.textPrimary, background);
+    final inverseRatio = calculateContrastRatio(
+      GBTColors.textInverse,
+      background,
+    );
+    return inkRatio >= inverseRatio
+        ? GBTColors.textPrimary
+        : GBTColors.textInverse;
   }
 }
 

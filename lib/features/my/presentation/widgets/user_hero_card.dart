@@ -12,9 +12,15 @@ import '../../../../core/theme/gbt_colors.dart';
 import '../../../../core/theme/gbt_decorations.dart';
 import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';
+import '../../../../core/widgets/common/gbt_icon_chip.dart';
+import '../../../../core/widgets/common/gbt_image.dart';
 import '../../../../core/widgets/feedback/gbt_loading.dart';
 import '../../../fan_level/application/fan_level_controller.dart';
 import '../../../fan_level/domain/entities/fan_level.dart';
+import '../../../settings/application/settings_controller.dart';
+import '../../../titles/application/titles_controller.dart';
+import '../../../titles/domain/entities/title_entities.dart';
+import '../../../titles/presentation/widgets/active_title_badge.dart';
 import 'xp_ring_painter.dart';
 
 // EN: Format XP with thousands separators.
@@ -34,23 +40,72 @@ class UserHeroCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(fanLevelControllerProvider);
+    final avatarUrl = ref
+        .watch(userProfileControllerProvider)
+        .valueOrNull
+        ?.avatarUrl;
+    final activeTitle = ref.watch(activeTitleProvider).valueOrNull;
     final primaryColor = isDark ? GBTColors.darkPrimary : GBTColors.primary;
+    final secondaryColor = isDark
+        ? GBTColors.darkSecondary
+        : GBTColors.secondary;
+    final fillColor = isDark
+        ? GBTColors.darkSurfaceElevated
+        : GBTColors.surface;
 
     return GestureDetector(
       onTap: () => context.pushNamed(AppRoutes.fanLevel),
       child: Container(
-        padding: const EdgeInsets.all(GBTSpacing.md),
-        decoration: GBTDecorations.cardElevated(isDark: isDark),
-        child: state.when(
-          loading: () => const _HeroSkeleton(),
-          error: (_, __) => _HeroError(isDark: isDark),
-          data: (profile) => profile == null
-              ? _HeroLoginPrompt(isDark: isDark, primaryColor: primaryColor)
-              : _HeroContent(
-                  isDark: isDark,
-                  profile: profile,
-                  primaryColor: primaryColor,
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          color: fillColor,
+          borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
+          boxShadow: isDark ? GBTShadows.darkSm : GBTShadows.sm,
+        ),
+        child: Stack(
+          children: [
+            // EN: Subtle stage-gradient edge — the card's "ticket stub" accent.
+            // KO: 미세한 스테이지 그라디언트 엣지 — 카드의 "티켓 스텁" 강조.
+            Positioned(
+              left: 0,
+              top: 0,
+              bottom: 0,
+              width: 4,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [primaryColor, secondaryColor],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
                 ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                GBTSpacing.md + 4,
+                GBTSpacing.md,
+                GBTSpacing.md,
+                GBTSpacing.md,
+              ),
+              child: state.when(
+                loading: () => const _HeroSkeleton(),
+                error: (_, __) => _HeroError(isDark: isDark),
+                data: (profile) => profile == null
+                    ? _HeroLoginPrompt(
+                        isDark: isDark,
+                        primaryColor: primaryColor,
+                      )
+                    : _HeroContent(
+                        isDark: isDark,
+                        profile: profile,
+                        primaryColor: primaryColor,
+                        avatarUrl: avatarUrl,
+                        activeTitle: activeTitle,
+                      ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -62,20 +117,27 @@ class _HeroContent extends StatelessWidget {
     required this.isDark,
     required this.profile,
     required this.primaryColor,
+    this.avatarUrl,
+    this.activeTitle,
   });
 
   final bool isDark;
   final FanLevelProfile profile;
   final Color primaryColor;
+  final String? avatarUrl;
+  final ActiveTitleItem? activeTitle;
 
   @override
   Widget build(BuildContext context) {
-    final textSecondary =
-        isDark ? GBTColors.darkTextSecondary : GBTColors.textSecondary;
-    final textTertiary =
-        isDark ? GBTColors.darkTextTertiary : GBTColors.textTertiary;
+    final textSecondary = isDark
+        ? GBTColors.darkTextSecondary
+        : GBTColors.textSecondary;
+    final textTertiary = isDark
+        ? GBTColors.darkTextTertiary
+        : GBTColors.textTertiary;
     final isKo = Localizations.localeOf(context).languageCode == 'ko';
     final gradeName = isKo ? profile.grade.koLabel : profile.grade.enLabel;
+    final hasAvatar = avatarUrl?.isNotEmpty ?? false;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -83,8 +145,11 @@ class _HeroContent extends StatelessWidget {
         Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // EN: XP arc ring with grade icon in the centre.
-            // KO: 중앙에 등급 아이콘이 있는 XP 호 링.
+            // EN: XP arc ring with the fan's avatar (or grade icon fallback)
+            // in the centre, plus a small grade-icon badge when an avatar
+            // is shown.
+            // KO: 중앙에 팬 아바타(없으면 등급 아이콘)가 있는 XP 호 링,
+            // 아바타 표시 시 작은 등급 아이콘 배지를 함께 표시.
             SizedBox(
               width: 80,
               height: 80,
@@ -110,19 +175,57 @@ class _HeroContent extends StatelessWidget {
                       ),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(
-                      _gradeIcon(profile.grade),
-                      color: primaryColor,
-                      size: 26,
-                    ),
+                    child: hasAvatar
+                        ? ClipOval(
+                            child: GBTImage(
+                              imageUrl: avatarUrl!,
+                              width: 54,
+                              height: 54,
+                              fit: BoxFit.cover,
+                              semanticLabel: context.l10n(
+                                ko: '프로필 사진',
+                                en: 'Profile photo',
+                                ja: 'プロフィール写真',
+                              ),
+                            ),
+                          )
+                        : Icon(
+                            _gradeIcon(profile.grade),
+                            color: primaryColor,
+                            size: 26,
+                          ),
                   ),
+                  if (hasAvatar)
+                    Positioned(
+                      right: 0,
+                      bottom: 0,
+                      child: Container(
+                        width: 22,
+                        height: 22,
+                        decoration: BoxDecoration(
+                          color: primaryColor,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isDark
+                                ? GBTColors.darkSurfaceElevated
+                                : GBTColors.surface,
+                            width: 2,
+                          ),
+                        ),
+                        child: Icon(
+                          _gradeIcon(profile.grade),
+                          color: GBTColors.textInverse,
+                          size: 12,
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
             const SizedBox(width: GBTSpacing.md),
 
-            // EN: Grade name + check-in badge + XP text.
-            // KO: 등급명 + 출석 배지 + XP 텍스트.
+            // EN: Grade name + check-in badge + active title + XP text.
+            // KO: 등급명 + 출석 배지 + 활성 칭호 + XP 텍스트.
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -176,6 +279,10 @@ class _HeroContent extends StatelessWidget {
                       ],
                     ],
                   ),
+                  if (activeTitle != null && activeTitle!.name.isNotEmpty) ...[
+                    const SizedBox(height: GBTSpacing.xxs),
+                    ActiveTitleBadge.fromActiveItem(activeTitle!),
+                  ],
                   const SizedBox(height: 3),
                   Text(
                     '${_fmtXp(profile.totalXp)} XP',
@@ -222,11 +329,7 @@ class _HeroContent extends StatelessWidget {
               ),
             ),
             const SizedBox(width: GBTSpacing.xs),
-            Icon(
-              Icons.chevron_right_rounded,
-              color: textTertiary,
-              size: 18,
-            ),
+            Icon(Icons.chevron_right_rounded, color: textTertiary, size: 18),
           ],
         ),
       ],
@@ -263,7 +366,11 @@ class _HeroSkeleton extends StatelessWidget {
                   borderRadius: 4,
                 ),
                 const SizedBox(height: 8),
-                const GBTShimmerContainer(width: 70, height: 10, borderRadius: 4),
+                const GBTShimmerContainer(
+                  width: 70,
+                  height: 10,
+                  borderRadius: 4,
+                ),
                 const SizedBox(height: 10),
                 GBTShimmerContainer(
                   width: double.infinity,
@@ -286,8 +393,9 @@ class _HeroError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textSecondary =
-        isDark ? GBTColors.darkTextSecondary : GBTColors.textSecondary;
+    final textSecondary = isDark
+        ? GBTColors.darkTextSecondary
+        : GBTColors.textSecondary;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: GBTSpacing.sm),
       child: Row(
@@ -309,34 +417,24 @@ class _HeroError extends StatelessWidget {
 }
 
 class _HeroLoginPrompt extends StatelessWidget {
-  const _HeroLoginPrompt({
-    required this.isDark,
-    required this.primaryColor,
-  });
+  const _HeroLoginPrompt({required this.isDark, required this.primaryColor});
 
   final bool isDark;
   final Color primaryColor;
 
   @override
   Widget build(BuildContext context) {
-    final textSecondary =
-        isDark ? GBTColors.darkTextSecondary : GBTColors.textSecondary;
+    final textSecondary = isDark
+        ? GBTColors.darkTextSecondary
+        : GBTColors.textSecondary;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: GBTSpacing.xs),
       child: Row(
         children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: primaryColor.withValues(alpha: 0.12),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.person_outline_rounded,
-              color: primaryColor,
-              size: 24,
-            ),
+          GBTIconChip(
+            icon: Icons.person_outline_rounded,
+            color: primaryColor,
+            size: 48,
           ),
           const SizedBox(width: GBTSpacing.md),
           Expanded(

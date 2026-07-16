@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 import '../../theme/gbt_animations.dart';
 import '../../theme/gbt_colors.dart';
+import '../../theme/gbt_decorations.dart';
 import '../../theme/gbt_spacing.dart';
 import '../../theme/gbt_typography.dart';
 import '../common/gbt_image.dart';
@@ -65,32 +66,48 @@ class GBTPlaceCardCarousel extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              // EN: Square image with rounded corners, shadow, and Hero animation
-              // KO: 둥근 모서리, 그림자, Hero 애니메이션이 있는 정사각형 이미지
+              // EN: Square image, 2026 large-radius (radiusCard), border-subtle
+              // depth (no shadow), plus a glass-feel top edge hairline.
+              // KO: 정사각형 이미지, 2026 라지 라운드(radiusCard),
+              // border-subtle 깊이감 (그림자 없음), 글래스 느낌의 상단
+              // 엣지 헤어라인 추가.
               Container(
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
-                  // EN: Subtle shadow in light mode only
-                  // KO: 라이트 모드에서만 부드러운 그림자
-                  boxShadow: isDark
-                      ? null
-                      : [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.08),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                ),
-                child: Hero(
-                  tag: GBTHeroTags.placeImage(placeId),
-                  child: AspectRatio(
-                    aspectRatio: 1,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
-                      child: _buildImage(isDark),
-                    ),
+                  borderRadius: BorderRadius.circular(GBTSpacing.radiusCard),
+                  border: Border.all(
+                    color: isDark
+                        ? GBTColors.darkBorderSubtle
+                        : GBTColors.border.withValues(alpha: 0.6),
                   ),
+                ),
+                child: Stack(
+                  children: [
+                    Hero(
+                      tag: GBTHeroTags.placeImage(placeId),
+                      child: AspectRatio(
+                        aspectRatio: 1,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(
+                            GBTSpacing.radiusCard,
+                          ),
+                          child: _buildImage(isDark),
+                        ),
+                      ),
+                    ),
+                    const Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      child: SizedBox(
+                        height: 1,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: GBTDecorations.glassTopHairline,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: GBTSpacing.sm),

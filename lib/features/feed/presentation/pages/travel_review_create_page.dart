@@ -1,5 +1,5 @@
-import 'dart:io';
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -9,13 +9,23 @@ import 'package:go_router/go_router.dart';
 import 'package:apple_maps_flutter/apple_maps_flutter.dart' as amaps;
 import 'package:google_maps_flutter/google_maps_flutter.dart' as gmaps;
 
-import '../../../../core/theme/gbt_colors.dart';
+import '../../../../core/providers/core_providers.dart';
 import '../../../../core/theme/gbt_map_styles.dart';
 import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';
-import '../../../../core/widgets/common/gbt_image.dart';
-import '../../../places/application/places_controller.dart';
+import '../../../../core/widgets/layout/gbt_page_header.dart';
+import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
+import '../../../../core/utils/result.dart';
+import '../../../live_events/application/live_events_controller.dart';
+import '../../../live_events/domain/entities/live_event_entities.dart';
 import '../../../places/domain/entities/place_entities.dart';
+import '../../../projects/domain/entities/fan_subject.dart';
+import '../../../visits/application/visits_controller.dart';
+import '../../../visits/domain/entities/visit_entities.dart';
+import '../../application/travel_reviews_controller.dart';
+import '../../domain/entities/travel_review.dart';
+import '../widgets/travel_review_compose_sections.dart';
+import '../widgets/travel_review_place_picker_sheet.dart';
 
 /// EN: Travel Review creation page.
 /// KO: 여행 후기 작성 페이지.
@@ -31,10 +41,16 @@ class _TravelReviewCreatePageState
     extends ConsumerState<TravelReviewCreatePage> {
   final _titleController = TextEditingController();
   final _contentController = TextEditingController();
+  final _routeNoteController = TextEditingController();
 
   // EN: Selected places for the review
   // KO: 후기에 선택된 장소들
   final List<PlaceSummary> _selectedPlaces = [];
+  final List<LiveEventSummary> _selectedEvents = [];
+  final List<FanSubject> _selectedSubjects = [];
+
+  DateTime? _tripStartedOn;
+  DateTime? _tripEndedOn;
 
   bool _isSubmitting = false;
 
@@ -61,15 +77,26 @@ class _TravelReviewCreatePageState
     _contentController.removeListener(_updateState);
     _titleController.dispose();
     _contentController.dispose();
+    _routeNoteController.dispose();
     super.dispose();
   }
 
   void _addPlace(PlaceSummary place) {
+    if (_selectedPlaces.length >= 20 &&
+        !_selectedPlaces.any((selected) => selected.id == place.id)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('방문 장소는 최대 20곳까지 추가할 수 있어요.')),
+      );
+      return;
+    }
     setState(() {
       if (!_selectedPlaces.any((p) => p.id == place.id)) {
         _selectedPlaces.add(place);
       }
     });
+    if (ref.read(userVisitsControllerProvider).valueOrNull == null) {
+      unawaited(ref.read(userVisitsControllerProvider.notifier).load());
+    }
   }
 
   void _removePlace(int index) {
@@ -81,15 +108,12 @@ class _TravelReviewCreatePageState
   void _reorderPlaces(int oldIndex, int newIndex) {
     HapticFeedback.lightImpact();
     setState(() {
-      if (newIndex > oldIndex) {
-        newIndex -= 1;
-      }
       final place = _selectedPlaces.removeAt(oldIndex);
       _selectedPlaces.insert(newIndex, place);
     });
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     if (_titleController.text.trim().isEmpty ||
         _contentController.text.trim().isEmpty) {
       ScaffoldMessenger.of(
@@ -104,33 +128,120 @@ class _TravelReviewCreatePageState
       return;
     }
 
-    setState(() => _isSubmitting = true);
+    final projectCode = ref.read(selectedProjectKeyProvider)?.trim();
+    if (projectCode == null || projectCode.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('여행을 기록할 프로젝트를 먼저 선택해주세요.')));
+      return;
+    }
+    if (_tripStartedOn != null &&
+        _tripEndedOn != null &&
+        _tripEndedOn!.isBefore(_tripStartedOn!)) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('종료일은 시작일보다 빠를 수 없어요.')));
+      return;
+    }
 
-    // EN: Mock submission delay
-    // KO: 제출 지연 모의
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) {
-        setState(() => _isSubmitting = false);
+    setState(() => _isSubmitting = true);
+    if (ref.read(userVisitsControllerProvider).valueOrNull == null) {
+      await ref.read(userVisitsControllerProvider.notifier).load();
+      if (!mounted) return;
+    }
+    final visits =
+        ref.read(userVisitsControllerProvider).valueOrNull ??
+        const <VisitEvent>[];
+    final attendanceRecords = await _loadAttendanceProofRecords();
+    if (!mounted) return;
+    final result = await ref
+        .read(travelReviewMutationControllerProvider.notifier)
+        .create(
+          projectCode: projectCode,
+          draft: TravelReviewDraft(
+            title: _titleController.text.trim(),
+            content: _contentController.text.trim(),
+            stops: _selectedPlaces
+                .map(
+                  (place) => TravelReviewStopDraft(
+                    placeId: place.id,
+                    verifiedVisitId: verifiedVisitProofId(visits, place.id),
+                  ),
+                )
+                .toList(growable: false),
+            events: _selectedEvents
+                .map(
+                  (event) => TravelReviewEventDraft(
+                    liveEventId: event.id,
+                    verifiedAttendanceId: verifiedAttendanceProofId(
+                      attendanceRecords,
+                      event.id,
+                    ),
+                  ),
+                )
+                .toList(growable: false),
+            fanSubjectIds: _selectedSubjects
+                .map((subject) => subject.id)
+                .toList(growable: false),
+            tripStartedOn: _tripStartedOn,
+            tripEndedOn: _tripEndedOn,
+            routeNote: _routeNoteController.text.trim(),
+          ),
+        );
+    if (!mounted) return;
+    setState(() => _isSubmitting = false);
+    switch (result) {
+      case Success():
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('여행 후기가 등록되었습니다.')));
         context.pop();
-      }
-    });
+      case Err(:final failure):
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(failure.userMessage)));
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final visits =
+        ref.watch(userVisitsControllerProvider).valueOrNull ??
+        const <VisitEvent>[];
+    final attendanceRecords = _selectedEvents.isEmpty
+        ? const <LiveAttendanceHistoryRecord>[]
+        : ref.watch(liveAttendanceHistoryControllerProvider).items;
+    final verifiedEventIds = attendanceRecords
+        .where(
+          (record) =>
+              record.isVerified &&
+              record.attendanceId?.trim().isNotEmpty == true,
+        )
+        .map((record) => record.eventId)
+        .toSet();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('여행 후기 작성'),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: gbtStandardAppBar(
+        context,
+        title: '후기 작성',
         actions: [
-          TextButton(
-            onPressed: _canSubmit ? _submit : null,
-            child: const Text('등록'),
+          Padding(
+            padding: const EdgeInsets.only(right: GBTSpacing.xs),
+            child: FilledButton(
+              key: const ValueKey('travel-review-submit'),
+              onPressed: _canSubmit ? _submit : null,
+              style: FilledButton.styleFrom(
+                minimumSize: const Size(56, 48),
+                padding: const EdgeInsets.symmetric(horizontal: GBTSpacing.sm),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
+                ),
+              ),
+              child: const Text('등록'),
+            ),
           ),
         ],
       ),
@@ -139,16 +250,43 @@ class _TravelReviewCreatePageState
           CustomScrollView(
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             slivers: [
-              SliverToBoxAdapter(child: _buildMapSection(colorScheme, isDark)),
+              const SliverToBoxAdapter(
+                child: GBTPageHeader(
+                  eyebrow: 'FIELD REPORT',
+                  title: '오늘의 순례를 기록하세요',
+                  description: '방문한 순서와 현장의 감정을 함께 남기면 다음 여행의 지도가 됩니다.',
+                ),
+              ),
               SliverPadding(
-                padding: GBTSpacing.paddingPage,
+                padding: const EdgeInsets.fromLTRB(
+                  GBTSpacing.md,
+                  GBTSpacing.lg,
+                  GBTSpacing.md,
+                  0,
+                ),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
+                    Text(
+                      'TRAVEL NOTE',
+                      style: GBTTypography.labelSmall.copyWith(
+                        color: colorScheme.primary,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.1,
+                      ),
+                    ),
+                    const SizedBox(height: GBTSpacing.sm),
                     TextField(
                       controller: _titleController,
+                      maxLines: 2,
+                      maxLength: 255,
+                      style: GBTTypography.headlineSmall.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
                       decoration: const InputDecoration(
                         labelText: '제목',
                         hintText: '이번 여행은 어떠셨나요?',
+                        filled: false,
+                        border: UnderlineInputBorder(),
                       ),
                     ),
                     const SizedBox(height: GBTSpacing.md),
@@ -156,73 +294,160 @@ class _TravelReviewCreatePageState
                       controller: _contentController,
                       maxLines: 8,
                       minLines: 5,
+                      maxLength: 20000,
                       decoration: const InputDecoration(
                         labelText: '내용',
                         hintText: '자세한 후기를 남겨주세요.',
+                        alignLabelWithHint: true,
+                        filled: false,
+                        border: UnderlineInputBorder(),
                       ),
                     ),
-                    const SizedBox(height: GBTSpacing.xl),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    const SizedBox(height: GBTSpacing.xl2),
+                    TravelReviewComposeMetadata(
+                      routeNoteController: _routeNoteController,
+                      tripStartedOn: _tripStartedOn,
+                      tripEndedOn: _tripEndedOn,
+                      selectedEvents: _selectedEvents,
+                      verifiedEventIds: verifiedEventIds,
+                      selectedSubjects: _selectedSubjects,
+                      onPickStartDate: () => _pickDate(isStart: true),
+                      onPickEndDate: () => _pickDate(isStart: false),
+                      onPickEvents: _showEventPicker,
+                      onPickSubjects: _showFanSubjectPicker,
+                      onRemoveEvent: (eventId) => setState(
+                        () => _selectedEvents.removeWhere(
+                          (event) => event.id == eventId,
+                        ),
+                      ),
+                      onRemoveSubject: (subjectId) => setState(
+                        () => _selectedSubjects.removeWhere(
+                          (subject) => subject.id == subjectId,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: GBTSpacing.xl2),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('방문 일정', style: GBTTypography.titleMedium),
-                        TextButton.icon(
+                        Text(
+                          'ROUTE',
+                          style: GBTTypography.labelSmall.copyWith(
+                            color: colorScheme.primary,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1.1,
+                          ),
+                        ),
+                        const SizedBox(height: GBTSpacing.xs),
+                        Text(
+                          '방문 순서',
+                          style: GBTTypography.titleLarge.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: GBTSpacing.xs),
+                        Text(
+                          _selectedPlaces.isEmpty
+                              ? '장소를 추가하면 이동 순서를 지도에 그려드려요.'
+                              : '총 ${_selectedPlaces.length}곳 · 길게 눌러 순서를 바꿀 수 있어요.',
+                          style: GBTTypography.bodyMedium.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(height: GBTSpacing.sm),
+                        OutlinedButton.icon(
                           onPressed: _showPlacePicker,
                           icon: const Icon(Icons.add),
                           label: const Text('장소 추가'),
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size(0, 48),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                GBTSpacing.radiusSm,
+                              ),
+                            ),
+                          ),
                         ),
                       ],
                     ),
+                    const SizedBox(height: GBTSpacing.md),
                   ]),
                 ),
               ),
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: GBTSpacing.md),
+                sliver: SliverToBoxAdapter(
+                  child: _buildMapSection(colorScheme, isDark),
+                ),
+              ),
+              const SliverPadding(padding: EdgeInsets.only(top: GBTSpacing.sm)),
               SliverReorderableList(
                 itemCount: _selectedPlaces.length,
-                onReorder: _reorderPlaces,
+                onReorderItem: _reorderPlaces,
                 itemBuilder: (context, index) {
                   final place = _selectedPlaces[index];
-                  return Container(
+                  return DecoratedBox(
                     key: ValueKey(place.id),
-                    margin: const EdgeInsets.symmetric(
-                      horizontal: GBTSpacing.md,
-                      vertical: GBTSpacing.xs,
-                    ),
                     decoration: BoxDecoration(
-                      color: colorScheme.surfaceContainerHighest.withAlpha(100),
-                      borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
+                      border: Border(
+                        bottom: BorderSide(color: colorScheme.outlineVariant),
+                      ),
                     ),
-                    child: ListTile(
-                      leading: CircleAvatar(
-                        radius: 14,
-                        backgroundColor: colorScheme.primary,
-                        child: Text(
-                          '${index + 1}',
-                          style: TextStyle(
-                            color: colorScheme.onPrimary,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: GBTSpacing.md,
+                      ),
+                      child: ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        minVerticalPadding: GBTSpacing.sm,
+                        leading: SizedBox(
+                          width: 32,
+                          child: Text(
+                            '${index + 1}'.padLeft(2, '0'),
+                            style: GBTTypography.labelLarge.copyWith(
+                              color: colorScheme.primary,
+                              fontWeight: FontWeight.w800,
+                            ),
                           ),
                         ),
-                      ),
-                      title: Text(
-                        place.name,
-                        style: GBTTypography.bodyMedium.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      subtitle: Text(
-                        place.address,
-                        style: GBTTypography.bodySmall,
-                      ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.close, size: 20),
-                            onPressed: () => _removePlace(index),
+                        title: Text(
+                          place.name,
+                          style: GBTTypography.bodyMedium.copyWith(
+                            fontWeight: FontWeight.w700,
                           ),
-                          const Icon(Icons.drag_handle, color: Colors.grey),
-                        ],
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(place.address, style: GBTTypography.bodySmall),
+                            if (verifiedVisitProofId(visits, place.id) != null)
+                              Text(
+                                '인증된 방문 기록 연결',
+                                style: GBTTypography.labelSmall.copyWith(
+                                  color: colorScheme.primary,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                          ],
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.close, size: 20),
+                              onPressed: () => _removePlace(index),
+                              tooltip: '${place.name} 제거',
+                            ),
+                            ReorderableDragStartListener(
+                              index: index,
+                              child: const SizedBox(
+                                width: 48,
+                                height: 48,
+                                child: Icon(Icons.drag_handle),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   );
@@ -243,21 +468,21 @@ class _TravelReviewCreatePageState
 
   Widget _buildMapSection(ColorScheme colorScheme, bool isDark) {
     if (_selectedPlaces.isEmpty) {
-      return Container(
-        height: 200,
-        color: colorScheme.surfaceContainerHighest,
+      return SizedBox(
+        height: 168,
         child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
                 Icons.map_outlined,
-                size: 48,
+                size: 36,
                 color: colorScheme.onSurfaceVariant.withAlpha(150),
               ),
               const SizedBox(height: GBTSpacing.sm),
               Text(
-                '장소를 추가하면 지도에 경로가 표시됩니다.',
+                '아직 표시할 여정이 없어요',
+                textAlign: TextAlign.center,
                 style: GBTTypography.bodyMedium.copyWith(
                   color: colorScheme.onSurfaceVariant,
                 ),
@@ -291,30 +516,29 @@ class _TravelReviewCreatePageState
         );
       }
 
-      final appleMap = SizedBox(
-        height: 250,
-        child: amaps.AppleMap(
-          initialCameraPosition: amaps.CameraPosition(
-            target: amaps.LatLng(
-              _selectedPlaces.first.latitude,
-              _selectedPlaces.first.longitude,
+      return SizedBox(
+        height: 184,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            amaps.AppleMap(
+              initialCameraPosition: amaps.CameraPosition(
+                target: amaps.LatLng(
+                  _selectedPlaces.first.latitude,
+                  _selectedPlaces.first.longitude,
+                ),
+                zoom: 12,
+              ),
+              polylines: {polyline},
+              annotations: markers,
             ),
-            zoom: 12,
-          ),
-          polylines: {polyline},
-          annotations: markers,
+            IgnorePointer(
+              child: ColoredBox(
+                color: gbtAppleMapOverlayColorForDarkMode(isDark),
+              ),
+            ),
+          ],
         ),
-      );
-      return Stack(
-        fit: StackFit.expand,
-        children: [
-          appleMap,
-          IgnorePointer(
-            child: ColoredBox(
-              color: gbtAppleMapOverlayColorForDarkMode(isDark),
-            ),
-          ),
-        ],
       );
     } else {
       final gmaps.Polyline polyline = gmaps.Polyline(
@@ -340,7 +564,7 @@ class _TravelReviewCreatePageState
       }
 
       return SizedBox(
-        height: 250,
+        height: 184,
         child: gmaps.GoogleMap(
           initialCameraPosition: gmaps.CameraPosition(
             target: gmaps.LatLng(
@@ -357,6 +581,124 @@ class _TravelReviewCreatePageState
     }
   }
 
+  Future<List<LiveAttendanceHistoryRecord>>
+  _loadAttendanceProofRecords() async {
+    if (_selectedEvents.isEmpty) return const [];
+
+    final provider = liveAttendanceHistoryControllerProvider;
+    final notifier = ref.read(provider.notifier);
+    var history = ref.read(provider);
+    if (history.isInitialLoading) {
+      await notifier.load(forceRefresh: true);
+      if (!mounted) return const [];
+      history = ref.read(provider);
+    }
+
+    final selectedEventIds = _selectedEvents
+        .map((event) => event.id.trim())
+        .where((eventId) => eventId.isNotEmpty)
+        .toSet();
+    while (history.hasNext &&
+        !history.items
+            .map((record) => record.eventId.trim())
+            .toSet()
+            .containsAll(selectedEventIds)) {
+      final previousPage = history.nextPage;
+      await notifier.loadMore();
+      if (!mounted) return const [];
+      history = ref.read(provider);
+      if (history.nextPage <= previousPage) break;
+    }
+    return history.items;
+  }
+
+  Future<void> _pickDate({required bool isStart}) async {
+    final initialDate = isStart
+        ? (_tripStartedOn ?? DateTime.now())
+        : (_tripEndedOn ?? _tripStartedOn ?? DateTime.now());
+    final selected = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now().add(const Duration(days: 365 * 3)),
+    );
+    if (!mounted || selected == null) return;
+    setState(() {
+      if (isStart) {
+        _tripStartedOn = selected;
+        if (_tripEndedOn != null && _tripEndedOn!.isBefore(selected)) {
+          _tripEndedOn = selected;
+        }
+      } else {
+        _tripEndedOn = selected;
+      }
+    });
+  }
+
+  Future<void> _showEventPicker() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (context, setSheetState) {
+          return TravelEventPickerSheet(
+            selectedIds: _selectedEvents.map((event) => event.id).toSet(),
+            onToggle: (event) {
+              setState(() {
+                final index = _selectedEvents.indexWhere(
+                  (selected) => selected.id == event.id,
+                );
+                if (index >= 0) {
+                  _selectedEvents.removeAt(index);
+                } else if (_selectedEvents.length < 10) {
+                  _selectedEvents.add(event);
+                }
+              });
+              setSheetState(() {});
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _showFanSubjectPicker() async {
+    final projectCode = ref.read(selectedProjectKeyProvider)?.trim();
+    if (projectCode == null || projectCode.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('프로젝트를 먼저 선택해주세요.')));
+      return;
+    }
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (context, setSheetState) {
+          return TravelFanSubjectPickerSheet(
+            projectCode: projectCode,
+            selectedIds: _selectedSubjects.map((subject) => subject.id).toSet(),
+            onToggle: (subject) {
+              setState(() {
+                final index = _selectedSubjects.indexWhere(
+                  (selected) => selected.id == subject.id,
+                );
+                if (index >= 0) {
+                  _selectedSubjects.removeAt(index);
+                } else if (_selectedSubjects.length < 20) {
+                  _selectedSubjects.add(subject);
+                }
+              });
+              setSheetState(() {});
+            },
+          );
+        },
+      ),
+    );
+  }
+
   // EN: Open the real place picker sheet backed by placesListControllerProvider.
   // KO: placesListControllerProvider를 사용한 실제 장소 선택 시트를 엽니다.
   Future<void> _showPlacePicker() async {
@@ -364,362 +706,15 @@ class _TravelReviewCreatePageState
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(GBTSpacing.radiusLg),
+        ),
       ),
-      builder: (_) => _PlacePickerSheet(
+      builder: (_) => TravelReviewPlacePickerSheet(
         selectedIds: _selectedPlaces.map((p) => p.id).toSet(),
         onAdd: _addPlace,
-      ),
-    );
-  }
-}
-
-// ================================================
-// EN: Place picker bottom sheet — search + list from placesListControllerProvider.
-// KO: 장소 선택 바텀시트 — placesListControllerProvider 기반 검색 + 목록.
-// ================================================
-class _PlacePickerSheet extends ConsumerStatefulWidget {
-  const _PlacePickerSheet({required this.selectedIds, required this.onAdd});
-
-  final Set<String> selectedIds;
-  final ValueChanged<PlaceSummary> onAdd;
-
-  @override
-  ConsumerState<_PlacePickerSheet> createState() => _PlacePickerSheetState();
-}
-
-class _PlacePickerSheetState extends ConsumerState<_PlacePickerSheet> {
-  final _searchController = TextEditingController();
-  String _query = '';
-  Timer? _debounce;
-
-  @override
-  void dispose() {
-    _debounce?.cancel();
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  List<PlaceSummary> _filtered(List<PlaceSummary> all) {
-    if (_query.isEmpty) return all;
-    final q = _query.toLowerCase();
-    return all
-        .where(
-          (p) =>
-              p.name.toLowerCase().contains(q) ||
-              p.address.toLowerCase().contains(q),
-        )
-        .toList();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final placesAsync = ref.watch(placesListControllerProvider);
-    final primaryColor = isDark ? GBTColors.darkPrimary : GBTColors.primary;
-    final tertiaryColor = isDark
-        ? GBTColors.darkTextTertiary
-        : GBTColors.textTertiary;
-    final borderColor = isDark ? GBTColors.darkBorder : GBTColors.border;
-
-    return DraggableScrollableSheet(
-      initialChildSize: 0.75,
-      minChildSize: 0.5,
-      maxChildSize: 0.95,
-      expand: false,
-      builder: (context, scrollController) {
-        return Column(
-          children: [
-            // EN: Header — title + search field
-            // KO: 헤더 — 제목 + 검색 필드
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                GBTSpacing.md,
-                0,
-                GBTSpacing.md,
-                GBTSpacing.sm,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '성지 장소 추가',
-                    style: GBTTypography.titleMedium.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: GBTSpacing.sm),
-                  // EN: Search field
-                  // KO: 검색 필드
-                  Container(
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? GBTColors.darkSurfaceVariant
-                          : GBTColors.surfaceVariant,
-                      borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
-                    ),
-                    child: TextField(
-                      controller: _searchController,
-                      onChanged: (v) {
-                        _debounce?.cancel();
-                        _debounce = Timer(const Duration(milliseconds: 300), () {
-                          if (mounted) {
-                            setState(() => _query = v.trim());
-                          }
-                        });
-                      },
-                      style: GBTTypography.bodyMedium,
-                      decoration: InputDecoration(
-                        hintText: '장소명 또는 주소로 검색',
-                        hintStyle: GBTTypography.bodyMedium.copyWith(
-                          color: tertiaryColor,
-                        ),
-                        prefixIcon: Icon(
-                          Icons.search_rounded,
-                          color: tertiaryColor,
-                          size: 20,
-                        ),
-                        suffixIcon: _query.isNotEmpty
-                            ? IconButton(
-                                icon: Icon(
-                                  Icons.close_rounded,
-                                  size: 18,
-                                  color: tertiaryColor,
-                                ),
-                                onPressed: () {
-                                  _debounce?.cancel();
-                                  _searchController.clear();
-                                  setState(() => _query = '');
-                                },
-                              )
-                            : null,
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: GBTSpacing.md,
-                          vertical: 12,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Divider(height: 1, color: borderColor.withValues(alpha: 0.5)),
-            // EN: Place list
-            // KO: 장소 목록
-            Expanded(
-              child: placesAsync.when(
-                loading: () => const Center(
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-                error: (e, _) => Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(GBTSpacing.xl),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.cloud_off_rounded,
-                          size: 40,
-                          color: tertiaryColor,
-                        ),
-                        const SizedBox(height: GBTSpacing.md),
-                        Text(
-                          '장소를 불러오지 못했어요',
-                          style: GBTTypography.bodyMedium.copyWith(
-                            color: tertiaryColor,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                data: (all) {
-                  final places = _filtered(all);
-                  if (places.isEmpty) {
-                    return Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(GBTSpacing.xl),
-                        child: Text(
-                          _query.isEmpty
-                              ? '등록된 장소가 없어요'
-                              : '"$_query" 검색 결과가 없어요',
-                          style: GBTTypography.bodyMedium.copyWith(
-                            color: tertiaryColor,
-                          ),
-                        ),
-                      ),
-                    );
-                  }
-                  return ListView.separated(
-                    controller: scrollController,
-                    padding: const EdgeInsets.only(bottom: GBTSpacing.xl),
-                    itemCount: places.length,
-                    separatorBuilder: (_, __) => Divider(
-                      height: 1,
-                      indent: GBTSpacing.md,
-                      endIndent: GBTSpacing.md,
-                      color: borderColor.withValues(alpha: 0.4),
-                    ),
-                    itemBuilder: (context, index) {
-                      final place = places[index];
-                      final isAdded = widget.selectedIds.contains(place.id);
-                      return _PlacePickerItem(
-                        place: place,
-                        isAdded: isAdded,
-                        primaryColor: primaryColor,
-                        tertiaryColor: tertiaryColor,
-                        onTap: isAdded
-                            ? null
-                            : () {
-                                widget.onAdd(place);
-                                Navigator.of(context).pop();
-                              },
-                      );
-                    },
-                  );
-                },
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-// EN: Single place row in the picker sheet.
-// KO: 선택 시트의 단일 장소 행.
-class _PlacePickerItem extends StatelessWidget {
-  const _PlacePickerItem({
-    required this.place,
-    required this.isAdded,
-    required this.primaryColor,
-    required this.tertiaryColor,
-    required this.onTap,
-  });
-
-  final PlaceSummary place;
-  final bool isAdded;
-  final Color primaryColor;
-  final Color tertiaryColor;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final contentColor = isDark
-        ? (isAdded ? GBTColors.darkTextTertiary : GBTColors.darkTextPrimary)
-        : (isAdded ? GBTColors.textTertiary : GBTColors.textPrimary);
-
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: GBTSpacing.md,
-          vertical: 10,
-        ),
-        child: Row(
-          children: [
-            // EN: Place thumbnail or placeholder icon
-            // KO: 장소 썸네일 또는 플레이스홀더 아이콘
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: place.imageUrl != null && place.imageUrl!.isNotEmpty
-                  ? SizedBox(
-                      width: 48,
-                      height: 48,
-                      child: GBTImage(
-                        imageUrl: place.imageUrl!,
-                        fit: BoxFit.cover,
-                        semanticLabel: '${place.name} 이미지',
-                      ),
-                    )
-                  : Container(
-                      width: 48,
-                      height: 48,
-                      color: isDark
-                          ? GBTColors.darkSurfaceVariant
-                          : GBTColors.surfaceVariant,
-                      child: Icon(
-                        Icons.place_rounded,
-                        size: 22,
-                        color: tertiaryColor,
-                      ),
-                    ),
-            ),
-            const SizedBox(width: GBTSpacing.sm),
-            // EN: Place name + address
-            // KO: 장소명 + 주소
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    place.name,
-                    style: GBTTypography.labelMedium.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: contentColor,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    place.address,
-                    style: GBTTypography.labelSmall.copyWith(
-                      color: tertiaryColor,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: GBTSpacing.sm),
-            // EN: Add button or added checkmark
-            // KO: 추가 버튼 또는 추가됨 체크
-            isAdded
-                ? Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.check_circle_rounded,
-                        size: 18,
-                        color: primaryColor,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '추가됨',
-                        style: GBTTypography.labelSmall.copyWith(
-                          color: primaryColor,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  )
-                : Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: GBTSpacing.sm,
-                      vertical: 5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: primaryColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(
-                        GBTSpacing.radiusFull,
-                      ),
-                    ),
-                    child: Text(
-                      '추가',
-                      style: GBTTypography.labelSmall.copyWith(
-                        color: primaryColor,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-          ],
-        ),
       ),
     );
   }

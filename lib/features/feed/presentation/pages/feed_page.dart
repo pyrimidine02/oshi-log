@@ -21,7 +21,8 @@ import '../../../../core/utils/result.dart';
 import '../../../../core/widgets/common/gbt_image.dart';
 import '../../../../core/widgets/common/gbt_linkified_text.dart';
 import '../../../../core/widgets/dialogs/gbt_adaptive_dialog.dart';
-import '../../../../core/widgets/feedback/gbt_loading.dart';
+import '../../../../core/widgets/feedback/gbt_empty_state.dart';
+import '../../../../core/widgets/feedback/gbt_loading.dart' hide GBTEmptyState;
 import '../../../../core/widgets/sheets/gbt_bottom_sheet.dart';
 import '../../../../core/widgets/navigation/gbt_segmented_tab_bar.dart';
 import '../../../projects/presentation/widgets/project_selector.dart';
@@ -192,63 +193,71 @@ class _NewsList extends StatelessWidget {
   const _NewsList({required this.state, required this.onRetry});
 
   final AsyncValue<List<NewsSummary>> state;
-  final VoidCallback onRetry;
+  final Future<void> Function() onRetry;
 
   @override
   Widget build(BuildContext context) {
-    return state.when(
-      loading: () => ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(vertical: GBTSpacing.sm),
-        children: [
-          GBTListSkeleton(
-            itemCount: 4,
-            padding: EdgeInsets.zero,
-            spacing: GBTSpacing.sm,
-            itemBuilder: (_) => const GBTNewsCardSkeleton(),
-          ),
-        ],
-      ),
-      error: (error, _) {
-        final message = error is Failure ? error.userMessage : '뉴스를 불러오지 못했어요';
-        return ListView(
+    return RefreshIndicator(
+      onRefresh: onRetry,
+      child: state.when(
+        loading: () => ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: GBTSpacing.paddingPage,
+          padding: const EdgeInsets.symmetric(vertical: GBTSpacing.sm),
           children: [
-            const SizedBox(height: GBTSpacing.lg),
-            GBTErrorState(message: message, onRetry: onRetry),
+            GBTListSkeleton(
+              itemCount: 4,
+              padding: EdgeInsets.zero,
+              spacing: GBTSpacing.sm,
+              itemBuilder: (_) => const GBTNewsCardSkeleton(),
+            ),
           ],
-        );
-      },
-      data: (newsList) {
-        if (newsList.isEmpty) {
+        ),
+        error: (error, _) {
+          final message = error is Failure
+              ? error.userMessage
+              : '뉴스를 불러오지 못했어요';
           return ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: GBTSpacing.paddingPage,
-            children: const [
-              SizedBox(height: GBTSpacing.lg),
-              GBTEmptyState(message: '표시할 뉴스가 없습니다'),
+            children: [
+              const SizedBox(height: GBTSpacing.lg),
+              GBTErrorState(message: message, onRetry: onRetry),
             ],
           );
-        }
+        },
+        data: (newsList) {
+          if (newsList.isEmpty) {
+            return ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: GBTSpacing.paddingPage,
+              children: [
+                const SizedBox(height: GBTSpacing.lg),
+                GBTEmptyState(
+                  icon: Icons.newspaper_outlined,
+                  title: '표시할 뉴스가 없습니다',
+                ),
+              ],
+            );
+          }
 
-        // EN: Divider-separated list for modern look
-        // KO: 모던한 느낌의 구분선 분리 리스트
-        return ListView.separated(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.symmetric(vertical: GBTSpacing.sm),
-          itemCount: newsList.length,
-          separatorBuilder: (_, __) => const Divider(
-            height: 1,
-            indent: GBTSpacing.pageHorizontal,
-            endIndent: GBTSpacing.pageHorizontal,
-          ),
-          itemBuilder: (context, index) {
-            final news = newsList[index];
-            return _NewsCard(news: news);
-          },
-        );
-      },
+          // EN: Divider-separated list for modern look
+          // KO: 모던한 느낌의 구분선 분리 리스트
+          return ListView.separated(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(vertical: GBTSpacing.sm),
+            itemCount: newsList.length,
+            separatorBuilder: (_, __) => const Divider(
+              height: 1,
+              indent: GBTSpacing.pageHorizontal,
+              endIndent: GBTSpacing.pageHorizontal,
+            ),
+            itemBuilder: (context, index) {
+              final news = newsList[index];
+              return _NewsCard(news: news);
+            },
+          );
+        },
+      ),
     );
   }
 }
@@ -359,7 +368,7 @@ class _CommunityList extends ConsumerStatefulWidget {
   const _CommunityList({required this.state, required this.onRetry});
 
   final AsyncValue<List<PostSummary>> state;
-  final VoidCallback onRetry;
+  final Future<void> Function() onRetry;
 
   @override
   ConsumerState<_CommunityList> createState() => _CommunityListState();
@@ -421,62 +430,69 @@ class _CommunityListState extends ConsumerState<_CommunityList> {
 
     return Stack(
       children: [
-        widget.state.when(
-          loading: () => ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(vertical: GBTSpacing.sm),
-            children: [
-              GBTListSkeleton(
-                itemCount: 5,
-                padding: EdgeInsets.zero,
-                spacing: GBTSpacing.none,
-                itemBuilder: (_) => const GBTCommunityPostSkeleton(),
-              ),
-            ],
-          ),
-          error: (error, _) {
-            final message = error is Failure
-                ? error.userMessage
-                : '커뮤니티 글을 불러오지 못했어요';
-            return ListView(
+        RefreshIndicator(
+          onRefresh: widget.onRetry,
+          child: widget.state.when(
+            loading: () => ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: GBTSpacing.paddingPage,
+              padding: const EdgeInsets.symmetric(vertical: GBTSpacing.sm),
               children: [
-                const SizedBox(height: GBTSpacing.lg),
-                GBTErrorState(message: message, onRetry: widget.onRetry),
+                GBTListSkeleton(
+                  itemCount: 5,
+                  padding: EdgeInsets.zero,
+                  spacing: GBTSpacing.none,
+                  itemBuilder: (_) => const GBTCommunityPostSkeleton(),
+                ),
               ],
-            );
-          },
-          data: (posts) {
-            if (posts.isEmpty) {
+            ),
+            error: (error, _) {
+              final message = error is Failure
+                  ? error.userMessage
+                  : '커뮤니티 글을 불러오지 못했어요';
               return ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: GBTSpacing.paddingPage,
-                children: const [
-                  SizedBox(height: GBTSpacing.lg),
-                  GBTEmptyState(message: '아직 커뮤니티 글이 없습니다'),
+                children: [
+                  const SizedBox(height: GBTSpacing.lg),
+                  GBTErrorState(message: message, onRetry: widget.onRetry),
                 ],
               );
-            }
+            },
+            data: (posts) {
+              if (posts.isEmpty) {
+                return ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: GBTSpacing.paddingPage,
+                  children: [
+                    const SizedBox(height: GBTSpacing.lg),
+                    GBTEmptyState(
+                      icon: Icons.forum_outlined,
+                      title: '아직 커뮤니티 글이 없습니다',
+                      subtitle: '첫 이야기를 들려주세요!',
+                    ),
+                  ],
+                );
+              }
 
-            // EN: Divider-separated SNS-style list with scroll tracking.
-            // KO: 구분선 분리 SNS 스타일 리스트 + 스크롤 추적.
-            return ListView.separated(
-              controller: _scrollController,
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.symmetric(vertical: GBTSpacing.sm),
-              itemCount: posts.length,
-              separatorBuilder: (_, __) => const Divider(
-                height: 1,
-                indent: GBTSpacing.pageHorizontal,
-                endIndent: GBTSpacing.pageHorizontal,
-              ),
-              itemBuilder: (context, index) {
-                final post = posts[index];
-                return _CommunityPostCard(post: post);
-              },
-            );
-          },
+              // EN: Divider-separated SNS-style list with scroll tracking.
+              // KO: 구분선 분리 SNS 스타일 리스트 + 스크롤 추적.
+              return ListView.separated(
+                controller: _scrollController,
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(vertical: GBTSpacing.sm),
+                itemCount: posts.length,
+                separatorBuilder: (_, __) => const Divider(
+                  height: 1,
+                  indent: GBTSpacing.pageHorizontal,
+                  endIndent: GBTSpacing.pageHorizontal,
+                ),
+                itemBuilder: (context, index) {
+                  final post = posts[index];
+                  return _CommunityPostCard(post: post);
+                },
+              );
+            },
+          ),
         ),
 
         // EN: New-posts pill — slides in from top when new content arrives.
@@ -670,7 +686,9 @@ class _CommunityPostCard extends ConsumerWidget {
     final hasImage = previewImageUrls.isNotEmpty;
 
     // EN: Card container — rounded border, surface background.
+    //     2026 large-radius card trend.
     // KO: 카드 컨테이너 — 둥근 테두리, 표면 배경.
+    //     2026 라지 라운드 카드 트렌드.
     return Container(
       margin: const EdgeInsets.symmetric(
         horizontal: GBTSpacing.md,
@@ -678,7 +696,7 @@ class _CommunityPostCard extends ConsumerWidget {
       ),
       decoration: BoxDecoration(
         color: isDark ? GBTColors.darkSurfaceElevated : GBTColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(GBTSpacing.radiusCard),
         boxShadow: [
           if (!isDark)
             BoxShadow(
@@ -696,9 +714,9 @@ class _CommunityPostCard extends ConsumerWidget {
       ),
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(GBTSpacing.radiusCard),
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(GBTSpacing.radiusCard),
           onTap: () =>
               context.goToPostDetail(post.id, projectCode: post.projectId),
           child: Column(

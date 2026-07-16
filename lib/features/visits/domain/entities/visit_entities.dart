@@ -7,11 +7,26 @@ import 'package:intl/intl.dart';
 import '../../data/dto/user_ranking_dto.dart';
 import '../../data/dto/visit_dto.dart';
 
+/// EN: Canonical visit verification states understood by the app.
+/// KO: 앱이 이해하는 표준 방문 인증 상태입니다.
+class VisitVerificationStatus {
+  const VisitVerificationStatus._();
+
+  static const String verified = 'VERIFIED';
+  static const String unknown = 'UNKNOWN';
+
+  static String normalize(String raw) {
+    final normalized = raw.trim().toUpperCase();
+    return normalized.isEmpty ? unknown : normalized;
+  }
+}
+
 class VisitEvent {
   const VisitEvent({
     required this.id,
     required this.placeId,
     required this.visitedAt,
+    this.status = VisitVerificationStatus.unknown,
     this.distanceM,
     this.accuracy,
   });
@@ -19,6 +34,7 @@ class VisitEvent {
   final String id;
   final String placeId;
   final DateTime? visitedAt;
+  final String status;
 
   /// EN: Distance from the place at verification time, in meters (optional).
   /// KO: 인증 시 장소로부터의 거리 (미터 단위, 선택적).
@@ -28,15 +44,20 @@ class VisitEvent {
   /// KO: GPS 정확도 (미터 단위, 30일 후 null이 될 수 있음).
   final double? accuracy;
 
-  /// EN: Whether this visit was GPS-verified (distanceM is present).
-  /// KO: GPS 인증이 완료된 방문인지 여부 (distanceM 존재 여부로 판단).
-  bool get hasGpsVerification => distanceM != null;
+  /// EN: Whether the server currently recognizes this visit as verified.
+  /// KO: 서버가 현재 이 방문을 인증 완료로 인정하는지 여부입니다.
+  bool get isVerified => status == VisitVerificationStatus.verified;
+
+  /// EN: Backward-compatible UI alias; proof never depends on distance.
+  /// KO: UI 호환 별칭이며, 증빙 여부는 거리 값에 의존하지 않습니다.
+  bool get hasGpsVerification => isVerified;
 
   factory VisitEvent.fromDto(VisitEventDto dto) {
     return VisitEvent(
       id: dto.id,
       placeId: dto.placeId,
       visitedAt: dto.visitedAt,
+      status: VisitVerificationStatus.normalize(dto.status),
       distanceM: dto.distanceM,
     );
   }
@@ -46,6 +67,7 @@ class VisitEvent {
       id: dto.id,
       placeId: dto.placeId,
       visitedAt: dto.visitedAt,
+      status: VisitVerificationStatus.normalize(dto.status),
       distanceM: dto.distanceM,
       accuracy: dto.accuracy,
     );

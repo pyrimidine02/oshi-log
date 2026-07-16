@@ -13,7 +13,9 @@ import '../../../../core/theme/gbt_typography.dart';
 import '../../../../core/utils/result.dart';
 import '../../../../core/widgets/buttons/gbt_button.dart';
 import '../../../../core/widgets/inputs/gbt_text_field.dart';
+import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
 import '../../application/auth_controller.dart';
+import '../widgets/field_auth_components.dart';
 
 /// EN: Page for changing the current user's password (requires authentication).
 /// KO: 현재 사용자의 비밀번호를 변경하는 페이지 (인증 필요).
@@ -63,9 +65,12 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
         ref.watch(authControllerProvider).isLoading || _isSubmitting;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          context.l10n(ko: '비밀번호 변경', en: 'Change Password', ja: 'パスワード変更'),
+      appBar: gbtStandardAppBar(
+        context,
+        title: context.l10n(
+          ko: '비밀번호 변경',
+          en: 'Change Password',
+          ja: 'パスワード変更',
         ),
       ),
       body: SafeArea(
@@ -77,6 +82,23 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: GBTSpacing.lg),
+
+                FieldAuthHeader(
+                  eyebrow: 'ACCOUNT SECURITY',
+                  title: context.l10n(
+                    ko: '여행 기록을 안전하게 보호하세요',
+                    en: 'Keep your travel record secure',
+                    ja: '旅の記録を安全に守りましょう',
+                  ),
+                  subtitle: context.l10n(
+                    ko: '새 비밀번호는 8자 이상의 복합 문자로 설정해주세요.',
+                    en: 'Use at least 8 characters with a secure mix.',
+                    ja: '8文字以上の複雑なパスワードを設定してください。',
+                  ),
+                  icon: Icons.lock_outline,
+                ),
+
+                const SizedBox(height: GBTSpacing.xl),
 
                 // EN: Info banner
                 // KO: 안내 배너
@@ -158,8 +180,7 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
                   suffixIcon: _obscureNew
                       ? Icons.visibility_outlined
                       : Icons.visibility_off_outlined,
-                  onSuffixTap: () =>
-                      setState(() => _obscureNew = !_obscureNew),
+                  onSuffixTap: () => setState(() => _obscureNew = !_obscureNew),
                   textInputAction: TextInputAction.next,
                   validator: _validatePassword,
                 ),

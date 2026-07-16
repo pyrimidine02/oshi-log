@@ -19,11 +19,13 @@ import 'core/logging/app_logger.dart';
 import 'core/notifications/firebase_runtime_options.dart';
 import 'core/notifications/remote_push_service.dart';
 import 'core/providers/core_providers.dart';
+import 'core/theme/gbt_font_licenses.dart';
 
 Future<void> main() async {
   // EN: Ensure Flutter bindings are initialized
   // KO: Flutter 바인딩 초기화 확인
   WidgetsFlutterBinding.ensureInitialized();
+  registerGBTFontLicenses();
 
   // EN: Initialize Firebase (required before Crashlytics / Messaging).
   // KO: Crashlytics / Messaging 사용 전에 Firebase를 초기화합니다.

@@ -1,5 +1,158 @@
 # TODO
 
+- Rotate the Facebook/Instagram credential captured by a local Playwright trace
+  if it is still live (2026-07-16):
+  - `.playwright-mcp/` is now ignored and was not staged or committed.
+  - Delete the local trace after it is no longer needed for debugging.
+  - Removal criteria: the credential is revoked or rotated and the local trace
+    no longer contains an active credential.
+
+- Refresh the full OpenAPI JSON after the server endpoint work stabilizes
+  (2026-07-16):
+  - `api_v3_endpoints_catalog.dart` and its mobile contract checks now include
+    the current endpoint delta, but `api_docs.json` remains the older 197-path
+    runtime snapshot.
+  - Start the current backend with local OpenAPI enabled and replace the JSON
+    only from `GET /api-docs`; do not synthesize schemas from controller grep.
+  - Add credential-bound X/Twitter account recovery server support. Until then,
+    the app directs users to an already-linked password, Google, or Apple
+    credential, or to support when no alternative credential is linked.
+  - Removal criteria: generated JSON matches the stabilized server working
+    tree and password/Google/Apple/X recovery all pass mobile integration tests.
+
+- Verify the deep Field Document redesign on physical iOS and Android devices
+  (2026-07-16):
+  - Create, edit, reopen, like, and comment on a post; confirm keyboard, media,
+    unsaved-exit, refresh, and author-profile navigation behavior.
+  - Exercise map layer changes, selected-place detail, and every available
+    directions provider without native map controller disposal errors.
+  - Verify self passport, public traveler card, follow/block/report, pinned
+    post/comment activity, and profile media crop/upload/save at 320dp and 200%
+    text scale with VoiceOver/TalkBack.
+  - Add a public visits endpoint before showing another user's visit history;
+    until then the visit tab must remain count-only or honestly empty.
+  - Removal criteria: iOS and Android each pass the real-account flows with no
+    overflow, false action, stale activity, or new crash.
+
+- Rotate the previously embedded probe-admin credential outside this repository
+  (2026-07-16):
+  - Local probe defaults were removed and the expired token no longer exists in
+    the script, but repository cleanup cannot revoke a password or token already
+    exposed to history.
+  - Removal criteria: the server-side password/session has been rotated or
+    revoked and a new environment-injected probe credential succeeds.
+
+- Complete production and device QA for generalized fan subjects and travel reviews (2026-07-16):
+  - Verify project, unit/band, and voice-actor preference reads/writes against
+    the deployed HTTPS API and confirm project-scoped authorization is
+    unchanged. Artist/anime remain server-side future types for now.
+  - Create, reopen, edit, and delete a travel review on iOS and Android with a
+    real verified visit and verified live attendance record.
+  - Add image selection/upload IDs, editable tags, full-field edit controls, and
+    infinite-scroll pagination to the travel-review UI.
+  - Removal criteria: both device families pass the real account flow and the
+    server record retains ordered stops, proof IDs, subjects, dates, and note.
+
+- Add canonical cross-role person identity before dual-role catalog import
+  (2026-07-16):
+  - A voice actor who also releases music must keep one user-facing fan identity
+    instead of separate `VOICE_ACTOR` and `ARTIST` subscriptions.
+  - Removal criteria: catalog import resolves aliases to one canonical subject,
+    role facets remain queryable, and subscription/content history is not split.
+
+- Verify authoritative schedule synchronization after reviewed deployment (2026-07-16):
+  - The local server now owns rolling official BanG Dream schedule synchronization;
+    the app must continue consuming only the API, never scraping the site.
+  - Verify source freshness, cancellation/restoration, multi-day projection, and
+    parser-failure retention through production HTTPS and calendar UI.
+  - Removal criteria: freshness alerting is active and a source parser failure
+    cannot remove existing calendar rows.
+
+- [x] Replace the travel-review mock routes with a real API contract (completed locally 2026-07-16):
+  - DTO, data source, repository, Riverpod state, real list/detail/create/update/delete,
+    ordered stops, event/visit proof references, trip metadata, and fan-subject links
+    are implemented and covered by focused tests.
+  - The audit notes below describe the pre-change state and are retained only as
+    historical context; they no longer describe the routed implementation.
+  - 현재 `travel_review_create_page.dart`는 실제 저장 없이 지연 후 성공으로 처리하고,
+    `travel_review_detail_page.dart`는 route ID에 연결된 서버 데이터 대신 더미 내용을
+    표시한다.
+  - 작성·수정·삭제, 여행 일자, 장소 ID, 방문 기록 ID, 이벤트 ID, 이미지,
+    공개 범위를 포함한 서버 계약을 먼저 확정한다.
+  - 실제 계약 전에는 새로운 샘플 후기나 거짓 통계를 추가하지 않는다.
+  - 제거 기준:
+    - 실제 API·DTO·repository·controller·작성/상세 위젯 테스트와 운영 HTTPS
+      end-to-end 저장·재조회가 모두 통과하면 제거.
+
+- Remove unrouted legacy presentation siblings after parity verification (2026-07-15):
+  - 구형 `home_page.dart`, `explore_page.dart`, `calendar_page.dart`, `live_events_page.dart`,
+    `live_event_detail_page.dart`, `board_page.dart`, `feed_page.dart`, `info_page.dart`,
+    `user_profile_page.dart`, `my_page.dart`는 현재 실제 GoRoute에서 열리지 않는다.
+  - 삭제 전 deep link, 위젯 직접 import, 테스트·스토리 참조를 전수 검색하고
+    신규 Field 화면이 동일 기능을 보존하는지 확인한다.
+  - 제거 기준:
+    - 참조 0건과 iOS·Android 핵심 루트 패리티 확인 후 별도 cleanup 변경으로 제거.
+
+- Deploy and verify the calendar live-schedule backend contract (2026-07-15):
+  - 서버의 `GET /api/v1/calendar/events` 공개 읽기 권한과
+    `LiveEventSummaryDto.endTime` 응답 필드를 운영에 배포한다.
+  - 미인증 상태에서 팬 캘린더가 200을 반환하고, 라이브 목록이
+    `endTime`을 포함하는지 공개 HTTPS 경로로 확인한다.
+  - 뱅드림 2026년 7월을 실제 앱에서 열어 `MyGO!!!!! 9th LIVE`가
+    7월 18일과 19일, 대상 상세가 제공하는 다일 일정은 모든
+    해당 날짜에 표시되는지 확인한다.
+  - 제거 기준:
+    - 서버 배포 후 미인증 캘린더 200, 라이브 `endTime`, 다일
+      표시를 운영 API와 iOS/Android 각 1기기에서 확인하면 제거.
+
+- Establish authoritative schedule synchronization and project-timezone projection (2026-07-15):
+  - 뱅드림 등 공식 일정 소스의 추가·변경·취소를 서버에서
+    주기적으로 대조하는 멱등 동기화 작업을 설계한다. 모바일 앱은
+    공식 사이트를 직접 스크래핑하지 않는다.
+  - 안정적인 외부 키, 출처 URL, 최종 확인 시각, 원본 수정 시각과
+    멱등 upsert/중복 제거 규칙을 서버 계약으로 확정한다.
+  - 캘린더 조회·월 필터·일별 투영이 기기의 `toLocal()` 대신
+    선택한 `Project.defaultTimezone` IANA 시간대를 사용하도록 도메인
+    날짜 정책을 분리한다.
+  - 제거 기준:
+    - 공식 일정 동기화의 재실행 멱등성·취소/일시 변경 반영과,
+      `Asia/Tokyo`·`Asia/Seoul`·UTC 경계 테스트가 서버/앱에서 모두
+      통과하면 제거.
+
+- Run device QA for Urban Travel Field Notes UI rebuild (2026-07-15):
+  - iOS/Android에서 홈 → 탐방(지도/이벤트/기록/도감) → 정보 → 커뮤니티 → 마이
+    루트 전환과 기존 딥링크 진입을 확인.
+  - 탐방 상단에 모드 선택기가 다시 쌓이지 않고, 60dp 별도 모드 도크가
+    메인 하단바 위 8dp 간격과 일치하는지 확인. 지도·이벤트·여정 원장·
+    표본 아카이브 전환 시 본문이 두 하단바에 가려지지 않는지 확인.
+  - 커뮤니티 진입 시 기존 별도 하단바가 표시되고 피드/발견/여행후기 전환 및
+    뒤로가기가 기존과 동일하게 동작하는지 확인.
+  - 프로젝트 선택 바텀시트에서 다른 프로젝트 행 한 번으로 장소·일정·도감
+    컨텍스트가 정확히 한 번 전환되고 시트가 닫히는지 확인. 현재 프로젝트를
+    다시 탭하면 저장값과 선택 유닛이 바뀌지 않는지도 확인.
+  - 홈에서 대표 일정/장소가 아래 섹션에 중복되지 않고, 오늘의 원정 브리핑
+    → 그다음 일정 → 프로젝트 성지 → 프로젝트 소식 순서와 첫 주요 행동이
+    하단바 위에서 읽히는지 확인.
+  - 위치 권한 허용/거부/미결정 각각에서 지도 거리가 거짓 도쿄 기준값으로
+    표시되지 않고 실제 거리 또는 서버 제공 순서를 유지하는지 확인.
+  - 이벤트 즐겨찾기·출석·공식 티켓 링크·세트리스트와 유저 프로필의
+    팔로우·차단·신고·연결 목록·편집 흐름을 실제 계정으로 회귀 확인.
+  - 여정 원장에서 장소 방문/이벤트 출석 전환, 월별 정렬, GPS 인증 표시,
+    상세·통계 라우팅과 도감 표본의 진행·완료 상태가 실제 계정 데이터와
+    일치하는지 확인.
+  - 지도 → 이벤트/기록/도감 → 지도 재진입을 반복해 폐기된 네이티브 지도
+    controller 예외나 카메라 멈춤이 없는지 확인.
+  - 앱을 종료한 후 도감 탭 딥링크로 바로 진입해도 저장된 프로젝트가
+    복원되고, 복원 실패·빈 프로젝트 목록에서는 재시도/선택 상태로 전환되어
+    표본 색인이 로딩에 머물지 않는지 확인.
+  - VoiceOver/TalkBack으로 지도 검색·필터·원장 초기화/접기, 이벤트 모드·필터·
+    출석, 프로젝트 렌즈와 방문 기록 행을 실제로 실행할 수 있는지 확인.
+  - 노치/홈 인디케이터가 있는 기기, 320dp 폭, 200% 글자, 라이트/다크에서
+    하단바 겹침·텍스트 잘림·터치 타깃 축소가 없는지 확인.
+  - 제거 기준:
+    - iOS/Android 각 1기기 이상에서 위 흐름과 접근성 QA를 통과하고,
+      신규 Crashlytics 레이아웃/라우팅 오류가 24시간 발생하지 않으면 제거.
+
 - Run QA for iOS native-assets objective_c runtime load fix (2026-03-31):
   - iOS Simulator(arm64/x64)에서 앱 시작 직후
     `DOBJC_initializeApi` / `objective_c.framework/objective_c` 예외가
@@ -59,11 +212,13 @@
   - 제거 기준:
     - Android/iOS 각 1기기 이상에서 3종 알림 end-to-end QA 통과 시 본 항목 제거.
 
-- Run QA for Android-only Material 3 visual polish (2026-03-30):
+- Superseded — Android-only Material 3 visual polish (2026-03-30, replaced 2026-07-15):
+  - 2026-07-15 전면 재설계로 플랫폼별 구 디자인 유지 요구를 폐기하고,
+    iOS/Android 모두 Urban Travel Field Notes 디자인을 검수 대상으로 삼는다.
   - Android에서만 하단 네비게이션/커뮤니티 서브 하단바가
     라운드 컨테이너 + 톤드 surface + 선택 상태 강조로 표시되는지 확인.
-  - iOS에서 기존 하단바/프로필 디자인이 이전과 동일하게 유지되는지 확인
-    (플랫폼 회귀 방지).
+  - iOS/Android에서 새 메인 하단바·프로필 디자인과 탐방 전용 하단 도크가
+    동일한 정보 구조로 동작하는지 확인한다.
   - 프로필 페이지 Android에서:
     - 헤더 뒤로가기 버튼 가독성/터치 영역(최소 44dp) 확인
     - `프로필 수정/칭호`, `팔로우/차단` 버튼 높이/패딩 증가가 의도대로 반영되는지 확인
@@ -87,7 +242,9 @@
   - 제거 기준:
     - iOS/Android 각 1기기 이상에서 캐시 hit/재시작 fallback/로그아웃 정리/푸시 키 정리 QA 통과 시 본 항목 제거.
 
-- Run QA for My sub-page appbar standardization + FanLevel score visibility (2026-03-30):
+- Superseded — My sub-page appbar standardization (2026-03-30, replaced 2026-07-15):
+  - 2026-07-15 전면 재설계 이후에는 기존 AppBar 복원이 아니라 각 도메인의
+    문서형 헤더와 48dp 이상 터치 영역을 기준으로 검수한다.
   - `정보/유저` 탭과 동일한 상단바 톤(배경/타이포/그림자 없음)이
     아래 페이지에서 일관되게 적용되는지 확인:
     `나의 덕력`, `성지순례 도감(목록/상세)`, `응원 가이드(목록/상세)`,
@@ -110,7 +267,9 @@
   - 제거 기준:
     - 내부 QA 기기 2대 이상에서 재현 시도 실패 + Crashlytics 신규 발생 0건 24시간 유지 시 본 항목 제거.
 
-- Run QA for explore map edge-to-edge fill (2026-03-30):
+- Superseded — explore map edge-to-edge fill (2026-03-30, replaced 2026-07-15):
+  - 새 지도 기준은 56dp 미션 스트립 + 지도 캔버스 + 하단 현장 원장이며,
+    검색/필터 헤더와 상단 서브탭은 더 이상 존재하지 않는다.
   - 탐방 탭 지도 모드에서 지도 타일이 상태바 영역(노치/다이내믹 아일랜드 상단 포함)까지 연속적으로 채워지는지 확인.
   - 상단 검색/필터 헤더가 상태바와 겹치지 않고 기존 터치 영역/가독성을 유지하는지 확인.
   - 탐방 내 다른 서브탭(이벤트/방문기록/성지도감) 진입 시 AppBar 상단 여백/터치 영역이 기존과 동일한지 확인.
@@ -118,7 +277,9 @@
   - 제거 기준:
     - iOS/Android 탐방 탭 시각 QA 통과 후 본 항목 제거.
 
-- Run QA for explore map top readability blur layer (2026-03-30):
+- Superseded — explore map top readability blur layer (2026-03-30, replaced 2026-07-15):
+  - 새 지도는 상단 블러·검색 카드·필터 칩을 사용하지 않는다. 56dp 미션
+    스트립의 대비와 지도 팬/줌 성능을 기준으로 검수한다.
   - 탐방 지도 상단에서 상태바 시간/아이콘 가독성이 밝은 지도 타일에서도 유지되는지 확인.
   - 상단 검색 카드/필터 칩 뒤 배경이 과도하게 뿌옇지 않고, 지도 맥락이 유지되는지 확인.
   - iOS/Android에서 상단 오버레이 경계(블러 종료 지점) 밴딩/이음선이 보이지 않는지 확인.
@@ -576,7 +737,7 @@
 
 - Run QA for unified-search global entry + reference-style discovery UI (2026-03-08):
   - Home/Feed/Board/Places의 돋보기 아이콘(또는 검색 카드 탭)에서 모두 `/search`로 이동하는지 확인.
-  - Places 페이지 검색 카드에서 길게 누를 때 기존 지도 내 검색 시트가 열리는지 확인.
+  - 탐방 지도 56dp 미션 스트립을 탭하면 장소 검색/필터 흐름이 열리는지 확인.
   - 통합 검색 페이지 상단 레이아웃(뒤로가기 + 라운드 검색 입력창 + 범위 토글)이 레퍼런스 톤으로 표시되는지 확인.
   - query empty 상태에서 `인기 통합 검색`, `인기 탐색 카테고리`, `검색 둘러보기` 섹션 노출 확인.
   - query 입력 상태에서 기존 통합검색 결과 로드/탭 필터(`전체/장소/이벤트/뉴스`)가 정상 동작하는지 확인.
@@ -807,10 +968,10 @@
   - 로그아웃/다른 계정 로그인 후 이전 계정 알림이 잘못 표시되지 않는지 확인.
 - Follow up backend push integration request (`docs/api-spec/푸시알림연동요청서_v1.0.0.md`) and start Phase B client work (`firebase_messaging`, token register/unregister API binding) once endpoints are confirmed.
 - Run full-device visual QA for service-fit redesign phase1 (`home`, `places`, `live`, `board`, `search`) focusing on bottom-nav reachability, segmented-tab readability, and search-field focus states (remove once validated).
-- Run QA for live-year filter on `LiveEventsPage`:
-  - 연도 칩(`전체 연도 + 연도별`) 노출/선택 상태와 스크롤 접근성 확인.
-  - 연도+밴드 동시 필터 적용 시 예정/완료 탭 결과가 기대대로 좁혀지는지 확인.
-  - 연도 필터 선택 상태에서 캘린더 FAB가 동일 연도 데이터만 표시하는지 확인.
+- Run QA for the unified event schedule filter sheet:
+  - 100dp 상단 컨트롤에서 일정 필터 시트 진입과 48dp 터치 영역을 확인.
+  - 시트에서 연도+유닛 동시 필터 적용 시 예정/기록 결과가 기대대로 좁혀지는지 확인.
+  - 필터 적용·초기화 후 NEXT LIVE 포스터와 하단 아젠다가 같은 범위를 표시하는지 확인.
 - Run board Toss-style nav redesign QA:
   - 게시판 탭 진입 시 하단바가 `← + 피드/발견/여행후기`로 전환되고, 화살표 탭 시 기존 메인 5탭(`홈/장소/라이브/게시판/정보`)으로 복귀하는지 확인.
   - 레거시/호환 경로 리다이렉트(` /feed`, `/discover`, `/travel-reviews-tab`, `/posts/...`, `/travel-reviews/...`)가 `/board/...`로 정상 동작하는지 확인.

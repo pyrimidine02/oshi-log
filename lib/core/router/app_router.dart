@@ -9,6 +9,8 @@ import 'package:go_router/go_router.dart';
 
 import '../providers/core_providers.dart';
 import '../theme/gbt_animations.dart';
+import '../widgets/feedback/gbt_navigation_error_view.dart';
+import '../widgets/navigation/gbt_standard_app_bar.dart';
 import '../../shared/main_scaffold.dart';
 import '../../features/auth/presentation/pages/change_password_page.dart';
 import '../../features/auth/presentation/pages/email_verification_args.dart';
@@ -22,13 +24,13 @@ import '../../features/auth/presentation/pages/oauth_callback_page.dart';
 import '../../features/auth/presentation/pages/oauth_conflict_page.dart';
 import '../../features/auth/presentation/pages/oauth_merge_existing_page.dart';
 import '../../features/settings/presentation/pages/linked_accounts_page.dart';
-import '../../features/home/presentation/pages/home_page.dart';
-import '../../features/explore/presentation/pages/explore_page.dart';
+import '../../features/home/presentation/field_home/field_home_page.dart';
+import '../../features/explore/presentation/field_explore/field_explore_page.dart';
 import '../../features/places/presentation/pages/place_detail_page.dart';
-import '../../features/live_events/presentation/pages/live_event_detail_page.dart';
-import '../../features/feed/presentation/pages/board_page.dart';
-import '../../features/feed/presentation/pages/info_page.dart';
-import '../../features/my/presentation/pages/my_page.dart';
+import '../../features/live_events/presentation/field_events/field_live_event_detail_page.dart';
+import '../../features/feed/presentation/field_community/field_community_page.dart';
+import '../../features/feed/presentation/field_guide/field_guide_page.dart';
+import '../../features/my/presentation/travel_passport/travel_passport_page.dart';
 import '../../features/feed/presentation/pages/member_detail_page.dart';
 import '../../features/feed/presentation/pages/news_detail_page.dart';
 import '../../features/feed/presentation/pages/post_create_page.dart';
@@ -38,11 +40,12 @@ import '../../features/feed/presentation/pages/voice_actor_detail_page.dart';
 import '../../features/music/presentation/pages/music_song_detail_page.dart';
 import '../../features/projects/domain/entities/project_entities.dart'
     show Unit, UnitMember;
+import '../../features/projects/presentation/pages/fan_subject_detail_page.dart';
 import '../../features/feed/presentation/pages/post_edit_page.dart';
 import '../../features/feed/presentation/pages/travel_review_create_page.dart';
 import '../../features/feed/presentation/pages/travel_review_detail_page.dart';
 import '../../features/feed/presentation/pages/user_connections_page.dart';
-import '../../features/feed/presentation/pages/user_profile_page.dart';
+import '../../features/feed/presentation/field_user_profile/field_user_profile_page.dart';
 import '../../features/feed/domain/entities/feed_entities.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
 import '../../features/settings/presentation/pages/community_settings_page.dart';
@@ -53,7 +56,8 @@ import '../../features/settings/presentation/pages/privacy_rights_page.dart';
 import '../../features/settings/presentation/pages/consent_history_page.dart';
 import '../../features/admin_ops/presentation/pages/admin_ops_page.dart';
 import '../../features/visits/presentation/pages/visit_detail_page.dart';
-import '../../features/visits/presentation/pages/visit_history_page.dart';
+import '../../features/visits/presentation/field_visit_ledger/field_visit_ledger_page.dart';
+import '../../features/visits/presentation/field_visit_ledger/field_visit_ledger_common.dart';
 import '../../features/visits/presentation/pages/visit_stats_page.dart';
 import '../../features/favorites/presentation/pages/favorites_page.dart';
 import '../../features/feed/presentation/pages/post_bookmarks_page.dart';
@@ -61,12 +65,12 @@ import '../../features/search/presentation/pages/search_page.dart';
 import '../../features/notifications/presentation/pages/notifications_page.dart';
 import '../../features/profile_banner/presentation/pages/banner_picker_page.dart';
 import '../../features/titles/presentation/pages/title_catalog_page.dart';
-import '../../features/calendar/presentation/pages/calendar_page.dart';
+import '../../features/calendar/presentation/field_calendar/field_calendar_page.dart';
 import '../../features/fan_level/presentation/pages/fan_level_page.dart';
 import '../../features/cheer_guides/presentation/pages/cheer_guides_page.dart';
 import '../../features/cheer_guides/presentation/pages/cheer_guide_detail_page.dart';
 import '../../features/quotes/presentation/pages/quotes_page.dart';
-import '../../features/zukan/presentation/pages/zukan_page.dart';
+import '../../features/zukan/presentation/field_archive/field_zukan_archive_page.dart';
 import '../../features/zukan/presentation/pages/zukan_detail_page.dart';
 
 DateTime? _lastPostDetailNavigationAt;
@@ -146,6 +150,7 @@ class AppRoutes {
   static const String unitDetail = 'unit-detail';
   static const String memberDetail = 'member-detail';
   static const String voiceActorDetail = 'voice-actor-detail';
+  static const String fanSubjectDetail = 'fan-subject-detail';
   static const String songDetail = 'song-detail';
   static const String postDetail = 'post-detail';
   static const String overlayPostDetail = 'overlay-post-detail';
@@ -225,7 +230,6 @@ class NavIndex {
   /// EN: Community branch — board / feed.
   /// KO: 커뮤니티 분기 — 게시판.
   static const int community = 4;
-
 }
 
 /// EN: GoRouter provider with authentication redirect
@@ -252,9 +256,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           loc == '/reset-password' ||
           loc == '/email-verification-pending' ||
           loc == '/email-verified';
-      final isPublicRoute =
-          loc == '/home' ||
-          loc.startsWith('/information');
+      final isPublicRoute = loc == '/home' || loc.startsWith('/information');
 
       // EN: If logged in and on auth pages, redirect to home.
       // KO: 로그인했고 인증 페이지면 홈으로 리다이렉트.
@@ -292,7 +294,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final args = state.extra is EmailVerificationArgs
               ? state.extra! as EmailVerificationArgs
-              : EmailVerificationArgs(email: state.uri.queryParameters['email'] ?? '');
+              : EmailVerificationArgs(
+                  email: state.uri.queryParameters['email'] ?? '',
+                );
           return EmailVerificationPendingPage(args: args);
         },
       ),
@@ -324,8 +328,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/oauth/conflict',
         name: AppRoutes.oauthConflict,
         builder: (context, state) {
-          final email =
-              state.extra is String ? state.extra! as String : '';
+          final email = state.extra is String ? state.extra! as String : '';
           return OAuthConflictPage(conflictEmail: email);
         },
       ),
@@ -354,7 +357,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/home',
                 name: AppRoutes.home,
-                builder: (context, state) => const HomePage(),
+                builder: (context, state) => const FieldHomePage(),
               ),
             ],
           ),
@@ -368,11 +371,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 name: AppRoutes.explore,
                 pageBuilder: (context, state) {
                   final tabParam = state.uri.queryParameters['tab'];
-                  final tabIndex =
-                      tabParam != null ? (int.tryParse(tabParam) ?? 0) : 0;
+                  final tabIndex = tabParam != null
+                      ? (int.tryParse(tabParam) ?? 0)
+                      : 0;
                   return NoTransitionPage(
                     key: state.pageKey,
-                    child: ExplorePage(initialTabIndex: tabIndex),
+                    child: FieldExplorePage(initialTabIndex: tabIndex),
                   );
                 },
                 routes: [
@@ -394,7 +398,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                       final eventId = state.pathParameters['eventId']!;
                       return _buildAdaptiveDetailPage(
                         key: state.pageKey,
-                        child: LiveEventDetailPage(eventId: eventId),
+                        child: FieldLiveEventDetailPage(eventId: eventId),
                       );
                     },
                   ),
@@ -410,7 +414,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/information',
                 name: AppRoutes.information,
-                builder: (context, state) => const InfoPage(),
+                builder: (context, state) => const FieldGuidePage(),
                 routes: [
                   GoRoute(
                     path: 'news/:newsId',
@@ -560,7 +564,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/mypage',
                 name: AppRoutes.mypage,
-                builder: (context, state) => const MyPage(),
+                builder: (context, state) => const TravelPassportPage(),
               ),
             ],
           ),
@@ -574,7 +578,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 name: AppRoutes.community,
                 pageBuilder: (context, state) => NoTransitionPage(
                   key: state.pageKey,
-                  child: const BoardPage(initialTabIndex: 0),
+                  child: const FieldCommunityPage(initialSectionIndex: 0),
                 ),
                 routes: [
                   GoRoute(
@@ -582,7 +586,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                     name: AppRoutes.discover,
                     pageBuilder: (context, state) => NoTransitionPage(
                       key: state.pageKey,
-                      child: const BoardPage(initialTabIndex: 1),
+                      child: const FieldCommunityPage(initialSectionIndex: 1),
                     ),
                   ),
                   GoRoute(
@@ -590,7 +594,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                     name: AppRoutes.travelReviewTab,
                     pageBuilder: (context, state) => NoTransitionPage(
                       key: state.pageKey,
-                      child: const BoardPage(initialTabIndex: 2),
+                      child: const FieldCommunityPage(initialSectionIndex: 2),
                     ),
                   ),
                   GoRoute(
@@ -604,18 +608,49 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: 'travel-review-create',
                     name: AppRoutes.travelReviewCreate,
-                    pageBuilder: (context, state) =>
-                        _buildAdaptiveOverlayPage(
+                    pageBuilder: (context, state) => _buildAdaptiveOverlayPage(
                       key: state.pageKey,
                       child: const TravelReviewCreatePage(),
                     ),
                   ),
                   GoRoute(
-                    path: 'travel-reviews/:reviewId',
+                    path: ':projectCode/travel-reviews/:reviewId',
                     name: AppRoutes.travelReviewDetail,
                     builder: (context, state) {
+                      final projectCode = state.pathParameters['projectCode']!;
                       final reviewId = state.pathParameters['reviewId']!;
-                      return TravelReviewDetailPage(reviewId: reviewId);
+                      return TravelReviewDetailPage(
+                        projectCode: projectCode,
+                        reviewId: reviewId,
+                      );
+                    },
+                  ),
+                  // EN: Preserve query-qualified legacy links while refusing
+                  //     to guess project scope from mutable global state.
+                  // KO: 쿼리에 프로젝트가 있는 기존 링크는 보존하되 변경 가능한
+                  //     전역 상태에서 프로젝트 범위를 추측하지 않습니다.
+                  GoRoute(
+                    path: 'travel-reviews/:reviewId',
+                    redirect: (context, state) {
+                      final projectCode = state
+                          .uri
+                          .queryParameters['projectCode']
+                          ?.trim();
+                      if (projectCode == null || projectCode.isEmpty) {
+                        return null;
+                      }
+                      return state.namedLocation(
+                        AppRoutes.travelReviewDetail,
+                        pathParameters: {
+                          'projectCode': projectCode,
+                          'reviewId': state.pathParameters['reviewId']!,
+                        },
+                      );
+                    },
+                    builder: (context, state) {
+                      return const _InvalidNavigationPage(
+                        message: '여행 후기 링크에 프로젝트 정보가 없습니다.',
+                      );
                     },
                   ),
                   GoRoute(
@@ -771,6 +806,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
+        path: '/fan-subjects/:subjectId',
+        name: AppRoutes.fanSubjectDetail,
+        pageBuilder: (context, state) => _buildAdaptiveDetailPage(
+          key: state.pageKey,
+          child: FanSubjectDetailPage(
+            subjectId: state.pathParameters['subjectId']!,
+          ),
+        ),
+      ),
+      GoRoute(
         path: '/notifications',
         name: AppRoutes.notifications,
         pageBuilder: (context, state) => _buildAdaptiveOverlayPage(
@@ -802,7 +847,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: AppRoutes.calendar,
         pageBuilder: (context, state) => _buildAdaptiveOverlayPage(
           key: state.pageKey,
-          child: const CalendarPage(),
+          child: const FieldCalendarPage(),
         ),
       ),
       GoRoute(
@@ -844,7 +889,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: AppRoutes.zukan,
         pageBuilder: (context, state) => _buildAdaptiveOverlayPage(
           key: state.pageKey,
-          child: const ZukanPage(),
+          child: const FieldZukanArchivePage(),
         ),
         routes: [
           GoRoute(
@@ -912,7 +957,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final eventId = state.pathParameters['eventId']!;
           return _buildAdaptiveDetailPage(
             key: state.pageKey,
-            child: LiveEventDetailPage(eventId: eventId),
+            child: FieldLiveEventDetailPage(eventId: eventId),
           );
         },
       ),
@@ -975,10 +1020,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: AppRoutes.visitHistory,
         builder: (context, state) {
           final tab = state.uri.queryParameters['tab'];
-          final initialTab = tab == 'live'
-              ? VisitHistoryTab.live
-              : VisitHistoryTab.places;
-          return VisitHistoryPage(initialTab: initialTab);
+          final initialKind = tab == 'live'
+              ? FieldVisitLedgerKind.events
+              : FieldVisitLedgerKind.places;
+          return FieldVisitLedgerPage(initialKind: initialKind);
         },
         routes: [
           GoRoute(
@@ -1007,7 +1052,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: AppRoutes.userProfile,
         builder: (context, state) {
           final userId = state.pathParameters['userId']!;
-          return UserProfilePage(userId: userId);
+          return FieldUserProfilePage(userId: userId);
         },
         routes: [
           GoRoute(
@@ -1036,28 +1081,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
     ],
     errorBuilder: (context, state) => Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, size: 64),
-            const SizedBox(height: 16),
-            Text(
-              '페이지를 찾을 수 없습니다',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              state.matchedLocation,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: () => context.go('/home'),
-              child: const Text('홈으로 돌아가기'),
-            ),
-          ],
-        ),
+      body: GBTNavigationErrorView(
+        message: '페이지를 찾을 수 없어요',
+        details: state.matchedLocation,
+        onRecover: () => context.go('/home'),
       ),
     ),
   );
@@ -1071,12 +1098,10 @@ class _InvalidNavigationPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Navigation Error')),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(message, textAlign: TextAlign.center),
-        ),
+      appBar: gbtStandardAppBar(context, title: '여정을 열 수 없어요'),
+      body: GBTNavigationErrorView(
+        message: '요청한 페이지를 열 수 없어요',
+        details: message,
       ),
     );
   }
@@ -1095,6 +1120,7 @@ extension AppRouterExtension on BuildContext {
         path.startsWith('/visit-stats') ||
         path.startsWith('/notifications') ||
         path.startsWith('/search') ||
+        path.startsWith('/fan-subjects') ||
         path.startsWith('/calendar') ||
         path.startsWith('/fan-level') ||
         path.startsWith('/cheer-guides') ||
@@ -1278,11 +1304,30 @@ extension AppRouterExtension on BuildContext {
   /// KO: 유닛 상세 페이지로 이동.
   void goToUnitDetail({required Unit unit, required String projectId}) {
     final unitIdentifier = unit.code.isNotEmpty ? unit.code : unit.id;
+    goToUnitDetailByIdentifier(
+      unitIdentifier,
+      projectId: projectId,
+      initialUnit: unit,
+    );
+  }
+
+  /// EN: Navigate to unit detail when only a search identity is available.
+  /// KO: 검색 식별자만 있는 경우 유닛 상세 페이지로 이동합니다.
+  void goToUnitDetailByIdentifier(
+    String unitIdentifier, {
+    required String projectId,
+    Unit? initialUnit,
+  }) {
+    final trimmedUnitIdentifier = unitIdentifier.trim();
+    final trimmedProjectId = projectId.trim();
+    if (trimmedUnitIdentifier.isEmpty || trimmedProjectId.isEmpty) {
+      return;
+    }
     pushNamed(
       AppRoutes.unitDetail,
-      pathParameters: {'unitId': unitIdentifier},
-      queryParameters: {'projectId': projectId},
-      extra: unit,
+      pathParameters: {'unitId': trimmedUnitIdentifier},
+      queryParameters: {'projectId': trimmedProjectId},
+      extra: initialUnit,
     );
   }
 
@@ -1322,6 +1367,17 @@ extension AppRouterExtension on BuildContext {
       AppRoutes.voiceActorDetail,
       pathParameters: {'voiceActorId': voiceActorId},
       queryParameters: queryParameters,
+    );
+  }
+
+  /// EN: Navigate to generic project, band/unit, person, artist, or anime detail.
+  /// KO: 프로젝트·밴드/유닛·인물·아티스트·애니메이션 공통 상세로 이동합니다.
+  void goToFanSubjectDetail(String subjectId) {
+    final trimmedSubjectId = subjectId.trim();
+    if (trimmedSubjectId.isEmpty) return;
+    pushNamed(
+      AppRoutes.fanSubjectDetail,
+      pathParameters: {'subjectId': trimmedSubjectId},
     );
   }
 

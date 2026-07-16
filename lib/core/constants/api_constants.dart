@@ -19,6 +19,10 @@ class ApiEndpoints {
   static const String register = '$apiVersion/auth/register';
   static const String refresh = '$apiVersion/auth/refresh';
   static const String logout = '$apiVersion/auth/logout';
+  static const String accountRecovery = '$apiVersion/auth/account-recovery';
+  static const String accountRecoveryPassword = '$accountRecovery/password';
+  static const String accountRecoveryGoogle = '$accountRecovery/google';
+  static const String accountRecoveryApple = '$accountRecovery/apple';
   static const String emailVerifications =
       '$apiVersion/auth/email-verifications';
   static const String emailVerificationsConfirm =
@@ -206,6 +210,8 @@ class ApiEndpoints {
   static String places(String projectId) => '${project(projectId)}/places';
   static String place(String projectId, String placeId) =>
       '${places(projectId)}/$placeId';
+  static String placeStats(String projectId, String placeId) =>
+      '${place(projectId, placeId)}/stats';
   static String placesWithinBounds(String projectId) =>
       '${places(projectId)}/within-bounds';
   static String placesNearby(String projectId) => '${places(projectId)}/nearby';
@@ -439,6 +445,13 @@ class ApiEndpoints {
   static String commentsByAuthor(String projectCode, String userId) =>
       '$apiVersion/projects/$projectCode/comments/by-author/$userId';
 
+  // EN: Project-scoped pilgrimage travel review aggregate endpoints.
+  // KO: 프로젝트 범위 성지순례 여행 후기 애그리거트 엔드포인트.
+  static String travelReviews(String projectCode) =>
+      '$apiVersion/projects/$projectCode/travel-reviews';
+  static String travelReview(String projectCode, String reviewId) =>
+      '${travelReviews(projectCode)}/$reviewId';
+
   // EN: Community subscription endpoints.
   // KO: 커뮤니티 구독 엔드포인트.
   static const String communityRecommendedFeed =
@@ -553,6 +566,19 @@ class ApiEndpoints {
       '${project(projectId)}/rankings/trending';
   static String rankingsUsers(String projectId) =>
       '${project(projectId)}/rankings/users';
+  static String rankingsCurrentUser(String projectId) =>
+      '${rankingsUsers(projectId)}/me';
+
+  // ============================================================
+  // EN: Unified fan-subject endpoints (project, unit, voice actor)
+  // KO: 통합 팬 대상 엔드포인트 (프로젝트, 유닛, 성우)
+  // ============================================================
+  static const String fanSubjects = '$apiVersion/fan-subjects';
+  static String fanSubject(String subjectId) => '$fanSubjects/$subjectId';
+  static String fanSubjectChildren(String subjectId) =>
+      '${fanSubject(subjectId)}/children';
+  static const String myFanSubjects = '$apiVersion/users/me/fan-subjects';
+  static String myFanSubject(String subjectId) => '$myFanSubjects/$subjectId';
 
   // ============================================================
   // EN: Admin User/Role endpoints (8.21)
@@ -723,10 +749,6 @@ class ApiEndpoints {
   /// KO: 인증된 사용자의 일일 출석 체크 엔드포인트 (POST).
   static const String fanLevelCheckIn =
       '$apiVersion/users/me/fan-level/check-in';
-
-  /// EN: XP earning endpoint for in-app activities (POST).
-  /// KO: 앱 내 활동 XP 획득 엔드포인트 (POST).
-  static const String fanLevelEarnXp = '$apiVersion/users/me/fan-level/xp';
 
   // ============================================================
   // EN: Cheer guide endpoints

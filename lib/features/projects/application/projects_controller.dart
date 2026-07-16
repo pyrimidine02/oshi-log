@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/failure.dart';
+import '../../../core/logging/app_logger.dart';
 import '../../../core/providers/core_providers.dart';
 import '../../../core/utils/result.dart';
 import '../data/datasources/projects_remote_data_source.dart';
@@ -81,16 +82,40 @@ class ProjectUnitsController extends StateNotifier<AsyncValue<List<Unit>>> {
 class ProjectSelectionController extends StateNotifier<ProjectSelectionState> {
   ProjectSelectionController(this._ref)
     : super(ProjectSelectionState.initial()) {
-    _initialize();
+    unawaited(_initialize());
   }
 
   final Ref _ref;
+  int _userSelectionGeneration = 0;
+  Future<void> _persistenceTail = Future<void>.value();
 
   Future<void> _initialize() async {
+    final initializationGeneration = _userSelectionGeneration;
+    try {
+      await _restoreSelection(initializationGeneration);
+    } catch (error, stackTrace) {
+      if (!_ownsSelection(initializationGeneration)) {
+        return;
+      }
+      AppLogger.error(
+        'Failed to restore project selection',
+        error: error,
+        stackTrace: stackTrace,
+        tag: 'ProjectSelectionController',
+      );
+    }
+  }
+
+  Future<void> _restoreSelection(int initializationGeneration) async {
     final storage = await _ref.read(localStorageProvider.future);
+    if (!_ownsSelection(initializationGeneration)) {
+      return;
+    }
     final storedProjectKey = storage.getSelectedProjectKey();
     final storedProjectId = storage.getSelectedProjectId();
-    final storedUnitIds = storage.getSelectedUnitIds();
+    final storedUnitIds = List<String>.unmodifiable(
+      storage.getSelectedUnitIds(),
+    );
     final hasStoredProjectKey =
         storedProjectKey != null && storedProjectKey.isNotEmpty;
     final hasStoredProjectId =
@@ -99,6 +124,9 @@ class ProjectSelectionController extends StateNotifier<ProjectSelectionState> {
 
     if (hasStoredProjectKey || hasStoredProjectId) {
       projects = await _fetchProjects();
+      if (!_ownsSelection(initializationGeneration)) {
+        return;
+      }
       final match = _findProject(projects, storedProjectKey, storedProjectId);
       if (match != null) {
         final resolvedProjectKey = _projectKeyFor(match);
@@ -106,20 +134,18 @@ class ProjectSelectionController extends StateNotifier<ProjectSelectionState> {
         // parallel so the home controller can start loading immediately.
         // KO: 저장된 선택 사용. state + 프로바이더를 먼저 업데이트하고, 홈
         // 컨트롤러가 즉시 로드할 수 있도록 저장은 병렬 수행.
-        state = ProjectSelectionState(
+        _applySelection(
           projectKey: resolvedProjectKey,
+          projectId: match.id,
           unitIds: storedUnitIds,
         );
-        _setSelectedProjectKey(resolvedProjectKey);
-        _setSelectedProjectId(match.id);
-        _setSelectedUnitIdsIfChanged(storedUnitIds);
-        // EN: Fire-and-forget parallel persist — don't block the UI.
-        // KO: fire-and-forget 병렬 저장 — UI를 차단하지 않음.
-        unawaited(
-          Future.wait([
-            storage.setSelectedProjectKey(resolvedProjectKey),
-            storage.setSelectedProjectId(match.id),
-          ]),
+        await _queuePersistence(
+          _SelectionPersistence.project(
+            generation: initializationGeneration,
+            projectKey: resolvedProjectKey,
+            projectId: match.id,
+            unitIds: storedUnitIds,
+          ),
         );
         return;
       }
@@ -128,10 +154,24 @@ class ProjectSelectionController extends StateNotifier<ProjectSelectionState> {
     // EN: No stored project — fetch from API and auto-select first.
     // KO: 저장된 프로젝트 없음 — API에서 조회 후 첫 번째를 자동 선택합니다.
     projects ??= await _fetchProjects();
+    if (!_ownsSelection(initializationGeneration)) {
+      return;
+    }
     if (projects.isNotEmpty) {
-      await selectProject(
-        _projectKeyFor(projects.first),
-        projectId: projects.first.id,
+      final project = projects.first;
+      final projectKey = _projectKeyFor(project);
+      _applySelection(
+        projectKey: projectKey,
+        projectId: project.id,
+        unitIds: const [],
+      );
+      await _queuePersistence(
+        _SelectionPersistence.project(
+          generation: initializationGeneration,
+          projectKey: projectKey,
+          projectId: project.id,
+          unitIds: const [],
+        ),
       );
     }
   }
@@ -147,32 +187,103 @@ class ProjectSelectionController extends StateNotifier<ProjectSelectionState> {
   }
 
   Future<void> selectProject(String? projectKey, {String? projectId}) async {
+    final generation = ++_userSelectionGeneration;
+    final normalizedProjectKey = _nonEmptyOrNull(projectKey);
+    final normalizedProjectId = _nonEmptyOrNull(projectId);
     // EN: Update state + providers immediately, persist in parallel.
     // KO: state + 프로바이더를 즉시 업데이트하고, 저장은 병렬 수행.
-    state = state.copyWith(projectKey: projectKey, unitIds: []);
-    _setSelectedProjectKey(projectKey);
-    _setSelectedProjectId(
-      (projectId != null && projectId.isNotEmpty) ? projectId : null,
+    _applySelection(
+      projectKey: normalizedProjectKey,
+      projectId: normalizedProjectId,
+      unitIds: const [],
     );
-    _setSelectedUnitIdsIfChanged(const []);
-
-    final storage = await _ref.read(localStorageProvider.future);
-    unawaited(
-      Future.wait([
-        storage.setSelectedProjectKey(projectKey ?? ''),
-        storage.setSelectedProjectId(
-          (projectId != null && projectId.isNotEmpty) ? projectId : '',
-        ),
-        storage.setSelectedUnitIds([]),
-      ]),
+    await _queuePersistence(
+      _SelectionPersistence.project(
+        generation: generation,
+        projectKey: normalizedProjectKey ?? '',
+        projectId: normalizedProjectId ?? '',
+        unitIds: const [],
+      ),
     );
   }
 
   Future<void> selectUnits(List<String> unitIds) async {
-    final storage = await _ref.read(localStorageProvider.future);
-    await storage.setSelectedUnitIds(unitIds);
-    state = state.copyWith(unitIds: unitIds);
-    _setSelectedUnitIdsIfChanged(unitIds);
+    final generation = _userSelectionGeneration;
+    final immutableUnitIds = List<String>.unmodifiable(unitIds);
+    if (!_ownsSelection(generation)) {
+      return;
+    }
+    state = state.copyWith(unitIds: immutableUnitIds);
+    _setSelectedUnitIdsIfChanged(immutableUnitIds);
+    await _queuePersistence(
+      _SelectionPersistence.units(
+        generation: generation,
+        unitIds: immutableUnitIds,
+      ),
+    );
+  }
+
+  bool _ownsSelection(int generation) {
+    // EN: Async initialization may only publish while no newer user choice
+    // owns the controller.
+    // KO: 비동기 초기화는 더 최신 사용자 선택이 컨트롤러 소유권을 가져가지
+    // 않았을 때만 결과를 반영합니다.
+    return mounted && generation == _userSelectionGeneration;
+  }
+
+  void _applySelection({
+    required String? projectKey,
+    required String? projectId,
+    required List<String> unitIds,
+  }) {
+    final immutableUnitIds = List<String>.unmodifiable(unitIds);
+    state = ProjectSelectionState(
+      projectKey: projectKey,
+      unitIds: immutableUnitIds,
+    );
+    _setSelectedProjectKey(projectKey);
+    _setSelectedProjectId(projectId);
+    _setSelectedUnitIdsIfChanged(immutableUnitIds);
+  }
+
+  Future<void> _queuePersistence(_SelectionPersistence persistence) {
+    // EN: Serialize writes so an in-flight older write always finishes before
+    // the latest selection, while queued obsolete generations are discarded.
+    // KO: 진행 중인 이전 저장이 최신 선택보다 먼저 끝나도록 직렬화하고,
+    // 대기 중인 오래된 세대의 저장은 폐기합니다.
+    final operation = _persistenceTail.then((_) async {
+      if (!_ownsSelection(persistence.generation)) {
+        return;
+      }
+      final storage = await _ref.read(localStorageProvider.future);
+      if (!_ownsSelection(persistence.generation)) {
+        return;
+      }
+
+      await Future.wait([
+        if (persistence.includesProject)
+          storage.setSelectedProjectKey(persistence.projectKey),
+        if (persistence.includesProject)
+          storage.setSelectedProjectId(persistence.projectId),
+        storage.setSelectedUnitIds(persistence.unitIds),
+      ]);
+    });
+    final recovered = _recoverPersistence(operation);
+    _persistenceTail = recovered;
+    return recovered;
+  }
+
+  Future<void> _recoverPersistence(Future<void> operation) async {
+    try {
+      await operation;
+    } catch (error, stackTrace) {
+      AppLogger.error(
+        'Failed to persist project selection',
+        error: error,
+        stackTrace: stackTrace,
+        tag: 'ProjectSelectionController',
+      );
+    }
   }
 
   void _setSelectedProjectKey(String? projectKey) {
@@ -212,11 +323,37 @@ class ProjectSelectionController extends StateNotifier<ProjectSelectionState> {
     // KO: 동일한 유닛 리스트 방출을 막아 중복 호출을 방지합니다.
     final current = _ref.read(selectedUnitIdsProvider);
     if (!listEquals(current, unitIds)) {
-      _ref.read(selectedUnitIdsProvider.notifier).state = List<String>.from(
-        unitIds,
-      );
+      _ref.read(selectedUnitIdsProvider.notifier).state =
+          List<String>.unmodifiable(unitIds);
     }
   }
+}
+
+class _SelectionPersistence {
+  const _SelectionPersistence.project({
+    required this.generation,
+    required this.projectKey,
+    required this.projectId,
+    required this.unitIds,
+  }) : includesProject = true;
+
+  const _SelectionPersistence.units({
+    required this.generation,
+    required this.unitIds,
+  }) : includesProject = false,
+       projectKey = '',
+       projectId = '';
+
+  final int generation;
+  final bool includesProject;
+  final String projectKey;
+  final String projectId;
+  final List<String> unitIds;
+}
+
+String? _nonEmptyOrNull(String? value) {
+  final normalized = value?.trim();
+  return normalized == null || normalized.isEmpty ? null : normalized;
 }
 
 /// EN: Projects repository provider.

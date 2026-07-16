@@ -8,12 +8,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../core/utils/result.dart';
 import '../../../../core/theme/gbt_colors.dart';
 import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';
+import '../../../../core/utils/result.dart';
 import '../../../../core/widgets/feedback/gbt_loading.dart';
+import '../../../../core/widgets/layout/gbt_page_header.dart';
 import '../../../../core/widgets/navigation/gbt_segmented_tab_bar.dart';
+import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
 import '../../../../features/settings/application/settings_controller.dart';
 import '../../../settings/domain/entities/user_profile.dart';
 import '../../application/admin_ops_controller.dart';
@@ -44,22 +46,7 @@ class _AdminOpsPageState extends ConsumerState<AdminOpsPage> {
     return DefaultTabController(
       length: 4,
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('운영 센터'),
-          bottom: const PreferredSize(
-            preferredSize: Size.fromHeight(44),
-            child: GBTSegmentedTabBar(
-              height: 44,
-              margin: EdgeInsets.symmetric(horizontal: GBTSpacing.md2),
-              tabs: [
-                Tab(text: '개요'),
-                Tab(text: '신고 관리'),
-                Tab(text: '권한 요청'),
-                Tab(text: '미디어 삭제'),
-              ],
-            ),
-          ),
-        ),
+        appBar: gbtStandardAppBar(context, title: '관리자 도구'),
         body: profileState.when(
           loading: () => const Center(child: GBTLoading(message: '권한 확인 중...')),
           error: (error, _) => Center(
@@ -78,12 +65,19 @@ class _AdminOpsPageState extends ConsumerState<AdminOpsPage> {
               return const _AccessDeniedView();
             }
 
-            return const TabBarView(
+            return const Column(
               children: [
-                _OverviewTab(),
-                _ReportsTab(),
-                _RoleRequestsTab(),
-                _MediaDeletionsTab(),
+                AdminOpsSectionNavigation(),
+                Expanded(
+                  child: TabBarView(
+                    children: [
+                      _OverviewTab(),
+                      _ReportsTab(),
+                      _RoleRequestsTab(),
+                      _MediaDeletionsTab(),
+                    ],
+                  ),
+                ),
               ],
             );
           },
@@ -100,39 +94,51 @@ class _AdminOpsPageState extends ConsumerState<AdminOpsPage> {
   }
 }
 
+/// EN: Keeps the four local operations modes in the page body so the global
+/// app bar remains compact and predictable.
+/// KO: 전역 앱바를 작고 예측 가능하게 유지하도록 네 가지 운영 모드를 본문에
+/// 배치합니다.
+class AdminOpsSectionNavigation extends StatelessWidget {
+  const AdminOpsSectionNavigation({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      container: true,
+      label: '운영 업무 영역',
+      child: const SizedBox(
+        height: 56,
+        child: GBTSegmentedTabBar(
+          height: 56,
+          isScrollable: true,
+          margin: EdgeInsets.fromLTRB(
+            GBTSpacing.md,
+            GBTSpacing.xs,
+            GBTSpacing.md,
+            GBTSpacing.xs,
+          ),
+          labelPadding: EdgeInsets.symmetric(horizontal: GBTSpacing.md),
+          tabs: [
+            Tab(text: '개요'),
+            Tab(text: '신고 관리'),
+            Tab(text: '권한 요청'),
+            Tab(text: '미디어 삭제'),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _AccessDeniedView extends StatelessWidget {
   const _AccessDeniedView();
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Center(
-      child: Padding(
-        padding: GBTSpacing.paddingPage,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.lock_outline, size: 56, color: GBTColors.warning),
-            const SizedBox(height: GBTSpacing.md),
-            Text(
-              '접근 권한이 없습니다',
-              style: GBTTypography.titleMedium,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: GBTSpacing.sm),
-            Text(
-              '운영 권한이 확인된 계정만 접근할 수 있습니다.',
-              style: GBTTypography.bodyMedium.copyWith(
-                color: isDark
-                    ? GBTColors.darkTextSecondary
-                    : GBTColors.textSecondary,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
+    return const GBTEmptyState(
+      icon: Icons.lock_outline,
+      title: '접근 권한이 없습니다',
+      subtitle: '운영 권한이 확인된 계정만 접근할 수 있습니다.',
     );
   }
 }
@@ -176,15 +182,9 @@ class _OverviewTab extends ConsumerWidget {
             .load(forceRefresh: true),
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: GBTSpacing.paddingPage,
+          padding: EdgeInsets.zero,
           children: [
-            _HeadlineCard(summary: summary),
-            const SizedBox(height: GBTSpacing.md),
-            _StatGrid(summary: summary),
-            if (summary.extraMetrics.isNotEmpty) ...[
-              const SizedBox(height: GBTSpacing.md),
-              _ExtraMetricsSection(extraMetrics: summary.extraMetrics),
-            ],
+            AdminOpsSummaryLedger(summary: summary),
             const SizedBox(height: GBTSpacing.xl),
           ],
         ),
@@ -193,115 +193,100 @@ class _OverviewTab extends ConsumerWidget {
   }
 }
 
-// ========================================
-// EN: Headline card — dark slate background with urgent badge and admin icon
-// KO: 헤드라인 카드 — 다크 슬레이트 배경, 긴급 배지, 관리자 아이콘
-// ========================================
-
-class _HeadlineCard extends StatelessWidget {
-  const _HeadlineCard({required this.summary});
+/// EN: Presents pending operations as a linear field ledger rather than a
+/// dashboard of unrelated cards.
+/// KO: 대기 중인 운영 업무를 서로 다른 카드 대시보드가 아닌 선형 현장
+/// 원장으로 표시합니다.
+class AdminOpsSummaryLedger extends StatelessWidget {
+  const AdminOpsSummaryLedger({super.key, required this.summary});
 
   final AdminDashboardSummary summary;
 
   @override
   Widget build(BuildContext context) {
-    // EN: Show urgent red badge when there are open reports
-    // KO: 접수된 신고가 있을 때 빨간 긴급 배지 표시
     final hasUrgent = summary.openReports > 0;
+    final colors = Theme.of(context).colorScheme;
 
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: const Color(0xFF0F172A),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      padding: const EdgeInsets.all(GBTSpacing.lg),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const GBTPageHeader(
+          eyebrow: 'OPERATIONS LOG',
+          title: '운영 대기 원장',
+          description: '신고, 권한, 검증, 미디어 요청을 처리 순서대로 확인하세요.',
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            GBTSpacing.md,
+            GBTSpacing.lg,
+            GBTSpacing.md,
+            GBTSpacing.md,
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '운영 대기 항목',
-                      style: GBTTypography.labelLarge.copyWith(
-                        color: Colors.white.withValues(alpha: 0.8),
+                      '현재 대기',
+                      style: GBTTypography.labelMedium.copyWith(
+                        color: colors.primary,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.8,
                       ),
                     ),
-                    if (hasUrgent) ...[
-                      const SizedBox(width: GBTSpacing.xs),
-                      // EN: Urgent badge — shown when openReports > 0
-                      // KO: 긴급 배지 — openReports > 0일 때 표시
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: GBTSpacing.xs,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: GBTColors.error,
-                          borderRadius: BorderRadius.circular(
-                            GBTSpacing.radiusFull,
-                          ),
-                        ),
-                        child: Text(
-                          '긴급',
-                          style: GBTTypography.labelSmall.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 10,
-                          ),
-                        ),
+                    const SizedBox(height: GBTSpacing.xs),
+                    Text(
+                      '${summary.totalPendingItems}건',
+                      style: GBTTypography.displaySmall.copyWith(
+                        color: colors.onSurface,
+                        fontWeight: FontWeight.w800,
                       ),
-                    ],
+                    ),
+                    const SizedBox(height: GBTSpacing.xs),
+                    Text(
+                      hasUrgent
+                          ? '신규 신고 ${summary.openReports}건을 먼저 확인해야 합니다.'
+                          : '신규로 접수된 신고는 없습니다.',
+                      style: GBTTypography.bodySmall.copyWith(
+                        color: hasUrgent
+                            ? colors.error
+                            : colors.onSurfaceVariant,
+                      ),
+                    ),
                   ],
                 ),
-                const SizedBox(height: GBTSpacing.sm),
-                Text(
-                  '${summary.totalPendingItems}',
-                  style: GBTTypography.displaySmall.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: GBTSpacing.xs),
-                Text(
-                  '신고/이의제기/접근 레벨 이슈를 한 화면에서 점검하세요',
-                  style: GBTTypography.bodySmall.copyWith(
-                    color: Colors.white.withValues(alpha: 0.82),
-                  ),
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(width: GBTSpacing.md),
+              Icon(
+                Icons.admin_panel_settings_outlined,
+                color: colors.primary,
+                size: GBTSpacing.iconLg,
+              ),
+            ],
           ),
-          const SizedBox(width: GBTSpacing.md),
-          // EN: 36px admin icon container on the right side
-          // KO: 우측 36px 관리자 아이콘 컨테이너
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
-            ),
-            child: const Icon(
-              Icons.admin_panel_settings_rounded,
-              size: 20,
-              color: Colors.white,
-            ),
+        ),
+        Divider(height: 1, color: colors.outlineVariant),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: GBTSpacing.md),
+          child: _StatGrid(summary: summary),
+        ),
+        if (summary.extraMetrics.isNotEmpty) ...[
+          const SizedBox(height: GBTSpacing.lg),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: GBTSpacing.md),
+            child: _ExtraMetricsSection(extraMetrics: summary.extraMetrics),
           ),
         ],
-      ),
+      ],
     );
   }
 }
 
-// ========================================
-// EN: Stat grid — 2-column GridView for metric cards
-// KO: 통계 그리드 — 지표 카드를 위한 2열 GridView
-// ========================================
+// EN: Linear operations ledger ordered by triage priority.
+// KO: 처리 우선순위로 정렬한 선형 운영 원장.
 
 class _StatGrid extends StatelessWidget {
   const _StatGrid({required this.summary});
@@ -320,13 +305,13 @@ class _StatGrid extends StatelessWidget {
       _StatCardData(
         label: '검토 중 신고',
         value: summary.inReviewReports,
-        color: GBTColors.warning,
+        color: GBTColors.primary,
         icon: Icons.rule,
       ),
       _StatCardData(
         label: '권한 변경 요청',
         value: summary.pendingAccessGrantRequests,
-        color: GBTColors.info,
+        color: GBTColors.primary,
         icon: Icons.manage_accounts,
       ),
       _StatCardData(
@@ -338,27 +323,25 @@ class _StatGrid extends StatelessWidget {
       _StatCardData(
         label: '삭제 요청',
         value: summary.pendingMediaDeletionRequests,
-        color: GBTColors.accent,
+        color: GBTColors.error,
         icon: Icons.photo_library_outlined,
       ),
       _StatCardData(
         label: '활성 제재',
         value: summary.activeSanctions,
-        color: GBTColors.success,
+        color: GBTColors.secondary,
         icon: Icons.policy,
       ),
     ];
 
-    return GridView.count(
-      crossAxisCount: 2,
-      childAspectRatio: 1.6,
-      mainAxisSpacing: GBTSpacing.sm,
-      crossAxisSpacing: GBTSpacing.sm,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      children: cards
-          .map((data) => _StatCard(data: data))
-          .toList(growable: false),
+    final dividerColor = Theme.of(context).colorScheme.outlineVariant;
+    return Column(
+      children: [
+        for (var index = 0; index < cards.length; index++) ...[
+          _StatCard(index: index + 1, data: cards[index]),
+          if (index < cards.length - 1) Divider(height: 1, color: dividerColor),
+        ],
+      ],
     );
   }
 }
@@ -378,80 +361,60 @@ class _StatCardData {
 }
 
 class _StatCard extends StatelessWidget {
-  const _StatCard({required this.data});
+  const _StatCard({required this.index, required this.data});
 
+  final int index;
   final _StatCardData data;
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    // EN: Show colored left accent border when value > 0
-    // KO: 값이 있을 때 왼쪽 컬러 accent 테두리 표시
+    final colors = Theme.of(context).colorScheme;
     final hasValue = data.value > 0;
 
-    final borderColor = isDark ? GBTColors.darkBorder : GBTColors.border;
-    return Stack(
-      children: [
-        Container(
-          decoration: BoxDecoration(
-            color: isDark ? GBTColors.darkSurfaceElevated : Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: borderColor),
-          ),
-          padding: const EdgeInsets.all(GBTSpacing.md),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: data.color.withValues(alpha: 0.14),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(data.icon, size: 16, color: data.color),
-                  ),
-                  const Spacer(),
-                  // EN: Apply color to value text when value > 0
-                  // KO: 값이 있으면 값 텍스트에 해당 색상 적용
-                  Text(
-                    '${data.value}',
-                    style: GBTTypography.titleLarge.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: hasValue ? data.color : null,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: GBTSpacing.sm),
-              Text(
-                data.label,
-                style: GBTTypography.bodySmall.copyWith(
-                  color: isDark
-                      ? GBTColors.darkTextSecondary
-                      : GBTColors.textSecondary,
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 64),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: GBTSpacing.sm2),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: 32,
+              child: Text(
+                index.toString().padLeft(2, '0'),
+                style: GBTTypography.labelSmall.copyWith(
+                  color: colors.onSurfaceVariant,
+                  fontFeatures: const [FontFeature.tabularFigures()],
                 ),
               ),
-            ],
-          ),
-        ),
-        // EN: Left accent bar overlay when value > 0
-        // KO: 값이 있을 때 왼쪽 컬러 accent 바 오버레이
-        if (hasValue)
-          Positioned(
-            left: 0,
-            top: 0,
-            bottom: 0,
-            child: ClipRRect(
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(16),
-                bottomLeft: Radius.circular(16),
-              ),
-              child: Container(width: 3, color: data.color),
             ),
-          ),
-      ],
+            Icon(
+              data.icon,
+              size: GBTSpacing.iconSm,
+              color: hasValue ? data.color : colors.onSurfaceVariant,
+            ),
+            const SizedBox(width: GBTSpacing.sm2),
+            Expanded(
+              child: Text(
+                data.label,
+                style: GBTTypography.bodyMedium.copyWith(
+                  color: colors.onSurface,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            const SizedBox(width: GBTSpacing.sm),
+            Text(
+              '${data.value}',
+              style: GBTTypography.titleMedium.copyWith(
+                color: hasValue ? data.color : colors.onSurfaceVariant,
+                fontWeight: FontWeight.w800,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -471,72 +434,75 @@ class _ExtraMetricsSection extends StatelessWidget {
     final entries = extraMetrics.entries.toList(growable: false)
       ..sort((a, b) => b.value.compareTo(a.value));
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark
-        ? GBTColors.darkTextPrimary
-        : GBTColors.textPrimary;
-    final textSecondary = isDark
-        ? GBTColors.darkTextSecondary
-        : GBTColors.textSecondary;
-    final dividerColor = isDark ? GBTColors.darkBorder : GBTColors.divider;
+    final colors = Theme.of(context).colorScheme;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? GBTColors.darkSurfaceElevated : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDark ? GBTColors.darkBorder : GBTColors.border,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              GBTSpacing.md,
-              GBTSpacing.md,
-              GBTSpacing.md,
-              GBTSpacing.sm,
-            ),
-            child: Text('추가 지표', style: GBTTypography.titleSmall),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '보조 지표',
+          style: GBTTypography.labelMedium.copyWith(
+            color: colors.primary,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0.8,
           ),
-          for (int i = 0; i < entries.length; i++) ...[
-            if (i > 0)
-              Divider(
-                height: 1,
-                indent: GBTSpacing.md,
-                endIndent: GBTSpacing.md,
-                color: dividerColor,
-              ),
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: GBTSpacing.md,
-                vertical: GBTSpacing.sm,
-              ),
+        ),
+        const SizedBox(height: GBTSpacing.sm),
+        Divider(height: 1, color: colors.outlineVariant),
+        for (int i = 0; i < entries.length; i++) ...[
+          ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 52),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: GBTSpacing.sm),
               child: Row(
                 children: [
                   Expanded(
                     child: Text(
                       entries[i].key,
                       style: GBTTypography.bodySmall.copyWith(
-                        color: textSecondary,
+                        color: colors.onSurfaceVariant,
                       ),
                     ),
                   ),
+                  const SizedBox(width: GBTSpacing.sm),
                   Text(
                     '${entries[i].value}',
                     style: GBTTypography.labelLarge.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: textPrimary,
+                      fontWeight: FontWeight.w800,
+                      color: colors.secondary,
+                      fontFeatures: const [FontFeature.tabularFigures()],
                     ),
                   ),
                 ],
               ),
             ),
-          ],
-          const SizedBox(height: GBTSpacing.xs),
+          ),
+          if (i < entries.length - 1)
+            Divider(height: 1, color: colors.outlineVariant),
         ],
-      ),
+      ],
+    );
+  }
+}
+
+class _AdminOpsTabHeader extends StatelessWidget {
+  const _AdminOpsTabHeader({
+    required this.eyebrow,
+    required this.title,
+    required this.description,
+  });
+
+  final String eyebrow;
+  final String title;
+  final String description;
+
+  @override
+  Widget build(BuildContext context) {
+    return GBTPageHeader(
+      eyebrow: eyebrow,
+      title: title,
+      description: description,
+      padding: const EdgeInsets.fromLTRB(0, GBTSpacing.sm, 0, GBTSpacing.md),
     );
   }
 }
@@ -557,6 +523,11 @@ class _ReportsTab extends ConsumerWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: GBTSpacing.paddingPage,
           children: [
+            const _AdminOpsTabHeader(
+              eyebrow: 'COMMUNITY MODERATION',
+              title: '신고 처리 원장',
+              description: '접수 순서와 담당 상태를 기준으로 처리합니다.',
+            ),
             _ReportFilterRow(selected: state.filter),
             const SizedBox(height: GBTSpacing.xl),
             const GBTLoading(message: '신고 목록을 불러오는 중...'),
@@ -566,6 +537,11 @@ class _ReportsTab extends ConsumerWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: GBTSpacing.paddingPage,
           children: [
+            const _AdminOpsTabHeader(
+              eyebrow: 'COMMUNITY MODERATION',
+              title: '신고 처리 원장',
+              description: '접수 순서와 담당 상태를 기준으로 처리합니다.',
+            ),
             _ReportFilterRow(selected: state.filter),
             const SizedBox(height: GBTSpacing.xl),
             GBTErrorState(
@@ -580,6 +556,11 @@ class _ReportsTab extends ConsumerWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: GBTSpacing.paddingPage,
           children: [
+            const _AdminOpsTabHeader(
+              eyebrow: 'COMMUNITY MODERATION',
+              title: '신고 처리 원장',
+              description: '접수 순서와 담당 상태를 기준으로 처리합니다.',
+            ),
             _ReportFilterRow(selected: state.filter),
             const SizedBox(height: GBTSpacing.sm),
             if (reports.isEmpty)
@@ -616,6 +597,11 @@ class _RoleRequestsTab extends ConsumerWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: GBTSpacing.paddingPage,
           children: [
+            const _AdminOpsTabHeader(
+              eyebrow: 'ACCESS DESK',
+              title: '권한 요청 원장',
+              description: '프로젝트 역할과 사유를 확인한 후 승인하세요.',
+            ),
             _RoleRequestFilterRow(selected: state.filter),
             const SizedBox(height: GBTSpacing.xl),
             const GBTLoading(message: '권한 요청 목록을 불러오는 중...'),
@@ -625,6 +611,11 @@ class _RoleRequestsTab extends ConsumerWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: GBTSpacing.paddingPage,
           children: [
+            const _AdminOpsTabHeader(
+              eyebrow: 'ACCESS DESK',
+              title: '권한 요청 원장',
+              description: '프로젝트 역할과 사유를 확인한 후 승인하세요.',
+            ),
             _RoleRequestFilterRow(selected: state.filter),
             const SizedBox(height: GBTSpacing.xl),
             GBTErrorState(
@@ -639,6 +630,11 @@ class _RoleRequestsTab extends ConsumerWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: GBTSpacing.paddingPage,
           children: [
+            const _AdminOpsTabHeader(
+              eyebrow: 'ACCESS DESK',
+              title: '권한 요청 원장',
+              description: '프로젝트 역할과 사유를 확인한 후 승인하세요.',
+            ),
             _RoleRequestFilterRow(selected: state.filter),
             const SizedBox(height: GBTSpacing.sm),
             if (requests.isEmpty)
@@ -677,6 +673,11 @@ class _MediaDeletionsTab extends ConsumerWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: GBTSpacing.paddingPage,
           children: const [
+            _AdminOpsTabHeader(
+              eyebrow: 'MEDIA CONTROL',
+              title: '미디어 삭제 원장',
+              description: '연결된 콘텐츠 범위를 확인한 뒤 삭제를 진행하세요.',
+            ),
             SizedBox(height: GBTSpacing.xl),
             GBTLoading(message: '미디어 삭제 요청 목록을 불러오는 중...'),
           ],
@@ -685,6 +686,11 @@ class _MediaDeletionsTab extends ConsumerWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: GBTSpacing.paddingPage,
           children: [
+            const _AdminOpsTabHeader(
+              eyebrow: 'MEDIA CONTROL',
+              title: '미디어 삭제 원장',
+              description: '연결된 콘텐츠 범위를 확인한 뒤 삭제를 진행하세요.',
+            ),
             const SizedBox(height: GBTSpacing.xl),
             GBTErrorState(
               message: '미디어 삭제 요청 목록을 불러오지 못했어요',
@@ -698,6 +704,11 @@ class _MediaDeletionsTab extends ConsumerWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: GBTSpacing.paddingPage,
           children: [
+            const _AdminOpsTabHeader(
+              eyebrow: 'MEDIA CONTROL',
+              title: '미디어 삭제 원장',
+              description: '연결된 콘텐츠 범위를 확인한 뒤 삭제를 진행하세요.',
+            ),
             if (requests.isEmpty)
               const Padding(
                 padding: EdgeInsets.only(top: 96),
@@ -718,6 +729,83 @@ class _MediaDeletionsTab extends ConsumerWidget {
   }
 }
 
+/// EN: A scrollable document-index filter with accessible touch targets.
+/// KO: 접근성 터치 영역을 갖춘 가로 스크롤 문서 색인 필터입니다.
+class AdminOpsFilterRail extends StatelessWidget {
+  const AdminOpsFilterRail({
+    super.key,
+    required this.labels,
+    required this.selectedIndex,
+    required this.onSelected,
+  }) : assert(selectedIndex >= 0 && selectedIndex < labels.length);
+
+  final List<String> labels;
+  final int selectedIndex;
+  final ValueChanged<int> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          for (var index = 0; index < labels.length; index++)
+            Padding(
+              padding: EdgeInsets.only(
+                right: index == labels.length - 1 ? 0 : GBTSpacing.xs,
+              ),
+              child: Semantics(
+                button: true,
+                selected: index == selectedIndex,
+                child: InkWell(
+                  onTap: () => onSelected(index),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      minHeight: GBTSpacing.touchTarget,
+                    ),
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            color: index == selectedIndex
+                                ? colors.primary
+                                : Colors.transparent,
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: GBTSpacing.sm2,
+                          vertical: GBTSpacing.sm,
+                        ),
+                        child: Center(
+                          child: Text(
+                            labels[index],
+                            style: GBTTypography.labelMedium.copyWith(
+                              color: index == selectedIndex
+                                  ? colors.primary
+                                  : colors.onSurfaceVariant,
+                              fontWeight: index == selectedIndex
+                                  ? FontWeight.w800
+                                  : FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 class _RoleRequestFilterRow extends ConsumerWidget {
   const _RoleRequestFilterRow({required this.selected});
 
@@ -725,62 +813,13 @@ class _RoleRequestFilterRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primary = isDark ? GBTColors.darkPrimary : GBTColors.primary;
-    final surfaceVariantColor = isDark
-        ? GBTColors.darkSurfaceVariant
-        : GBTColors.surfaceVariant;
-    final borderColor = isDark ? GBTColors.darkBorder : GBTColors.border;
-    final textSecondary = isDark
-        ? GBTColors.darkTextSecondary
-        : GBTColors.textSecondary;
-
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: AdminProjectRoleRequestFilter.values
-            .map((filter) {
-              final isSelected = filter == selected;
-              return Padding(
-                padding: const EdgeInsets.only(right: GBTSpacing.xs),
-                child: InkWell(
-                  onTap: () => ref
-                      .read(adminRoleRequestsControllerProvider.notifier)
-                      .load(filter: filter, forceRefresh: true),
-                  borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: GBTSpacing.md,
-                      vertical: GBTSpacing.xs,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? primary.withValues(alpha: 0.14)
-                          : surfaceVariantColor,
-                      borderRadius: BorderRadius.circular(
-                        GBTSpacing.radiusFull,
-                      ),
-                      border: Border.all(
-                        color: isSelected
-                            ? primary.withValues(alpha: 0.45)
-                            : borderColor,
-                      ),
-                    ),
-                    child: Text(
-                      filter.label,
-                      style: GBTTypography.labelMedium.copyWith(
-                        color: isSelected ? primary : textSecondary,
-                        fontWeight: isSelected
-                            ? FontWeight.w700
-                            : FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            })
-            .toList(growable: false),
-      ),
+    final filters = AdminProjectRoleRequestFilter.values;
+    return AdminOpsFilterRail(
+      labels: filters.map((filter) => filter.label).toList(growable: false),
+      selectedIndex: filters.indexOf(selected),
+      onSelected: (index) => ref
+          .read(adminRoleRequestsControllerProvider.notifier)
+          .load(filter: filters[index], forceRefresh: true),
     );
   }
 }
@@ -793,112 +832,130 @@ class _RoleRequestCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final surfaceColor = isDark ? GBTColors.darkSurfaceElevated : Colors.white;
-    final borderColor = isDark ? GBTColors.darkBorder : GBTColors.border;
-    final textSecondary = isDark
-        ? GBTColors.darkTextSecondary
-        : GBTColors.textSecondary;
+    final colors = Theme.of(context).colorScheme;
     final statusColor = _statusColor(request.status);
 
     return Padding(
-      padding: const EdgeInsets.only(top: GBTSpacing.sm),
-      child: Container(
+      padding: const EdgeInsets.only(top: GBTSpacing.md),
+      child: DecoratedBox(
         decoration: BoxDecoration(
-          color: surfaceColor,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: borderColor),
+          border: Border(
+            bottom: BorderSide(color: colors.outlineVariant, width: 0.8),
+          ),
         ),
-        padding: const EdgeInsets.all(GBTSpacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    request.projectName ??
-                        request.projectCode ??
-                        request.projectId,
-                    style: GBTTypography.titleSmall.copyWith(
-                      fontWeight: FontWeight.w700,
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: GBTSpacing.md),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'ACCESS REQUEST',
+                          style: GBTTypography.labelSmall.copyWith(
+                            color: colors.primary,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                        const SizedBox(height: GBTSpacing.xs),
+                        Text(
+                          request.projectName ??
+                              request.projectCode ??
+                              request.projectId,
+                          style: GBTTypography.titleSmall.copyWith(
+                            color: colors.onSurface,
+                            fontWeight: FontWeight.w800,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: GBTSpacing.xs,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
+                  const SizedBox(width: GBTSpacing.sm),
+                  Text(
                     request.statusLabel,
                     style: GBTTypography.labelSmall.copyWith(
                       color: statusColor,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: GBTSpacing.xs),
-            Text(
-              '${request.requestedRoleLabel} · ${request.requesterName ?? request.requesterId ?? '-'}',
-              style: GBTTypography.bodySmall.copyWith(color: textSecondary),
-            ),
-            const SizedBox(height: GBTSpacing.xs),
-            Text(
-              request.justification,
-              style: GBTTypography.bodySmall.copyWith(
-                color: textSecondary,
-                height: 1.35,
-              ),
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: GBTSpacing.xs),
-            Text(
-              DateFormat('yyyy.MM.dd HH:mm').format(request.createdAt),
-              style: GBTTypography.labelSmall.copyWith(color: textSecondary),
-            ),
-            if (request.isPending) ...[
-              const SizedBox(height: GBTSpacing.sm),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: isMutating
-                          ? null
-                          : () => _reviewRequest(
-                              context,
-                              ref,
-                              decision: AdminRoleRequestDecision.reject,
-                            ),
-                      child: const Text('거절'),
-                    ),
-                  ),
-                  const SizedBox(width: GBTSpacing.xs),
-                  Expanded(
-                    child: FilledButton(
-                      onPressed: isMutating
-                          ? null
-                          : () => _reviewRequest(
-                              context,
-                              ref,
-                              decision: AdminRoleRequestDecision.approve,
-                            ),
-                      child: const Text('승인'),
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                 ],
               ),
+              const SizedBox(height: GBTSpacing.sm),
+              Text(
+                '${request.requestedRoleLabel} · ${request.requesterName ?? request.requesterId ?? '-'}',
+                style: GBTTypography.bodySmall.copyWith(
+                  color: colors.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: GBTSpacing.sm),
+              Text(
+                request.justification,
+                style: GBTTypography.bodyMedium.copyWith(
+                  color: colors.onSurface,
+                  height: 1.45,
+                ),
+                maxLines: 4,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: GBTSpacing.sm),
+              Text(
+                DateFormat('yyyy.MM.dd HH:mm').format(request.createdAt),
+                style: GBTTypography.labelSmall.copyWith(
+                  color: colors.onSurfaceVariant,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+              ),
+              if (request.isPending) ...[
+                const SizedBox(height: GBTSpacing.md),
+                Row(
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: GBTSpacing.touchTarget,
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: colors.error,
+                          ),
+                          onPressed: isMutating
+                              ? null
+                              : () => _reviewRequest(
+                                  context,
+                                  ref,
+                                  decision: AdminRoleRequestDecision.reject,
+                                ),
+                          child: const Text('거절'),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: GBTSpacing.sm),
+                    Expanded(
+                      child: SizedBox(
+                        height: GBTSpacing.touchTarget,
+                        child: FilledButton(
+                          onPressed: isMutating
+                              ? null
+                              : () => _reviewRequest(
+                                  context,
+                                  ref,
+                                  decision: AdminRoleRequestDecision.approve,
+                                ),
+                          child: const Text('승인'),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -958,6 +1015,9 @@ class _RoleRequestCard extends ConsumerWidget {
               child: const Text('취소'),
             ),
             FilledButton(
+              style: decision == AdminRoleRequestDecision.reject
+                  ? FilledButton.styleFrom(backgroundColor: GBTColors.error)
+                  : null,
               onPressed: () => Navigator.of(dialogContext).pop(controller.text),
               child: Text(decision.label),
             ),
@@ -973,7 +1033,7 @@ class _RoleRequestCard extends ConsumerWidget {
     switch (status.toUpperCase()) {
       case 'APPROVED':
       case 'GRANTED':
-        return GBTColors.success;
+        return GBTColors.secondary;
       case 'REJECTED':
       case 'DENIED':
         return GBTColors.error;
@@ -984,7 +1044,7 @@ class _RoleRequestCard extends ConsumerWidget {
       case 'OPEN':
       case 'REQUESTED':
       default:
-        return GBTColors.info;
+        return GBTColors.primary;
     }
   }
 }
@@ -1000,99 +1060,124 @@ class _MediaDeletionRequestCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final surfaceColor = isDark ? GBTColors.darkSurfaceElevated : Colors.white;
-    final borderColor = isDark ? GBTColors.darkBorder : GBTColors.border;
-    final textSecondary = isDark
-        ? GBTColors.darkTextSecondary
-        : GBTColors.textSecondary;
+    final colors = Theme.of(context).colorScheme;
 
     return Padding(
-      padding: const EdgeInsets.only(top: GBTSpacing.sm),
-      child: Container(
+      padding: const EdgeInsets.only(top: GBTSpacing.md),
+      child: DecoratedBox(
         decoration: BoxDecoration(
-          color: surfaceColor,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: borderColor),
+          border: Border(
+            bottom: BorderSide(color: colors.outlineVariant, width: 0.8),
+          ),
         ),
-        padding: const EdgeInsets.all(GBTSpacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    request.entityTypeLabel,
-                    style: GBTTypography.titleSmall.copyWith(
-                      fontWeight: FontWeight.w700,
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: GBTSpacing.md),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'DELETION REQUEST',
+                          style: GBTTypography.labelSmall.copyWith(
+                            color: colors.primary,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                        const SizedBox(height: GBTSpacing.xs),
+                        Text(
+                          request.entityTypeLabel,
+                          style: GBTTypography.titleSmall.copyWith(
+                            color: colors.onSurface,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: GBTSpacing.xs,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: GBTColors.warning.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
+                  const SizedBox(width: GBTSpacing.sm),
+                  Text(
                     request.status.label,
                     style: GBTTypography.labelSmall.copyWith(
-                      color: GBTColors.warning,
-                      fontWeight: FontWeight.w700,
+                      color: colors.primary,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
+                ],
+              ),
+              const SizedBox(height: GBTSpacing.sm),
+              Text(
+                '요청자 · ${request.requestedBy}',
+                style: GBTTypography.bodySmall.copyWith(
+                  color: colors.onSurfaceVariant,
                 ),
-              ],
-            ),
-            const SizedBox(height: GBTSpacing.xs),
-            Text(
-              '요청자: ${request.requestedBy}',
-              style: GBTTypography.bodySmall.copyWith(color: textSecondary),
-            ),
-            const SizedBox(height: GBTSpacing.xxs),
-            Text(
-              '요청 시각: ${DateFormat('yyyy.MM.dd HH:mm').format(request.createdAt)}',
-              style: GBTTypography.bodySmall.copyWith(color: textSecondary),
-            ),
-            const SizedBox(height: GBTSpacing.xxs),
-            Text(
-              'Upload ID: ${request.uploadId}',
-              style: GBTTypography.labelSmall.copyWith(color: textSecondary),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: GBTSpacing.sm),
-            Wrap(
-              spacing: GBTSpacing.xs,
-              runSpacing: GBTSpacing.xs,
-              children: [
-                OutlinedButton(
+              ),
+              const SizedBox(height: GBTSpacing.xs),
+              Text(
+                DateFormat('yyyy.MM.dd HH:mm').format(request.createdAt),
+                style: GBTTypography.bodySmall.copyWith(
+                  color: colors.onSurfaceVariant,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+              ),
+              const SizedBox(height: GBTSpacing.xs),
+              Text(
+                'UPLOAD · ${request.uploadId}',
+                style: GBTTypography.labelSmall.copyWith(
+                  color: colors.onSurfaceVariant,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: GBTSpacing.md),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: colors.error,
+                    minimumSize: const Size(0, GBTSpacing.touchTarget),
+                  ),
                   onPressed: isMutating
                       ? null
                       : () =>
                             _approve(context, ref, deleteLinkedContents: false),
                   child: const Text('미디어만 삭제'),
                 ),
-                FilledButton.tonal(
+              ),
+              const SizedBox(height: GBTSpacing.sm),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: colors.error,
+                    minimumSize: const Size(0, GBTSpacing.touchTarget),
+                  ),
                   onPressed: isMutating
                       ? null
                       : () =>
                             _approve(context, ref, deleteLinkedContents: true),
-                  child: const Text('연관 콘텐츠 포함 삭제'),
+                  child: const Text('연관 콘텐츠도 삭제'),
                 ),
-                TextButton(
+              ),
+              const SizedBox(height: GBTSpacing.xs),
+              SizedBox(
+                width: double.infinity,
+                child: TextButton(
+                  style: TextButton.styleFrom(
+                    minimumSize: const Size(0, GBTSpacing.touchTarget),
+                  ),
                   onPressed: isMutating ? null : () => _reject(context, ref),
                   child: const Text('반려'),
                 ),
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -1119,6 +1204,7 @@ class _MediaDeletionRequestCard extends ConsumerWidget {
               child: const Text('취소'),
             ),
             FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: GBTColors.error),
               onPressed: () => Navigator.of(dialogContext).pop(true),
               child: const Text('승인'),
             ),
@@ -1175,72 +1261,19 @@ class _ReportFilterRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primary = isDark ? GBTColors.darkPrimary : GBTColors.primary;
-    final surfaceVariantColor = isDark
-        ? GBTColors.darkSurfaceVariant
-        : GBTColors.surfaceVariant;
-    final borderColor = isDark ? GBTColors.darkBorder : GBTColors.border;
-    final textSecondary = isDark
-        ? GBTColors.darkTextSecondary
-        : GBTColors.textSecondary;
-
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: AdminReportFilter.values
-            .map((filter) {
-              final isSelected = filter == selected;
-              return Padding(
-                padding: const EdgeInsets.only(right: GBTSpacing.xs),
-                child: InkWell(
-                  onTap: () => ref
-                      .read(adminReportsControllerProvider.notifier)
-                      .load(filter: filter, forceRefresh: true),
-                  borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: GBTSpacing.md,
-                      vertical: GBTSpacing.xs,
-                    ),
-                    decoration: BoxDecoration(
-                      // EN: Selected chip — indigo background, unselected — surfaceVariant
-                      // KO: 선택된 칩 — indigo 배경, 미선택 — surfaceVariant
-                      color: isSelected
-                          ? primary.withValues(alpha: 0.14)
-                          : surfaceVariantColor,
-                      borderRadius: BorderRadius.circular(
-                        GBTSpacing.radiusFull,
-                      ),
-                      border: Border.all(
-                        color: isSelected
-                            ? primary.withValues(alpha: 0.45)
-                            : borderColor,
-                      ),
-                    ),
-                    child: Text(
-                      filter.label,
-                      style: GBTTypography.labelMedium.copyWith(
-                        color: isSelected ? primary : textSecondary,
-                        fontWeight: isSelected
-                            ? FontWeight.w700
-                            : FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            })
-            .toList(growable: false),
-      ),
+    final filters = AdminReportFilter.values;
+    return AdminOpsFilterRail(
+      labels: filters.map((filter) => filter.label).toList(growable: false),
+      selectedIndex: filters.indexOf(selected),
+      onSelected: (index) => ref
+          .read(adminReportsControllerProvider.notifier)
+          .load(filter: filters[index], forceRefresh: true),
     );
   }
 }
 
-// ========================================
-// EN: Report card — Material + Container + InkWell, improved meta row
-// KO: 신고 카드 — Material + Container + InkWell, 메타라인 Row 개선
-// ========================================
+// EN: Borderless moderation record that opens the existing action sheet.
+// KO: 기존 처리 액션 시트를 여는 테두리 없는 모더레이션 기록.
 
 class _ReportCard extends ConsumerWidget {
   const _ReportCard({required this.report, required this.isMutating});
@@ -1250,123 +1283,98 @@ class _ReportCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = Theme.of(context).colorScheme;
     final palette = _paletteFor(report.status);
-    final textSecondary = isDark
-        ? GBTColors.darkTextSecondary
-        : GBTColors.textSecondary;
-    final surfaceColor = isDark ? GBTColors.darkSurfaceElevated : Colors.white;
-    final borderColor = isDark ? GBTColors.darkBorder : GBTColors.border;
 
     return Padding(
-      padding: const EdgeInsets.only(top: GBTSpacing.sm),
+      padding: const EdgeInsets.only(top: GBTSpacing.xs),
       child: Material(
         color: Colors.transparent,
-        child: Container(
+        child: DecoratedBox(
           decoration: BoxDecoration(
-            color: surfaceColor,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: borderColor),
+            border: Border(
+              bottom: BorderSide(color: colors.outlineVariant, width: 0.8),
+            ),
           ),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(14),
-            onTap: isMutating
-                ? null
-                : () => _showReportActionsSheet(context, ref, report),
-            child: Padding(
-              padding: const EdgeInsets.all(GBTSpacing.md),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+          child: Semantics(
+            button: true,
+            label:
+                '${report.status.label} ${report.targetLabel} ${report.reason}',
+            child: InkWell(
+              onTap: isMutating
+                  ? null
+                  : () => _showReportActionsSheet(context, ref, report),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 88),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: GBTSpacing.md),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: GBTSpacing.sm,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: palette.background,
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: Text(
-                          report.status.label,
-                          style: GBTTypography.labelSmall.copyWith(
-                            color: palette.foreground,
-                            fontWeight: FontWeight.w700,
+                      Row(
+                        children: [
+                          Text(
+                            report.status.label,
+                            style: GBTTypography.labelSmall.copyWith(
+                              color: palette.foreground,
+                              fontWeight: FontWeight.w800,
+                            ),
                           ),
+                          const SizedBox(width: GBTSpacing.sm),
+                          Expanded(
+                            child: Text(
+                              report.targetLabel,
+                              style: GBTTypography.labelSmall.copyWith(
+                                color: colors.onSurfaceVariant,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          Icon(
+                            Icons.chevron_right,
+                            size: GBTSpacing.iconSm,
+                            color: colors.onSurfaceVariant,
+                          ),
+                        ],
+                      ),
+                      Text(
+                        report.reason,
+                        style: GBTTypography.titleSmall.copyWith(
+                          color: colors.onSurface,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
-                      const SizedBox(width: GBTSpacing.xs),
+                      if (report.previewText != null &&
+                          report.previewText!.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: GBTSpacing.xs),
+                          child: Text(
+                            report.previewText!,
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                            style: GBTTypography.bodySmall.copyWith(
+                              color: colors.onSurfaceVariant,
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                      const SizedBox(height: GBTSpacing.sm),
                       Text(
-                        report.targetLabel,
+                        '접수 · ${DateFormat('yyyy.MM.dd HH:mm').format(report.createdAt)}',
                         style: GBTTypography.labelSmall.copyWith(
-                          color: textSecondary,
+                          color: colors.onSurfaceVariant,
+                          fontFeatures: const [FontFeature.tabularFigures()],
                         ),
                       ),
-                      const Spacer(),
-                      Icon(Icons.chevron_right, size: 18, color: textSecondary),
-                    ],
-                  ),
-                  const SizedBox(height: GBTSpacing.sm),
-                  Text(
-                    report.reason,
-                    style: GBTTypography.titleSmall.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  if (report.previewText != null &&
-                      report.previewText!.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: GBTSpacing.xs),
-                      child: Text(
-                        report.previewText!,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: GBTTypography.bodySmall.copyWith(
-                          color: textSecondary,
-                        ),
-                      ),
-                    ),
-                  const SizedBox(height: GBTSpacing.sm),
-                  // EN: Meta row — date and assignee with icons
-                  // KO: 메타 행 — 날짜와 담당자를 아이콘과 함께 표시
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.calendar_today_outlined,
-                        size: 12,
-                        color: textSecondary,
-                      ),
-                      const SizedBox(width: 3),
                       Text(
-                        DateFormat('yyyy.MM.dd HH:mm').format(report.createdAt),
-                        style: GBTTypography.bodySmall.copyWith(
-                          color: textSecondary,
-                          fontSize: 11,
-                        ),
-                      ),
-                      const SizedBox(width: GBTSpacing.sm),
-                      Icon(
-                        Icons.person_outline,
-                        size: 12,
-                        color: textSecondary,
-                      ),
-                      const SizedBox(width: 3),
-                      Expanded(
-                        child: Text(
-                          report.assigneeName ?? '미할당',
-                          style: GBTTypography.bodySmall.copyWith(
-                            color: textSecondary,
-                            fontSize: 11,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        '담당 · ${report.assigneeName ?? '미할당'}',
+                        style: GBTTypography.labelSmall.copyWith(
+                          color: colors.onSurfaceVariant,
                         ),
                       ),
                     ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
@@ -1443,10 +1451,8 @@ class _ReportCard extends ConsumerWidget {
 
 enum _ReportAction { assignToMe, markInReview, markResolved, reject }
 
-// ========================================
-// EN: Report action sheet — styled action items with icon containers
-// KO: 신고 처리 액션 시트 — 아이콘 컨테이너가 있는 스타일링된 액션 항목
-// ========================================
+// EN: Report action sheet as a compact moderation document.
+// KO: 신고 처리 액션 시트를 컴팩트한 모더레이션 문서로 표시합니다.
 
 class _ReportActionSheet extends StatelessWidget {
   const _ReportActionSheet({required this.report});
@@ -1455,68 +1461,98 @@ class _ReportActionSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final borderColor = isDark ? GBTColors.darkBorder : GBTColors.border;
+    final colors = Theme.of(context).colorScheme;
 
     return SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const SizedBox(height: GBTSpacing.sm),
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: borderColor,
-              borderRadius: BorderRadius.circular(999),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: GBTSpacing.sm),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: colors.outline,
+                borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
+              ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              GBTSpacing.md,
-              GBTSpacing.md,
-              GBTSpacing.md,
-              GBTSpacing.sm,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                GBTSpacing.md,
+                GBTSpacing.md,
+                GBTSpacing.md,
+                GBTSpacing.md,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'MODERATION ACTION',
+                    style: GBTTypography.labelSmall.copyWith(
+                      color: colors.primary,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.9,
+                    ),
+                  ),
+                  const SizedBox(height: GBTSpacing.xs),
+                  Text(
+                    '신고 처리',
+                    style: GBTTypography.titleLarge.copyWith(
+                      color: colors.onSurface,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: GBTSpacing.xs),
+                  Text(
+                    report.reason,
+                    style: GBTTypography.bodySmall.copyWith(
+                      color: colors.onSurfaceVariant,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
             ),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text('신고 처리', style: GBTTypography.titleMedium),
+            Divider(height: 1, color: colors.outlineVariant),
+            _ActionSheetItem(
+              icon: Icons.person_add_alt_1,
+              iconColor: colors.primary,
+              title: '나에게 할당',
+              subtitle: report.assigneeName ?? '현재 미할당',
+              onTap: () => Navigator.of(context).pop(_ReportAction.assignToMe),
             ),
-          ),
-          _ActionSheetItem(
-            icon: Icons.person_add_alt_1,
-            iconColor: GBTColors.info,
-            title: '나에게 할당',
-            subtitle: report.assigneeName ?? '현재 미할당',
-            onTap: () => Navigator.of(context).pop(_ReportAction.assignToMe),
-          ),
-          _ActionSheetItem(
-            icon: Icons.rule,
-            iconColor: GBTColors.warning,
-            title: '검토 중으로 변경',
-            onTap: () => Navigator.of(context).pop(_ReportAction.markInReview),
-          ),
-          _ActionSheetItem(
-            icon: Icons.check_circle,
-            iconColor: GBTColors.success,
-            title: '조치 완료로 변경',
-            onTap: () => Navigator.of(context).pop(_ReportAction.markResolved),
-          ),
-          _ActionSheetItem(
-            icon: Icons.block,
-            iconColor: GBTColors.error,
-            title: '반려 처리',
-            onTap: () => Navigator.of(context).pop(_ReportAction.reject),
-          ),
-          const SizedBox(height: GBTSpacing.sm),
-        ],
+            _ActionSheetItem(
+              icon: Icons.rule_outlined,
+              iconColor: colors.primary,
+              title: '검토 중으로 변경',
+              onTap: () =>
+                  Navigator.of(context).pop(_ReportAction.markInReview),
+            ),
+            _ActionSheetItem(
+              icon: Icons.check_circle_outline,
+              iconColor: colors.secondary,
+              title: '조치 완료로 변경',
+              onTap: () =>
+                  Navigator.of(context).pop(_ReportAction.markResolved),
+            ),
+            _ActionSheetItem(
+              icon: Icons.block_outlined,
+              iconColor: colors.error,
+              title: '반려 처리',
+              onTap: () => Navigator.of(context).pop(_ReportAction.reject),
+            ),
+            const SizedBox(height: GBTSpacing.sm),
+          ],
+        ),
       ),
     );
   }
 }
 
-/// EN: Action sheet item with 36px icon container, title and optional subtitle.
-/// KO: 36px 아이콘 컨테이너, 타이틀, 선택적 서브타이틀을 포함한 액션 시트 항목.
+/// EN: Borderless action row with a minimum 56px interaction target.
+/// KO: 최소 56px 상호작용 영역을 갖춘 테두리 없는 액션 행입니다.
 class _ActionSheetItem extends StatelessWidget {
   const _ActionSheetItem({
     required this.icon,
@@ -1534,59 +1570,61 @@ class _ActionSheetItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark
-        ? GBTColors.darkTextPrimary
-        : GBTColors.textPrimary;
-    final textSecondary = isDark
-        ? GBTColors.darkTextSecondary
-        : GBTColors.textSecondary;
+    final colors = Theme.of(context).colorScheme;
 
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: GBTSpacing.md,
-          vertical: GBTSpacing.sm,
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: colors.outlineVariant, width: 0.8),
         ),
-        child: Row(
-          children: [
-            // EN: 36px icon container with tinted background
-            // KO: 색조 배경이 있는 36px 아이콘 컨테이너
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
-              ),
-              child: Icon(icon, size: 20, color: iconColor),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 56),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: GBTSpacing.md,
+              vertical: GBTSpacing.sm,
             ),
-            const SizedBox(width: GBTSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: GBTTypography.bodyMedium.copyWith(
-                      color: textPrimary,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  if (subtitle != null) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle!,
-                      style: GBTTypography.labelSmall.copyWith(
-                        color: textSecondary,
+            child: Row(
+              children: [
+                Icon(icon, size: GBTSpacing.iconSm, color: iconColor),
+                const SizedBox(width: GBTSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        title,
+                        style: GBTTypography.bodyMedium.copyWith(
+                          color: iconColor == colors.error
+                              ? colors.error
+                              : colors.onSurface,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
-                    ),
-                  ],
-                ],
-              ),
+                      if (subtitle != null) ...[
+                        const SizedBox(height: GBTSpacing.xs),
+                        Text(
+                          subtitle!,
+                          style: GBTTypography.labelSmall.copyWith(
+                            color: colors.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right,
+                  size: GBTSpacing.iconSm,
+                  color: colors.onSurfaceVariant,
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -1614,13 +1652,13 @@ AdminReportStatusPalette _paletteFor(AdminReportStatus status) {
       );
     case AdminReportStatus.inReview:
       return const AdminReportStatusPalette(
-        foreground: GBTColors.warningDark,
-        background: GBTColors.warningLight,
+        foreground: GBTColors.primary,
+        background: GBTColors.primaryLight,
       );
     case AdminReportStatus.resolved:
       return const AdminReportStatusPalette(
-        foreground: GBTColors.successDark,
-        background: GBTColors.successLight,
+        foreground: GBTColors.secondary,
+        background: GBTColors.secondaryLight,
       );
     case AdminReportStatus.rejected:
     case AdminReportStatus.duplicate:
@@ -1631,8 +1669,8 @@ AdminReportStatusPalette _paletteFor(AdminReportStatus status) {
       );
     case AdminReportStatus.unknown:
       return const AdminReportStatusPalette(
-        foreground: GBTColors.infoDark,
-        background: GBTColors.infoLight,
+        foreground: GBTColors.primary,
+        background: GBTColors.primaryLight,
       );
   }
 }

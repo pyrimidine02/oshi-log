@@ -5,6 +5,7 @@ void main() {
   group('LiveAttendanceHistoryRecord', () {
     test('fromState maps attendance fields', () {
       final state = LiveAttendanceState(
+        attendanceId: 'attendance-1',
         liveEventId: 'event-1',
         attended: true,
         status: LiveAttendanceStatus.declared,
@@ -19,6 +20,7 @@ void main() {
       );
 
       expect(record.projectKey, 'girls-band-cry');
+      expect(record.attendanceId, 'attendance-1');
       expect(record.eventId, 'event-1');
       expect(record.attended, isTrue);
       expect(record.isDeclared, isTrue);

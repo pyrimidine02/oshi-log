@@ -50,6 +50,17 @@ ios/Runner/GoogleService-Info.plist
 
 # Claude Code local settings
 .claude/settings.local.json
+.claude/scheduled_tasks.lock
+
+# Local browser automation artifacts (may contain credentials)
+.playwright-mcp/
+
+# Local API/reverse-engineering inventories and extracted APKs
+installed_railway_packages.txt
+jr_shikoku_paths.txt
+jrkyushu_apk/
+railway_apks/
+railway_packages.txt
 
 # Android Studio will place build artifacts here
 /android/app/debug

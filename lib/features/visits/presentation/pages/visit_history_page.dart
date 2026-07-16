@@ -8,10 +8,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/localization/locale_text.dart';
 import '../../../../core/router/app_router.dart';
-import '../../../../core/theme/gbt_colors.dart';
-import '../../../../core/theme/gbt_spacing.dart';
-import '../../../../core/theme/gbt_typography.dart';
+import '../../../../core/theme/theme.dart';
+import '../../../../core/widgets/cards/gbt_ticket_card.dart';
 import '../../../../core/widgets/common/gbt_image.dart';
+import '../../../../core/widgets/common/gbt_pressable.dart';
 import '../../../../core/widgets/feedback/gbt_loading.dart';
 import '../../../../core/widgets/navigation/gbt_app_bar_icon_button.dart';
 import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
@@ -27,9 +27,17 @@ import '../../domain/entities/visit_entities.dart';
 enum VisitHistoryTab { places, live }
 
 class VisitHistoryPage extends ConsumerStatefulWidget {
-  const VisitHistoryPage({super.key, this.initialTab = VisitHistoryTab.places});
+  const VisitHistoryPage({
+    super.key,
+    this.initialTab = VisitHistoryTab.places,
+    this.embedded = false,
+  });
 
   final VisitHistoryTab initialTab;
+
+  /// EN: Moves the local places/events switch into the body when embedded.
+  /// KO: 포함 모드에서는 장소/이벤트 전환을 본문으로 이동합니다.
+  final bool embedded;
 
   @override
   ConsumerState<VisitHistoryPage> createState() => _VisitHistoryPageState();
@@ -64,42 +72,56 @@ class _VisitHistoryPageState extends ConsumerState<VisitHistoryPage>
     final allPlacesMapState = ref.watch(visitAllProjectsPlacesMapProvider);
     final orderedProjects =
         ref.watch(projectsControllerProvider).valueOrNull ?? const <Project>[];
+    final localTabBar = TabBar(
+      controller: _tabController,
+      tabs: [
+        Tab(
+          text: context.l10n(ko: '장소', en: 'Places', ja: '場所'),
+        ),
+        Tab(
+          text: context.l10n(ko: '이벤트', en: 'Events', ja: 'イベント'),
+        ),
+      ],
+    );
+    final tabBody = TabBarView(
+      controller: _tabController,
+      children: [
+        _buildPlaceHistoryBody(
+          context,
+          visitsState,
+          allPlacesMapState,
+          orderedProjects,
+        ),
+        const LiveAttendanceHistoryBody(),
+      ],
+    );
 
     return Scaffold(
-      appBar: gbtStandardAppBar(
-        context,
-        title: context.l10n(ko: '방문 기록', en: 'Visit history', ja: '訪問履歴'),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: [
-            Tab(
-              text: context.l10n(ko: '장소', en: 'Places', ja: '場所'),
+      appBar: widget.embedded
+          ? null
+          : gbtStandardAppBar(
+              context,
+              title: context.l10n(ko: '방문 기록', en: 'Visit history', ja: '訪問履歴'),
+              bottom: localTabBar,
+              actions: [
+                GBTAppBarIconButton(
+                  icon: Icons.bar_chart_rounded,
+                  tooltip: context.l10n(ko: '통계', en: 'Stats', ja: '統計'),
+                  onPressed: () => context.goToVisitStats(),
+                ),
+              ],
             ),
-            Tab(
-              text: context.l10n(ko: '이벤트', en: 'Events', ja: 'イベント'),
-            ),
-          ],
-        ),
-        actions: [
-          GBTAppBarIconButton(
-            icon: Icons.bar_chart_rounded,
-            tooltip: context.l10n(ko: '통계', en: 'Stats', ja: '統計'),
-            onPressed: () => context.goToVisitStats(),
-          ),
-        ],
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildPlaceHistoryBody(
-            context,
-            visitsState,
-            allPlacesMapState,
-            orderedProjects,
-          ),
-          const LiveAttendanceHistoryBody(),
-        ],
-      ),
+      body: widget.embedded
+          ? Column(
+              children: [
+                Material(
+                  color: Theme.of(context).colorScheme.surface,
+                  child: localTabBar,
+                ),
+                Expanded(child: tabBody),
+              ],
+            )
+          : tabBody,
     );
   }
 
@@ -330,7 +352,7 @@ class _SummaryHeader extends StatelessWidget {
       ),
       padding: const EdgeInsets.all(GBTSpacing.lg),
       decoration: BoxDecoration(
-        color: isDark ? GBTColors.darkSurfaceElevated : Colors.white,
+        color: isDark ? GBTColors.darkSurfaceElevated : GBTColors.surface,
         borderRadius: BorderRadius.circular(GBTSpacing.radiusLg),
         border: Border.all(
           color: isDark ? GBTColors.darkBorder : GBTColors.border,
@@ -342,6 +364,9 @@ class _SummaryHeader extends StatelessWidget {
           Expanded(
             child: _SummaryItem(
               icon: Icons.check_circle_rounded,
+              iconColor: GBTSemanticColors.getDistanceColor(
+                Theme.of(context).brightness,
+              ),
               label: context.l10n(ko: '총 방문', en: 'Total visits', ja: '総訪問'),
               value: context.l10n(
                 ko: '$totalVisits회',
@@ -386,12 +411,14 @@ class _SummaryItem extends StatelessWidget {
     required this.label,
     required this.value,
     required this.isDark,
+    this.iconColor,
   });
 
   final IconData icon;
   final String label;
   final String value;
   final bool isDark;
+  final Color? iconColor;
 
   @override
   Widget build(BuildContext context) {
@@ -400,13 +427,14 @@ class _SummaryItem extends StatelessWidget {
         Icon(
           icon,
           size: 24,
-          color: isDark ? GBTColors.darkPrimary : GBTColors.primary,
+          color:
+              iconColor ?? (isDark ? GBTColors.darkPrimary : GBTColors.primary),
         ),
         const SizedBox(height: GBTSpacing.xs),
         Text(
           value,
-          style: GBTTypography.headlineSmall.copyWith(
-            fontWeight: FontWeight.w700,
+          style: GBTTypography.statNumber.copyWith(
+            fontSize: 22,
             color: isDark ? GBTColors.darkTextPrimary : GBTColors.textPrimary,
           ),
         ),
@@ -489,8 +517,10 @@ class _MonthHeader extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// EN: Visit card with image, place name, date, and chevron
-// KO: 이미지, 장소 이름, 날짜, 화살표가 있는 방문 카드
+// EN: Visit card rendered as a small ticket stub — place info in the body,
+// visited date + chevron torn off below the perforation line.
+// KO: 작은 티켓 스텁으로 렌더링되는 방문 카드 — 본문에 장소 정보, 절취선
+// 아래에 방문 날짜와 화살표를 배치합니다.
 // ---------------------------------------------------------------------------
 
 class _VisitCard extends StatelessWidget {
@@ -512,7 +542,9 @@ class _VisitCard extends StatelessWidget {
     final placeName =
         place?.name ??
         context.l10n(ko: '장소 정보 없음', en: 'No place info', ja: '場所情報なし');
-    final borderColor = isDark ? GBTColors.darkBorder : GBTColors.border;
+    final mutedText = isDark
+        ? GBTColors.darkTextTertiary
+        : GBTColors.textTertiary;
 
     return Semantics(
       label: isLoading
@@ -527,131 +559,90 @@ class _VisitCard extends StatelessWidget {
               ja: '訪問記録: $placeName, ${visit.visitedAtLabel}',
             ),
       button: true,
-      child: Material(
-        color: isDark ? GBTColors.darkSurfaceElevated : Colors.white,
-        borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: Container(
-            height: 88,
-            decoration: BoxDecoration(
-              border: Border.all(color: borderColor, width: 0.5),
-              borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
-            ),
-            child: Row(
-              children: [
-                // EN: Place thumbnail
-                // KO: 장소 썸네일
-                SizedBox(
-                  width: 88,
-                  height: 88,
+      child: GBTPressable(
+        onTap: onTap,
+        child: GBTTicketCard(
+          stubHeight: 40,
+          padding: const EdgeInsets.all(GBTSpacing.sm),
+          stubPadding: const EdgeInsets.symmetric(horizontal: GBTSpacing.md),
+          body: Row(
+            children: [
+              // EN: Place thumbnail
+              // KO: 장소 썸네일
+              ClipRRect(
+                borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
+                child: SizedBox(
+                  width: 64,
+                  height: 64,
                   child: _buildThumbnail(context, isDark),
                 ),
-
-                // EN: Visit info
-                // KO: 방문 정보
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: GBTSpacing.md,
-                      vertical: GBTSpacing.sm,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // EN: Place name
-                        // KO: 장소 이름
-                        if (isLoading)
-                          _buildShimmer(isDark)
-                        else
-                          Text(
-                            placeName,
-                            style: GBTTypography.bodyMedium.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: isDark
-                                  ? GBTColors.darkTextPrimary
-                                  : GBTColors.textPrimary,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-
-                        const SizedBox(height: GBTSpacing.xxs),
-
-                        // EN: Visit date
-                        // KO: 방문 날짜
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.schedule_rounded,
-                              size: 14,
-                              color: isDark
-                                  ? GBTColors.darkTextTertiary
-                                  : GBTColors.textTertiary,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              visit.visitedAtLabel.isNotEmpty
-                                  ? visit.visitedAtLabel
-                                  : '-',
-                              style: GBTTypography.bodySmall.copyWith(
-                                color: isDark
-                                    ? GBTColors.darkTextSecondary
-                                    : GBTColors.textSecondary,
-                              ),
-                            ),
-                          ],
+              ),
+              const SizedBox(width: GBTSpacing.md),
+              // EN: Place name + address
+              // KO: 장소 이름 + 주소
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (isLoading)
+                      _buildShimmer(isDark)
+                    else
+                      Text(
+                        placeName,
+                        style: GBTTypography.bodyMedium.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: isDark
+                              ? GBTColors.darkTextPrimary
+                              : GBTColors.textPrimary,
                         ),
-
-                        // EN: Location info
-                        // KO: 위치 정보
-                        if (place != null && place!.address.isNotEmpty) ...[
-                          const SizedBox(height: 2),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.location_on_outlined,
-                                size: 14,
-                                color: isDark
-                                    ? GBTColors.darkTextTertiary
-                                    : GBTColors.textTertiary,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    if (place != null && place!.address.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.location_on_outlined,
+                            size: 13,
+                            color: mutedText,
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              place!.address,
+                              style: GBTTypography.bodySmall.copyWith(
+                                color: mutedText,
                               ),
-                              const SizedBox(width: 4),
-                              Expanded(
-                                child: Text(
-                                  place!.address,
-                                  style: GBTTypography.bodySmall.copyWith(
-                                    color: isDark
-                                        ? GBTColors.darkTextTertiary
-                                        : GBTColors.textTertiary,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                         ],
-                      ],
-                    ),
-                  ),
+                      ),
+                    ],
+                  ],
                 ),
-
-                // EN: Chevron
-                // KO: 화살표
-                Padding(
-                  padding: const EdgeInsets.only(right: GBTSpacing.sm),
-                  child: Icon(
-                    Icons.chevron_right_rounded,
-                    color: isDark
-                        ? GBTColors.darkTextTertiary
-                        : GBTColors.textTertiary,
-                  ),
+              ),
+            ],
+          ),
+          stub: Row(
+            children: [
+              Icon(Icons.schedule_rounded, size: 14, color: mutedText),
+              const SizedBox(width: 4),
+              Text(
+                visit.visitedAtLabel.isNotEmpty ? visit.visitedAtLabel : '-',
+                style: GBTTypography.bodySmall.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: isDark
+                      ? GBTColors.darkTextSecondary
+                      : GBTColors.textSecondary,
                 ),
-              ],
-            ),
+              ),
+              const Spacer(),
+              Icon(Icons.chevron_right_rounded, size: 18, color: mutedText),
+            ],
           ),
         ),
       ),

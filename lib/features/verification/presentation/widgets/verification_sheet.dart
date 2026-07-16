@@ -8,10 +8,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/accessibility/a11y_wrapper.dart';
 import '../../../../core/constants/legal_policy_constants.dart';
 import '../../../../core/error/failure.dart';
-import '../../../../core/theme/gbt_colors.dart';
-import '../../../../core/theme/gbt_spacing.dart';
-import '../../../../core/theme/gbt_typography.dart';
+import '../../../../core/theme/theme.dart';
 import '../../../../core/utils/result.dart';
+import '../../../../core/widgets/common/gbt_stamp_badge.dart';
 import '../../../../core/widgets/feedback/gbt_loading.dart';
 import '../../application/verification_controller.dart';
 import '../../domain/entities/verification_entities.dart';
@@ -127,18 +126,42 @@ class _VerificationSheetState extends ConsumerState<VerificationSheet> {
                   }
                 });
 
+                final isDark = Theme.of(context).brightness == Brightness.dark;
+                // EN: Verified/visited semantic mint — matches the stamp
+                // color used across zukan and visit records.
+                // KO: 인증/방문 시맨틱 민트 — 도감·방문 기록에서 쓰는
+                // 스탬프 색상과 동일합니다.
+                final mint = GBTSemanticColors.getDistanceColor(
+                  Theme.of(context).brightness,
+                );
+
                 return Column(
                   children: [
-                    Icon(
-                      Icons.check_circle,
-                      color: GBTColors.success,
-                      size: 48,
+                    // EN: Celebratory stamp-press pop — reuses the same
+                    // unlock animation as the zukan collection badges.
+                    // KO: 축하 스탬프 찍기 팝 — 도감 배지와 동일한 해금
+                    // 애니메이션을 재사용합니다.
+                    GBTStampBadge(
+                      size: 96,
+                      unlocked: true,
+                      color: mint,
+                      child: Icon(Icons.check_rounded, size: 44, color: mint),
                     ),
-                    const SizedBox(height: GBTSpacing.sm),
+                    const SizedBox(height: GBTSpacing.md),
+                    Text(
+                      '인증 완료!',
+                      style: GBTTypography.titleLarge.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: mint,
+                      ),
+                    ),
+                    const SizedBox(height: GBTSpacing.xs),
                     Text(
                       result.result,
                       style: GBTTypography.bodyMedium.copyWith(
-                        color: GBTColors.textSecondary,
+                        color: isDark
+                            ? GBTColors.darkTextSecondary
+                            : GBTColors.textSecondary,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -196,7 +219,6 @@ class _VerificationSheetState extends ConsumerState<VerificationSheet> {
       const SnackBar(content: Text('위치 수집 사전 고지에 동의해야 인증을 시작할 수 있어요')),
     );
   }
-
 }
 
 class _LocationNoticeCard extends StatelessWidget {
@@ -282,10 +304,8 @@ class _LocationNoticeCard extends StatelessWidget {
 // EN: Maps server error codes to user-facing Korean messages.
 // KO: 서버 에러 코드를 사용자 표시용 한국어 메시지로 매핑합니다.
 const _verificationErrorMessages = <String, String>{
-  'out_of_verification_radius':
-      '인증 반경 밖입니다. 장소/공연장 근처에서 다시 시도해주세요.',
-  'location_token_invalid':
-      '위치 인증 토큰이 유효하지 않습니다. 앱을 재시작한 뒤 다시 시도해주세요.',
+  'out_of_verification_radius': '인증 반경 밖입니다. 장소/공연장 근처에서 다시 시도해주세요.',
+  'location_token_invalid': '위치 인증 토큰이 유효하지 않습니다. 앱을 재시작한 뒤 다시 시도해주세요.',
   'location_token_expired': '위치 인증 토큰이 만료되었습니다. 다시 시도해주세요.',
   'visit_cooldown_active': '짧은 시간 내 중복 인증은 제한됩니다. 잠시 후 다시 시도해주세요.',
   'daily_visit_limit_reached': '오늘 이 장소의 인증 가능 횟수를 초과했습니다.',
@@ -297,8 +317,7 @@ const _verificationErrorMessages = <String, String>{
   'gps_accuracy_too_low': 'GPS 정확도가 낮아 인증할 수 없습니다.',
 };
 
-const _verificationFallbackMessage =
-    '인증에 실패했습니다. 위치와 GPS 상태를 확인하고 다시 시도해주세요.';
+const _verificationFallbackMessage = '인증에 실패했습니다. 위치와 GPS 상태를 확인하고 다시 시도해주세요.';
 
 String _buildVerificationErrorMessage(Failure error) {
   final codeLower = error.code?.toLowerCase();

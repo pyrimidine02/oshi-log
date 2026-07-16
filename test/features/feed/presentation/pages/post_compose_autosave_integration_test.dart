@@ -18,6 +18,77 @@ import 'package:girlsbandtabi_app/features/projects/domain/repositories/projects
 
 void main() {
   group('Post compose autosave integration', () {
+    testWidgets(
+      'create page uses solid field-note chrome at 320dp and 200 percent text',
+      (tester) async {
+        await tester.binding.setSurfaceSize(const Size(320, 720));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        final harness = await _createHarness();
+        addTearDown(harness.container.dispose);
+
+        await tester.pumpWidget(
+          harness.wrap(
+            const MediaQuery(
+              data: MediaQueryData(
+                size: Size(320, 720),
+                textScaler: TextScaler.linear(2),
+              ),
+              child: PostCreatePage(),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byType(BackdropFilter), findsNothing);
+        expect(find.text('새 여행 기록'), findsOneWidget);
+        final submit = find.byKey(const ValueKey('post-compose-submit'));
+        expect(submit, findsOneWidget);
+        expect(tester.getSize(submit).height, greaterThanOrEqualTo(48));
+        expect(tester.takeException(), isNull);
+        await tester.pump(const Duration(milliseconds: 1300));
+      },
+    );
+
+    testWidgets(
+      'edit page keeps a 48dp submit action at 320dp and large text',
+      (tester) async {
+        await tester.binding.setSurfaceSize(const Size(320, 720));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        final harness = await _createHarness();
+        addTearDown(harness.container.dispose);
+
+        await tester.pumpWidget(
+          harness.wrap(
+            MediaQuery(
+              data: const MediaQueryData(
+                size: Size(320, 720),
+                textScaler: TextScaler.linear(2),
+              ),
+              child: PostEditPage(
+                post: PostDetail(
+                  id: 'post-field-note',
+                  projectId: '550e8400-e29b-41d4-a716-446655440001',
+                  authorId: '243701ba-86d8-4356-9c17-630944e2ed8f',
+                  title: '원본 제목',
+                  content: '원본 내용',
+                  createdAt: DateTime(2026, 3, 5),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byType(BackdropFilter), findsNothing);
+        expect(find.text('여행 기록 수정'), findsOneWidget);
+        final submit = find.byKey(const ValueKey('post-compose-submit'));
+        expect(submit, findsOneWidget);
+        expect(tester.getSize(submit).height, greaterThanOrEqualTo(48));
+        expect(tester.takeException(), isNull);
+        await tester.pump(const Duration(milliseconds: 1300));
+      },
+    );
+
     testWidgets('create page reflects autosave status message from provider', (
       tester,
     ) async {
@@ -147,7 +218,12 @@ Future<_Harness> _createHarness() async {
   SharedPreferences.setMockInitialValues(<String, Object>{});
   final prefs = await SharedPreferences.getInstance();
   final localStorage = LocalStorage(prefs);
-  final store = PostComposeDraftStore(localStorage);
+  final store = PostComposeDraftStore(
+    localStorage,
+    // EN: Keep the fixed March fixtures inside the 30-day recovery window.
+    // KO: 고정된 3월 픽스처가 30일 복구 기간 안에 있도록 시계를 고정합니다.
+    now: () => DateTime.parse('2026-03-06T00:00:00.000Z'),
+  );
   final projectsRepository = _FakeProjectsRepository(const [
     Project(
       id: '550e8400-e29b-41d4-a716-446655440001',
