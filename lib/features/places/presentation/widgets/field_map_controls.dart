@@ -6,7 +6,9 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/localization/locale_text.dart';
 import '../../../../core/theme/gbt_spacing.dart';
+import '../../../../core/widgets/common/gbt_image.dart';
 import '../../application/places_controller.dart';
+import '../../domain/entities/place_entities.dart';
 
 /// EN: A single 56dp mission strip replacing stacked map search chrome.
 /// KO: 겹쳐 있던 지도 검색 크롬을 대체하는 단일 56dp 미션 스트립입니다.
@@ -269,6 +271,263 @@ class FieldMapFieldIndex extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// EN: Keeps exploration layers and the selected place in one map ledger.
+/// KO: 탐색 레이어와 선택 장소를 하나의 지도 원장에 배치합니다.
+class FieldMapExplorationOverlay extends StatelessWidget {
+  const FieldMapExplorationOverlay({
+    super.key,
+    required this.projectLabel,
+    required this.regionLabel,
+    required this.bandLabel,
+    required this.mode,
+    required this.hasRegionFilter,
+    required this.hasBandFilter,
+    required this.onProjectTap,
+    required this.onRegionTap,
+    required this.onBandTap,
+    required this.onModeChanged,
+    required this.onOpenSelectedPlace,
+    required this.onDirections,
+    this.selectedPlace,
+    this.showDirections = true,
+  });
+
+  final String projectLabel;
+  final String regionLabel;
+  final String bandLabel;
+  final PlaceListMode mode;
+  final bool hasRegionFilter;
+  final bool hasBandFilter;
+  final PlaceSummary? selectedPlace;
+  final bool showDirections;
+  final VoidCallback onProjectTap;
+  final VoidCallback onRegionTap;
+  final VoidCallback onBandTap;
+  final ValueChanged<PlaceListMode> onModeChanged;
+  final ValueChanged<PlaceSummary> onOpenSelectedPlace;
+  final ValueChanged<PlaceSummary> onDirections;
+
+  @override
+  Widget build(BuildContext context) {
+    final place = selectedPlace;
+    return Column(
+      key: const ValueKey<String>('field-map-exploration-overlay'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        KeyedSubtree(
+          key: const ValueKey<String>('field-map-exploration-layers'),
+          child: FieldMapFieldIndex(
+            projectLabel: projectLabel,
+            regionLabel: regionLabel,
+            bandLabel: bandLabel,
+            mode: mode,
+            hasRegionFilter: hasRegionFilter,
+            hasBandFilter: hasBandFilter,
+            onProjectTap: onProjectTap,
+            onRegionTap: onRegionTap,
+            onBandTap: onBandTap,
+            onModeChanged: onModeChanged,
+          ),
+        ),
+        if (place != null)
+          FieldMapSelectedPlaceCard(
+            place: place,
+            onOpen: () => onOpenSelectedPlace(place),
+            onDirections: showDirections ? () => onDirections(place) : null,
+          ),
+      ],
+    );
+  }
+}
+
+/// EN: A compact field card for the place currently selected on the map.
+/// KO: 지도에서 현재 선택한 장소를 보여주는 간결한 현장 카드입니다.
+class FieldMapSelectedPlaceCard extends StatelessWidget {
+  const FieldMapSelectedPlaceCard({
+    super.key,
+    required this.place,
+    required this.onOpen,
+    this.onDirections,
+  });
+
+  final PlaceSummary place;
+  final VoidCallback onOpen;
+  final VoidCallback? onDirections;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final metadata = [
+      place.address,
+      place.distanceLabel,
+    ].whereType<String>().where((value) => value.trim().isNotEmpty).join(' · ');
+    return Container(
+      key: const ValueKey<String>('field-map-selected-place-card'),
+      padding: const EdgeInsets.fromLTRB(
+        GBTSpacing.md,
+        GBTSpacing.md,
+        GBTSpacing.md,
+        GBTSpacing.sm,
+      ),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        border: Border(
+          top: BorderSide(color: colors.primary, width: 3),
+          bottom: BorderSide(color: colors.outlineVariant),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'SELECTED FIELD / ${place.id.toUpperCase()}',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: colors.primary,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.7,
+            ),
+          ),
+          const SizedBox(height: GBTSpacing.sm),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 76,
+                height: 76,
+                padding: const EdgeInsets.all(3),
+                decoration: BoxDecoration(
+                  border: Border.all(color: colors.outlineVariant),
+                ),
+                child: place.imageUrl?.trim().isNotEmpty == true
+                    ? GBTImage(
+                        imageUrl: place.imageUrl!,
+                        fit: BoxFit.cover,
+                        semanticLabel: place.name,
+                      )
+                    : ColoredBox(
+                        color: colors.secondaryContainer,
+                        child: Icon(
+                          Icons.place_outlined,
+                          color: colors.onSecondaryContainer,
+                        ),
+                      ),
+              ),
+              const SizedBox(width: GBTSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (place.isVerified) ...[
+                          Icon(
+                            Icons.verified_rounded,
+                            size: 17,
+                            color: colors.secondary,
+                          ),
+                          const SizedBox(width: GBTSpacing.xs),
+                        ],
+                        Expanded(
+                          child: Text(
+                            place.name,
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.w800),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (metadata.isNotEmpty) ...[
+                      const SizedBox(height: GBTSpacing.xs),
+                      Text(
+                        metadata,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: colors.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: GBTSpacing.sm),
+          Wrap(
+            spacing: GBTSpacing.sm,
+            runSpacing: GBTSpacing.xs,
+            children: [
+              _FieldMapPlaceAction(
+                actionKey: const ValueKey<String>(
+                  'field-map-selected-place-open',
+                ),
+                label: context.l10n(
+                  ko: '상세 기록',
+                  en: 'Open field note',
+                  ja: '詳細記録',
+                ),
+                icon: Icons.arrow_outward_rounded,
+                onPressed: onOpen,
+              ),
+              if (onDirections != null)
+                _FieldMapPlaceAction(
+                  actionKey: const ValueKey<String>(
+                    'field-map-selected-place-directions',
+                  ),
+                  label: context.l10n(ko: '길찾기', en: 'Directions', ja: '経路'),
+                  icon: Icons.directions_outlined,
+                  onPressed: onDirections!,
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FieldMapPlaceAction extends StatelessWidget {
+  const _FieldMapPlaceAction({
+    required this.actionKey,
+    required this.label,
+    required this.icon,
+    required this.onPressed,
+  });
+
+  final Key actionKey;
+  final String label;
+  final IconData icon;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      key: actionKey,
+      button: true,
+      enabled: true,
+      label: label,
+      onTap: onPressed,
+      excludeSemantics: true,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          minWidth: GBTSpacing.touchTarget,
+          minHeight: GBTSpacing.touchTarget,
+        ),
+        child: OutlinedButton.icon(
+          onPressed: onPressed,
+          icon: Icon(icon, size: 17),
+          label: Text(label),
         ),
       ),
     );

@@ -19,7 +19,6 @@ import '../../../../core/theme/gbt_map_styles.dart';
 import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';
 import '../../../../core/utils/result.dart';
-import '../../../../core/widgets/common/gbt_image.dart';
 import '../../../../core/widgets/common/themed_builder.dart';
 import '../../../../core/widgets/feedback/gbt_loading.dart';
 import '../../../../core/widgets/inputs/gbt_search_bar.dart';
@@ -338,7 +337,7 @@ class _PlacesMapPageState extends ConsumerState<PlacesMapPage> {
                           ),
 
                           SliverToBoxAdapter(
-                            child: FieldMapFieldIndex(
+                            child: FieldMapExplorationOverlay(
                               projectLabel: selectedProjectLabel,
                               regionLabel: selectedRegionLabel,
                               bandLabel: selectedBandLabel,
@@ -354,23 +353,14 @@ class _PlacesMapPageState extends ConsumerState<PlacesMapPage> {
                                           .read(placeListModeProvider.notifier)
                                           .state =
                                       mode,
+                              selectedPlace: selectedPlace,
+                              showDirections:
+                                  selectedPlace?.directions?.hasProviders ==
+                                  true,
+                              onOpenSelectedPlace: _navigateToPlaceDetail,
+                              onDirections: _showDirectionsForPlace,
                             ),
                           ),
-
-                          if (selectedPlace != null)
-                            SliverToBoxAdapter(
-                              child: _SelectedPlacePreview(
-                                place: selectedPlace,
-                                onOpen: () =>
-                                    _navigateToPlaceDetail(selectedPlace),
-                                onDirections:
-                                    selectedPlace.directions?.hasProviders ==
-                                        true
-                                    ? () =>
-                                          _showDirectionsForPlace(selectedPlace)
-                                    : null,
-                              ),
-                            ),
 
                           // ── Place list ──
                           _PlacesSliverList(
@@ -967,126 +957,6 @@ class _PlacesMapPageState extends ConsumerState<PlacesMapPage> {
 
   bool get _isAppleMap =>
       !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
-}
-
-class _SelectedPlacePreview extends StatelessWidget {
-  const _SelectedPlacePreview({
-    required this.place,
-    required this.onOpen,
-    this.onDirections,
-  });
-
-  final PlaceSummary place;
-  final VoidCallback onOpen;
-  final VoidCallback? onDirections;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    return Container(
-      margin: const EdgeInsets.fromLTRB(
-        GBTSpacing.md,
-        GBTSpacing.sm,
-        GBTSpacing.md,
-        0,
-      ),
-      padding: const EdgeInsets.only(bottom: GBTSpacing.md),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: colors.outlineVariant)),
-      ),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
-            child: SizedBox(
-              width: 88,
-              height: 72,
-              child: place.imageUrl?.trim().isNotEmpty == true
-                  ? GBTImage(
-                      imageUrl: place.imageUrl!,
-                      fit: BoxFit.cover,
-                      semanticLabel: place.name,
-                    )
-                  : ColoredBox(
-                      color: colors.secondaryContainer,
-                      child: Icon(
-                        Icons.place_outlined,
-                        color: colors.secondary,
-                      ),
-                    ),
-            ),
-          ),
-          const SizedBox(width: GBTSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    if (place.isVerified) ...[
-                      Icon(
-                        Icons.verified_rounded,
-                        size: 16,
-                        color: colors.secondary,
-                      ),
-                      const SizedBox(width: GBTSpacing.xs),
-                    ],
-                    Expanded(
-                      child: Text(
-                        place.name,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: GBTSpacing.xs),
-                Text(
-                  [place.address, place.distanceLabel]
-                      .whereType<String>()
-                      .where((value) => value.trim().isNotEmpty)
-                      .join(' · '),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: colors.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: GBTSpacing.sm),
-                Wrap(
-                  spacing: GBTSpacing.sm,
-                  children: [
-                    TextButton.icon(
-                      onPressed: onOpen,
-                      icon: const Icon(Icons.arrow_forward_rounded, size: 17),
-                      label: Text(
-                        context.l10n(
-                          ko: '상세 보기',
-                          en: 'View place',
-                          ja: '詳細を見る',
-                        ),
-                      ),
-                    ),
-                    if (onDirections != null)
-                      TextButton.icon(
-                        onPressed: onDirections,
-                        icon: const Icon(Icons.directions_outlined, size: 17),
-                        label: Text(
-                          context.l10n(ko: '길찾기', en: 'Directions', ja: '経路'),
-                        ),
-                      ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _PlacesSliverList extends StatelessWidget {

@@ -13,6 +13,11 @@ void main() {
         (path: ApiEndpoints.emailVerificationsConfirm, method: 'POST'),
         (path: ApiEndpoints.refresh, method: 'POST'),
         (path: ApiEndpoints.logout, method: 'POST'),
+        (path: ApiEndpoints.accountRecoveryPassword, method: 'POST'),
+        (path: ApiEndpoints.accountRecoveryGoogle, method: 'POST'),
+        (path: ApiEndpoints.accountRecoveryApple, method: 'POST'),
+        (path: ApiEndpoints.oauthConnectExistingGoogle, method: 'POST'),
+        (path: ApiEndpoints.oauthConnectExistingApple, method: 'POST'),
         (path: ApiEndpoints.oauthCallback('{provider}'), method: 'GET'),
         (path: ApiEndpoints.projects, method: 'GET'),
         (path: ApiEndpoints.projectUnits('{projectId}'), method: 'GET'),
@@ -88,6 +93,10 @@ void main() {
         (path: ApiEndpoints.searchDiscoveryCategories, method: 'GET'),
         (path: ApiEndpoints.places('{projectId}'), method: 'GET'),
         (path: ApiEndpoints.place('{projectId}', '{placeId}'), method: 'GET'),
+        (
+          path: ApiEndpoints.placeStats('{projectId}', '{placeId}'),
+          method: 'GET',
+        ),
         (path: ApiEndpoints.placesNearby('{projectId}'), method: 'GET'),
         (path: ApiEndpoints.placesWithinBounds('{projectId}'), method: 'GET'),
         (
@@ -110,12 +119,17 @@ void main() {
         (path: ApiEndpoints.rankingsMostLiked('{projectId}'), method: 'GET'),
         (path: ApiEndpoints.rankingsUsers('{projectId}'), method: 'GET'),
         (path: ApiEndpoints.rankingsCurrentUser('{projectId}'), method: 'GET'),
+        (path: ApiEndpoints.cheerGuide('{guideId}'), method: 'GET'),
+        (path: ApiEndpoints.quoteLike('{quoteId}'), method: 'POST'),
+        (path: ApiEndpoints.quoteLike('{quoteId}'), method: 'DELETE'),
         (path: ApiEndpoints.fanSubjects, method: 'GET'),
         (path: ApiEndpoints.fanSubject('{subjectId}'), method: 'GET'),
         (path: ApiEndpoints.fanSubjectChildren('{subjectId}'), method: 'GET'),
         (path: ApiEndpoints.myFanSubjects, method: 'GET'),
         (path: ApiEndpoints.myFanSubject('{subjectId}'), method: 'PUT'),
         (path: ApiEndpoints.myFanSubject('{subjectId}'), method: 'DELETE'),
+        (path: ApiEndpoints.fanLevelProfile, method: 'GET'),
+        (path: ApiEndpoints.fanLevelCheckIn, method: 'POST'),
         (path: ApiEndpoints.liveEvents('{projectId}'), method: 'GET'),
         (
           path: ApiEndpoints.liveEvent('{projectId}', '{liveEventId}'),
@@ -426,6 +440,12 @@ void main() {
           reason: 'Method ${check.method} missing for ${check.path}',
         );
       }
+
+      expect(
+        ApiV3EndpointCatalog.containsPath('/api/v1/users/me/fan-level/xp'),
+        isFalse,
+        reason: 'Client-awarded XP endpoint was removed by server contract',
+      );
     });
   });
 }

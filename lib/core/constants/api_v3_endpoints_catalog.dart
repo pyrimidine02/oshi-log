@@ -1,12 +1,18 @@
-/// EN: OpenAPI v3 endpoint catalog snapshot (generated from /v3/api-docs).
-/// KO: /v3/api-docs에서 생성한 OpenAPI v3 엔드포인트 카탈로그 스냅샷입니다.
+/// EN: Mobile-server endpoint contract catalog.
+///     The baseline was imported from /v3/api-docs; changes made while the
+///     server is stabilizing are reconciled manually and covered by focused
+///     client contract tests until the next full OpenAPI refresh.
+/// KO: 모바일-서버 엔드포인트 계약 카탈로그입니다.
+///     기준은 /v3/api-docs에서 가져왔으며, 서버 안정화 중의 변경은
+///     다음 전체 OpenAPI 갱신 전까지 수동 반영하고 클라이언트 계약 테스트로
+///     보호합니다.
 library;
 
 class ApiV3EndpointCatalog {
   ApiV3EndpointCatalog._();
 
-  /// EN: OpenAPI info version from the server snapshot.
-  /// KO: 서버 스냅샷의 OpenAPI info 버전입니다.
+  /// EN: OpenAPI info version from the last imported server baseline.
+  /// KO: 마지막으로 가져온 서버 기준선의 OpenAPI info 버전입니다.
   static const String specVersion = 'v1';
 
   /// EN: Path -> allowed HTTP methods map.
@@ -66,9 +72,14 @@ class ApiV3EndpointCatalog {
     '/api/v1/admin/users/{userId}/sanctions/{sanctionId}': ['DELETE'],
     '/api/v1/auth/email-verifications': ['POST'],
     '/api/v1/auth/email-verifications/confirm': ['POST'],
+    '/api/v1/auth/account-recovery/apple': ['POST'],
+    '/api/v1/auth/account-recovery/google': ['POST'],
+    '/api/v1/auth/account-recovery/password': ['POST'],
     '/api/v1/auth/login': ['POST'],
     '/api/v1/auth/logout': ['POST'],
     '/api/v1/auth/oauth2/callback/{provider}': ['GET'],
+    '/api/v1/auth/oauth2/connect/existing/apple': ['POST'],
+    '/api/v1/auth/oauth2/connect/existing/google': ['POST'],
     '/api/v1/auth/refresh': ['POST'],
     '/api/v1/auth/register': ['POST'],
     '/api/v1/community/feed/recommended': ['GET'],
@@ -79,6 +90,7 @@ class ApiV3EndpointCatalog {
     '/api/v1/community/reports/me': ['GET'],
     '/api/v1/community/reports/{reportId}': ['DELETE', 'GET'],
     '/api/v1/community/subscriptions': ['GET'],
+    '/api/v1/cheer-guides/{guideId}': ['GET'],
     '/api/v1/health': ['GET'],
     '/api/v1/health/detailed': ['GET'],
     '/api/v1/health/live': ['GET'],
@@ -237,6 +249,7 @@ class ApiV3EndpointCatalog {
     '/api/v1/projects/{projectId}/places/search/unified': ['GET'],
     '/api/v1/projects/{projectId}/places/within-bounds': ['GET'],
     '/api/v1/projects/{projectId}/places/{placeId}': ['DELETE', 'GET', 'PUT'],
+    '/api/v1/projects/{projectId}/places/{placeId}/stats': ['GET'],
     '/api/v1/projects/{projectId}/places/{placeId}/images': ['POST'],
     '/api/v1/projects/{projectId}/places/{placeId}/images/{imageId}': [
       'DELETE',
@@ -251,11 +264,14 @@ class ApiV3EndpointCatalog {
     '/api/v1/projects/{projectId}/rankings/trending': ['GET'],
     '/api/v1/projects/{projectId}/rankings/users': ['GET'],
     '/api/v1/projects/{projectId}/rankings/users/me': ['GET'],
+    '/api/v1/quotes/{quoteId}/like': ['DELETE', 'POST'],
     '/api/v1/fan-subjects': ['GET'],
     '/api/v1/fan-subjects/{subjectId}': ['GET'],
     '/api/v1/fan-subjects/{subjectId}/children': ['GET'],
     '/api/v1/users/me/fan-subjects': ['GET'],
     '/api/v1/users/me/fan-subjects/{subjectId}': ['PUT', 'DELETE'],
+    '/api/v1/users/me/fan-level': ['GET'],
+    '/api/v1/users/me/fan-level/check-in': ['POST'],
     '/api/v1/projects/{projectId}/roles': ['GET'],
     '/api/v1/projects/{projectId}/roles/grant': ['POST'],
     '/api/v1/projects/{projectId}/roles/revoke': ['POST'],

@@ -19,6 +19,10 @@ class ApiEndpoints {
   static const String register = '$apiVersion/auth/register';
   static const String refresh = '$apiVersion/auth/refresh';
   static const String logout = '$apiVersion/auth/logout';
+  static const String accountRecovery = '$apiVersion/auth/account-recovery';
+  static const String accountRecoveryPassword = '$accountRecovery/password';
+  static const String accountRecoveryGoogle = '$accountRecovery/google';
+  static const String accountRecoveryApple = '$accountRecovery/apple';
   static const String emailVerifications =
       '$apiVersion/auth/email-verifications';
   static const String emailVerificationsConfirm =
@@ -206,6 +210,8 @@ class ApiEndpoints {
   static String places(String projectId) => '${project(projectId)}/places';
   static String place(String projectId, String placeId) =>
       '${places(projectId)}/$placeId';
+  static String placeStats(String projectId, String placeId) =>
+      '${place(projectId, placeId)}/stats';
   static String placesWithinBounds(String projectId) =>
       '${places(projectId)}/within-bounds';
   static String placesNearby(String projectId) => '${places(projectId)}/nearby';
@@ -743,10 +749,6 @@ class ApiEndpoints {
   /// KO: 인증된 사용자의 일일 출석 체크 엔드포인트 (POST).
   static const String fanLevelCheckIn =
       '$apiVersion/users/me/fan-level/check-in';
-
-  /// EN: XP earning endpoint for in-app activities (POST).
-  /// KO: 앱 내 활동 XP 획득 엔드포인트 (POST).
-  static const String fanLevelEarnXp = '$apiVersion/users/me/fan-level/xp';
 
   // ============================================================
   // EN: Cheer guide endpoints

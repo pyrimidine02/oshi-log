@@ -16,6 +16,7 @@ import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';
 import '../../../../core/utils/result.dart';
 import '../../application/auth_controller.dart';
+import 'account_recovery_dialog.dart';
 
 /// EN: OAuth buttons group with official brand styling.
 ///     Google button is shown on all platforms.
@@ -46,7 +47,10 @@ class _OAuthButtonsSectionState extends ConsumerState<OAuthButtonsSection> {
           .read(authControllerProvider.notifier)
           .loginWithGoogle();
       if (!mounted) return;
-      _handleSocialLoginResult(result);
+      await _handleSocialLoginResult(
+        result,
+        recover: ref.read(authControllerProvider.notifier).recoverWithGoogle,
+      );
     } finally {
       if (mounted) setState(() => _googleLoading = false);
     }
@@ -60,7 +64,10 @@ class _OAuthButtonsSectionState extends ConsumerState<OAuthButtonsSection> {
           .read(authControllerProvider.notifier)
           .loginWithApple();
       if (!mounted) return;
-      _handleSocialLoginResult(result);
+      await _handleSocialLoginResult(
+        result,
+        recover: ref.read(authControllerProvider.notifier).recoverWithApple,
+      );
     } finally {
       if (mounted) setState(() => _appleLoading = false);
     }
@@ -81,7 +88,7 @@ class _OAuthButtonsSectionState extends ConsumerState<OAuthButtonsSection> {
           .startTwitterLogin();
       if (!mounted) return;
       if (result is Err<void>) {
-        _handleSocialLoginResult(result);
+        await _handleSocialLoginResult(result);
       }
       // EN: On success, do nothing here — OAuthCallbackPage navigates to /home.
       // KO: 성공 시 아무것도 하지 않음 — OAuthCallbackPage가 /home으로 이동합니다.
@@ -90,7 +97,10 @@ class _OAuthButtonsSectionState extends ConsumerState<OAuthButtonsSection> {
     }
   }
 
-  void _handleSocialLoginResult(Result<void> result) {
+  Future<void> _handleSocialLoginResult(
+    Result<void> result, {
+    Future<Result<void>> Function()? recover,
+  }) async {
     if (result is Success<void>) {
       // EN: OAuth login succeeded (new or existing OAuth account).
       //     Push merge page so the user can optionally merge with a local account.
@@ -109,6 +119,16 @@ class _OAuthButtonsSectionState extends ConsumerState<OAuthButtonsSection> {
       // EN: EMAIL_ACCOUNT_CONFLICT is handled by the LoginPage listener (navigation).
       // KO: EMAIL_ACCOUNT_CONFLICT는 LoginPage listener에서 라우팅 처리됩니다.
       if (failure.code == 'EMAIL_ACCOUNT_CONFLICT') return;
+      if (failure.code == 'ACCOUNT_INACTIVE' && recover != null) {
+        final confirmed = await showAccountRecoveryDialog(context);
+        if (!mounted || !confirmed) return;
+        final recoveryResult = await recover();
+        if (!mounted) return;
+        if (recoveryResult is Success<void>) {
+          context.go('/home');
+        }
+        return;
+      }
       final message = _buildSocialLoginErrorMessage(context, failure);
       ScaffoldMessenger.of(
         context,
@@ -173,6 +193,13 @@ String _buildSocialLoginErrorMessage(BuildContext context, Failure failure) {
       ko: '소셜 계정 인증에 실패했습니다. 다시 시도해주세요.',
       en: 'Social account verification failed. Please try again.',
       ja: 'ソーシャルアカウントの認証に失敗しました。再試行してください。',
+    );
+  }
+  if (failure.code == 'ACCOUNT_INACTIVE') {
+    return context.l10n(
+      ko: 'X 복구는 아직 지원하지 않습니다. 이 계정에 기존에 연결한 비밀번호, Google 또는 Apple로 복구하고, 없다면 지원팀에 문의해주세요.',
+      en: 'X recovery is not supported yet. Use a password, Google, or Apple credential already linked to this account, or contact support if none is linked.',
+      ja: 'Xでの復元はまだ対応していません。このアカウントに登録済みのパスワード、Google、またはAppleを使用し、なければサポートにお問い合わせください。',
     );
   }
   return context.l10n(

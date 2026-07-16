@@ -31,6 +31,7 @@ class FieldProfileCallingCard extends StatelessWidget {
     required this.onEdit,
     required this.onOpenTitlePicker,
     this.activeTitleBadge,
+    this.onMessage,
   });
 
   final FieldUserProfileViewData data;
@@ -50,6 +51,7 @@ class FieldProfileCallingCard extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback onOpenTitlePicker;
   final Widget? activeTitleBadge;
+  final VoidCallback? onMessage;
 
   @override
   Widget build(BuildContext context) {
@@ -76,72 +78,116 @@ class FieldProfileCallingCard extends StatelessWidget {
       ),
       child: ColoredBox(
         color: colors.surface,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _CoverPlate(
-              coverImageUrl: data.coverImageUrl,
-              onBack: onBack,
-              onTap: onCoverTap,
-            ),
-            Transform.translate(
-              offset: const Offset(0, -38),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: GBTSpacing.pageHorizontal,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _IdentityRow(
-                      avatarUrl: data.avatarUrl,
-                      onAvatarTap: onAvatarTap,
-                      marker: data.accountRole,
-                    ),
-                    const SizedBox(height: GBTSpacing.sm),
-                    Text(
-                      title,
-                      style: GBTTypography.displaySmall.copyWith(
-                        color: colors.onSurface,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    if (activeTitleBadge != null) ...[
-                      const SizedBox(height: GBTSpacing.sm),
-                      activeTitleBadge!,
-                    ],
-                    const SizedBox(height: GBTSpacing.sm),
-                    Text(
-                      bio,
-                      style: GBTTypography.bodyMedium.copyWith(
-                        color: colors.onSurfaceVariant,
-                        height: 1.55,
-                      ),
-                    ),
-                    const SizedBox(height: GBTSpacing.md),
-                    _RelationshipLine(
-                      data: data,
-                      onFollowers: onFollowers,
-                      onFollowing: onFollowing,
-                    ),
-                    const SizedBox(height: GBTSpacing.md),
-                    _Actions(
-                      isMyProfile: isMyProfile,
-                      isAuthenticated: isAuthenticated,
-                      isFollowing: isFollowing,
-                      isBlocked: isBlocked,
-                      isFollowBusy: isFollowBusy,
-                      isMoreBusy: isMoreBusy,
-                      onFollow: onFollow,
-                      onMore: onMore,
-                      onEdit: onEdit,
-                      onOpenTitlePicker: onOpenTitlePicker,
-                    ),
-                  ],
-                ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            GBTSpacing.pageHorizontal,
+            GBTSpacing.sm,
+            GBTSpacing.pageHorizontal,
+            GBTSpacing.lg,
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border(
+                top: BorderSide(color: colors.primary, width: 4),
+                left: BorderSide(color: colors.outlineVariant),
+                right: BorderSide(color: colors.outlineVariant),
+                bottom: BorderSide(color: colors.outlineVariant),
               ),
             ),
-          ],
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _CoverPlate(
+                  coverImageUrl: data.coverImageUrl,
+                  onBack: onBack,
+                  onTap: onCoverTap,
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(GBTSpacing.md),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Wrap(
+                        alignment: WrapAlignment.spaceBetween,
+                        spacing: GBTSpacing.sm,
+                        runSpacing: GBTSpacing.xs,
+                        children: [
+                          Text(
+                            'TRAVELER FIELD CARD',
+                            style: GBTTypography.overline.copyWith(
+                              color: colors.primary,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                          Text(
+                            'PUBLIC FIELD RECORD',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GBTTypography.overline.copyWith(
+                              color: colors.onSurfaceVariant,
+                              fontFeatures: const [
+                                FontFeature.tabularFigures(),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: GBTSpacing.sm),
+                      Divider(height: 1, color: colors.outlineVariant),
+                      const SizedBox(height: GBTSpacing.md),
+                      _IdentityRow(
+                        avatarUrl: data.avatarUrl,
+                        onAvatarTap: onAvatarTap,
+                        marker: data.accountRole,
+                      ),
+                      const SizedBox(height: GBTSpacing.md),
+                      Text(
+                        title,
+                        style: GBTTypography.headlineMedium.copyWith(
+                          color: colors.onSurface,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      if (activeTitleBadge != null) ...[
+                        const SizedBox(height: GBTSpacing.sm),
+                        activeTitleBadge!,
+                      ],
+                      const SizedBox(height: GBTSpacing.sm),
+                      Text(
+                        bio,
+                        style: GBTTypography.bodyMedium.copyWith(
+                          color: colors.onSurfaceVariant,
+                          height: 1.6,
+                        ),
+                      ),
+                      const SizedBox(height: GBTSpacing.md),
+                      Divider(height: 1, color: colors.outlineVariant),
+                      _RelationshipLine(
+                        data: data,
+                        onFollowers: onFollowers,
+                        onFollowing: onFollowing,
+                      ),
+                      const SizedBox(height: GBTSpacing.md),
+                      _Actions(
+                        isMyProfile: isMyProfile,
+                        isAuthenticated: isAuthenticated,
+                        isFollowing: isFollowing,
+                        isBlocked: isBlocked,
+                        isFollowBusy: isFollowBusy,
+                        isMoreBusy: isMoreBusy,
+                        onFollow: onFollow,
+                        onMessage: onMessage,
+                        onMore: onMore,
+                        onEdit: onEdit,
+                        onOpenTitlePicker: onOpenTitlePicker,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -164,7 +210,7 @@ class _CoverPlate extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     final normalizedCover = coverImageUrl;
     return SizedBox(
-      height: 184,
+      height: 96,
       child: Stack(
         fit: StackFit.expand,
         children: [
@@ -192,12 +238,12 @@ class _CoverPlate extends StatelessWidget {
           DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
                 colors: [
-                  Colors.black.withValues(alpha: 0.28),
-                  Colors.transparent,
-                  Colors.black.withValues(alpha: 0.18),
+                  Colors.black.withValues(alpha: 0.38),
+                  Colors.black.withValues(alpha: 0.08),
+                  Colors.black.withValues(alpha: 0.32),
                 ],
               ),
             ),
@@ -223,8 +269,8 @@ class _CoverPlate extends StatelessWidget {
             ),
           ),
           Positioned(
-            right: GBTSpacing.md,
-            bottom: GBTSpacing.md,
+            right: GBTSpacing.sm,
+            bottom: GBTSpacing.sm,
             child: DecoratedBox(
               decoration: BoxDecoration(
                 color: GBTColors.fieldInk.withValues(alpha: 0.82),
@@ -236,7 +282,7 @@ class _CoverPlate extends StatelessWidget {
                   vertical: GBTSpacing.xs,
                 ),
                 child: Text(
-                  'TRAVELER / COMMUNITY',
+                  'COMMUNITY / FIELD 01',
                   style: GBTTypography.overline.copyWith(color: Colors.white),
                 ),
               ),
@@ -264,32 +310,33 @@ class _IdentityRow extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     final normalizedAvatar = avatarUrl;
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Material(
           color: colors.surface,
-          shape: const CircleBorder(),
+          shape: const RoundedRectangleBorder(),
           child: InkWell(
-            customBorder: const CircleBorder(),
             onTap: normalizedAvatar == null ? null : onAvatarTap,
             child: Padding(
-              padding: const EdgeInsets.all(4),
-              child: ClipOval(
-                child: SizedBox.square(
-                  dimension: 86,
+              padding: const EdgeInsets.all(3),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(2),
+                child: SizedBox(
+                  width: 78,
+                  height: 94,
                   child: normalizedAvatar == null
                       ? ColoredBox(
                           color: colors.secondaryContainer,
                           child: Icon(
                             Icons.person_outline_rounded,
-                            size: 42,
+                            size: 38,
                             color: colors.onSecondaryContainer,
                           ),
                         )
                       : GBTImage(
                           imageUrl: normalizedAvatar,
-                          width: 86,
-                          height: 86,
+                          width: 78,
+                          height: 94,
                           fit: BoxFit.cover,
                           semanticLabel: context.l10n(
                             ko: '프로필 사진',
@@ -302,21 +349,41 @@ class _IdentityRow extends StatelessWidget {
             ),
           ),
         ),
+        const SizedBox(width: GBTSpacing.md),
         Expanded(
-          child: Padding(
-            padding: const EdgeInsets.only(
-              left: GBTSpacing.sm,
-              bottom: GBTSpacing.sm,
-            ),
-            child: Text(
-              marker.trim().isEmpty ? 'MEMBER' : marker.toUpperCase(),
-              style: GBTTypography.overline.copyWith(
-                color: colors.onSurfaceVariant,
-                fontFeatures: const [FontFeature.tabularFigures()],
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 94),
+            padding: const EdgeInsets.all(GBTSpacing.sm),
+            decoration: BoxDecoration(
+              color: colors.surfaceContainerHighest,
+              border: Border(
+                left: BorderSide(color: colors.primary, width: 3),
+                top: BorderSide(color: colors.outlineVariant),
+                right: BorderSide(color: colors.outlineVariant),
+                bottom: BorderSide(color: colors.outlineVariant),
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.end,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'ACCESS CLASS',
+                  style: GBTTypography.overline.copyWith(
+                    color: colors.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: GBTSpacing.xs),
+                Text(
+                  marker.trim().isEmpty ? 'MEMBER' : marker.toUpperCase(),
+                  style: GBTTypography.titleSmall.copyWith(
+                    color: colors.onSurface,
+                    fontWeight: FontWeight.w800,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
           ),
         ),
@@ -435,6 +502,7 @@ class _Actions extends StatelessWidget {
     required this.onMore,
     required this.onEdit,
     required this.onOpenTitlePicker,
+    this.onMessage,
   });
 
   final bool isMyProfile;
@@ -444,6 +512,7 @@ class _Actions extends StatelessWidget {
   final bool isFollowBusy;
   final bool isMoreBusy;
   final VoidCallback onFollow;
+  final VoidCallback? onMessage;
   final VoidCallback onMore;
   final VoidCallback onEdit;
   final VoidCallback onOpenTitlePicker;
@@ -475,38 +544,77 @@ class _Actions extends StatelessWidget {
     }
     if (!isAuthenticated) return const SizedBox.shrink();
 
-    return Row(
-      children: [
-        Expanded(
-          child: SizedBox(
+    final followButton = SizedBox(
+      key: const Key('traveler-profile-follow'),
+      height: GBTSpacing.touchTarget,
+      child: FilledButton(
+        key: const Key('field-profile-follow'),
+        onPressed: isFollowBusy || isBlocked ? null : onFollow,
+        child: Text(
+          isBlocked
+              ? context.l10n(ko: '차단됨', en: 'Blocked', ja: 'ブロック済み')
+              : isFollowing
+              ? context.l10n(ko: '팔로우 취소', en: 'Unfollow', ja: 'フォロー解除')
+              : context.l10n(ko: '팔로우', en: 'Follow', ja: 'フォロー'),
+        ),
+      ),
+    );
+    final messageButton = onMessage == null
+        ? null
+        : SizedBox(
+            key: const Key('traveler-profile-message'),
             height: GBTSpacing.touchTarget,
-            child: FilledButton(
-              key: const Key('field-profile-follow'),
-              onPressed: isFollowBusy || isBlocked ? null : onFollow,
-              child: Text(
-                isBlocked
-                    ? context.l10n(ko: '차단됨', en: 'Blocked', ja: 'ブロック済み')
-                    : isFollowing
-                    ? context.l10n(ko: '팔로우 취소', en: 'Unfollow', ja: 'フォロー解除')
-                    : context.l10n(ko: '팔로우', en: 'Follow', ja: 'フォロー'),
+            child: OutlinedButton.icon(
+              onPressed: onMessage,
+              icon: const Icon(Icons.mail_outline_rounded, size: 18),
+              label: Text(context.l10n(ko: '메시지', en: 'Message', ja: 'メッセージ')),
+            ),
+          );
+    final moreButton = SizedBox(
+      width: GBTSpacing.touchTarget,
+      height: GBTSpacing.touchTarget,
+      child: OutlinedButton(
+        onPressed: isMoreBusy ? null : onMore,
+        style: OutlinedButton.styleFrom(
+          padding: EdgeInsets.zero,
+          minimumSize: const Size.square(GBTSpacing.touchTarget),
+        ),
+        child: const Icon(Icons.more_horiz_rounded),
+      ),
+    );
+    final textScale = MediaQuery.textScalerOf(context).scale(1);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 380 || textScale > 1.3) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              followButton,
+              const SizedBox(height: GBTSpacing.sm),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  if (messageButton != null) Expanded(child: messageButton),
+                  if (messageButton != null)
+                    const SizedBox(width: GBTSpacing.sm),
+                  moreButton,
+                ],
               ),
-            ),
-          ),
-        ),
-        const SizedBox(width: GBTSpacing.sm),
-        SizedBox(
-          width: GBTSpacing.touchTarget,
-          height: GBTSpacing.touchTarget,
-          child: OutlinedButton(
-            onPressed: isMoreBusy ? null : onMore,
-            style: OutlinedButton.styleFrom(
-              padding: EdgeInsets.zero,
-              minimumSize: const Size.square(GBTSpacing.touchTarget),
-            ),
-            child: const Icon(Icons.more_horiz_rounded),
-          ),
-        ),
-      ],
+            ],
+          );
+        }
+        return Row(
+          children: [
+            Expanded(child: followButton),
+            if (messageButton != null) ...[
+              const SizedBox(width: GBTSpacing.sm),
+              messageButton,
+            ],
+            const SizedBox(width: GBTSpacing.sm),
+            moreButton,
+          ],
+        );
+      },
     );
   }
 }

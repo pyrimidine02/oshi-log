@@ -32,9 +32,7 @@ import '../../application/user_follow_list_controller.dart';
 import '../../domain/entities/community_moderation.dart';
 import '../widgets/community_report_sheet.dart';
 import 'field_user_profile_view_data.dart';
-import 'widgets/field_profile_activity.dart';
-import 'widgets/field_profile_calling_card.dart';
-import 'widgets/field_profile_ledger.dart';
+import 'widgets/field_user_profile_document.dart';
 
 /// EN: Public profile entry point preserving all existing domain actions.
 /// KO: 기존 도메인 액션을 모두 유지하는 공개 프로필 진입점입니다.
@@ -118,118 +116,103 @@ class FieldUserProfilePage extends ConsumerWidget {
         ? ref.watch(activeTitleProvider).valueOrNull?.titleId
         : null;
 
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        body: NestedScrollView(
-          headerSliverBuilder: (context, _) => [
-            SliverToBoxAdapter(
-              child: FieldProfileCallingCard(
-                data: viewData,
-                activeTitleBadge: activeTitleBadge,
-                isMyProfile: isMyProfile,
-                isAuthenticated: isAuthenticated,
-                isFollowing: followStatus?.following == true,
-                isBlocked: isBlocked,
-                isFollowBusy: !isMyProfile && followState.isLoading,
-                isMoreBusy: !isMyProfile && blockStatus == null,
-                onBack: () => Navigator.of(context).maybePop(),
-                onAvatarTap: () => _openImage(
-                  context,
-                  imageUrl: viewData.avatarUrl,
-                  label: context.l10n(
-                    ko: '프로필 사진',
-                    en: 'Profile image',
-                    ja: 'プロフィール画像',
-                  ),
-                ),
-                onCoverTap: () => _openImage(
-                  context,
-                  imageUrl: viewData.coverImageUrl,
-                  label: context.l10n(
-                    ko: '프로필 커버 이미지',
-                    en: 'Profile cover image',
-                    ja: 'プロフィールカバー画像',
-                  ),
-                ),
-                onFollow: () => _toggleFollow(context, ref),
-                onMore: () => _openMoreActions(
-                  context,
-                  ref,
-                  blockedByMe: blockStatus?.blockedByMe == true,
-                ),
-                onFollowers: () => context.goToUserFollowers(userId),
-                onFollowing: () => context.goToUserFollowing(userId),
-                onEdit: () => context.pushNamed(AppRoutes.profileEdit),
-                onOpenTitlePicker: () => context.pushNamed(
-                  AppRoutes.titlePicker,
-                  queryParameters:
-                      activeTitleId != null && activeTitleId.isNotEmpty
-                      ? {'titleId': activeTitleId}
-                      : {},
-                ),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: FieldProfileLedger(
-                metrics: viewData.metrics,
-                onOpenFanLevel: isMyProfile
-                    ? () => context.push('/fan-level')
-                    : null,
-                onOpenPlaceHistory: isMyProfile
-                    ? () => context.goToVisitHistory()
-                    : null,
-                onOpenLiveHistory: isMyProfile
-                    ? () => context.goToVisitHistory(showLiveTab: true)
-                    : null,
-              ),
-            ),
-            if (isMyProfile)
-              SliverToBoxAdapter(child: _AccountLedger(profile: profile)),
-          ],
-          body: _activity(
-            context,
-            ref,
-            activityState: activityState,
-            isBlocked: isBlocked && !isMyProfile,
-            blockStatus: blockStatus,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _activity(
-    BuildContext context,
-    WidgetRef ref, {
-    required AsyncValue<UserActivity> activityState,
-    required bool isBlocked,
-    required BlockStatus? blockStatus,
-  }) {
     final activity = activityState.valueOrNull;
     final error = activityState.error;
-    return FieldProfileActivity(
-      posts: activity?.posts ?? const [],
-      comments: activity?.comments ?? const [],
-      isLoading: activityState.isLoading,
-      errorMessage: error == null
-          ? null
-          : error is Failure
-          ? error.userMessage
-          : context.l10n(
-              ko: '활동을 불러오지 못했어요',
-              en: 'Failed to load activity',
-              ja: 'アクティビティを読み込めませんでした',
-            ),
-      blockedMessage: isBlocked ? _blockedMessage(context, blockStatus) : null,
-      onRetry: () => ref
+    Future<void> refreshActivity() {
+      return ref
           .read(userActivityControllerProvider(userId).notifier)
-          .load(forceRefresh: true),
-      onRefresh: () => ref
-          .read(userActivityControllerProvider(userId).notifier)
-          .load(forceRefresh: true),
-      onOpenPost: (postId, projectCode) =>
-          context.goToPostDetail(postId, projectCode: projectCode),
+          .load(forceRefresh: true);
+    }
+
+    Future<void> refreshVisits() async {
+      if (isMyProfile) {
+        ref.invalidate(userRankingProvider);
+        await Future.wait([
+          ref
+              .read(userProfileControllerProvider.notifier)
+              .load(forceRefresh: true),
+          ref.read(userRankingProvider.future),
+        ]);
+        return;
+      }
+      await ref
+          .read(userProfileByIdProvider(userId).notifier)
+          .load(forceRefresh: true);
+    }
+
+    return Scaffold(
+      body: FieldUserProfileDocument(
+        data: viewData,
+        posts: activity?.posts ?? const [],
+        comments: activity?.comments ?? const [],
+        isMyProfile: isMyProfile,
+        isAuthenticated: isAuthenticated,
+        isFollowing: followStatus?.following == true,
+        isBlocked: isBlocked,
+        isFollowBusy: !isMyProfile && followState.isLoading,
+        isMoreBusy: !isMyProfile && blockStatus == null,
+        activeTitleBadge: activeTitleBadge,
+        onBack: () => Navigator.of(context).maybePop(),
+        onAvatarTap: () => _openImage(
+          context,
+          imageUrl: viewData.avatarUrl,
+          label: context.l10n(
+            ko: '프로필 사진',
+            en: 'Profile image',
+            ja: 'プロフィール画像',
+          ),
+        ),
+        onCoverTap: () => _openImage(
+          context,
+          imageUrl: viewData.coverImageUrl,
+          label: context.l10n(
+            ko: '프로필 커버 이미지',
+            en: 'Profile cover image',
+            ja: 'プロフィールカバー画像',
+          ),
+        ),
+        onFollow: () => _toggleFollow(context, ref),
+        onMore: () => _openMoreActions(
+          context,
+          ref,
+          blockedByMe: blockStatus?.blockedByMe == true,
+        ),
+        onFollowers: () => context.goToUserFollowers(userId),
+        onFollowing: () => context.goToUserFollowing(userId),
+        onEdit: () => context.pushNamed(AppRoutes.profileEdit),
+        onOpenTitlePicker: () => context.pushNamed(
+          AppRoutes.titlePicker,
+          queryParameters: activeTitleId != null && activeTitleId.isNotEmpty
+              ? {'titleId': activeTitleId}
+              : {},
+        ),
+        onRefresh: refreshActivity,
+        onRefreshVisits: refreshVisits,
+        onOpenPost: (postId, projectCode) =>
+            context.goToPostDetail(postId, projectCode: projectCode),
+        isActivityLoading: activityState.isLoading,
+        activityErrorMessage: error == null
+            ? null
+            : error is Failure
+            ? error.userMessage
+            : context.l10n(
+                ko: '활동을 불러오지 못했어요',
+                en: 'Failed to load activity',
+                ja: 'アクティビティを読み込めませんでした',
+              ),
+        blockedMessage: isBlocked && !isMyProfile
+            ? _blockedMessage(context, blockStatus)
+            : null,
+        onRetryActivity: refreshActivity,
+        onOpenFanLevel: isMyProfile ? () => context.push('/fan-level') : null,
+        onOpenPlaceHistory: isMyProfile
+            ? () => context.goToVisitHistory()
+            : null,
+        onOpenLiveHistory: isMyProfile
+            ? () => context.goToVisitHistory(showLiveTab: true)
+            : null,
+        accountLedger: isMyProfile ? _AccountLedger(profile: profile) : null,
+      ),
     );
   }
 

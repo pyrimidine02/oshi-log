@@ -5,6 +5,7 @@ import 'package:girlsbandtabi_app/core/error/failure.dart';
 import 'package:girlsbandtabi_app/core/security/secure_storage.dart';
 import 'package:girlsbandtabi_app/core/utils/result.dart';
 import 'package:girlsbandtabi_app/features/auth/data/datasources/auth_remote_data_source.dart';
+import 'package:girlsbandtabi_app/features/auth/data/dto/account_recovery_password_request.dart';
 import 'package:girlsbandtabi_app/features/auth/data/dto/login_request.dart';
 import 'package:girlsbandtabi_app/features/auth/data/dto/token_response.dart';
 import 'package:girlsbandtabi_app/features/auth/data/repositories/auth_repository_impl.dart';
@@ -18,6 +19,9 @@ class _MockSecureStorage extends Mock implements SecureStorage {}
 void main() {
   setUpAll(() {
     registerFallbackValue(const LoginRequest(username: 'u', password: 'p'));
+    registerFallbackValue(
+      const AccountRecoveryPasswordRequest(email: 'u', password: 'p'),
+    );
   });
 
   late _MockAuthRemoteDataSource remoteDataSource;
@@ -237,5 +241,38 @@ void main() {
         expect(failure.code, 'token_persist_failed');
       },
     );
+  });
+
+  test('persists tokens after explicit password account recovery', () async {
+    AccountRecoveryPasswordRequest? capturedRequest;
+    when(() => remoteDataSource.recoverWithPassword(any())).thenAnswer((
+      invocation,
+    ) async {
+      capturedRequest =
+          invocation.positionalArguments.first
+              as AccountRecoveryPasswordRequest;
+      return Result.success(
+        const TokenResponse(accessToken: 'access', refreshToken: 'refresh'),
+      );
+    });
+    final repository = AuthRepositoryImpl(
+      remoteDataSource: remoteDataSource,
+      secureStorage: secureStorage,
+    );
+
+    final result = await repository.recoverWithPassword(
+      email: ' Fan@Example.com ',
+      password: 'secret',
+    );
+
+    expect(result, isA<Success<AuthTokens>>());
+    expect(capturedRequest?.email, 'fan@example.com');
+    expect(capturedRequest?.password, 'secret');
+    verify(
+      () => secureStorage.saveTokens(
+        accessToken: 'access',
+        refreshToken: 'refresh',
+      ),
+    ).called(1);
   });
 }

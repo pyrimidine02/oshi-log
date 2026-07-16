@@ -1,5 +1,47 @@
 # TODO
 
+- Rotate the Facebook/Instagram credential captured by a local Playwright trace
+  if it is still live (2026-07-16):
+  - `.playwright-mcp/` is now ignored and was not staged or committed.
+  - Delete the local trace after it is no longer needed for debugging.
+  - Removal criteria: the credential is revoked or rotated and the local trace
+    no longer contains an active credential.
+
+- Refresh the full OpenAPI JSON after the server endpoint work stabilizes
+  (2026-07-16):
+  - `api_v3_endpoints_catalog.dart` and its mobile contract checks now include
+    the current endpoint delta, but `api_docs.json` remains the older 197-path
+    runtime snapshot.
+  - Start the current backend with local OpenAPI enabled and replace the JSON
+    only from `GET /api-docs`; do not synthesize schemas from controller grep.
+  - Add credential-bound X/Twitter account recovery server support. Until then,
+    the app directs users to an already-linked password, Google, or Apple
+    credential, or to support when no alternative credential is linked.
+  - Removal criteria: generated JSON matches the stabilized server working
+    tree and password/Google/Apple/X recovery all pass mobile integration tests.
+
+- Verify the deep Field Document redesign on physical iOS and Android devices
+  (2026-07-16):
+  - Create, edit, reopen, like, and comment on a post; confirm keyboard, media,
+    unsaved-exit, refresh, and author-profile navigation behavior.
+  - Exercise map layer changes, selected-place detail, and every available
+    directions provider without native map controller disposal errors.
+  - Verify self passport, public traveler card, follow/block/report, pinned
+    post/comment activity, and profile media crop/upload/save at 320dp and 200%
+    text scale with VoiceOver/TalkBack.
+  - Add a public visits endpoint before showing another user's visit history;
+    until then the visit tab must remain count-only or honestly empty.
+  - Removal criteria: iOS and Android each pass the real-account flows with no
+    overflow, false action, stale activity, or new crash.
+
+- Rotate the previously embedded probe-admin credential outside this repository
+  (2026-07-16):
+  - Local probe defaults were removed and the expired token no longer exists in
+    the script, but repository cleanup cannot revoke a password or token already
+    exposed to history.
+  - Removal criteria: the server-side password/session has been rotated or
+    revoked and a new environment-injected probe credential succeeds.
+
 - Complete production and device QA for generalized fan subjects and travel reviews (2026-07-16):
   - Verify project, unit/band, and voice-actor preference reads/writes against
     the deployed HTTPS API and confirm project-scoped authorization is

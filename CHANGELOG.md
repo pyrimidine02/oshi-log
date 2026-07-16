@@ -2,6 +2,30 @@
 
 ## 2026-07-16
 
+- Synchronized mobile endpoint use with the current server contract: removed
+  client-awarded activity XP, switched place statistics to the exact single
+  place endpoint, and added explicit password/Google/Apple inactive-account
+  recovery with token persistence. Recovery bypasses stale app authentication,
+  while Google/Apple reuse the fresh provider proof from the failed login once
+  instead of reopening the native account picker.
+- Updated the endpoint catalog for recovery, OAuth merge, place statistics,
+  cheer-guide detail, quote likes, and server-owned fan-level reads. Added
+  focused data-source, repository, dialog, and contract tests.
+
+- Redesigned the remaining high-traffic deep surfaces as one Field Document
+  system: shared post create/edit composition, ordered post detail and comment
+  ledger, map exploration layers with a selected-place field card, public
+  traveler profiles with pinned post/comment/visit ledgers, and a
+  passport-inspired profile identity amendment form.
+- Preserved the existing self-profile passport, API/provider/deep-link
+  contracts, native Apple/Google map controller lifecycle, and profile media
+  upload/save behavior. No fabricated public visit history or messaging action
+  was introduced.
+- Added 320dp/200% text-scale widget contracts with 48dp actions and split the
+  Android profile crop dialog from the profile page. Added
+  `docs/adr/ADR-20260716-deep-field-document-redesign.md`.
+- Bumped the app version from `0.0.1+1` to `0.0.2+1`.
+
 - Generalized the user interest model from project/unit-only selection to one
   project, band/unit, and voice-actor mobile contract while preserving the
   project journey lens and both existing bottom navigation bars. Future artist

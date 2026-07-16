@@ -2,14 +2,11 @@
 /// KO: 게시글 상세 및 댓글 컨트롤러.
 library;
 
-import 'dart:async' show unawaited;
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/failure.dart';
 import '../../../core/providers/core_providers.dart';
 import '../../../core/utils/result.dart';
-import '../../fan_level/application/fan_level_controller.dart';
 import '../../projects/application/projects_controller.dart';
 import '../domain/entities/feed_entities.dart';
 import '../domain/repositories/feed_repository.dart';
@@ -325,14 +322,6 @@ class PostCommentsController
       );
       state = AsyncData([result.data, ...current]);
       await _refreshCommentsFromServer(repository);
-      // EN: Earn XP for comment creation and refresh fan level profile.
-      // KO: 댓글 작성 XP를 획득하고 팬 레벨 프로필을 갱신합니다.
-      final fanLevelRepo = _ref.read(fanLevelRepositoryProvider);
-      unawaited(fanLevelRepo.earnXp('COMMENT_CREATED', result.data.id).then(
-        (_) {
-          if (mounted) _ref.invalidate(fanLevelControllerProvider);
-        },
-      ));
     } else if (result is Err<PostComment>) {
       // EN: Keep existing data visible for project-required guard failures.
       // KO: 프로젝트 선택 가드 실패 시 기존 목록을 유지합니다.

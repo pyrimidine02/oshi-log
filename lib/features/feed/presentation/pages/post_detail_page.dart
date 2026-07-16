@@ -323,7 +323,7 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
                 .load(forceRefresh: true),
           );
         },
-        data: (post) => _PostDetailContent(
+        data: (post) => PostDetailDocumentView(
           post: post,
           commentsState: commentsState,
           likeState: likeState,
@@ -919,8 +919,11 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
   }
 }
 
-class _PostDetailContent extends ConsumerWidget {
-  const _PostDetailContent({
+/// EN: Displays a post, its actions, and its comment log as one field note.
+/// KO: 게시글, 액션, 댓글 기록을 하나의 현장 기록 문서로 표시합니다.
+class PostDetailDocumentView extends ConsumerWidget {
+  const PostDetailDocumentView({
+    super.key,
     required this.post,
     required this.commentsState,
     required this.likeState,
@@ -1042,6 +1045,7 @@ class _PostDetailContent extends ConsumerWidget {
         : GBTColors.accentBlue;
 
     return Column(
+      key: const ValueKey<String>('field-note-document'),
       children: [
         Expanded(
           child: RefreshIndicator(
@@ -1063,6 +1067,7 @@ class _PostDetailContent extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
+                        key: const ValueKey<String>('field-note-header'),
                         'COMMUNITY FIELD NOTE',
                         style: GBTTypography.labelSmall.copyWith(
                           color: Theme.of(context).colorScheme.primary,
@@ -1201,6 +1206,7 @@ class _PostDetailContent extends ConsumerWidget {
                         const SizedBox(height: GBTSpacing.md),
                       if (contentText.isNotEmpty)
                         Column(
+                          key: const ValueKey<String>('field-note-body'),
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             GBTLinkifiedText(
@@ -1240,7 +1246,8 @@ class _PostDetailContent extends ConsumerWidget {
                       if (likeCount > 0)
                         Padding(
                           padding: const EdgeInsets.only(bottom: GBTSpacing.sm),
-                          child: Row(
+                          child: Wrap(
+                            crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
                               Icon(
                                 Icons.favorite_rounded,
@@ -1263,6 +1270,7 @@ class _PostDetailContent extends ConsumerWidget {
                       // EN: Borderless document actions wrap on narrow screens.
                       // KO: 보더리스 문서 액션은 좁은 화면에서 줄바꿈합니다.
                       Semantics(
+                        key: const ValueKey<String>('field-note-actions'),
                         label:
                             '좋아요 $likeCount개, '
                             '${isLiked ? "좋아요 누른 상태" : "좋아요 안 누른 상태"}, '
@@ -1340,6 +1348,7 @@ class _PostDetailContent extends ConsumerWidget {
                 // EN: Comment list — full width, no horizontal padding.
                 // KO: 댓글 목록 — 좌우 패딩 없이 전체 너비.
                 _PostCommentsSection(
+                  key: const ValueKey<String>('field-note-comment-log'),
                   state: commentsState,
                   postAuthorId: post.authorId,
                   onTapAuthor: onTapAuthor,
@@ -1360,6 +1369,7 @@ class _PostDetailContent extends ConsumerWidget {
         // KO: 답글 컨텍스트 배너가 포함된 댓글 작성 바.
         if (isAuthenticated)
           _CommentComposerBar(
+            key: const ValueKey<String>('field-note-composer'),
             commentController: commentController,
             commentFocusNode: commentFocusNode,
             isSubmitting: isSubmitting,
@@ -1401,6 +1411,7 @@ class _PostDetailContent extends ConsumerWidget {
 
 class _PostCommentsSection extends StatefulWidget {
   const _PostCommentsSection({
+    super.key,
     required this.state,
     required this.postAuthorId,
     required this.onTapAuthor,
@@ -2569,6 +2580,7 @@ class _CommentSortTextButton extends StatelessWidget {
 // ================================================
 class _CommentComposerBar extends StatefulWidget {
   const _CommentComposerBar({
+    super.key,
     required this.commentController,
     required this.commentFocusNode,
     required this.isSubmitting,

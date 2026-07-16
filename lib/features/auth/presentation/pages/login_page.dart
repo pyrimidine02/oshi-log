@@ -18,6 +18,7 @@ import '../../../../core/router/app_router.dart';
 import '../../application/auth_controller.dart';
 import '../widgets/field_auth_components.dart';
 import '../widgets/oauth_buttons.dart';
+import '../widgets/account_recovery_dialog.dart';
 import 'email_verification_args.dart';
 
 /// EN: Login page widget
@@ -52,7 +53,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         error: (error, _) {
           // EN: EMAIL_NOT_VERIFIED is handled in _handleLogin; suppress generic snackbar.
           // KO: EMAIL_NOT_VERIFIED는 _handleLogin에서 처리하므로 일반 스낵바를 억제합니다.
-          if (error is AuthFailure && error.code == 'EMAIL_NOT_VERIFIED') {
+          if (error is AuthFailure &&
+              (error.code == 'EMAIL_NOT_VERIFIED' ||
+                  error.code == 'EMAIL_VERIFICATION_REQUIRED')) {
+            return;
+          }
+          if (error is Failure && error.code == 'ACCOUNT_INACTIVE') {
             return;
           }
 
@@ -343,13 +349,24 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       } else if (result is Err<void>) {
         // EN: Redirect to email verification pending when account is unverified.
         // KO: 이메일 인증이 완료되지 않은 계정은 인증 대기 화면으로 이동합니다.
-        if (result.failure.code == 'EMAIL_NOT_VERIFIED') {
+        if (result.failure.code == 'EMAIL_NOT_VERIFIED' ||
+            result.failure.code == 'EMAIL_VERIFICATION_REQUIRED') {
           context.pushNamed(
             AppRoutes.emailVerificationPending,
             extra: EmailVerificationArgs(
               email: _usernameController.text.trim(),
             ),
           );
+        } else if (result.failure.code == 'ACCOUNT_INACTIVE') {
+          final confirmed = await showAccountRecoveryDialog(context);
+          if (!mounted || !confirmed) return;
+          final recoveryResult = await controller.recoverWithPassword(
+            email: _usernameController.text.trim(),
+            password: _passwordController.text,
+          );
+          if (mounted && recoveryResult is Success<void>) {
+            context.go('/home');
+          }
         }
       }
     } finally {

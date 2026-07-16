@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:girlsbandtabi_app/core/theme/gbt_theme.dart';
 import 'package:girlsbandtabi_app/features/auth/presentation/widgets/field_auth_components.dart';
+import 'package:girlsbandtabi_app/features/auth/presentation/widgets/account_recovery_dialog.dart';
 
 void main() {
   testWidgets('uses a solid blue field-note account header', (tester) async {
@@ -56,5 +57,32 @@ void main() {
 
     expect(find.byKey(const ValueKey('field-auth-mark')), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('inactive account recovery requires explicit confirmation', (
+    tester,
+  ) async {
+    bool? decision;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: GBTTheme.light,
+        home: Builder(
+          builder: (context) => TextButton(
+            onPressed: () async {
+              decision = await showAccountRecoveryDialog(context);
+            },
+            child: const Text('open'),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('account-recovery-confirm')), findsOne);
+
+    await tester.tap(find.byKey(const ValueKey('account-recovery-confirm')));
+    await tester.pumpAndSettle();
+    expect(decision, isTrue);
   });
 }

@@ -30,6 +30,125 @@ String appendImageMarkdownContent(String content, List<String> urls) {
 /// KO: 작성 메타데이터에서 허용하는 최대 태그 개수입니다.
 const int kPostMaxTagCount = 5;
 
+/// EN: Shared field-note writing surface used by create and edit flows.
+/// KO: 작성과 수정 흐름이 공통으로 사용하는 필드 노트 작성 영역입니다.
+class PostComposeDocumentEditor extends StatelessWidget {
+  const PostComposeDocumentEditor({
+    super.key,
+    required this.titleController,
+    required this.contentController,
+    this.titleFocusNode,
+    this.contentFocusNode,
+    this.header,
+    this.enabled = true,
+    this.autofocusTitle = true,
+    this.maxTitleLength = 60,
+    this.maxContentLength = 3000,
+  });
+
+  final TextEditingController titleController;
+  final TextEditingController contentController;
+  final FocusNode? titleFocusNode;
+  final FocusNode? contentFocusNode;
+  final Widget? header;
+  final bool enabled;
+  final bool autofocusTitle;
+  final int maxTitleLength;
+  final int maxContentLength;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final ruleColor = colors.outlineVariant.withValues(alpha: 0.8);
+    const fieldBorder = InputBorder.none;
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        border: Border(
+          top: BorderSide(color: ruleColor),
+          bottom: BorderSide(color: ruleColor),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: GBTSpacing.sm),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (header != null) ...[
+              header!,
+              const SizedBox(height: GBTSpacing.sm),
+              Divider(height: 1, color: ruleColor),
+              const SizedBox(height: GBTSpacing.sm),
+            ],
+            TextField(
+              key: const ValueKey<String>('post-compose-title'),
+              controller: titleController,
+              focusNode: titleFocusNode,
+              enabled: enabled,
+              autofocus: autofocusTitle,
+              maxLength: maxTitleLength,
+              maxLines: 1,
+              textInputAction: TextInputAction.next,
+              style: GBTTypography.headlineMedium.copyWith(
+                fontWeight: FontWeight.w700,
+                color: colors.onSurface,
+              ),
+              decoration: InputDecoration(
+                hintText: '제목을 입력해주세요',
+                counterText: '',
+                filled: false,
+                border: fieldBorder,
+                enabledBorder: fieldBorder,
+                focusedBorder: fieldBorder,
+                disabledBorder: fieldBorder,
+                isDense: true,
+                contentPadding: EdgeInsets.zero,
+                hintStyle: GBTTypography.headlineMedium.copyWith(
+                  fontWeight: FontWeight.w500,
+                  color: colors.onSurfaceVariant,
+                ),
+              ),
+            ),
+            const SizedBox(height: GBTSpacing.sm),
+            Divider(height: 1, color: ruleColor),
+            const SizedBox(height: GBTSpacing.md),
+            TextField(
+              key: const ValueKey<String>('post-compose-content'),
+              controller: contentController,
+              focusNode: contentFocusNode,
+              enabled: enabled,
+              maxLength: maxContentLength,
+              maxLines: null,
+              minLines: 8,
+              textInputAction: TextInputAction.newline,
+              style: GBTTypography.bodyLarge.copyWith(
+                fontWeight: FontWeight.w400,
+                height: 1.7,
+                color: colors.onSurface,
+              ),
+              decoration: InputDecoration(
+                hintText: '어디서 무엇을 보았는지, 왜 기억하고 싶은지 남겨보세요.',
+                counterText: '',
+                filled: false,
+                border: fieldBorder,
+                enabledBorder: fieldBorder,
+                focusedBorder: fieldBorder,
+                disabledBorder: fieldBorder,
+                isDense: true,
+                contentPadding: EdgeInsets.zero,
+                hintStyle: GBTTypography.bodyLarge.copyWith(
+                  color: colors.onSurfaceVariant,
+                  height: 1.7,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// EN: Normalizes user-entered tag text into API-friendly token.
 /// KO: 사용자 입력 태그를 API 전송 가능한 토큰으로 정규화합니다.
 String normalizePostTag(String rawTag) {

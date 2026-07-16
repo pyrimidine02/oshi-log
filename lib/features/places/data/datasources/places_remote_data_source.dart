@@ -243,42 +243,10 @@ class PlacesRemoteDataSource {
   Future<Result<PlaceStatsDto>> fetchPlaceStats({
     required String projectId,
     required String placeId,
-    int limit = 200,
-  }) async {
-    final visitsResult = await _apiClient.get<Map<String, dynamic>>(
-      ApiEndpoints.rankingsMostVisited(projectId),
-      queryParameters: {'limit': limit},
-      fromJson: (json) => _decodeRankingResponse(json),
-    );
-
-    final likesResult = await _apiClient.get<Map<String, dynamic>>(
-      ApiEndpoints.rankingsMostLiked(projectId),
-      queryParameters: {'limit': limit},
-      fromJson: (json) => _decodeRankingResponse(json),
-    );
-
-    if (visitsResult is Err<Map<String, dynamic>> &&
-        likesResult is Err<Map<String, dynamic>>) {
-      return Result.failure(visitsResult.failure);
-    }
-
-    final visitCount = visitsResult is Success<Map<String, dynamic>>
-        ? _extractPlaceCount(visitsResult.data, placeId, const [
-            'totalVisits',
-            'visitCount',
-            'count',
-          ])
-        : null;
-    final favoriteCount = likesResult is Success<Map<String, dynamic>>
-        ? _extractPlaceCount(likesResult.data, placeId, const [
-            'favoriteCount',
-            'likeCount',
-            'count',
-          ])
-        : null;
-
-    return Result.success(
-      PlaceStatsDto(visitCount: visitCount, favoriteCount: favoriteCount),
+  }) {
+    return _apiClient.get<PlaceStatsDto>(
+      ApiEndpoints.placeStats(projectId, placeId),
+      fromJson: (json) => PlaceStatsDto.fromJson(json as Map<String, dynamic>),
     );
   }
 }
@@ -341,42 +309,4 @@ List<PlaceCommentDetailDto> _decodeCommentList(dynamic json) {
     }
   }
   return <PlaceCommentDetailDto>[];
-}
-
-Map<String, dynamic> _decodeRankingResponse(dynamic json) {
-  if (json is Map<String, dynamic>) {
-    return json;
-  }
-  return <String, dynamic>{};
-}
-
-int? _extractPlaceCount(
-  Map<String, dynamic> data,
-  String placeId,
-  List<String> keys,
-) {
-  final places = data['places'];
-  if (places is List) {
-    for (final item in places) {
-      if (item is Map<String, dynamic> && item['placeId'] == placeId) {
-        for (final key in keys) {
-          final value = item[key];
-          final parsed = _intOrNull(value);
-          if (parsed != null) {
-            return parsed;
-          }
-        }
-      }
-    }
-    return 0;
-  }
-  return null;
-}
-
-int? _intOrNull(dynamic value) {
-  if (value == null) return null;
-  if (value is int) return value;
-  if (value is num) return value.toInt();
-  if (value is String) return int.tryParse(value);
-  return null;
 }

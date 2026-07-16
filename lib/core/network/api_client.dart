@@ -610,6 +610,7 @@ class _AuthInterceptor extends Interceptor {
       ApiEndpoints.login,
       ApiEndpoints.register,
       ApiEndpoints.refresh,
+      ApiEndpoints.accountRecovery,
       ApiEndpoints.health,
     ];
 

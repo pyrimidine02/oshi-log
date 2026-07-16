@@ -28,7 +28,6 @@ import '../../../../core/widgets/dialogs/gbt_adaptive_dialog.dart';
 import '../../../../core/widgets/feedback/gbt_loading.dart';
 import '../../../../core/widgets/layout/gbt_page_header.dart';
 import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
-import '../../../fan_level/application/fan_level_controller.dart';
 import '../../application/feed_controller.dart';
 import '../../domain/entities/feed_entities.dart';
 import '../../../projects/presentation/widgets/project_selector.dart';
@@ -585,64 +584,14 @@ class _PostCreatePageState extends ConsumerState<PostCreatePage> {
                                 ),
                               ],
                               const SizedBox(height: GBTSpacing.xs),
-                              TextField(
-                                controller: _titleController,
-                                focusNode: _titleFocusNode,
-                                autofocus: true,
-                                maxLength: _maxTitleLength,
-                                maxLines: 1,
-                                textInputAction: TextInputAction.next,
-                                style: GBTTypography.headlineMedium.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                  color: colorScheme.onSurface,
-                                ),
-                                decoration: InputDecoration(
-                                  hintText: '제목을 입력해주세요',
-                                  counterText: '',
-                                  filled: true,
-                                  fillColor: Colors.transparent,
-                                  border: InputBorder.none,
-                                  enabledBorder: InputBorder.none,
-                                  focusedBorder: InputBorder.none,
-                                  isDense: true,
-                                  contentPadding: EdgeInsets.zero,
-                                  hintStyle: GBTTypography.headlineMedium
-                                      .copyWith(
-                                        fontWeight: FontWeight.w500,
-                                        color: colorScheme.onSurfaceVariant,
-                                      ),
-                                ),
-                              ),
-                              const SizedBox(height: GBTSpacing.md),
-                              TextField(
-                                controller: _contentController,
-                                focusNode: _contentFocusNode,
-                                maxLength: _maxContentLength,
-                                maxLines: null,
-                                minLines: 8,
-                                textInputAction: TextInputAction.newline,
-                                style: GBTTypography.bodyLarge.copyWith(
-                                  fontWeight: FontWeight.w400,
-                                  height: 1.6,
-                                  color: colorScheme.onSurface,
-                                ),
-                                decoration: InputDecoration(
-                                  hintText:
-                                      '커뮤니티 이용규칙을 지켜주세요.\n'
-                                      '광고, 비방, 도배성 글은 제재될 수 있어요.',
-                                  hintStyle: GBTTypography.bodyLarge.copyWith(
-                                    color: colorScheme.onSurfaceVariant,
-                                    height: 1.6,
-                                  ),
-                                  counterText: '',
-                                  filled: true,
-                                  fillColor: Colors.transparent,
-                                  border: InputBorder.none,
-                                  enabledBorder: InputBorder.none,
-                                  focusedBorder: InputBorder.none,
-                                  isDense: true,
-                                  contentPadding: EdgeInsets.zero,
-                                ),
+                              PostComposeDocumentEditor(
+                                titleController: _titleController,
+                                contentController: _contentController,
+                                titleFocusNode: _titleFocusNode,
+                                contentFocusNode: _contentFocusNode,
+                                enabled: !_isSubmitting,
+                                maxTitleLength: _maxTitleLength,
+                                maxContentLength: _maxContentLength,
                               ),
                             ],
                           ),
@@ -953,14 +902,6 @@ class _PostCreatePageState extends ConsumerState<PostCreatePage> {
           ? _selectedTopic!.trim()
           : 'general';
       unawaited(ref.read(analyticsServiceProvider).logPostCreate(category));
-      // EN: Earn XP for post creation and refresh fan level profile.
-      // KO: 게시글 작성 XP를 획득하고 팬 레벨 프로필을 갱신합니다.
-      unawaited(
-        ref
-            .read(fanLevelRepositoryProvider)
-            .earnXp('POST_CREATED', data.id, projectId: projectCode)
-            .then((_) => ref.invalidate(fanLevelControllerProvider)),
-      );
       await Future.wait([
         ref
             .read(communityFeedControllerProvider.notifier)

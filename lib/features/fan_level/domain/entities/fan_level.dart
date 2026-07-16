@@ -74,15 +74,19 @@ enum FanActivityType {
   dailyCheckIn,
   commentCreated,
   postLiked,
+
   /// EN: Bookmark added (currently no XP awarded).
   /// KO: 북마크 추가 (현재 XP 미부여).
   bookmark,
+
   /// EN: Collection completed (currently no XP awarded).
   /// KO: 컬렉션 완성 (현재 XP 미부여).
   collectionCompleted,
+
   /// EN: Follower gained (currently no XP awarded).
   /// KO: 팔로워 획득 (현재 XP 미부여).
   followReceived,
+
   /// EN: XP manually granted or adjusted by an admin.
   /// KO: 관리자가 수동으로 부여하거나 조정한 XP.
   adminGrant,
@@ -116,15 +120,17 @@ enum FanActivityType {
       // KO: 히스토리 action 값 (서버 → 앱)
       'visit' || 'place_visit' || 'placevisit' => FanActivityType.placeVisit,
       'post' || 'post_created' || 'postcreated' => FanActivityType.postCreated,
-      'comment' || 'comment_created' || 'commentcreated' =>
-        FanActivityType.commentCreated,
-      'attendance' || 'daily_check_in' || 'dailycheckin' =>
-        FanActivityType.dailyCheckIn,
+      'comment' ||
+      'comment_created' ||
+      'commentcreated' => FanActivityType.commentCreated,
+      'attendance' ||
+      'daily_check_in' ||
+      'dailycheckin' => FanActivityType.dailyCheckIn,
       'post_liked' || 'postliked' => FanActivityType.postLiked,
       'live_attendance' || 'liveattendance' => FanActivityType.liveAttendance,
       'bookmark' => FanActivityType.bookmark,
-      'collection_completed' || 'collectioncompleted' =>
-        FanActivityType.collectionCompleted,
+      'collection_completed' ||
+      'collectioncompleted' => FanActivityType.collectionCompleted,
       'follow_received' || 'followreceived' => FanActivityType.followReceived,
       'admin_grant' || 'admingrant' => FanActivityType.adminGrant,
       _ => FanActivityType.other,
@@ -202,48 +208,6 @@ class FanActivity {
   /// EN: Optional human-readable description of the activity.
   /// KO: 활동에 대한 선택적 사람이 읽을 수 있는 설명.
   final String? description;
-}
-
-/// EN: Result of earning XP for an in-app activity.
-/// KO: 앱 내 활동에 대한 XP 획득 결과.
-class EarnXpResult {
-  const EarnXpResult({
-    required this.awarded,
-    required this.xpEarned,
-    required this.totalPoints,
-    required this.currentGrade,
-    required this.leveledUp,
-    this.newGrade,
-    this.skipReason,
-  });
-
-  /// EN: Whether XP was actually awarded (false when already granted or limit reached).
-  /// KO: XP가 실제로 부여되었는지 여부 (이미 부여되었거나 한도에 도달한 경우 false).
-  final bool awarded;
-
-  /// EN: XP earned from this activity (0 when not awarded).
-  /// KO: 이번 활동으로 획득한 XP (미부여 시 0).
-  final int xpEarned;
-
-  /// EN: New total XP after earning.
-  /// KO: 획득 후 새로운 총 XP.
-  final int totalPoints;
-
-  /// EN: Current grade after earning XP.
-  /// KO: XP 획득 후 현재 등급.
-  final FanGrade currentGrade;
-
-  /// EN: Whether this earning triggered a level-up.
-  /// KO: 이번 XP 획득으로 레벨업이 발생했는지 여부.
-  final bool leveledUp;
-
-  /// EN: New grade if a level-up occurred; null otherwise.
-  /// KO: 레벨업 발생 시 새로운 등급; 발생하지 않으면 null.
-  final FanGrade? newGrade;
-
-  /// EN: Reason XP was skipped when [awarded] is false (e.g. "ALREADY_GRANTED_TODAY").
-  /// KO: [awarded]가 false일 때 XP 미부여 사유 (예: "ALREADY_GRANTED_TODAY").
-  final String? skipReason;
 }
 
 /// EN: Result returned after a successful daily check-in.

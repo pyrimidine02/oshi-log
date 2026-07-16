@@ -96,13 +96,6 @@ class _StaticFanLevelRepository implements FanLevelRepository {
 
   @override
   Future<Result<CheckInResult>> checkIn() async => throw UnimplementedError();
-
-  @override
-  Future<Result<EarnXpResult>> earnXp(
-    String activityType,
-    String entityId, {
-    String? projectId,
-  }) async => throw UnimplementedError();
 }
 
 UserProfile _profile() {

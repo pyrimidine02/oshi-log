@@ -23,15 +23,6 @@ class _FakeFanLevelRepository implements FanLevelRepository {
   Future<Result<CheckInResult>> checkIn() async {
     return const Result.failure(UnknownFailure('not used in this test'));
   }
-
-  @override
-  Future<Result<EarnXpResult>> earnXp(
-    String activityType,
-    String entityId, {
-    String? projectId,
-  }) async {
-    return const Result.failure(UnknownFailure('not used in this test'));
-  }
 }
 
 void main() {
