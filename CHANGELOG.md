@@ -2,6 +2,11 @@
 
 ## 2026-07-16
 
+- Restored Flutter 3.41 CI compatibility by using the SDK's platform-default
+  page transitions and the stable `SliverReorderableList.onReorder` contract.
+  Travel-review stop reordering now normalizes legacy indices through immutable
+  add, remove, and reorder helpers with regression coverage.
+
 - Synchronized mobile endpoint use with the current server contract: removed
   client-awarded activity XP, switched place statistics to the exact single
   place endpoint, and added explicit password/Google/Apple inactive-account

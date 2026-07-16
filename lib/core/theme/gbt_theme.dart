@@ -2,7 +2,6 @@
 /// KO: 색상, 타이포그래피, 간격을 통합하는 GBT 테마 구성
 library;
 
-import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -1012,17 +1011,10 @@ class GBTTheme {
   // EN: Navigation Transitions
   // KO: 화면 전환
   // ========================================
-  static PageTransitionsTheme get _pageTransitionsTheme =>
-      const PageTransitionsTheme(
-        builders: {
-          TargetPlatform.android: ZoomPageTransitionsBuilder(),
-          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-          TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
-          TargetPlatform.windows: ZoomPageTransitionsBuilder(),
-          TargetPlatform.linux: ZoomPageTransitionsBuilder(),
-          TargetPlatform.fuchsia: ZoomPageTransitionsBuilder(),
-        },
-      );
+  // EN: Use Flutter's version-matched platform transition defaults.
+  // KO: Flutter SDK 버전에 맞는 플랫폼 기본 화면 전환을 사용합니다.
+  static const PageTransitionsTheme _pageTransitionsTheme =
+      PageTransitionsTheme();
 
   // ========================================
   // EN: TabBar Theme

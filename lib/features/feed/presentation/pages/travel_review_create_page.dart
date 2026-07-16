@@ -27,6 +27,28 @@ import '../../domain/entities/travel_review.dart';
 import '../widgets/travel_review_compose_sections.dart';
 import '../widgets/travel_review_place_picker_sheet.dart';
 
+/// EN: Returns a reordered copy using Flutter's legacy onReorder indices.
+/// KO: Flutter의 기존 onReorder 인덱스 규칙으로 재정렬한 복사본을 반환합니다.
+List<T> reorderTravelReviewItems<T>(List<T> items, int oldIndex, int newIndex) {
+  final adjustedNewIndex = newIndex > oldIndex ? newIndex - 1 : newIndex;
+  final reordered = List<T>.of(items);
+  final item = reordered.removeAt(oldIndex);
+  reordered.insert(adjustedNewIndex, item);
+  return List<T>.unmodifiable(reordered);
+}
+
+/// EN: Returns an immutable copy with one item appended.
+/// KO: 항목 하나를 뒤에 추가한 불변 복사본을 반환합니다.
+List<T> appendTravelReviewItem<T>(List<T> items, T item) {
+  return List<T>.unmodifiable([...items, item]);
+}
+
+/// EN: Returns an immutable copy without the item at [index].
+/// KO: [index]의 항목을 제외한 불변 복사본을 반환합니다.
+List<T> removeTravelReviewItem<T>(List<T> items, int index) {
+  return List<T>.unmodifiable([...items.take(index), ...items.skip(index + 1)]);
+}
+
 /// EN: Travel Review creation page.
 /// KO: 여행 후기 작성 페이지.
 class TravelReviewCreatePage extends ConsumerStatefulWidget {
@@ -45,7 +67,7 @@ class _TravelReviewCreatePageState
 
   // EN: Selected places for the review
   // KO: 후기에 선택된 장소들
-  final List<PlaceSummary> _selectedPlaces = [];
+  List<PlaceSummary> _selectedPlaces = [];
   final List<LiveEventSummary> _selectedEvents = [];
   final List<FanSubject> _selectedSubjects = [];
 
@@ -91,7 +113,7 @@ class _TravelReviewCreatePageState
     }
     setState(() {
       if (!_selectedPlaces.any((p) => p.id == place.id)) {
-        _selectedPlaces.add(place);
+        _selectedPlaces = appendTravelReviewItem(_selectedPlaces, place);
       }
     });
     if (ref.read(userVisitsControllerProvider).valueOrNull == null) {
@@ -101,15 +123,18 @@ class _TravelReviewCreatePageState
 
   void _removePlace(int index) {
     setState(() {
-      _selectedPlaces.removeAt(index);
+      _selectedPlaces = removeTravelReviewItem(_selectedPlaces, index);
     });
   }
 
   void _reorderPlaces(int oldIndex, int newIndex) {
     HapticFeedback.lightImpact();
     setState(() {
-      final place = _selectedPlaces.removeAt(oldIndex);
-      _selectedPlaces.insert(newIndex, place);
+      _selectedPlaces = reorderTravelReviewItems(
+        _selectedPlaces,
+        oldIndex,
+        newIndex,
+      );
     });
   }
 
@@ -383,7 +408,10 @@ class _TravelReviewCreatePageState
               const SliverPadding(padding: EdgeInsets.only(top: GBTSpacing.sm)),
               SliverReorderableList(
                 itemCount: _selectedPlaces.length,
-                onReorderItem: _reorderPlaces,
+                // EN: Flutter 3.41 stable requires the legacy callback.
+                // KO: Flutter 3.41 stable은 기존 콜백을 필수로 요구합니다.
+                // ignore: deprecated_member_use
+                onReorder: _reorderPlaces,
                 itemBuilder: (context, index) {
                   final place = _selectedPlaces[index];
                   return DecoratedBox(

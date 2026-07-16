@@ -12,6 +12,21 @@ import 'package:girlsbandtabi_app/features/feed/presentation/pages/travel_review
 import 'package:girlsbandtabi_app/features/feed/presentation/pages/travel_review_detail_page.dart';
 
 void main() {
+  test('travel review reorder keeps legacy Flutter index semantics', () {
+    final original = ['A', 'B', 'C'];
+
+    final movedForward = reorderTravelReviewItems(original, 0, 3);
+    final movedBackward = reorderTravelReviewItems(original, 2, 0);
+    final appended = appendTravelReviewItem(movedForward, 'D');
+    final removed = removeTravelReviewItem(appended, 1);
+
+    expect(movedForward, ['B', 'C', 'A']);
+    expect(movedBackward, ['C', 'A', 'B']);
+    expect(appended, ['B', 'C', 'A', 'D']);
+    expect(removed, ['B', 'A', 'D']);
+    expect(original, ['A', 'B', 'C']);
+  });
+
   testWidgets(
     'travel review compose is a field report at 320dp and 200 percent text',
     (tester) async {

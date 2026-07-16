@@ -1,5 +1,13 @@
 # TODO
 
+- Align developer Flutter SDKs with CI Flutter 3.41 (2026-07-16):
+  - CI currently compiles with Flutter 3.41 while this workstation uses 3.32.6,
+    where the reorder callback deprecation direction differs.
+  - Keep the compatibility regression test until every supported environment
+    uses the same stable Flutter release.
+  - Removal criteria: local, CI, Android, and Xcode Cloud builds use one pinned
+    Flutter version and `flutter analyze` passes without compatibility ignores.
+
 - Rotate the Facebook/Instagram credential captured by a local Playwright trace
   if it is still live (2026-07-16):
   - `.playwright-mcp/` is now ignored and was not staged or committed.
