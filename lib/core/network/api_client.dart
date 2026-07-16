@@ -12,6 +12,7 @@ import '../error/failure.dart';
 import '../logging/app_logger.dart';
 import '../security/secure_storage.dart';
 import '../utils/result.dart';
+import 'network_log_sanitizer.dart';
 
 /// EN: API client for making HTTP requests
 /// KO: HTTP 요청을 위한 API 클라이언트
@@ -621,41 +622,27 @@ enum _RefreshOutcome { refreshed, invalidSession, transientFailure }
 /// EN: Logging interceptor for debugging
 /// KO: 디버깅을 위한 로깅 인터셉터
 class _LoggingInterceptor extends Interceptor {
-  Map<String, dynamic>? _sanitizeMap(Map<String, dynamic> data) {
-    final sanitized = <String, dynamic>{};
-    for (final entry in data.entries) {
-      final key = entry.key.toLowerCase();
-      final value = entry.value;
-      if (key.contains('token') ||
-          key.contains('authorization') ||
-          key.contains('access') ||
-          key.contains('refresh')) {
-        sanitized[entry.key] = '***';
-        continue;
-      }
-      sanitized[entry.key] = value;
-    }
-    return sanitized;
-  }
-
-  dynamic _sanitizeData(dynamic data) {
-    if (data is Map<String, dynamic>) {
-      return _sanitizeMap(data);
-    }
-    return data;
-  }
-
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
     final startTime = DateTime.now();
     options.extra['startTime'] = startTime;
 
-    AppLogger.network(options.method, options.uri.toString(), tag: 'Request');
+    AppLogger.network(
+      options.method,
+      sanitizeNetworkLogUri(options.uri).toString(),
+      tag: 'Request',
+    );
     if (options.queryParameters.isNotEmpty) {
-      AppLogger.debug('Query: ${options.queryParameters}', tag: 'Request');
+      AppLogger.debug(
+        'Query: ${sanitizeNetworkLogData(options.queryParameters)}',
+        tag: 'Request',
+      );
     }
     if (options.data != null) {
-      AppLogger.debug('Body: ${_sanitizeData(options.data)}', tag: 'Request');
+      AppLogger.debug(
+        'Body: ${sanitizeNetworkLogData(options.data)}',
+        tag: 'Request',
+      );
     }
 
     handler.next(options);
@@ -670,13 +657,16 @@ class _LoggingInterceptor extends Interceptor {
 
     AppLogger.network(
       response.requestOptions.method,
-      response.requestOptions.uri.toString(),
+      sanitizeNetworkLogUri(response.requestOptions.uri).toString(),
       statusCode: response.statusCode,
       responseTimeMs: responseTime,
       tag: 'Response',
     );
     if (response.data != null) {
-      AppLogger.debug('Body: ${_sanitizeData(response.data)}', tag: 'Response');
+      AppLogger.debug(
+        'Body: ${sanitizeNetworkLogData(response.data)}',
+        tag: 'Response',
+      );
     }
 
     handler.next(response);
@@ -686,13 +676,13 @@ class _LoggingInterceptor extends Interceptor {
   void onError(DioException err, ErrorInterceptorHandler handler) {
     AppLogger.network(
       err.requestOptions.method,
-      err.requestOptions.uri.toString(),
+      sanitizeNetworkLogUri(err.requestOptions.uri).toString(),
       statusCode: err.response?.statusCode,
       tag: 'Error',
     );
     if (err.response?.data != null) {
       AppLogger.debug(
-        'Body: ${_sanitizeData(err.response?.data)}',
+        'Body: ${sanitizeNetworkLogData(err.response?.data)}',
         tag: 'Error',
       );
     }

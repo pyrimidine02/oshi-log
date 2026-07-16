@@ -6,10 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/localization/locale_text.dart';
-import '../../../../core/theme/gbt_colors.dart';
 import '../../../../core/theme/gbt_spacing.dart';
-import '../../../../core/theme/gbt_typography.dart';
 import '../../../../core/widgets/buttons/gbt_button.dart';
+import '../widgets/field_auth_components.dart';
 
 /// EN: Success screen displayed after email verification is completed via deeplink.
 /// KO: 딥링크를 통해 이메일 인증이 완료된 후 표시되는 성공 화면.
@@ -18,8 +17,6 @@ class EmailVerifiedPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -28,58 +25,20 @@ class EmailVerifiedPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // EN: Success icon
-              // KO: 성공 아이콘
-              Center(
-                child: Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? GBTColors.darkSurfaceVariant
-                        : GBTColors.surfaceVariant,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.mark_email_read_outlined,
-                    size: 40,
-                    color: isDark ? GBTColors.darkPrimary : GBTColors.primary,
-                  ),
-                ),
-              ),
-              const SizedBox(height: GBTSpacing.lg),
-
-              // EN: Headline
-              // KO: 헤드라인
-              Text(
-                context.l10n(
+              FieldAuthHeader(
+                eyebrow: 'ACCOUNT VERIFIED',
+                title: context.l10n(
                   ko: '이메일 인증이 완료되었습니다',
                   en: 'Email verified!',
                   ja: 'メール認証が完了しました',
                 ),
-                style: GBTTypography.headlineSmall.copyWith(
-                  color: isDark
-                      ? GBTColors.darkTextPrimary
-                      : GBTColors.textPrimary,
+                subtitle: context.l10n(
+                  ko: '이제 로그인하여 여정을 시작할 수 있어요.',
+                  en: 'You can now sign in and begin your journey.',
+                  ja: 'ログインして旅を始められます。',
                 ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: GBTSpacing.sm),
-
-              // EN: Description
-              // KO: 설명
-              Text(
-                context.l10n(
-                  ko: '이제 로그인하여 서비스를 이용할 수 있습니다.',
-                  en: 'You can now log in and start using the app.',
-                  ja: 'ログインしてサービスをご利用いただけます。',
-                ),
-                style: GBTTypography.bodyMedium.copyWith(
-                  color: isDark
-                      ? GBTColors.darkTextSecondary
-                      : GBTColors.textSecondary,
-                ),
-                textAlign: TextAlign.center,
+                icon: Icons.mark_email_read_outlined,
+                centered: true,
               ),
               const SizedBox(height: GBTSpacing.xl2),
 

@@ -13,8 +13,8 @@ import '../../theme/gbt_typography.dart';
 /// EN: Button variant enumeration
 /// KO: 버튼 변형 열거형
 enum GBTButtonVariant {
-  /// EN: Primary filled button (brand purple)
-  /// KO: 기본 채움 버튼 (브랜드 보라)
+  /// EN: Primary filled button (journey blue)
+  /// KO: 기본 채움 버튼 (여정 블루)
   primary,
 
   /// EN: Secondary outlined button
@@ -208,6 +208,10 @@ class GBTButton extends StatelessWidget {
     final padding = _getPadding();
     final minimumSize = _getMinimumSize();
 
+    // EN: Pill shape (StadiumBorder) across all variants to match the
+    // Journey Ticket button language defined in GBTTheme.
+    // KO: GBTTheme에 정의된 "여정의 티켓" 버튼 언어에 맞춰 모든 변형에
+    // 필(StadiumBorder) 형태를 적용합니다.
     return switch (variant) {
       GBTButtonVariant.primary => ElevatedButton.styleFrom(
         backgroundColor: GBTColors.primary,
@@ -216,20 +220,18 @@ class GBTButton extends StatelessWidget {
         minimumSize: minimumSize,
         textStyle: _getTextStyle(),
         elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
-        ),
+        shape: const StadiumBorder(),
       ),
       GBTButtonVariant.accent => ElevatedButton.styleFrom(
         backgroundColor: GBTColors.accent,
-        foregroundColor: GBTColors.textInverse,
+        foregroundColor: GBTColorValidator.getContrastingTextColor(
+          GBTColors.accent,
+        ),
         padding: padding,
         minimumSize: minimumSize,
         textStyle: _getTextStyle(),
         elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
-        ),
+        shape: const StadiumBorder(),
       ),
       GBTButtonVariant.danger => ElevatedButton.styleFrom(
         backgroundColor: GBTColors.error,
@@ -238,9 +240,7 @@ class GBTButton extends StatelessWidget {
         minimumSize: minimumSize,
         textStyle: _getTextStyle(),
         elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
-        ),
+        shape: const StadiumBorder(),
       ),
       GBTButtonVariant.secondary => OutlinedButton.styleFrom(
         foregroundColor: GBTColors.primary,
@@ -248,18 +248,14 @@ class GBTButton extends StatelessWidget {
         minimumSize: minimumSize,
         side: const BorderSide(color: GBTColors.border),
         textStyle: _getTextStyle(),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
-        ),
+        shape: const StadiumBorder(),
       ),
       GBTButtonVariant.tertiary => TextButton.styleFrom(
         foregroundColor: GBTColors.primary,
         padding: padding,
         minimumSize: minimumSize,
         textStyle: _getTextStyle(),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
-        ),
+        shape: const StadiumBorder(),
       ),
     };
   }
@@ -268,8 +264,10 @@ class GBTButton extends StatelessWidget {
   /// KO: 로딩 인디케이터용 전경색 반환
   Color _getForegroundColor() {
     return switch (variant) {
-      GBTButtonVariant.primary ||
-      GBTButtonVariant.accent ||
+      GBTButtonVariant.primary => GBTColors.textInverse,
+      GBTButtonVariant.accent => GBTColorValidator.getContrastingTextColor(
+        GBTColors.accent,
+      ),
       GBTButtonVariant.danger => GBTColors.textInverse,
       GBTButtonVariant.secondary ||
       GBTButtonVariant.tertiary => GBTColors.primary,

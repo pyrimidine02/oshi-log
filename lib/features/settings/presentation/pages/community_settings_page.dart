@@ -16,8 +16,10 @@ import '../../../../core/utils/sensitive_text_utils.dart';
 import '../../../../core/widgets/common/gbt_image.dart';
 import '../../../../core/widgets/feedback/gbt_loading.dart';
 import '../../../../core/widgets/navigation/gbt_app_bar_icon_button.dart';
+import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
 import '../../../settings/application/settings_controller.dart';
 import '../../../settings/domain/entities/user_profile.dart';
+import '../widgets/field_settings_components.dart';
 
 /// EN: Community settings page.
 /// KO: 커뮤니티 설정 페이지.
@@ -35,14 +37,17 @@ class CommunitySettingsPage extends ConsumerWidget {
     final canAccessAdminOps = profile?.canAccessAdminOps ?? false;
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: gbtStandardAppBar(
+        context,
         leading: GBTAppBarIconButton(
           icon: Icons.arrow_back,
           tooltip: context.l10n(ko: '뒤로 가기', en: 'Back', ja: '戻る'),
           onPressed: () => context.go('/community'),
         ),
-        title: Text(
-          context.l10n(ko: '커뮤니티 설정', en: 'Community Settings', ja: 'コミュニティ設定'),
+        title: context.l10n(
+          ko: '커뮤니티 설정',
+          en: 'Community Settings',
+          ja: 'コミュニティ設定',
         ),
       ),
       body: RefreshIndicator(
@@ -74,7 +79,7 @@ class CommunitySettingsPage extends ConsumerWidget {
               children: [
                 _CommunitySettingsRow(
                   icon: Icons.person_rounded,
-                  iconBgColor: const Color(0xFF3B82F6),
+                  iconBgColor: GBTColors.accentBlue,
                   title: context.l10n(
                     ko: '내 프로필',
                     en: 'My profile',
@@ -92,7 +97,7 @@ class CommunitySettingsPage extends ConsumerWidget {
                 ),
                 _CommunitySettingsRow(
                   icon: Icons.group_rounded,
-                  iconBgColor: const Color(0xFF8B5CF6),
+                  iconBgColor: GBTColors.secondary,
                   title: context.l10n(ko: '팔로워', en: 'Followers', ja: 'フォロワー'),
                   subtitle: context.l10n(
                     ko: '나를 팔로우한 사용자',
@@ -109,7 +114,7 @@ class CommunitySettingsPage extends ConsumerWidget {
                 ),
                 _CommunitySettingsRow(
                   icon: Icons.person_add_alt_1_rounded,
-                  iconBgColor: const Color(0xFF14B8A6),
+                  iconBgColor: GBTColors.accentTeal,
                   title: context.l10n(ko: '팔로잉', en: 'Following', ja: 'フォロー中'),
                   subtitle: context.l10n(
                     ko: '내가 팔로우한 사용자',
@@ -133,7 +138,7 @@ class CommunitySettingsPage extends ConsumerWidget {
               children: [
                 _CommunitySettingsRow(
                   icon: Icons.notifications_active_rounded,
-                  iconBgColor: const Color(0xFFF59E0B),
+                  iconBgColor: GBTColors.warning,
                   title: context.l10n(
                     ko: '알림함',
                     en: 'Notifications inbox',
@@ -151,7 +156,7 @@ class CommunitySettingsPage extends ConsumerWidget {
                 ),
                 _CommunitySettingsRow(
                   icon: Icons.bookmark_rounded,
-                  iconBgColor: const Color(0xFFEF4444),
+                  iconBgColor: GBTColors.favorite,
                   title: context.l10n(
                     ko: '북마크한 글',
                     en: 'Bookmarked posts',
@@ -169,7 +174,7 @@ class CommunitySettingsPage extends ConsumerWidget {
                 ),
                 _CommunitySettingsRow(
                   icon: Icons.edit_note_rounded,
-                  iconBgColor: const Color(0xFF2563EB),
+                  iconBgColor: GBTColors.infoDark,
                   title: context.l10n(
                     ko: '게시글 작성',
                     en: 'Write a post',
@@ -185,7 +190,7 @@ class CommunitySettingsPage extends ConsumerWidget {
                 ),
                 _CommunitySettingsRow(
                   icon: Icons.tune_rounded,
-                  iconBgColor: const Color(0xFF6366F1),
+                  iconBgColor: GBTColors.secondary,
                   title: context.l10n(
                     ko: '알림 설정',
                     en: 'Notification settings',
@@ -214,7 +219,7 @@ class CommunitySettingsPage extends ConsumerWidget {
               children: [
                 _CommunitySettingsRow(
                   icon: Icons.build_circle_rounded,
-                  iconBgColor: const Color(0xFF6366F1),
+                  iconBgColor: GBTColors.secondary,
                   title: context.l10n(
                     ko: '계정 도구',
                     en: 'Account tools',
@@ -233,7 +238,7 @@ class CommunitySettingsPage extends ConsumerWidget {
                 if (canAccessAdminOps)
                   _CommunitySettingsRow(
                     icon: Icons.admin_panel_settings_rounded,
-                    iconBgColor: const Color(0xFF1D4ED8),
+                    iconBgColor: GBTColors.infoDark,
                     title: context.l10n(
                       ko: '운영 센터',
                       en: 'Operations center',
@@ -250,7 +255,7 @@ class CommunitySettingsPage extends ConsumerWidget {
                 else
                   _CommunitySettingsRow(
                     icon: Icons.settings_rounded,
-                    iconBgColor: const Color(0xFF334155),
+                    iconBgColor: GBTColors.textSecondary,
                     title: context.l10n(
                       ko: '전체 설정',
                       en: 'All settings',
@@ -295,16 +300,11 @@ class _CommunityProfileCard extends StatelessWidget {
     final surfaceColor = isDark
         ? GBTColors.darkSurfaceElevated
         : GBTColors.surface;
-    final borderColor = isDark ? GBTColors.darkBorderSubtle : GBTColors.border;
 
     if (!isAuthenticated) {
       return Container(
         padding: const EdgeInsets.all(GBTSpacing.lg),
-        decoration: BoxDecoration(
-          color: surfaceColor,
-          borderRadius: BorderRadius.circular(GBTSpacing.radiusLg),
-          border: Border.all(color: borderColor, width: 0.5),
-        ),
+        color: surfaceColor,
         child: Column(
           children: [
             Text(
@@ -331,20 +331,12 @@ class _CommunityProfileCard extends StatelessWidget {
     return profileState!.when(
       loading: () => Container(
         height: 132,
-        decoration: BoxDecoration(
-          color: surfaceColor,
-          borderRadius: BorderRadius.circular(GBTSpacing.radiusLg),
-          border: Border.all(color: borderColor, width: 0.5),
-        ),
+        color: surfaceColor,
         child: const Center(child: GBTLoading(size: 20)),
       ),
       error: (_, _) => Container(
         padding: const EdgeInsets.all(GBTSpacing.lg),
-        decoration: BoxDecoration(
-          color: surfaceColor,
-          borderRadius: BorderRadius.circular(GBTSpacing.radiusLg),
-          border: Border.all(color: borderColor, width: 0.5),
-        ),
+        color: surfaceColor,
         child: Text(
           context.l10n(
             ko: '프로필 정보를 불러오지 못했습니다',
@@ -363,11 +355,7 @@ class _CommunityProfileCard extends StatelessWidget {
 
         return Container(
           padding: const EdgeInsets.all(GBTSpacing.lg),
-          decoration: BoxDecoration(
-            color: surfaceColor,
-            borderRadius: BorderRadius.circular(GBTSpacing.radiusLg),
-            border: Border.all(color: borderColor, width: 0.5),
-          ),
+          color: surfaceColor,
           child: Column(
             children: [
               Row(
@@ -490,137 +478,36 @@ class _CommunitySettingsGroup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(
-            left: GBTSpacing.sm,
-            bottom: GBTSpacing.xs,
-          ),
-          child: Text(
-            title,
-            style: GBTTypography.labelLarge.copyWith(
-              color: isDark
-                  ? GBTColors.darkTextSecondary
-                  : GBTColors.textSecondary,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-        Container(
-          decoration: BoxDecoration(
-            color: isDark ? GBTColors.darkSurfaceElevated : GBTColors.surface,
-            borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
-            border: Border.all(
-              color: isDark ? GBTColors.darkBorderSubtle : GBTColors.border,
-              width: 0.5,
-            ),
-          ),
-          child: Column(children: children),
-        ),
-      ],
-    );
+    return FieldSettingsSection(title: title, children: children);
   }
 }
 
 class _CommunitySettingsRow extends StatelessWidget {
   const _CommunitySettingsRow({
     required this.icon,
-    required this.iconBgColor,
+    required Color iconBgColor,
     required this.title,
     this.subtitle,
     this.onTap,
     this.enabled = true,
-    this.isLast = false,
+    bool isLast = false,
   });
 
   final IconData icon;
-  final Color iconBgColor;
   final String title;
   final String? subtitle;
   final VoidCallback? onTap;
   final bool enabled;
-  final bool isLast;
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final dividerColor = isDark
-        ? GBTColors.darkBorderSubtle.withValues(alpha: 0.8)
-        : GBTColors.border.withValues(alpha: 0.9);
-    final titleColor = enabled
-        ? (isDark ? GBTColors.darkTextPrimary : GBTColors.textPrimary)
-        : (isDark ? GBTColors.darkTextTertiary : GBTColors.textTertiary);
-    final subtitleColor = enabled
-        ? (isDark ? GBTColors.darkTextSecondary : GBTColors.textSecondary)
-        : (isDark ? GBTColors.darkTextTertiary : GBTColors.textTertiary);
-
     return Opacity(
       opacity: enabled ? 1 : 0.6,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: enabled ? onTap : null,
-          borderRadius: BorderRadius.vertical(
-            bottom: Radius.circular(isLast ? GBTSpacing.radiusMd : 0),
-          ),
-          child: Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: GBTSpacing.md,
-              vertical: GBTSpacing.sm,
-            ),
-            decoration: BoxDecoration(
-              border: isLast
-                  ? null
-                  : Border(bottom: BorderSide(color: dividerColor, width: 0.5)),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: iconBgColor.withValues(alpha: 0.14),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(icon, color: iconBgColor, size: 18),
-                ),
-                const SizedBox(width: GBTSpacing.sm),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: GBTTypography.bodyMedium.copyWith(
-                          color: titleColor,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      if (subtitle != null) ...[
-                        const SizedBox(height: 1),
-                        Text(
-                          subtitle!,
-                          style: GBTTypography.bodySmall.copyWith(
-                            color: subtitleColor,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  size: 20,
-                  color: subtitleColor,
-                ),
-              ],
-            ),
-          ),
-        ),
+      child: FieldSettingsRow(
+        icon: icon,
+        title: title,
+        subtitle: subtitle,
+        onTap: enabled ? onTap : null,
       ),
     );
   }

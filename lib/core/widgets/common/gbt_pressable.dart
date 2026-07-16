@@ -115,7 +115,8 @@ class _GBTPressableState extends State<GBTPressable>
     }
 
     final platform = Theme.of(context).platform;
-    final isApple = platform == TargetPlatform.iOS || platform == TargetPlatform.macOS;
+    final isApple =
+        platform == TargetPlatform.iOS || platform == TargetPlatform.macOS;
 
     Widget animatedChild = ScaleTransition(
       scale: _scaleAnimation,
@@ -123,10 +124,14 @@ class _GBTPressableState extends State<GBTPressable>
     );
 
     if (isApple) {
-      final opacityAnimation = Tween<double>(begin: 1.0, end: 0.5).animate(
-        CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+      final opacityAnimation = Tween<double>(
+        begin: 1.0,
+        end: 0.5,
+      ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+      animatedChild = FadeTransition(
+        opacity: opacityAnimation,
+        child: animatedChild,
       );
-      animatedChild = FadeTransition(opacity: opacityAnimation, child: animatedChild);
     }
 
     return GestureDetector(

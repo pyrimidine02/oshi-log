@@ -115,6 +115,8 @@ class _GuideContent extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(GBTSpacing.pageHorizontal),
       children: [
+        _GuideDocumentHeader(guide: guide),
+        const SizedBox(height: GBTSpacing.lg),
         // EN: Overall guide notes banner
         // KO: 전체 가이드 메모 배너
         if (guide.overallNotes != null) ...[
@@ -124,7 +126,18 @@ class _GuideContent extends StatelessWidget {
               color: isDark
                   ? GBTColors.darkPrimary.withValues(alpha: 0.1)
                   : GBTColors.primary.withValues(alpha: 0.07),
-              borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
+              border: Border(
+                left: BorderSide(
+                  color: isDark ? GBTColors.darkPrimary : GBTColors.primary,
+                  width: 3,
+                ),
+                top: BorderSide(
+                  color: isDark ? GBTColors.darkBorder : GBTColors.border,
+                ),
+                bottom: BorderSide(
+                  color: isDark ? GBTColors.darkBorder : GBTColors.border,
+                ),
+              ),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -151,9 +164,81 @@ class _GuideContent extends StatelessWidget {
           ),
           const SizedBox(height: GBTSpacing.md),
         ],
-        ...guide.sections.map((section) => _SectionCard(section: section)),
+        ...guide.sections.asMap().entries.map(
+          (entry) =>
+              _SectionCard(stepNumber: entry.key + 1, section: entry.value),
+        ),
         const SizedBox(height: GBTSpacing.xl),
       ],
+    );
+  }
+}
+
+/// EN: Indexed document heading for a song's full audience-participation note.
+/// KO: 한 곡의 전체 관객 참여 노트를 위한 인덱스 문서 헤더.
+class _GuideDocumentHeader extends StatelessWidget {
+  const _GuideDocumentHeader({required this.guide});
+
+  final CheerGuide guide;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final meta = <String>[
+      if (guide.artistName?.isNotEmpty == true) guide.artistName!,
+      context.l10n(
+        ko: '${guide.sections.length}개 구간',
+        en: '${guide.sections.length} sections',
+        ja: '${guide.sections.length}セクション',
+      ),
+      if (guide.difficulty != null) '★ ${guide.difficulty}/5',
+    ];
+    return Semantics(
+      header: true,
+      child: Container(
+        padding: const EdgeInsets.only(bottom: GBTSpacing.md),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: isDark ? GBTColors.darkBorder : GBTColors.border,
+            ),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'CALL SHEET / PERFORMANCE NOTE',
+              style: GBTTypography.labelSmall.copyWith(
+                color: isDark ? GBTColors.darkPrimary : GBTColors.primary,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1,
+              ),
+            ),
+            const SizedBox(height: GBTSpacing.xs),
+            Text(
+              guide.songTitle,
+              style: GBTTypography.headlineSmall.copyWith(
+                color: isDark
+                    ? GBTColors.darkTextPrimary
+                    : GBTColors.textPrimary,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            if (meta.isNotEmpty) ...[
+              const SizedBox(height: GBTSpacing.xs),
+              Text(
+                meta.join('  ·  '),
+                style: GBTTypography.bodySmall.copyWith(
+                  color: isDark
+                      ? GBTColors.darkTextSecondary
+                      : GBTColors.textSecondary,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }
@@ -162,24 +247,48 @@ class _GuideContent extends StatelessWidget {
 /// penlight colors.
 /// KO: 가사, 응원 텍스트, 펜라이트 색상을 표시하는 단일 [CheerSection] 카드.
 class _SectionCard extends StatelessWidget {
-  const _SectionCard({required this.section});
+  const _SectionCard({required this.stepNumber, required this.section});
 
+  /// EN: 1-based position of this section within the guide, shown as a
+  /// numbered step badge.
+  /// KO: 가이드 내 이 섹션의 1부터 시작하는 위치이며, 번호가 매겨진
+  /// 스텝 배지로 표시됩니다.
+  final int stepNumber;
   final CheerSection section;
 
-  // EN: Semantic color for each cheer type (light / dark).
-  // KO: 응원 유형별 시맨틱 색상 (라이트 / 다크).
+  // EN: Semantic color for each cheer type (light / dark). Call/response —
+  // the two audience-participation types — map onto the brand's
+  // primary/secondary stage colors; the rest stay neutral/amber.
+  // KO: 응원 유형별 시맨틱 색상 (라이트 / 다크). 관객 참여 유형인
+  // 콜/응답은 브랜드의 primary/secondary 스테이지 색상에 매핑하고,
+  // 나머지는 뉴트럴/앰버를 유지합니다.
   Color _typeColor(CheerType type, bool isDark) {
     return switch (type) {
-      CheerType.call =>
-        isDark ? const Color(0xFF60A5FA) : const Color(0xFF2563EB),
+      CheerType.call => isDark ? GBTColors.darkPrimary : GBTColors.primary,
       CheerType.response =>
-        isDark ? const Color(0xFFA78BFA) : const Color(0xFF7C3AED),
+        isDark ? GBTColors.darkSecondary : GBTColors.secondary,
       CheerType.silence =>
         isDark ? const Color(0xFF9CA3AF) : const Color(0xFF6B7280),
       CheerType.unified =>
         isDark ? const Color(0xFFFBBF24) : const Color(0xFFD97706),
       CheerType.none =>
         isDark ? GBTColors.darkTextTertiary : GBTColors.textTertiary,
+    };
+  }
+
+  // EN: Call-and-response blocks get the design system's dedicated light
+  // fills in light mode (no dark-mode equivalent token exists, so dark
+  // mode falls back to a tinted solid color); other cheer types always
+  // use the tinted fallback.
+  // KO: 콜앤리스폰스 블록은 라이트 모드에서 디자인 시스템의 전용 라이트
+  // 컬러를 사용합니다 (다크 모드 전용 토큰은 없어 다크 모드는 틴트된
+  // solid 색상으로 대체). 그 외 유형은 항상 틴트 폴백을 사용합니다.
+  Color _blockFill(CheerType type, Color typeColor, bool isDark) {
+    if (isDark) return typeColor.withValues(alpha: 0.14);
+    return switch (type) {
+      CheerType.call => GBTColors.primaryLight,
+      CheerType.response => GBTColors.secondaryLight,
+      _ => typeColor.withValues(alpha: 0.08),
     };
   }
 
@@ -199,11 +308,14 @@ class _SectionCard extends StatelessWidget {
     final typeColor = _typeColor(section.cheerType, isDark);
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: GBTSpacing.sm),
+      padding: EdgeInsets.zero,
       child: Container(
         decoration: BoxDecoration(
-          color: isDark ? GBTColors.darkSurface : GBTColors.surface,
-          borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
+          border: Border(
+            bottom: BorderSide(
+              color: isDark ? GBTColors.darkBorder : GBTColors.border,
+            ),
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -219,13 +331,22 @@ class _SectionCard extends StatelessWidget {
                 color: isDark
                     ? GBTColors.darkSurfaceVariant
                     : GBTColors.surfaceVariant,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(GBTSpacing.radiusSm),
-                  topRight: Radius.circular(GBTSpacing.radiusSm),
-                ),
               ),
               child: Row(
                 children: [
+                  // EN: Numbered step badge — gives the guide a clear
+                  // sequential, walk-through feel.
+                  // KO: 번호가 매겨진 스텝 배지 — 가이드에 순차적인
+                  // 워크스루 느낌을 부여합니다.
+                  Text(
+                    stepNumber.toString().padLeft(2, '0'),
+                    style: GBTTypography.labelSmall.copyWith(
+                      color: isDark ? GBTColors.darkPrimary : GBTColors.primary,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                  const SizedBox(width: GBTSpacing.sm),
                   Expanded(
                     child: Text(
                       section.sectionName,
@@ -332,7 +453,7 @@ class _SectionCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(GBTSpacing.sm),
                       decoration: BoxDecoration(
-                        color: typeColor.withValues(alpha: 0.08),
+                        color: _blockFill(section.cheerType, typeColor, isDark),
                         borderRadius: BorderRadius.circular(
                           GBTSpacing.radiusXs,
                         ),
@@ -380,6 +501,6 @@ class _SectionCard extends StatelessWidget {
     if (clean.length == 8) {
       return Color(int.parse(clean, radix: 16));
     }
-    return Colors.grey;
+    return GBTColors.textTertiary;
   }
 }

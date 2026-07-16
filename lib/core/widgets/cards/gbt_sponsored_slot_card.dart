@@ -79,14 +79,14 @@ class GBTSponsoredSlotCard extends StatelessWidget {
       margin: margin,
       decoration: BoxDecoration(
         color: surfaceColor,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(GBTSpacing.radiusLg),
         border: Border.all(color: borderColor, width: 0.6),
       ),
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(GBTSpacing.radiusLg),
         child: InkWell(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(GBTSpacing.radiusLg),
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),

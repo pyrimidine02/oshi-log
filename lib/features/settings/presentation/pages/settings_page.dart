@@ -19,9 +19,11 @@ import '../../../../core/widgets/common/gbt_image.dart';
 import '../../../../core/widgets/dialogs/gbt_adaptive_dialog.dart';
 import '../../../../core/widgets/feedback/gbt_loading.dart';
 import '../../../../core/widgets/navigation/gbt_app_bar_icon_button.dart';
+import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
 import '../../../auth/application/auth_controller.dart';
 import '../../application/settings_controller.dart';
 import '../../domain/entities/user_profile.dart';
+import '../widgets/field_settings_components.dart';
 
 /// EN: Settings page widget with grouped layout and profile hero.
 /// KO: 그룹 레이아웃과 프로필 히어로가 있는 설정 페이지 위젯.
@@ -42,7 +44,8 @@ class SettingsPage extends ConsumerWidget {
     final appVersionState = ref.watch(appVersionProvider);
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: gbtStandardAppBar(
+        context,
         // EN: Explicit back button for settings overlay route
         // KO: 설정 오버레이 라우트를 위한 명시적 뒤로가기 버튼
         leading: GBTAppBarIconButton(
@@ -61,7 +64,7 @@ class SettingsPage extends ConsumerWidget {
             context.go('/home');
           },
         ),
-        title: Text(context.l10n(ko: '설정', en: 'Settings', ja: '設定')),
+        title: context.l10n(ko: '설정', en: 'Settings', ja: '設定'),
       ),
       body: RefreshIndicator(
         onRefresh: () async {
@@ -102,7 +105,9 @@ class SettingsPage extends ConsumerWidget {
                 children: [
                   _SettingsRow(
                     icon: Icons.person_rounded,
-                    iconBgColor: const Color(0xFF8B5CF6),
+                    iconBgColor: isDark
+                        ? GBTColors.darkSecondary
+                        : GBTColors.secondary,
                     title: context.l10n(
                       ko: '프로필 수정',
                       en: 'Edit profile',
@@ -117,7 +122,7 @@ class SettingsPage extends ConsumerWidget {
                   ),
                   _SettingsRow(
                     icon: Icons.palette_rounded,
-                    iconBgColor: const Color(0xFFEC4899),
+                    iconBgColor: GBTColors.favorite,
                     title: context.l10n(
                       ko: '홈 배너 꾸미기',
                       en: 'Customize home banner',
@@ -132,7 +137,9 @@ class SettingsPage extends ConsumerWidget {
                   ),
                   _SettingsRow(
                     icon: Icons.workspace_premium_rounded,
-                    iconBgColor: const Color(0xFF6366F1),
+                    iconBgColor: isDark
+                        ? GBTColors.darkAccent
+                        : GBTColors.accent,
                     title: context.l10n(
                       ko: '칭호 관리',
                       en: 'Manage titles',
@@ -147,7 +154,9 @@ class SettingsPage extends ConsumerWidget {
                   ),
                   _SettingsRow(
                     icon: Icons.lock_outlined,
-                    iconBgColor: const Color(0xFF0EA5E9),
+                    iconBgColor: isDark
+                        ? GBTSemanticColors.darkAccentBlue
+                        : GBTColors.accentBlue,
                     title: context.l10n(
                       ko: '비밀번호 변경',
                       en: 'Change password',
@@ -162,7 +171,7 @@ class SettingsPage extends ConsumerWidget {
                   ),
                   _SettingsRow(
                     icon: Icons.link_rounded,
-                    iconBgColor: const Color(0xFF10B981),
+                    iconBgColor: GBTColors.success,
                     title: context.l10n(
                       ko: '소셜 계정 연결',
                       en: 'Linked social accounts',
@@ -179,7 +188,7 @@ class SettingsPage extends ConsumerWidget {
                   if (canAccessAdminOps)
                     _SettingsRow(
                       icon: Icons.admin_panel_settings_rounded,
-                      iconBgColor: const Color(0xFF1D4ED8),
+                      iconBgColor: GBTColors.infoDark,
                       title: context.l10n(
                         ko: '운영 센터',
                         en: 'Operations center',
@@ -210,7 +219,9 @@ class SettingsPage extends ConsumerWidget {
                 children: [
                   _SettingsRow(
                     icon: Icons.gpp_good_rounded,
-                    iconBgColor: const Color(0xFF0EA5E9),
+                    iconBgColor: isDark
+                        ? GBTSemanticColors.darkAccentBlue
+                        : GBTColors.accentBlue,
                     title: context.l10n(
                       ko: '개인정보 및 권리행사',
                       en: 'Privacy and rights',
@@ -225,7 +236,7 @@ class SettingsPage extends ConsumerWidget {
                   ),
                   _SettingsRow(
                     icon: Icons.fact_check_rounded,
-                    iconBgColor: const Color(0xFF2563EB),
+                    iconBgColor: GBTColors.infoDark,
                     title: context.l10n(
                       ko: '동의 이력',
                       en: 'Consent history',
@@ -300,15 +311,13 @@ class SettingsPage extends ConsumerWidget {
             // KO: 앱 설정 섹션 — 테마, 언어, 알림
             const SizedBox(height: GBTSpacing.lg),
             _SettingsGroup(
-              title: context.l10n(
-                ko: '앱 설정',
-                en: 'App Settings',
-                ja: 'アプリ設定',
-              ),
+              title: context.l10n(ko: '앱 설정', en: 'App Settings', ja: 'アプリ設定'),
               children: [
                 _SettingsRow(
                   icon: Icons.dark_mode_rounded,
-                  iconBgColor: const Color(0xFF6366F1),
+                  iconBgColor: isDark
+                      ? GBTColors.darkSecondary
+                      : GBTColors.secondary,
                   title: context.l10n(ko: '테마', en: 'Theme', ja: 'テーマ'),
                   trailing: Text(
                     _themeLabel(context, themeMode),
@@ -322,7 +331,7 @@ class SettingsPage extends ConsumerWidget {
                 ),
                 _SettingsRow(
                   icon: Icons.language_rounded,
-                  iconBgColor: const Color(0xFF0D9488),
+                  iconBgColor: GBTColors.success,
                   title: context.l10n(ko: '언어', en: 'Language', ja: '言語'),
                   trailing: Text(
                     _languageLabel(context, appLocale),
@@ -338,7 +347,7 @@ class SettingsPage extends ConsumerWidget {
                 if (isAuthenticated)
                   _SettingsRow(
                     icon: Icons.notifications_rounded,
-                    iconBgColor: const Color(0xFFF59E0B),
+                    iconBgColor: GBTColors.warning,
                     title: context.l10n(
                       ko: '알림 설정',
                       en: 'Notification settings',
@@ -363,7 +372,9 @@ class SettingsPage extends ConsumerWidget {
               children: [
                 _SettingsRow(
                   icon: Icons.help_rounded,
-                  iconBgColor: const Color(0xFF3B82F6),
+                  iconBgColor: isDark
+                      ? GBTSemanticColors.darkAccentBlue
+                      : GBTColors.accentBlue,
                   title: context.l10n(ko: '도움말', en: 'Help', ja: 'ヘルプ'),
                   onTap: () => _showComingSoon(
                     context,
@@ -376,7 +387,7 @@ class SettingsPage extends ConsumerWidget {
                 ),
                 _SettingsRow(
                   icon: Icons.feedback_rounded,
-                  iconBgColor: const Color(0xFFEC4899),
+                  iconBgColor: GBTColors.favorite,
                   title: context.l10n(
                     ko: '피드백 보내기',
                     en: 'Send feedback',
@@ -403,33 +414,23 @@ class SettingsPage extends ConsumerWidget {
                 width: double.infinity,
                 child: Semantics(
                   button: true,
-                  label: context.l10n(
-                    ko: '로그아웃',
-                    en: 'Log out',
-                    ja: 'ログアウト',
-                  ),
+                  label: context.l10n(ko: '로그아웃', en: 'Log out', ja: 'ログアウト'),
                   child: OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFFEF4444),
-                      side: const BorderSide(color: Color(0xFFEF4444)),
+                      foregroundColor: GBTColors.error,
+                      side: const BorderSide(color: GBTColors.error),
                       padding: const EdgeInsets.symmetric(
                         vertical: GBTSpacing.sm + 4,
                       ),
                     ),
                     icon: const Icon(Icons.logout_rounded, size: 20),
                     label: Text(
-                      context.l10n(
-                        ko: '로그아웃',
-                        en: 'Log out',
-                        ja: 'ログアウト',
-                      ),
+                      context.l10n(ko: '로그아웃', en: 'Log out', ja: 'ログアウト'),
                     ),
                     onPressed: () async {
                       final confirm = await _showLogoutConfirm(context);
                       if (confirm != true) return;
-                      await ref
-                          .read(authControllerProvider.notifier)
-                          .logout();
+                      await ref.read(authControllerProvider.notifier).logout();
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
@@ -545,16 +546,11 @@ class _ProfileCard extends StatelessWidget {
     final surfaceColor = isDark
         ? GBTColors.darkSurfaceElevated
         : GBTColors.surface;
-    final borderColor = isDark ? GBTColors.darkBorderSubtle : GBTColors.border;
 
     if (!isAuthenticated) {
       return Container(
         padding: const EdgeInsets.all(GBTSpacing.lg),
-        decoration: BoxDecoration(
-          color: surfaceColor,
-          borderRadius: BorderRadius.circular(GBTSpacing.radiusLg),
-          border: Border.all(color: borderColor, width: 0.5),
-        ),
+        color: surfaceColor,
         child: Column(
           children: [
             CircleAvatar(
@@ -628,11 +624,7 @@ class _ProfileCard extends StatelessWidget {
     return profileState?.when(
           loading: () => Container(
             padding: const EdgeInsets.all(GBTSpacing.lg),
-            decoration: BoxDecoration(
-              color: surfaceColor,
-              borderRadius: BorderRadius.circular(GBTSpacing.radiusLg),
-              border: Border.all(color: borderColor, width: 0.5),
-            ),
+            color: surfaceColor,
             child: GBTLoading(
               message: context.l10n(
                 ko: '프로필을 불러오는 중...',
@@ -643,11 +635,7 @@ class _ProfileCard extends StatelessWidget {
           ),
           error: (error, _) => Container(
             padding: const EdgeInsets.all(GBTSpacing.lg),
-            decoration: BoxDecoration(
-              color: surfaceColor,
-              borderRadius: BorderRadius.circular(GBTSpacing.radiusLg),
-              border: Border.all(color: borderColor, width: 0.5),
-            ),
+            color: surfaceColor,
             child: Row(
               children: [
                 CircleAvatar(
@@ -722,12 +710,8 @@ class _ProfileCard extends StatelessWidget {
                 ? GBTColors.darkTextTertiary
                 : GBTColors.textTertiary;
 
-            return Container(
-              decoration: BoxDecoration(
-                color: surfaceColor,
-                borderRadius: BorderRadius.circular(GBTSpacing.radiusLg),
-                border: Border.all(color: borderColor, width: 0.5),
-              ),
+            return ColoredBox(
+              color: surfaceColor,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -859,44 +843,7 @@ class _SettingsGroup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // EN: Section title label
-        // KO: 섹션 제목 라벨
-        Padding(
-          padding: const EdgeInsets.only(
-            left: GBTSpacing.sm,
-            bottom: GBTSpacing.xs,
-          ),
-          child: Text(
-            title,
-            style: GBTTypography.labelSmall.copyWith(
-              color: isDark
-                  ? GBTColors.darkTextTertiary
-                  : GBTColors.textTertiary,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.5,
-            ),
-          ),
-        ),
-        // EN: Card container with rounded corners
-        // KO: 둥근 모서리가 있는 카드 컨테이너
-        Container(
-          decoration: BoxDecoration(
-            color: isDark ? GBTColors.darkSurfaceElevated : GBTColors.surface,
-            borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
-            border: Border.all(
-              color: isDark ? GBTColors.darkBorderSubtle : GBTColors.border,
-              width: 0.5,
-            ),
-          ),
-          child: Column(children: children),
-        ),
-      ],
-    );
+    return FieldSettingsSection(title: title, children: children);
   }
 }
 
@@ -912,8 +859,8 @@ class _SettingsRow extends StatelessWidget {
     required this.onTap,
     this.subtitle,
     this.trailing,
-    this.iconBgColor,
-    this.isLast = false,
+    Color? iconBgColor,
+    bool isLast = false,
   });
 
   final IconData icon;
@@ -921,97 +868,15 @@ class _SettingsRow extends StatelessWidget {
   final String? subtitle;
   final VoidCallback onTap;
   final Widget? trailing;
-  final Color? iconBgColor;
-  final bool isLast;
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final resolvedIconColor =
-        iconBgColor ??
-        (isDark ? GBTColors.darkTextSecondary : GBTColors.textSecondary);
-
-    return Column(
-      children: [
-        Semantics(
-          button: true,
-          label: subtitle != null ? '$title - $subtitle' : title,
-          child: InkWell(
-            onTap: onTap,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: GBTSpacing.md,
-                vertical: GBTSpacing.sm + 4,
-              ),
-              child: Row(
-                children: [
-                  // EN: Icon with colored background (36px)
-                  // KO: 색상 배경이 있는 아이콘 (36px)
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: resolvedIconColor.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
-                    ),
-                    child: Icon(icon, color: resolvedIconColor, size: 20),
-                  ),
-                  const SizedBox(width: GBTSpacing.md),
-                  // EN: Title and optional subtitle
-                  // KO: 제목 및 선택적 부제
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          title,
-                          style: GBTTypography.bodyMedium.copyWith(
-                            color: isDark
-                                ? GBTColors.darkTextPrimary
-                                : GBTColors.textPrimary,
-                          ),
-                        ),
-                        if (subtitle != null) ...[
-                          const SizedBox(height: 1),
-                          Text(
-                            subtitle!,
-                            style: GBTTypography.labelSmall.copyWith(
-                              color: isDark
-                                  ? GBTColors.darkTextTertiary
-                                  : GBTColors.textTertiary,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                  // EN: Trailing widget or chevron
-                  // KO: 트레일링 위젯 또는 쉐브론
-                  trailing ??
-                      Icon(
-                        Icons.chevron_right,
-                        size: 18,
-                        color: isDark
-                            ? GBTColors.darkTextTertiary
-                            : GBTColors.textTertiary,
-                      ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        // EN: Divider between rows (skip for last item)
-        // KO: 행 사이 구분선 (마지막 항목은 건너뛰기)
-        if (!isLast)
-          Divider(
-            height: 1,
-            indent: GBTSpacing.md + 36 + GBTSpacing.md,
-            endIndent: GBTSpacing.md,
-            color: isDark ? GBTColors.darkBorderSubtle : GBTColors.divider,
-          ),
-      ],
+    return FieldSettingsRow(
+      icon: icon,
+      title: title,
+      subtitle: subtitle,
+      trailing: trailing,
+      onTap: onTap,
     );
   }
 }

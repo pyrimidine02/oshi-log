@@ -13,6 +13,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/config/ad_config.dart';
 import '../../../../core/theme/gbt_colors.dart';
+import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/widgets/cards/gbt_sponsored_slot_card.dart';
 import '../../../../core/providers/core_providers.dart';
 import '../../application/ads_controller.dart';
@@ -221,7 +222,10 @@ class _HybridSponsoredSlotState extends ConsumerState<HybridSponsoredSlot> {
       accentColor: widget.fallback.accentColor,
       margin:
           widget.margin ??
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+          const EdgeInsets.symmetric(
+            horizontal: GBTSpacing.pageHorizontal,
+            vertical: GBTSpacing.xs2,
+          ),
       onTap: () {
         if (decisionId != null && decisionId.isNotEmpty) {
           _trackEvent(
@@ -383,8 +387,16 @@ class _AdMobNativeSlotCardState extends State<_AdMobNativeSlotCard> {
     }
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+      margin: const EdgeInsets.symmetric(
+        horizontal: GBTSpacing.pageHorizontal,
+        vertical: GBTSpacing.xs2,
+      ),
       decoration: BoxDecoration(
+        // EN: 14px radius intentionally matches GBTSponsoredSlotCard so the
+        //     native-ad and house-fallback variants of this slot look like
+        //     the same component.
+        // KO: 14px 반지름은 네이티브 광고/하우스 폴백 변형이 같은 컴포넌트로
+        //     보이도록 GBTSponsoredSlotCard와 의도적으로 맞춘 값입니다.
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: Theme.of(context).brightness == Brightness.dark

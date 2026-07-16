@@ -157,6 +157,32 @@ class GBTGreetingHeader extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
+          // EN: Mesh-gradient glows — two soft radial blobs layered over the
+          // base greetingGradient for a liquid-glass depth feel. Cheap
+          // (RadialGradient falloff, no shader/blur) and naturally hidden
+          // once a real background image covers this layer below.
+          // KO: 메시 그라디언트 글로우 — 베이스 greetingGradient 위에 얹는
+          // 두 개의 부드러운 라디얼 블롭으로 리퀴드 글래스 깊이감을 연출합니다.
+          // 저비용(RadialGradient 페이드아웃, 셰이더/블러 없음)이며 실제
+          // 배경 이미지가 있으면 아래 레이어라 자연스럽게 가려집니다.
+          Positioned(
+            top: -50,
+            right: -60,
+            child: _MeshGlow(
+              color: GBTColors.secondaryLight,
+              alpha: isDark ? 0.22 : 0.16,
+              size: 240,
+            ),
+          ),
+          Positioned(
+            bottom: -60,
+            left: -50,
+            child: _MeshGlow(
+              color: GBTColors.accentBlue,
+              alpha: isDark ? 0.26 : 0.18,
+              size: 220,
+            ),
+          ),
           if (resolvedBackgroundUrl != null)
             GBTImage(
               imageUrl: resolvedBackgroundUrl,
@@ -243,6 +269,41 @@ class GBTGreetingHeader extends StatelessWidget {
   }
 }
 
+/// EN: Single soft radial glow circle — a cheap building block for the
+/// header's mesh-gradient depth effect (no blur shader, just gradient falloff).
+/// KO: 부드러운 라디얼 글로우 원 하나 — 헤더의 메시 그라디언트 깊이감 효과를
+/// 위한 저비용 빌딩 블록 (블러 셰이더 없이 그라디언트 페이드아웃만 사용).
+class _MeshGlow extends StatelessWidget {
+  const _MeshGlow({
+    required this.color,
+    required this.alpha,
+    required this.size,
+  });
+
+  final Color color;
+  final double alpha;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: RadialGradient(
+            colors: [
+              color.withValues(alpha: alpha),
+              color.withValues(alpha: 0),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _FeaturedLiveChip extends StatelessWidget {
   const _FeaturedLiveChip({
     required this.title,
@@ -286,9 +347,11 @@ class _FeaturedLiveChip extends StatelessWidget {
                             fit: BoxFit.cover,
                             useShimmer: false,
                           )
-                        : const ColoredBox(
-                            color: Color(0x55222222),
-                            child: Icon(
+                        : ColoredBox(
+                            color: GBTColors.darkSurfaceElevated.withValues(
+                              alpha: 0.55,
+                            ),
+                            child: const Icon(
                               Icons.music_note_rounded,
                               size: 14,
                               color: Colors.white70,

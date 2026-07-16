@@ -24,7 +24,8 @@ import '../../../../core/utils/result.dart';
 import '../../../../core/widgets/common/gbt_action_icons.dart';
 import '../../../../core/widgets/common/gbt_image.dart';
 import '../../../../core/widgets/dialogs/gbt_adaptive_dialog.dart';
-import '../../../../core/widgets/feedback/gbt_loading.dart';
+import '../../../../core/widgets/feedback/gbt_empty_state.dart';
+import '../../../../core/widgets/feedback/gbt_loading.dart' hide GBTEmptyState;
 import '../../../../core/widgets/sheets/gbt_bottom_sheet.dart';
 import '../../../ads/domain/entities/ad_slot_entities.dart';
 import '../../../ads/presentation/widgets/hybrid_sponsored_slot.dart';
@@ -37,9 +38,11 @@ import '../../application/community_moderation_controller.dart';
 import '../../application/feed_controller.dart';
 import '../../application/local_post_bookmarks_controller.dart';
 import '../../application/report_rate_limiter.dart';
+import '../../application/travel_reviews_controller.dart';
 import '../../application/user_follow_list_controller.dart';
 import '../../domain/entities/community_moderation.dart';
 import '../../domain/entities/feed_entities.dart';
+import '../../domain/entities/travel_review.dart';
 import '../models/feed_native_ad_placement.dart';
 import '../../../../core/widgets/navigation/gbt_app_bar_icon_button.dart';
 import '../widgets/community_translation_panel.dart';
@@ -387,7 +390,7 @@ class _ExpandableActionFab extends StatelessWidget {
                   ),
                 ),
         ),
-        FloatingActionButton(
+        FloatingActionButton.extended(
           heroTag: mainHeroTag,
           onPressed: onToggle,
           tooltip: isExpanded
@@ -397,7 +400,12 @@ class _ExpandableActionFab extends StatelessWidget {
                   en: 'Open compose menu',
                   ja: '作成メニューを開く',
                 ),
-          child: Icon(isExpanded ? Icons.close : Icons.edit_outlined),
+          icon: Icon(isExpanded ? Icons.close : Icons.edit_outlined),
+          label: Text(
+            isExpanded
+                ? context.l10n(ko: '닫기', en: 'Close', ja: '閉じる')
+                : context.l10n(ko: '글쓰기', en: 'Write', ja: '書く'),
+          ),
         ),
       ],
     );
@@ -539,6 +547,7 @@ class _FeedSectionState extends ConsumerState<_FeedSection>
   Widget build(BuildContext context) {
     final feedState = ref.watch(communityFeedControllerProvider);
     final notifier = ref.read(communityFeedControllerProvider.notifier);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return SafeArea(
       bottom: false,
@@ -587,51 +596,72 @@ class _FeedSectionState extends ConsumerState<_FeedSection>
               GBTSpacing.md,
               0,
             ),
-            child: SizedBox(
-              height: 44,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                children: [
-                  _FeedModePill(
-                    label: context.l10n(
-                      ko: '추천',
-                      en: 'Recommended',
-                      ja: 'おすすめ',
-                    ),
-                    isSelected: _tab == _FeedTopTab.recommended,
-                    onTap: () => _onTabChanged(_FeedTopTab.recommended),
+            // EN: Sticky-feeling category tab row — translucent tint +
+            //     hairline bottom border (no blur; this row sits above the
+            //     list in normal layout flow rather than a pinned Sliver
+            //     header, so a full glass panel would not overlay content).
+            // KO: 스티키 느낌의 카테고리 탭 행 — 반투명 틴트 + 헤어라인
+            //     하단 보더 (블러 없음; 이 행은 고정 Sliver 헤더가 아니라
+            //     리스트 위 일반 레이아웃 흐름에 위치하므로 완전한 글래스
+            //     패널은 콘텐츠 위에 뜨는 효과를 내지 못합니다).
+            child: Container(
+              decoration: BoxDecoration(
+                color: (isDark ? GBTColors.darkSurface : GBTColors.surface)
+                    .withValues(alpha: 0.6),
+                border: Border(
+                  bottom: BorderSide(
+                    color: (isDark ? GBTColors.darkBorder : GBTColors.border)
+                        .withValues(alpha: 0.5),
+                    width: 0.6,
                   ),
-                  const SizedBox(width: GBTSpacing.xs),
-                  _FeedModePill(
-                    label: context.l10n(
-                      ko: '팔로잉',
-                      en: 'Following',
-                      ja: 'フォロー中',
-                    ),
-                    isSelected: _tab == _FeedTopTab.following,
-                    onTap: () => _onTabChanged(_FeedTopTab.following),
-                  ),
-                  const SizedBox(width: GBTSpacing.xs),
-                  _FeedModePill(
-                    label: context.l10n(
-                      ko: '프로젝트별',
-                      en: 'By Project',
-                      ja: 'プロジェクト別',
-                    ),
-                    isSelected: _tab == _FeedTopTab.project,
-                    onTap: () => _onTabChanged(_FeedTopTab.project),
-                  ),
-                  if (_tab == _FeedTopTab.project) ...[
-                    const SizedBox(width: GBTSpacing.xs),
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 160),
-                      child: ProjectAudienceSelectorCompact(
-                        dense: true,
-                        onProjectSelected: (_) => _onProjectSelected(),
+                ),
+              ),
+              child: SizedBox(
+                height: 44,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    _FeedModePill(
+                      label: context.l10n(
+                        ko: '추천',
+                        en: 'Recommended',
+                        ja: 'おすすめ',
                       ),
+                      isSelected: _tab == _FeedTopTab.recommended,
+                      onTap: () => _onTabChanged(_FeedTopTab.recommended),
                     ),
+                    const SizedBox(width: GBTSpacing.xs),
+                    _FeedModePill(
+                      label: context.l10n(
+                        ko: '팔로잉',
+                        en: 'Following',
+                        ja: 'フォロー中',
+                      ),
+                      isSelected: _tab == _FeedTopTab.following,
+                      onTap: () => _onTabChanged(_FeedTopTab.following),
+                    ),
+                    const SizedBox(width: GBTSpacing.xs),
+                    _FeedModePill(
+                      label: context.l10n(
+                        ko: '프로젝트별',
+                        en: 'By Project',
+                        ja: 'プロジェクト別',
+                      ),
+                      isSelected: _tab == _FeedTopTab.project,
+                      onTap: () => _onTabChanged(_FeedTopTab.project),
+                    ),
+                    if (_tab == _FeedTopTab.project) ...[
+                      const SizedBox(width: GBTSpacing.xs),
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 160),
+                        child: ProjectAudienceSelectorCompact(
+                          dense: true,
+                          onProjectSelected: (_) => _onProjectSelected(),
+                        ),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
           ),
@@ -828,10 +858,16 @@ class _ProjectPostList extends ConsumerWidget {
             children: [
               const SizedBox(height: GBTSpacing.lg),
               GBTEmptyState(
-                message: context.l10n(
+                icon: Icons.article_outlined,
+                title: context.l10n(
                   ko: '이 프로젝트에 아직 게시글이 없습니다',
                   en: 'No posts in this project yet',
                   ja: 'このプロジェクトにはまだ投稿がありません',
+                ),
+                subtitle: context.l10n(
+                  ko: '첫 이야기를 들려주세요!',
+                  en: 'Be the first to share a story!',
+                  ja: '最初のお話を聞かせてください!',
                 ),
               ),
             ],
@@ -1195,52 +1231,57 @@ class _FeedModeTabRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = isDark ? GBTColors.darkPrimary : GBTColors.primary;
-    final tertiaryColor = isDark
-        ? GBTColors.darkTextTertiary
-        : GBTColors.textTertiary;
+    final trackColor = isDark
+        ? GBTColors.darkSurfaceVariant
+        : GBTColors.surfaceVariant;
+    final unselectedColor = isDark
+        ? GBTColors.darkTextSecondary
+        : GBTColors.textSecondary;
 
+    // EN: Segmented pill track — selected mode gets a solid primary fill.
+    // KO: 세그먼트 필 트랙 — 선택된 모드는 프라이머리 색으로 채워집니다.
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: GBTSpacing.md),
-      child: Row(
-        children: _modes.map((mode) {
-          final isSelected = mode == selectedMode;
-          return Padding(
-            padding: const EdgeInsets.only(right: GBTSpacing.lg),
-            child: GestureDetector(
-              onTap: () => onChanged(mode),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  AnimatedDefaultTextStyle(
-                    duration: const Duration(milliseconds: 160),
-                    curve: Curves.easeOutCubic,
+      padding: const EdgeInsets.symmetric(
+        horizontal: GBTSpacing.md,
+        vertical: GBTSpacing.xs,
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(3),
+        decoration: BoxDecoration(
+          color: trackColor,
+          borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
+        ),
+        child: Row(
+          children: _modes.map((mode) {
+            final isSelected = mode == selectedMode;
+            return Expanded(
+              child: GestureDetector(
+                onTap: () => onChanged(mode),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  curve: Curves.easeOutCubic,
+                  padding: const EdgeInsets.symmetric(vertical: GBTSpacing.sm),
+                  decoration: BoxDecoration(
+                    color: isSelected ? primaryColor : Colors.transparent,
+                    borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
+                  ),
+                  child: Text(
+                    _label(context, mode),
+                    textAlign: TextAlign.center,
                     style: GBTTypography.labelMedium.copyWith(
-                      color: isSelected ? primaryColor : tertiaryColor,
+                      color: isSelected
+                          ? GBTColors.textInverse
+                          : unselectedColor,
                       fontWeight: isSelected
                           ? FontWeight.w700
                           : FontWeight.w500,
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: GBTSpacing.sm,
-                      ),
-                      child: Text(_label(context, mode)),
-                    ),
                   ),
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 160),
-                    height: 2,
-                    width: isSelected ? 20.0 : 0.0,
-                    decoration: BoxDecoration(
-                      color: isSelected ? primaryColor : Colors.transparent,
-                      borderRadius: BorderRadius.circular(1),
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
-          );
-        }).toList(),
+            );
+          }).toList(),
+        ),
       ),
     );
   }
@@ -1523,59 +1564,51 @@ class _TravelReviewTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final mockReviews = [
-      {
-        'id': '1',
-        'authorName': '타비매니아',
-        'title': '도쿄 성지순례 1일차 알차게 다녀왔어!',
-        'content':
-            '아침 일찍 도쿄역에 도착하자마자 오다이바 먼저 찍고 아키하바라로 넘어갔는데 일정이 좀 빡셌지만 너무 재밌었어.',
-        'image':
-            'https://storage.googleapis.com/girlsbandtabi/thumbnails/placeholder_map1.webp',
-        'likeCount': 42,
-        'commentCount': 8,
-        'timeAgo': '2시간 전',
-        'places': ['도쿄 타워', '시부야 스크램블 교차로', '오다이바 해변공원'],
-      },
-      {
-        'id': '2',
-        'authorName': '뉴비리뷰어',
-        'title': '3박 4일 일정 공유해봐 (아키하바라 위주)',
-        'content': '이번엔 유명한 애니 성지 위주로만 골라서 가봤는데 너무 좋았어!! 다음엔 다른 지역도 가보고 싶다.',
-        'image':
-            'https://storage.googleapis.com/girlsbandtabi/thumbnails/placeholder_map2.webp',
-        'likeCount': 105,
-        'commentCount': 23,
-        'timeAgo': '1일 전',
-        'places': ['아키하바라', '우에노 공원', '센소지'],
-      },
-      {
-        'id': '3',
-        'authorName': '여행가고싶다',
-        'title': '사진 위주로 올림',
-        'content': '그냥 지나가다 찍은 것들이야. 예쁘더라.',
-        'image':
-            'https://storage.googleapis.com/girlsbandtabi/thumbnails/placeholder_map3.webp',
-        'likeCount': 15,
-        'commentCount': 2,
-        'timeAgo': '3일 전',
-        'places': ['신주쿠 코엔', '도쿄 도청'],
-      },
-    ];
+    final projectCode = ref.watch(selectedProjectKeyProvider)?.trim();
+    if (projectCode == null || projectCode.isEmpty) {
+      return const _TravelReviewListMessage(
+        icon: Icons.folder_off_outlined,
+        message: '여행 후기를 볼 프로젝트를 먼저 선택해주세요.',
+      );
+    }
 
-    return ListView.builder(
-      padding: const EdgeInsets.only(
-        left: GBTSpacing.md,
-        right: GBTSpacing.md,
-        top: GBTSpacing.md,
-        bottom: 80,
+    final reviews = ref.watch(travelReviewsProvider(projectCode));
+    return reviews.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, _) => _TravelReviewListMessage(
+        icon: Icons.cloud_off_rounded,
+        message: '여행 후기를 불러오지 못했어요.',
+        actionLabel: '다시 시도',
+        onAction: () => ref.invalidate(travelReviewsProvider(projectCode)),
       ),
-      itemCount: mockReviews.length,
-      itemBuilder: (context, index) {
-        final review = mockReviews[index];
-        return Padding(
-          padding: const EdgeInsets.only(bottom: GBTSpacing.md),
-          child: _TravelReviewCard(review: review),
+      data: (items) {
+        if (items.isEmpty) {
+          return const _TravelReviewListMessage(
+            icon: Icons.route_outlined,
+            message: '아직 등록된 여행 후기가 없어요.',
+          );
+        }
+        return RefreshIndicator(
+          onRefresh: () async {
+            ref.invalidate(travelReviewsProvider(projectCode));
+            await ref.read(travelReviewsProvider(projectCode).future);
+          },
+          child: ListView.builder(
+            padding: const EdgeInsets.only(
+              left: GBTSpacing.md,
+              right: GBTSpacing.md,
+              top: GBTSpacing.md,
+              bottom: 80,
+            ),
+            itemCount: items.length,
+            itemBuilder: (context, index) => Padding(
+              padding: const EdgeInsets.only(bottom: GBTSpacing.md),
+              child: _TravelReviewCard(
+                projectCode: projectCode,
+                review: items[index],
+              ),
+            ),
+          ),
         );
       },
     );
@@ -1585,22 +1618,28 @@ class _TravelReviewTab extends ConsumerWidget {
 /// EN: Travel review card with modern design — image header, route badges.
 /// KO: 모던 디자인의 여행 후기 카드 — 이미지 헤더, 경로 배지.
 class _TravelReviewCard extends StatelessWidget {
-  const _TravelReviewCard({required this.review});
+  const _TravelReviewCard({required this.projectCode, required this.review});
 
-  final Map<String, dynamic> review;
+  final String projectCode;
+  final TravelReviewSummary review;
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colorScheme = Theme.of(context).colorScheme;
-    final places = review['places'] as List<String>;
-    final likeCount = review['likeCount'] as int;
-    final commentCount = review['commentCount'] as int;
+    final places = review.stops.map((stop) => stop.place.name).toList();
+    final likeCount = review.post.likeCount ?? 0;
+    final commentCount = review.post.commentCount ?? 0;
+    final imageUrl =
+        review.post.thumbnailUrl ??
+        (review.post.imageUrls.isEmpty ? null : review.post.imageUrls.first);
 
     return Container(
       decoration: BoxDecoration(
         color: isDark ? GBTColors.darkSurfaceVariant : GBTColors.surface,
-        borderRadius: BorderRadius.circular(GBTSpacing.radiusLg),
+        // EN: 2026 large-radius card trend.
+        // KO: 2026 라지 라운드 카드 트렌드.
+        borderRadius: BorderRadius.circular(GBTSpacing.radiusCard),
         border: Border.all(
           color: isDark
               ? GBTColors.darkBorderSubtle
@@ -1613,7 +1652,7 @@ class _TravelReviewCard extends StatelessWidget {
         onTap: () {
           context.pushNamed(
             AppRoutes.travelReviewDetail,
-            pathParameters: {'reviewId': review['id'] as String},
+            pathParameters: {'projectCode': projectCode, 'reviewId': review.id},
           );
         },
         child: Column(
@@ -1627,11 +1666,11 @@ class _TravelReviewCard extends StatelessWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  if ((review['image'] as String?)?.isNotEmpty == true)
+                  if (imageUrl?.isNotEmpty == true)
                     GBTImage(
-                      imageUrl: review['image'] as String,
+                      imageUrl: imageUrl!,
                       fit: BoxFit.cover,
-                      semanticLabel: review['title'] as String,
+                      semanticLabel: review.post.title,
                     )
                   else
                     Container(
@@ -1745,7 +1784,7 @@ class _TravelReviewCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    review['title'] as String,
+                    review.post.title,
                     style: GBTTypography.titleSmall.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
@@ -1754,7 +1793,7 @@ class _TravelReviewCard extends StatelessWidget {
                   ),
                   const SizedBox(height: GBTSpacing.xs),
                   Text(
-                    review['content'] as String,
+                    _summaryText(review),
                     style: GBTTypography.bodySmall.copyWith(
                       color: isDark
                           ? GBTColors.darkTextSecondary
@@ -1792,14 +1831,16 @@ class _TravelReviewCard extends StatelessWidget {
                   ),
                   const SizedBox(width: GBTSpacing.xs),
                   Text(
-                    review['authorName'] as String,
+                    review.post.authorName?.trim().isNotEmpty == true
+                        ? review.post.authorName!
+                        : '여행자',
                     style: GBTTypography.labelSmall.copyWith(
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                   const SizedBox(width: GBTSpacing.xs),
                   Text(
-                    review['timeAgo'] as String,
+                    review.post.timeAgoLabel,
                     style: GBTTypography.labelSmall.copyWith(
                       color: isDark
                           ? GBTColors.darkTextTertiary
@@ -1848,6 +1889,51 @@ class _TravelReviewCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _TravelReviewListMessage extends StatelessWidget {
+  const _TravelReviewListMessage({
+    required this.icon,
+    required this.message,
+    this.actionLabel,
+    this.onAction,
+  });
+
+  final IconData icon;
+  final String message;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(GBTSpacing.xl),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 44),
+            const SizedBox(height: GBTSpacing.sm),
+            Text(message, textAlign: TextAlign.center),
+            if (onAction != null && actionLabel != null) ...[
+              const SizedBox(height: GBTSpacing.sm),
+              OutlinedButton(onPressed: onAction, child: Text(actionLabel!)),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+String _summaryText(TravelReviewSummary review) {
+  final routeNote = review.routeNote?.trim();
+  if (routeNote != null && routeNote.isNotEmpty) return routeNote;
+  if (review.post.tags.isNotEmpty) return review.post.tags.join(' · ');
+  final eventCount = review.events.length;
+  return eventCount == 0
+      ? '방문 장소 ${review.stops.length}곳을 이은 여행 기록'
+      : '방문 장소 ${review.stops.length}곳 · 라이브 $eventCount개';
 }
 
 /// EN: Route badge chip with numbered index and place name.
@@ -1997,7 +2083,7 @@ class _CommunityList extends StatelessWidget {
               padding: GBTSpacing.paddingPage,
               children: [
                 const SizedBox(height: GBTSpacing.lg),
-                GBTEmptyState(message: message),
+                GBTEmptyState(icon: Icons.forum_outlined, title: message),
               ],
             );
           }
@@ -2608,20 +2694,12 @@ class _CommunityPostCard extends ConsumerWidget {
                 const SizedBox(height: 12),
                 Text(
                   post.title,
-                  style: GBTTypography.titleLarge.copyWith(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    height: 1.32,
-                  ),
+                  style: GBTTypography.titleLarge.copyWith(height: 1.32),
                 ),
                 CommunityTranslationPanel(
                   contentId: 'post-title:${post.id}',
                   text: post.title,
-                  textStyle: GBTTypography.titleLarge.copyWith(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    height: 1.32,
-                  ),
+                  textStyle: GBTTypography.titleLarge.copyWith(height: 1.32),
                   compact: true,
                 ),
                 if (previewSnippet.isNotEmpty)
@@ -2701,7 +2779,11 @@ class _CommunityPostCard extends ConsumerWidget {
                     padding: const EdgeInsets.only(top: GBTSpacing.sm),
                     child: Container(
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
+                        // EN: 2026 large-radius card trend.
+                        // KO: 2026 라지 라운드 카드 트렌드.
+                        borderRadius: BorderRadius.circular(
+                          GBTSpacing.radiusCard,
+                        ),
                         border: Border.all(
                           color: isDark
                               ? GBTColors.darkBorder.withValues(alpha: 0.6)
@@ -2710,7 +2792,9 @@ class _CommunityPostCard extends ConsumerWidget {
                         ),
                       ),
                       child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(
+                          GBTSpacing.radiusCard,
+                        ),
                         child: ConstrainedBox(
                           // EN: Cap very tall images (e.g. 9:16 portrait) at 480px.
                           // KO: 매우 세로 긴 이미지(9:16 등)를 480px로 제한합니다.

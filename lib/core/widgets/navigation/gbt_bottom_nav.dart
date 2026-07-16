@@ -1,7 +1,6 @@
-/// EN: GBT bottom navigation bar — liquid glass Baemin-style bar with
-///     backdrop blur, rounded top corners matching iPhone screen corner radius.
-/// KO: GBT 하단 네비게이션 바 — 백드롭 블러를 이용한 리퀴드 글라스 배민 스타일 바.
-///     아이폰 화면 곡률에 맞는 상단 둥근 모서리.
+/// EN: GBT bottom navigation — the retained glass silhouette, recolored as a
+///     compact field-notes dock.
+/// KO: GBT 하단 네비게이션 — 기존 유리 실루엣을 유지한 필드 노트 도크.
 library;
 
 import 'dart:ui';
@@ -9,6 +8,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../localization/locale_text.dart';
 import '../../theme/gbt_colors.dart';
 import '../../theme/gbt_spacing.dart';
 import '../../theme/gbt_typography.dart';
@@ -30,12 +30,12 @@ class GBTBottomNavItem {
   final String? semanticLabel;
 }
 
-/// EN: Bottom navigation bar — liquid glass Baemin style.
-///     Full-width, rounded top corners (radius 40 dp ≈ iPhone screen corner),
-///     backdrop blur frosted glass surface, vertical icon-above-label layout.
-/// KO: 하단 네비게이션 바 — 리퀴드 글라스 배민 스타일.
-///     전체 폭, 아이폰 화면 곡률에 맞는 상단 둥근 모서리 (반경 40 dp),
-///     백드롭 블러 반투명 유리 표면, 아이콘-위-라벨 수직 레이아웃.
+/// EN: Bottom navigation bar with the app's retained floating silhouette.
+///     A restrained translucent surface keeps content context visible while
+///     preserving legibility and familiar five-destination navigation.
+/// KO: 앱의 기존 플로팅 실루엣을 유지한 하단 네비게이션 바입니다.
+///     절제된 반투명 표면으로 콘텐츠 맥락과 5개 목적지의 익숙함을
+///     함께 유지합니다.
 class GBTBottomNav extends StatelessWidget {
   const GBTBottomNav({
     super.key,
@@ -66,9 +66,13 @@ class GBTBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final effectiveHeight = GBTSpacing.scaledBottomNavHeight(
+      context,
+      baseHeight: height,
+    );
     final platform = Theme.of(context).platform;
     if (platform == TargetPlatform.android) {
-      return _buildAndroidBottomNav(context);
+      return _buildAndroidBottomNav(context, effectiveHeight);
     }
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -92,14 +96,16 @@ class GBTBottomNav extends StatelessWidget {
         child: BackdropFilter(
           // EN: Blur what's behind the bar — liquid glass core effect.
           // KO: 바 뒤쪽 화면을 블러 처리 — 리퀴드 글라스 핵심 효과.
-          filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
+          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
           child: Container(
             decoration: BoxDecoration(
-              // EN: Semi-transparent fill over the blur.
-              // KO: 블러 위에 반투명 채색.
+              // EN: Semi-transparent fill over the blur — plum-tinted in dark
+              // mode to match the live-house surface tone.
+              // KO: 블러 위에 반투명 채색 — 다크 모드는 라이브하우스 플럼
+              // 표면 톤에 맞춰 틴트.
               color: isDark
-                  ? const Color(0xFF0A0A0A).withValues(alpha: 0.60)
-                  : Colors.white.withValues(alpha: 0.76),
+                  ? GBTColors.darkBackground.withValues(alpha: 0.88)
+                  : GBTColors.surface.withValues(alpha: 0.90),
               // EN: Top glass edge — subtle highlight line.
               // KO: 상단 유리 테두리 — 미세한 하이라이트 선.
               border: Border(
@@ -114,7 +120,7 @@ class GBTBottomNav extends StatelessWidget {
             child: SafeArea(
               top: false,
               child: SizedBox(
-                height: height,
+                height: effectiveHeight,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: List.generate(
@@ -135,7 +141,7 @@ class GBTBottomNav extends StatelessWidget {
     );
   }
 
-  Widget _buildAndroidBottomNav(BuildContext context) {
+  Widget _buildAndroidBottomNav(BuildContext context, double effectiveHeight) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
@@ -159,56 +165,76 @@ class GBTBottomNav extends StatelessWidget {
               ),
             ],
           ),
-          child: Material(
-            color: colorScheme.surface,
-            surfaceTintColor: surfaceTint,
-            shadowColor: shadowColor,
-            elevation: 2,
-            shape: RoundedRectangleBorder(borderRadius: borderRadius),
-            clipBehavior: Clip.antiAlias,
-            child: NavigationBarTheme(
-              data: NavigationBarThemeData(
-                indicatorColor: colorScheme.primary.withValues(alpha: 0.16),
-                labelTextStyle: WidgetStateProperty.resolveWith((states) {
-                  final isSelected = states.contains(WidgetState.selected);
-                  return GBTTypography.labelSmall.copyWith(
-                    color: isSelected
-                        ? colorScheme.primary
-                        : colorScheme.onSurfaceVariant,
-                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                    fontSize: isSelected ? 11 : 10.5,
-                  );
-                }),
-                iconTheme: WidgetStateProperty.resolveWith((states) {
-                  final isSelected = states.contains(WidgetState.selected);
-                  return IconThemeData(
-                    color: isSelected
-                        ? colorScheme.primary
-                        : colorScheme.onSurfaceVariant,
-                    size: isSelected ? 26 : 23,
-                  );
-                }),
-              ),
-              child: NavigationBar(
-                selectedIndex: currentIndex,
-                height: height,
-                labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-                backgroundColor: Colors.transparent,
-                indicatorColor: colorScheme.primary.withValues(alpha: 0.16),
-                onDestinationSelected: (index) {
-                  HapticFeedback.selectionClick();
-                  onTap(index);
-                },
-                destinations: items
-                    .map(
-                      (item) => NavigationDestination(
-                        icon: Icon(item.icon),
-                        selectedIcon: Icon(item.activeIcon),
-                        label: item.label,
-                        tooltip: item.semanticLabel ?? item.label,
-                      ),
-                    )
-                    .toList(growable: false),
+          // EN: ClipRRect + BackdropFilter brings the Android bar closer to
+          // the iOS liquid-glass look above — translucent fill over a
+          // blurred backdrop, rounded floating container — while the
+          // Material inside keeps full NavigationBar ergonomics (ripple,
+          // indicator, a11y).
+          // KO: ClipRRect + BackdropFilter로 위 iOS 리퀴드 글래스 룩에
+          // 가깝게 — 블러 처리된 배경 위에 반투명 채움, 둥근 플로팅
+          // 컨테이너 — Material 내부는 NavigationBar의 리플·인디케이터·
+          // 접근성 등 Material 고유 동작을 그대로 유지합니다.
+          child: ClipRRect(
+            borderRadius: borderRadius,
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+              child: Material(
+                color: colorScheme.surface.withValues(
+                  alpha: isDark ? 0.72 : 0.80,
+                ),
+                surfaceTintColor: surfaceTint,
+                shadowColor: shadowColor,
+                elevation: 2,
+                shape: RoundedRectangleBorder(borderRadius: borderRadius),
+                clipBehavior: Clip.antiAlias,
+                child: NavigationBarTheme(
+                  data: NavigationBarThemeData(
+                    indicatorColor: colorScheme.primary.withValues(alpha: 0.16),
+                    labelTextStyle: WidgetStateProperty.resolveWith((states) {
+                      final isSelected = states.contains(WidgetState.selected);
+                      return GBTTypography.labelSmall.copyWith(
+                        color: isSelected
+                            ? colorScheme.primary
+                            : colorScheme.onSurfaceVariant,
+                        fontWeight: isSelected
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                        fontSize: isSelected ? 11 : 10.5,
+                      );
+                    }),
+                    iconTheme: WidgetStateProperty.resolveWith((states) {
+                      final isSelected = states.contains(WidgetState.selected);
+                      return IconThemeData(
+                        color: isSelected
+                            ? colorScheme.primary
+                            : colorScheme.onSurfaceVariant,
+                        size: isSelected ? 26 : 23,
+                      );
+                    }),
+                  ),
+                  child: NavigationBar(
+                    selectedIndex: currentIndex,
+                    height: effectiveHeight,
+                    labelBehavior:
+                        NavigationDestinationLabelBehavior.alwaysShow,
+                    backgroundColor: Colors.transparent,
+                    indicatorColor: colorScheme.primary.withValues(alpha: 0.16),
+                    onDestinationSelected: (index) {
+                      HapticFeedback.selectionClick();
+                      onTap(index);
+                    },
+                    destinations: items
+                        .map(
+                          (item) => NavigationDestination(
+                            icon: Icon(item.icon),
+                            selectedIcon: Icon(item.activeIcon),
+                            label: item.label,
+                            tooltip: item.semanticLabel ?? item.label,
+                          ),
+                        )
+                        .toList(growable: false),
+                  ),
+                ),
               ),
             ),
           ),
@@ -218,8 +244,8 @@ class GBTBottomNav extends StatelessWidget {
   }
 }
 
-/// EN: Individual bottom nav item — vertical icon + label layout (Baemin style).
-/// KO: 개별 하단 네비 아이템 — 수직 아이콘 + 라벨 레이아웃 (배민 스타일).
+/// EN: Individual bottom navigation destination with a compact vertical layout.
+/// KO: 간결한 수직 레이아웃의 개별 하단 네비게이션 목적지입니다.
 class _BottomNavItem extends StatelessWidget {
   const _BottomNavItem({
     required this.item,
@@ -236,18 +262,27 @@ class _BottomNavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final selectedColor = isDark ? GBTColors.darkPrimary : GBTColors.primary;
-    // EN: On glass bg unselected items use a slightly stronger neutral for legibility.
-    // KO: 유리 배경에서 미선택 아이템은 가독성을 위해 약간 더 강한 중립색 사용.
+    final motionDuration = MediaQuery.disableAnimationsOf(context)
+        ? Duration.zero
+        : GBTAnimations.fast;
+    // EN: Keep inactive destinations comfortably legible on translucent surfaces.
+    // KO: 반투명 표면에서도 비활성 목적지를 편안하게 읽을 수 있게 유지합니다.
     final unselectedColor = isDark
-        ? Colors.white.withValues(alpha: 0.45)
-        : Colors.black.withValues(alpha: 0.38);
+        ? GBTColors.darkTextSecondary
+        : GBTColors.textSecondary;
     final iconColor = isSelected ? selectedColor : unselectedColor;
     final labelColor = isSelected ? selectedColor : unselectedColor;
 
     return Expanded(
       child: Semantics(
         label: item.semanticLabel ?? item.label,
-        hint: isSelected ? null : '탭하면 ${item.label} 탭으로 이동합니다',
+        hint: isSelected
+            ? null
+            : context.l10n(
+                ko: '탭하면 ${item.label} 탭으로 이동합니다',
+                en: 'Tap to open ${item.label}',
+                ja: 'タップして${item.label}を開きます',
+              ),
         button: true,
         selected: isSelected,
         child: InkWell(
@@ -257,35 +292,55 @@ class _BottomNavItem extends StatelessWidget {
           },
           splashColor: Colors.transparent,
           highlightColor: Colors.transparent,
-          child: AnimatedContainer(
-            duration: GBTAnimations.fast,
-            curve: GBTAnimations.defaultCurve,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                AnimatedSwitcher(
-                  duration: GBTAnimations.fast,
-                  child: Icon(
-                    isSelected ? item.activeIcon : item.icon,
-                    key: ValueKey(isSelected),
-                    color: iconColor,
-                    // EN: Slightly larger icon when selected for visual emphasis.
-                    // KO: 선택 시 아이콘 약간 크게 — 시각적 강조.
-                    size: isSelected ? 24 : 22,
+          child: Center(
+            // EN: Soft pill indicator behind icon+label — fades and scales in
+            // when the tab becomes active.
+            // KO: 아이콘+라벨 뒤 소프트 필 인디케이터 — 탭 활성화 시 페이드·스케일.
+            child: AnimatedContainer(
+              duration: motionDuration,
+              curve: GBTAnimations.defaultCurve,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? selectedColor.withValues(alpha: isDark ? 0.20 : 0.13)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  AnimatedScale(
+                    scale: isSelected ? 1.02 : 1.0,
+                    duration: motionDuration,
+                    curve: GBTAnimations.defaultCurve,
+                    child: AnimatedSwitcher(
+                      duration: motionDuration,
+                      child: Icon(
+                        isSelected ? item.activeIcon : item.icon,
+                        key: ValueKey(isSelected),
+                        color: iconColor,
+                        // EN: Slightly larger icon when selected for visual emphasis.
+                        // KO: 선택 시 아이콘 약간 크게 — 시각적 강조.
+                        size: isSelected ? 24 : 22,
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  item.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GBTTypography.labelSmall.copyWith(
-                    color: labelColor,
-                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                    fontSize: 10,
+                  const SizedBox(height: 4),
+                  Text(
+                    item.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GBTTypography.labelSmall.copyWith(
+                      color: labelColor,
+                      fontWeight: isSelected
+                          ? FontWeight.w700
+                          : FontWeight.w500,
+                      fontSize: 11,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

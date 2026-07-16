@@ -1,22 +1,21 @@
-/// EN: Member detail page — character profile + voice actor section (wiki-style).
-/// KO: 멤버 상세 페이지 — 캐릭터 프로필 + 성우 섹션 (위키 스타일).
+/// EN: Member dossier page with profile facts and voice-cast records.
+/// KO: 프로필 사실과 성우 기록을 담는 멤버 기록 페이지입니다.
 library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/router/app_router.dart';
-import '../../../../core/theme/gbt_colors.dart';
-import '../../../../core/theme/gbt_spacing.dart';
-import '../../../../core/theme/gbt_typography.dart';
+import '../../../../core/theme/theme.dart';
 import '../../../../core/utils/date_utils.dart';
-import '../../../../core/utils/palette_utils.dart';
 import '../../../../core/widgets/common/gbt_image.dart';
+import '../../../../core/widgets/layout/gbt_page_header.dart';
+import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
 import '../../../projects/application/projects_controller.dart';
 import '../../../projects/domain/entities/project_entities.dart';
 
-/// EN: Member detail page — shows character card + voice actor section.
-/// KO: 멤버 상세 페이지 — 캐릭터 카드 + 성우 섹션 표시.
+/// EN: Loads the member contract and preserves routed voice-actor navigation.
+/// KO: 멤버 계약을 불러오고 기존 성우 상세 이동을 그대로 유지합니다.
 class MemberDetailPage extends ConsumerWidget {
   const MemberDetailPage({
     super.key,
@@ -49,534 +48,521 @@ class MemberDetailPage extends ConsumerWidget {
           code: unitIdentifier,
           displayName: unitIdentifier,
         );
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final paletteColor = paletteColorFromSeed(member.name);
-    final textPrimary = isDark
-        ? GBTColors.darkTextPrimary
-        : GBTColors.textPrimary;
-    final textSecondary = isDark
-        ? GBTColors.darkTextSecondary
-        : GBTColors.textSecondary;
-    final textTertiary = isDark
-        ? GBTColors.darkTextTertiary
-        : GBTColors.textTertiary;
-    final surfaceColor = isDark ? GBTColors.darkSurface : GBTColors.surface;
-    final surfaceVariant = isDark
-        ? GBTColors.darkSurfaceVariant
-        : GBTColors.surfaceVariant;
-    final borderColor = isDark ? GBTColors.darkBorder : GBTColors.border;
-
-    final hasImage = member.imageUrl != null && member.imageUrl!.isNotEmpty;
-    final initial = member.name.isNotEmpty ? member.name[0] : '?';
-    final voiceActorEntries = member.voiceActors.isNotEmpty
-        ? member.voiceActors
-        : (member.voiceActorName != null && member.voiceActorName!.isNotEmpty
-              ? <VoiceActorRole>[
-                  VoiceActorRole(id: '', displayName: member.voiceActorName!),
-                ]
-              : const <VoiceActorRole>[]);
-    final hasVA = voiceActorEntries.isNotEmpty;
-    final primaryVoiceActorName = hasVA
-        ? voiceActorEntries.first.displayName
-        : null;
-
-    final birthdayDays = daysUntilBirthday(member.birthdate);
 
     return Scaffold(
-      body: CustomScrollView(
+      appBar: gbtStandardAppBar(context, title: '멤버 기록'),
+      body: MemberDossierView(
+        member: member,
+        unit: resolvedUnit,
+        onVoiceActorTap: (actor) => context.goToVoiceActorDetail(
+          actor.id,
+          projectId: projectId,
+          fallbackName: actor.displayName,
+        ),
+      ),
+    );
+  }
+}
+
+/// EN: Displays a member as an editorial field record, not a wiki card.
+/// KO: 멤버를 위키 카드가 아닌 에디토리얼 현장 기록으로 표시합니다.
+class MemberDossierView extends StatelessWidget {
+  const MemberDossierView({
+    super.key,
+    required this.member,
+    required this.unit,
+    required this.onVoiceActorTap,
+  });
+
+  final UnitMember member;
+  final Unit unit;
+  final ValueChanged<VoiceActorRole> onVoiceActorTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final voiceActors = _voiceActorsFor(member);
+    final profileFacts = _profileFactsFor(member);
+    final birthdayDays = daysUntilBirthday(member.birthdate);
+    final metadata = _memberMetadata(member, unit);
+
+    return Material(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
-          // EN: Hero header with character avatar + gradient background.
-          // KO: 캐릭터 아바타 + 그라데이션 배경 히어로 헤더.
-          SliverAppBar(
-            expandedHeight: 240,
-            pinned: true,
-            flexibleSpace: FlexibleSpaceBar(
-              centerTitle: false,
-              titlePadding: const EdgeInsets.fromLTRB(
-                GBTSpacing.pageHorizontal,
-                0,
-                GBTSpacing.pageHorizontal,
-                GBTSpacing.md,
-              ),
-              title: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    member.name,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                      shadows: [Shadow(blurRadius: 4, color: Colors.black38)],
-                    ),
-                  ),
-                  if (hasVA)
-                    Text(
-                      'CV: $primaryVoiceActorName',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white.withValues(alpha: 0.85),
-                        shadows: const [
-                          Shadow(blurRadius: 4, color: Colors.black38),
-                        ],
-                      ),
-                    ),
-                ],
-              ),
-              background: Stack(
-                fit: StackFit.expand,
-                children: [
-                  // EN: Gradient from palette color.
-                  // KO: 팔레트 색상 그라데이션.
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          paletteColor.withValues(alpha: 0.9),
-                          paletteColor.withValues(alpha: 0.6),
-                        ],
-                      ),
-                    ),
-                  ),
-                  // EN: Character avatar centered in header.
-                  // KO: 헤더 중앙 캐릭터 아바타.
-                  Positioned(
-                    top: 56,
-                    left: 0,
-                    right: 0,
-                    child: Center(
-                      child: hasImage
-                          ? GBTImage(
-                              imageUrl: member.imageUrl!,
-                              width: 100,
-                              height: 100,
-                              borderRadius: BorderRadius.circular(50),
-                              fit: BoxFit.cover,
-                              semanticLabel: '${member.name} 캐릭터 이미지',
-                            )
-                          : Container(
-                              width: 100,
-                              height: 100,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.25),
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.5),
-                                  width: 2,
-                                ),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  initial,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 42,
-                                    shadows: [
-                                      Shadow(
-                                        blurRadius: 2,
-                                        color: Colors.black26,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // EN: Character detail section.
-          // KO: 캐릭터 상세 섹션.
           SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(
-                GBTSpacing.pageHorizontal,
-                GBTSpacing.lg,
-                GBTSpacing.pageHorizontal,
-                0,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // EN: Unit badge + character name + tags.
-                  // KO: 유닛 배지 + 캐릭터 이름 + 태그.
-                  Wrap(
-                    spacing: GBTSpacing.xs,
-                    runSpacing: GBTSpacing.xs,
-                    children: [
-                      // EN: Unit label chip.
-                      // KO: 유닛 레이블 칩.
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: GBTSpacing.sm,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: paletteColor.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(
-                            GBTSpacing.radiusFull,
-                          ),
-                          border: Border.all(
-                            color: paletteColor.withValues(alpha: 0.35),
-                          ),
-                        ),
-                        child: Text(
-                          resolvedUnit.displayName,
-                          style: GBTTypography.labelSmall.copyWith(
-                            color: paletteColor,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                      if (member.instrument != null)
-                        _Chip(label: member.instrument!, color: paletteColor),
-                      if (member.role != null &&
-                          member.role != member.instrument)
-                        _Chip(label: member.role!, color: paletteColor),
-                    ],
-                  ),
-
-                  // EN: Birthday countdown info.
-                  // KO: 생일 카운트다운 정보.
-                  if (birthdayDays != null && birthdayDays <= 30) ...[
-                    const SizedBox(height: GBTSpacing.sm),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          birthdayDays == 0
-                              ? '🎂 오늘 생일이에요!'
-                              : '🎂 $birthdayDays일 후 생일',
-                          style: GBTTypography.labelMedium.copyWith(
-                            color: birthdayDays == 0
-                                ? GBTColors.secondary
-                                : birthdayDays <= 7
-                                ? GBTColors.accent
-                                : textSecondary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-
-                  // EN: Character description if available.
-                  // KO: 캐릭터 설명 (있는 경우).
-                  if (member.description != null &&
-                      member.description!.isNotEmpty) ...[
-                    const SizedBox(height: GBTSpacing.md),
-                    Text(
-                      member.description!,
-                      style: GBTTypography.bodyMedium.copyWith(
-                        color: textSecondary,
-                        height: 1.6,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
+            child: GBTPageHeader(
+              eyebrow: 'MEMBER DOSSIER',
+              title: member.name,
+              description: metadata.isEmpty ? null : metadata,
             ),
           ),
-
-          // EN: Profile info table (birthdate, role, etc.)
-          // KO: 프로필 정보 테이블 (생일, 역할 등)
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(
-                GBTSpacing.pageHorizontal,
-                GBTSpacing.lg,
-                GBTSpacing.pageHorizontal,
-                0,
-              ),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: surfaceVariant,
-                  borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
-                ),
-                child: Column(
-                  children: [
-                    if (member.birthdate != null &&
-                        member.birthdate!.isNotEmpty)
-                      _InfoRow(
-                        icon: Icons.cake_outlined,
-                        label: '생일',
-                        value: member.birthdate!,
-                        isDark: isDark,
-                        textPrimary: textPrimary,
-                        textTertiary: textTertiary,
-                        borderColor: borderColor,
-                        showDivider: true,
-                      ),
-                    if (member.instrument != null)
-                      _InfoRow(
-                        icon: Icons.music_note_outlined,
-                        label: '담당',
-                        value: member.instrument!,
-                        isDark: isDark,
-                        textPrimary: textPrimary,
-                        textTertiary: textTertiary,
-                        borderColor: borderColor,
-                        showDivider:
-                            member.role != null &&
-                            member.role != member.instrument,
-                      ),
-                    if (member.role != null && member.role != member.instrument)
-                      _InfoRow(
-                        icon: Icons.badge_outlined,
-                        label: '역할',
-                        value: member.role!,
-                        isDark: isDark,
-                        textPrimary: textPrimary,
-                        textTertiary: textTertiary,
-                        borderColor: borderColor,
-                        showDivider: false,
-                      ),
-                  ],
-                ),
-              ),
+          if (member.imageUrl?.trim().isNotEmpty == true ||
+              member.description?.trim().isNotEmpty == true)
+            SliverToBoxAdapter(child: _MemberIntroduction(member: member)),
+          if (birthdayDays != null && birthdayDays <= 30)
+            SliverToBoxAdapter(child: _BirthdayNote(days: birthdayDays)),
+          const SliverToBoxAdapter(
+            child: _DossierSectionHeader(
+              index: '01',
+              eyebrow: 'PROFILE',
+              title: '인물 기록',
             ),
           ),
-
-          // EN: Voice actor section — only shown when VA name is available.
-          // KO: 성우 섹션 — 성우 이름이 있을 때만 표시.
-          if (hasVA) ...[
-            // EN: VA section header.
-            // KO: 성우 섹션 헤더.
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  GBTSpacing.pageHorizontal,
-                  GBTSpacing.xl,
-                  GBTSpacing.pageHorizontal,
-                  GBTSpacing.sm,
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.mic_rounded, size: 16, color: textSecondary),
-                    const SizedBox(width: GBTSpacing.xs),
-                    Text(
-                      '성우 정보',
-                      style: GBTTypography.labelMedium.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: textSecondary,
-                        letterSpacing: 0.3,
-                      ),
-                    ),
-                  ],
-                ),
+          if (profileFacts.isEmpty)
+            const SliverToBoxAdapter(
+              child: _InlineEmptyNote(text: '아직 등록된 프로필 메모가 없어요.'),
+            )
+          else
+            SliverList.builder(
+              itemCount: profileFacts.length,
+              itemBuilder: (context, index) => _ProfileFactRow(
+                fact: profileFacts[index],
+                isLast: index == profileFacts.length - 1,
               ),
             ),
-
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: GBTSpacing.pageHorizontal,
+          if (voiceActors.isNotEmpty) ...[
+            const SliverToBoxAdapter(
+              child: _DossierSectionHeader(
+                index: '02',
+                eyebrow: 'VOICE CAST',
+                title: '성우 기록',
               ),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate((context, index) {
-                  final actor = voiceActorEntries[index];
-                  final canOpen = actor.id.trim().isNotEmpty;
-                  return Padding(
-                    padding: EdgeInsets.only(
-                      bottom: index == voiceActorEntries.length - 1
-                          ? 0
-                          : GBTSpacing.sm,
-                    ),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
-                      onTap: canOpen
-                          ? () => context.goToVoiceActorDetail(
-                              actor.id,
-                              projectId: projectId,
-                              fallbackName: actor.displayName,
-                            )
-                          : null,
-                      child: Container(
-                        padding: const EdgeInsets.all(GBTSpacing.md),
-                        decoration: BoxDecoration(
-                          color: surfaceColor,
-                          borderRadius: BorderRadius.circular(
-                            GBTSpacing.radiusMd,
-                          ),
-                          border: Border.all(color: borderColor),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 56,
-                              height: 56,
-                              decoration: BoxDecoration(
-                                color: GBTColors.primary.withValues(
-                                  alpha: 0.12,
-                                ),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Center(
-                                child:
-                                    actor.profileImageUrl != null &&
-                                        actor.profileImageUrl!.isNotEmpty
-                                    ? ClipOval(
-                                        child: GBTImage(
-                                          imageUrl: actor.profileImageUrl!,
-                                          width: 56,
-                                          height: 56,
-                                          fit: BoxFit.cover,
-                                        ),
-                                      )
-                                    : Icon(
-                                        Icons.mic_rounded,
-                                        size: 26,
-                                        color: GBTColors.primary.withValues(
-                                          alpha: 0.8,
-                                        ),
-                                      ),
-                              ),
-                            ),
-                            const SizedBox(width: GBTSpacing.md),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    actor.displayName,
-                                    style: GBTTypography.bodyLarge.copyWith(
-                                      fontWeight: FontWeight.w700,
-                                      color: textPrimary,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    actor.roleType?.trim().isNotEmpty == true
-                                        ? '${member.name} · ${actor.roleType}'
-                                        : '${member.name} 담당 성우',
-                                    style: GBTTypography.labelSmall.copyWith(
-                                      color: textTertiary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            if (canOpen)
-                              Icon(
-                                Icons.chevron_right_rounded,
-                                color: textTertiary,
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                }, childCount: voiceActorEntries.length),
-              ),
+            ),
+            SliverList.builder(
+              itemCount: voiceActors.length,
+              itemBuilder: (context, index) {
+                final actor = voiceActors[index];
+                final canOpen = actor.id.trim().isNotEmpty;
+                return _VoiceActorIndexRow(
+                  index: index + 1,
+                  actor: actor,
+                  memberName: member.name,
+                  onTap: canOpen ? () => onVoiceActorTap(actor) : null,
+                );
+              },
             ),
           ],
-
-          const SliverToBoxAdapter(child: SizedBox(height: GBTSpacing.xl2)),
+          const SliverToBoxAdapter(
+            child: SizedBox(height: GBTSpacing.bottomNavClearance),
+          ),
         ],
       ),
     );
   }
 }
 
-/// EN: Info row for the profile table (icon + label + value).
-/// KO: 프로필 테이블 정보 행 (아이콘 + 레이블 + 값).
-class _InfoRow extends StatelessWidget {
-  const _InfoRow({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.isDark,
-    required this.textPrimary,
-    required this.textTertiary,
-    required this.borderColor,
-    required this.showDivider,
-  });
+List<VoiceActorRole> _voiceActorsFor(UnitMember member) {
+  if (member.voiceActors.isNotEmpty) {
+    return List<VoiceActorRole>.unmodifiable(member.voiceActors);
+  }
+  final fallbackName = member.voiceActorName?.trim();
+  if (fallbackName == null || fallbackName.isEmpty) {
+    return const <VoiceActorRole>[];
+  }
+  return <VoiceActorRole>[VoiceActorRole(id: '', displayName: fallbackName)];
+}
 
-  final IconData icon;
-  final String label;
-  final String value;
-  final bool isDark;
-  final Color textPrimary;
-  final Color textTertiary;
-  final Color borderColor;
-  final bool showDivider;
+String _memberMetadata(UnitMember member, Unit unit) {
+  return <String>[
+    if (unit.displayName.trim().isNotEmpty) unit.displayName.trim(),
+    if (member.characterNameKana?.trim().isNotEmpty == true)
+      member.characterNameKana!.trim(),
+    if (member.isLeader == true) '리더',
+    if (member.isActive == false) '활동 종료',
+  ].join('  ·  ');
+}
+
+List<_ProfileFact> _profileFactsFor(UnitMember member) {
+  return <_ProfileFact>[
+    if (member.birthdate?.trim().isNotEmpty == true)
+      _ProfileFact(label: '생일', value: member.birthdate!.trim()),
+    if (member.hometown?.trim().isNotEmpty == true)
+      _ProfileFact(label: '출신', value: member.hometown!.trim()),
+    if (member.instrument?.trim().isNotEmpty == true)
+      _ProfileFact(label: '담당', value: member.instrument!.trim()),
+    if (member.role?.trim().isNotEmpty == true &&
+        member.role!.trim() != member.instrument?.trim())
+      _ProfileFact(label: '역할', value: member.role!.trim()),
+  ];
+}
+
+/// EN: Compact rectangular portrait and biography block.
+/// KO: 컴팩트한 직사각형 인물 사진과 소개문 블록입니다.
+class _MemberIntroduction extends StatelessWidget {
+  const _MemberIntroduction({required this.member});
+
+  final UnitMember member;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: GBTSpacing.md,
-            vertical: GBTSpacing.sm,
-          ),
-          child: Row(
-            children: [
-              Icon(icon, size: 16, color: textTertiary),
-              const SizedBox(width: GBTSpacing.sm),
-              SizedBox(
-                width: 56,
+    final theme = Theme.of(context);
+    final hasImage = member.imageUrl?.trim().isNotEmpty == true;
+    final description = member.description?.trim();
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        GBTResponsiveSpacing.pageHorizontal(context),
+        GBTSpacing.lg,
+        GBTResponsiveSpacing.pageHorizontal(context),
+        GBTSpacing.sm,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (hasImage)
+            GBTImage(
+              imageUrl: member.imageUrl!.trim(),
+              width: 96,
+              height: 128,
+              borderRadius: BorderRadius.circular(GBTSpacing.radiusXs),
+              fit: BoxFit.cover,
+              semanticLabel: '${member.name} 캐릭터 이미지',
+            ),
+          if (hasImage && description?.isNotEmpty == true)
+            const SizedBox(height: GBTSpacing.md),
+          if (description?.isNotEmpty == true)
+            DecoratedBox(
+              decoration: BoxDecoration(
+                border: Border(
+                  left: BorderSide(color: theme.colorScheme.primary, width: 3),
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.only(left: GBTSpacing.md),
                 child: Text(
-                  label,
-                  style: GBTTypography.labelMedium.copyWith(
-                    color: textTertiary,
+                  description!,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    height: 1.65,
                   ),
                 ),
               ),
-              Expanded(
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// EN: A time-sensitive birthday field note without a decorative pill.
+/// KO: 장식용 필 없이 표시하는 시의성 있는 생일 현장 메모입니다.
+class _BirthdayNote extends StatelessWidget {
+  const _BirthdayNote({required this.days});
+
+  final int days;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final message = days == 0 ? '오늘은 생일이에요.' : '생일까지 $days일 남았어요.';
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        GBTResponsiveSpacing.pageHorizontal(context),
+        GBTSpacing.md,
+        GBTResponsiveSpacing.pageHorizontal(context),
+        0,
+      ),
+      child: Text(
+        message,
+        style: theme.textTheme.labelLarge?.copyWith(
+          color: theme.colorScheme.primary,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+  }
+}
+
+/// EN: Numbered editorial section marker shared within this dossier.
+/// KO: 이 기록 화면 안에서 공유하는 번호형 에디토리얼 섹션 표식입니다.
+class _DossierSectionHeader extends StatelessWidget {
+  const _DossierSectionHeader({
+    required this.index,
+    required this.eyebrow,
+    required this.title,
+  });
+
+  final String index;
+  final String eyebrow;
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        GBTResponsiveSpacing.pageHorizontal(context),
+        GBTSpacing.xl,
+        GBTResponsiveSpacing.pageHorizontal(context),
+        0,
+      ),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          border: Border(
+            top: BorderSide(color: colors.outlineVariant, width: 0.8),
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: GBTSpacing.md),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: GBTSpacing.xl,
                 child: Text(
-                  value,
-                  style: GBTTypography.bodySmall.copyWith(
-                    color: textPrimary,
-                    fontWeight: FontWeight.w500,
+                  index,
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: colors.primary,
+                    fontWeight: FontWeight.w800,
                   ),
+                ),
+              ),
+              const SizedBox(width: GBTSpacing.sm),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      eyebrow,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: colors.primary,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.1,
+                      ),
+                    ),
+                    const SizedBox(height: GBTSpacing.xs2),
+                    Text(
+                      title,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        color: colors.onSurface,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
         ),
-        if (showDivider)
-          Divider(
-            height: 1,
-            indent: GBTSpacing.md,
-            endIndent: GBTSpacing.md,
-            color: borderColor,
-          ),
-      ],
+      ),
     );
   }
 }
 
-/// EN: Compact chip for character attribute tags.
-/// KO: 캐릭터 속성 태그용 컴팩트 칩.
-class _Chip extends StatelessWidget {
-  const _Chip({required this.label, required this.color});
+class _ProfileFact {
+  const _ProfileFact({required this.label, required this.value});
+
   final String label;
-  final Color color;
+  final String value;
+}
+
+/// EN: Borderless definition row for profile facts.
+/// KO: 프로필 사실을 위한 테두리 없는 정의 행입니다.
+class _ProfileFactRow extends StatelessWidget {
+  const _ProfileFactRow({required this.fact, required this.isLast});
+
+  final _ProfileFact fact;
+  final bool isLast;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      constraints: const BoxConstraints(minHeight: GBTSpacing.touchTarget),
+      margin: EdgeInsets.symmetric(
+        horizontal: GBTResponsiveSpacing.pageHorizontal(context),
+      ),
+      padding: const EdgeInsets.symmetric(vertical: GBTSpacing.md),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
+        border: isLast
+            ? null
+            : Border(
+                bottom: BorderSide(color: colors.outlineVariant, width: 0.8),
+              ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 64,
+            child: Text(
+              fact.label,
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: colors.primary,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          const SizedBox(width: GBTSpacing.sm),
+          Expanded(
+            child: Text(
+              fact.value,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colors.onSurface,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// EN: Indexed voice-cast record; navigation is enabled only for real IDs.
+/// KO: 실제 ID가 있을 때만 이동 가능한 인덱스형 성우 기록입니다.
+class _VoiceActorIndexRow extends StatelessWidget {
+  const _VoiceActorIndexRow({
+    required this.index,
+    required this.actor,
+    required this.memberName,
+    required this.onTap,
+  });
+
+  final int index;
+  final VoiceActorRole actor;
+  final String memberName;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final content = _VoiceActorRowContent(
+      index: index,
+      actor: actor,
+      memberName: memberName,
+      canOpen: onTap != null,
+    );
+    if (onTap == null) return content;
+
+    return Semantics(
+      button: true,
+      label: '${actor.displayName}. 성우 상세 보기',
+      child: ExcludeSemantics(
+        child: InkWell(onTap: onTap, child: content),
+      ),
+    );
+  }
+}
+
+class _VoiceActorRowContent extends StatelessWidget {
+  const _VoiceActorRowContent({
+    required this.index,
+    required this.actor,
+    required this.memberName,
+    required this.canOpen,
+  });
+
+  final int index;
+  final VoiceActorRole actor;
+  final String memberName;
+  final bool canOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final hasImage = actor.profileImageUrl?.trim().isNotEmpty == true;
+    final role = actor.roleType?.trim();
+
+    return Container(
+      constraints: const BoxConstraints(minHeight: 72),
+      margin: EdgeInsets.symmetric(
+        horizontal: GBTResponsiveSpacing.pageHorizontal(context),
+      ),
+      padding: const EdgeInsets.symmetric(vertical: GBTSpacing.md),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: colors.outlineVariant, width: 0.8),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: GBTSpacing.xl,
+            child: Text(
+              index.toString().padLeft(2, '0'),
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: colors.primary,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          const SizedBox(width: GBTSpacing.sm),
+          if (hasImage) ...[
+            GBTImage(
+              imageUrl: actor.profileImageUrl!.trim(),
+              width: 48,
+              height: 60,
+              borderRadius: BorderRadius.circular(GBTSpacing.radiusXs),
+              fit: BoxFit.cover,
+              semanticLabel: '${actor.displayName} 성우 이미지',
+            ),
+            const SizedBox(width: GBTSpacing.md),
+          ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  actor.displayName,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: colors.onSurface,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: GBTSpacing.xs),
+                Text(
+                  role?.isNotEmpty == true
+                      ? '$memberName  ·  $role'
+                      : '$memberName 담당 성우',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (canOpen)
+            SizedBox(
+              width: GBTSpacing.touchTarget,
+              height: GBTSpacing.touchTarget,
+              child: Icon(
+                Icons.arrow_forward_rounded,
+                color: colors.onSurfaceVariant,
+                size: GBTSpacing.iconSm,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// EN: Small inline absence note keeps the document rhythm intact.
+/// KO: 작은 인라인 부재 메모로 문서 리듬을 유지합니다.
+class _InlineEmptyNote extends StatelessWidget {
+  const _InlineEmptyNote({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        GBTResponsiveSpacing.pageHorizontal(context),
+        GBTSpacing.sm,
+        GBTResponsiveSpacing.pageHorizontal(context),
+        GBTSpacing.md,
       ),
       child: Text(
-        label,
-        style: GBTTypography.labelSmall.copyWith(
-          color: color,
-          fontWeight: FontWeight.w600,
+        text,
+        style: theme.textTheme.bodyMedium?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
         ),
       ),
     );

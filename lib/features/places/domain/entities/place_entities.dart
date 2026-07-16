@@ -64,6 +64,33 @@ class PlaceSummary {
           : null,
     );
   }
+
+  /// EN: Returns an immutable copy with selected presentation enrichments.
+  /// KO: 선택한 프레젠테이션 보강값을 반영한 불변 복사본을 반환합니다.
+  PlaceSummary copyWith({
+    bool? isVerified,
+    bool? isFavorite,
+    String? distanceLabel,
+  }) {
+    return PlaceSummary(
+      id: id,
+      name: name,
+      address: address,
+      latitude: latitude,
+      longitude: longitude,
+      types: types,
+      tags: tags,
+      imageUrl: imageUrl,
+      distanceLabel: distanceLabel ?? this.distanceLabel,
+      isVerified: isVerified ?? this.isVerified,
+      isFavorite: isFavorite ?? this.isFavorite,
+      rating: rating,
+      regionCode: regionCode,
+      regionName: regionName,
+      regionPath: regionPath,
+      directions: directions,
+    );
+  }
 }
 
 class PlaceDetail {

@@ -31,7 +31,11 @@ import '../../../settings/application/settings_controller.dart';
 /// EN: Live events page widget
 /// KO: 라이브 이벤트 페이지 위젯
 class LiveEventsPage extends ConsumerStatefulWidget {
-  const LiveEventsPage({super.key});
+  const LiveEventsPage({super.key, this.embedded = false});
+
+  /// EN: Omits the standalone app bar inside the Explore workspace.
+  /// KO: 탐방 워크스페이스 내부에서는 독립 앱 바를 생략합니다.
+  final bool embedded;
 
   @override
   ConsumerState<LiveEventsPage> createState() => _LiveEventsPageState();
@@ -98,26 +102,28 @@ class _LiveEventsPageState extends ConsumerState<LiveEventsPage>
         ?.avatarUrl;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          context.l10n(ko: '이벤트', en: 'Events', ja: 'イベント'),
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-        ),
-        actions: [
-          GBTAppBarIconButton(
-            icon: Icons.history_rounded,
-            tooltip: context.l10n(
-              ko: '이벤트 방문 기록',
-              en: 'Event attendance history',
-              ja: 'イベント参加履歴',
+      appBar: widget.embedded
+          ? null
+          : AppBar(
+              title: Text(
+                context.l10n(ko: '이벤트', en: 'Events', ja: 'イベント'),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              actions: [
+                GBTAppBarIconButton(
+                  icon: Icons.history_rounded,
+                  tooltip: context.l10n(
+                    ko: '이벤트 방문 기록',
+                    en: 'Event attendance history',
+                    ja: 'イベント参加履歴',
+                  ),
+                  onPressed: () => context.goToVisitHistory(showLiveTab: true),
+                ),
+                GBTProfileAction(avatarUrl: avatarUrl),
+              ],
             ),
-            onPressed: () => context.goToVisitHistory(showLiveTab: true),
-          ),
-          GBTProfileAction(avatarUrl: avatarUrl),
-        ],
-      ),
       body: Stack(
         children: [
           TabBarView(
@@ -1057,8 +1063,9 @@ class _LiveProjectPickerSheet extends ConsumerWidget {
                       final isSelected =
                           selection.projectKey == key ||
                           selection.projectKey == project.id;
-                      final primaryColor =
-                          Theme.of(context).colorScheme.primary;
+                      final primaryColor = Theme.of(
+                        context,
+                      ).colorScheme.primary;
                       return ListTile(
                         leading: Icon(
                           isSelected
@@ -1108,11 +1115,7 @@ class _LiveUnitPickerSheet extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             _LiveSheetTitleRow(
-              title: context.l10n(
-                ko: '유닛 선택',
-                en: 'Select unit',
-                ja: 'ユニット選択',
-              ),
+              title: context.l10n(ko: '유닛 선택', en: 'Select unit', ja: 'ユニット選択'),
             ),
             const SizedBox(height: GBTSpacing.sm),
             ListTile(
@@ -1147,10 +1150,10 @@ class _LiveUnitPickerSheet extends ConsumerWidget {
                     ),
                     title: Text(label),
                     onTap: () {
-                      final current =
-                          ref.read(selectedLiveBandIdsProvider);
-                      ref.read(selectedLiveBandIdsProvider.notifier).state =
-                          isSelected
+                      final current = ref.read(selectedLiveBandIdsProvider);
+                      ref
+                          .read(selectedLiveBandIdsProvider.notifier)
+                          .state = isSelected
                           ? current.where((id) => id != unit.id).toList()
                           : [...current, unit.id];
                     },

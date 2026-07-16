@@ -18,19 +18,15 @@ OUT="${OUT:-docs/api_probe_results.md}"
 ALLOW_MUTATIONS="${ALLOW_MUTATIONS:-0}"
 
 #
-# EN: Optional defaults (fill locally; do not commit secrets).
-# KO: 선택 입력값 (로컬에서만 채우고, 시크릿은 커밋하지 마세요).
-DEFAULT_ACCESS_TOKEN="eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIyNDM3MDFiYS04NmQ4LTQzNTYtOWMxNy02MzA5NDRlMmVkOGYiLCJpc3MiOiJnaXJsc2JhbmR0YWJpIiwiaWF0IjoxNzY5NjE2NTk3LCJleHAiOjE3Njk2MTc0OTcsInJvbGVzIjpbIkFETUlOIl0sInRva2VuX3R5cGUiOiJhY2Nlc3MifQ.f6a0K9loUHLrlTjusD-uAHmxAXNMJ1-ndcEQ5t4PeBezSyR298GXFZOfYZwolVXf_vDYKDEuhelBqOGXtQLpdQ"
-DEFAULT_LOGIN_EMAIL="admin@pyrimidines.org"
-DEFAULT_LOGIN_PASSWORD="password!"
-
-ACCESS_TOKEN="${ACCESS_TOKEN:-$DEFAULT_ACCESS_TOKEN}"
+# EN: Inject credentials through the environment or the interactive prompt.
+# KO: 자격 증명은 환경 변수 또는 대화형 프롬프트로 주입합니다.
+ACCESS_TOKEN="${ACCESS_TOKEN:-}"
 LOGIN_ENDPOINT="${LOGIN_ENDPOINT:-/api/v1/auth/login}"
 LOGIN_EMAIL_KEY="${LOGIN_EMAIL_KEY:-username}"
 LOGIN_PASSWORD_KEY="${LOGIN_PASSWORD_KEY:-password}"
 
-LOGIN_EMAIL="${LOGIN_EMAIL:-$DEFAULT_LOGIN_EMAIL}"
-LOGIN_PASSWORD="${LOGIN_PASSWORD:-$DEFAULT_LOGIN_PASSWORD}"
+LOGIN_EMAIL="${LOGIN_EMAIL:-}"
+LOGIN_PASSWORD="${LOGIN_PASSWORD:-}"
 PROJECT_ID="${PROJECT_ID:-}"
 PLACE_ID="${PLACE_ID:-}"
 LIVE_EVENT_ID="${LIVE_EVENT_ID:-}"

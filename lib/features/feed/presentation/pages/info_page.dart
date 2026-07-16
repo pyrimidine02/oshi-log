@@ -16,7 +16,8 @@ import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';
 import '../../../../core/utils/palette_utils.dart';
 import '../../../../core/widgets/common/gbt_image.dart';
-import '../../../../core/widgets/feedback/gbt_loading.dart';
+import '../../../../core/widgets/feedback/gbt_empty_state.dart';
+import '../../../../core/widgets/feedback/gbt_loading.dart' hide GBTEmptyState;
 import '../../../../core/widgets/navigation/gbt_profile_action.dart';
 import '../../../music/application/music_controller.dart';
 import '../../../music/presentation/widgets/music_catalog_tab.dart';
@@ -302,7 +303,7 @@ class _NewsTab extends ConsumerWidget {
               const SizedBox(height: GBTSpacing.lg),
               GBTEmptyState(
                 icon: Icons.newspaper_outlined,
-                message: context.l10n(
+                title: context.l10n(
                   ko: '아직 소식이 없어요',
                   en: 'No news yet',
                   ja: 'まだお知らせがありません',
@@ -415,12 +416,7 @@ class _NewsHeroCard extends StatelessWidget {
                           // KO: 텍스트 가독성을 위한 하단 그라데이션 오버레이.
                           const DecoratedBox(
                             decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [Colors.transparent, Color(0xCC000000)],
-                                stops: [0.45, 1.0],
-                              ),
+                              gradient: GBTColors.carouselCardOverlayGradient,
                             ),
                           ),
                           // EN: NEW badge — only shown if published within 72 hours.
@@ -799,7 +795,7 @@ class _UnitsTab extends ConsumerWidget {
           const SizedBox(height: GBTSpacing.lg),
           GBTEmptyState(
             icon: Icons.groups_outlined,
-            message: context.l10n(
+            title: context.l10n(
               ko: '프로젝트를 먼저 선택해주세요',
               en: 'Please select a project first',
               ja: '先にプロジェクトを選択してください',
@@ -844,7 +840,7 @@ class _UnitsTab extends ConsumerWidget {
               const SizedBox(height: GBTSpacing.lg),
               GBTEmptyState(
                 icon: Icons.groups_outlined,
-                message: context.l10n(
+                title: context.l10n(
                   ko: '등록된 유닛이 없습니다',
                   en: 'No units available',
                   ja: '登録されたユニットがありません',
@@ -1035,11 +1031,8 @@ class _UnitAccordionCardState extends ConsumerState<_UnitAccordionCard>
                                     child: Center(
                                       child: Text(
                                         initial,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 20,
-                                        ),
+                                        style: GBTTypography.titleLarge
+                                            .copyWith(color: Colors.white),
                                       ),
                                     ),
                                   ),
@@ -1559,8 +1552,9 @@ class _SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primary = isDark ? GBTColors.darkPrimary : GBTColors.primary;
-    final titleColor =
-        isDark ? GBTColors.darkTextPrimary : GBTColors.textPrimary;
+    final titleColor = isDark
+        ? GBTColors.darkTextPrimary
+        : GBTColors.textPrimary;
     return Row(
       children: [
         Icon(icon, size: 15, color: primary),
@@ -1592,10 +1586,12 @@ class _SectionHeaderWithCount extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primary = isDark ? GBTColors.darkPrimary : GBTColors.primary;
-    final titleColor =
-        isDark ? GBTColors.darkTextPrimary : GBTColors.textPrimary;
-    final metaColor =
-        isDark ? GBTColors.darkTextSecondary : GBTColors.textSecondary;
+    final titleColor = isDark
+        ? GBTColors.darkTextPrimary
+        : GBTColors.textPrimary;
+    final metaColor = isDark
+        ? GBTColors.darkTextSecondary
+        : GBTColors.textSecondary;
     return Row(
       children: [
         Icon(icon, size: 15, color: primary),
@@ -1628,10 +1624,12 @@ class _MoreTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary =
-        isDark ? GBTColors.darkTextPrimary : GBTColors.textPrimary;
-    final textSecondary =
-        isDark ? GBTColors.darkTextSecondary : GBTColors.textSecondary;
+    final textPrimary = isDark
+        ? GBTColors.darkTextPrimary
+        : GBTColors.textPrimary;
+    final textSecondary = isDark
+        ? GBTColors.darkTextSecondary
+        : GBTColors.textSecondary;
 
     final entries = [
       (
@@ -1639,11 +1637,7 @@ class _MoreTab extends StatelessWidget {
         // EN: Pink — matches the celebratory / live cheer theme.
         // KO: 핑크 — 라이브 응원 테마와 어울리는 색상.
         color: isDark ? GBTColors.darkSecondary : GBTColors.secondary,
-        label: context.l10n(
-          ko: '응원가이드',
-          en: 'Cheer Guides',
-          ja: '応援ガイド',
-        ),
+        label: context.l10n(ko: '응원가이드', en: 'Cheer Guides', ja: '応援ガイド'),
         subtitle: context.l10n(
           ko: '이벤트에서 응원하는 법을 알아보세요',
           en: 'Learn how to cheer at events',
@@ -1656,11 +1650,7 @@ class _MoreTab extends StatelessWidget {
         // EN: Amber — warm tone for memorable quotes.
         // KO: 앰버 — 명대사에 어울리는 따뜻한 색상.
         color: isDark ? GBTColors.darkAccent : GBTColors.accent,
-        label: context.l10n(
-          ko: '명대사',
-          en: 'Quotes',
-          ja: '名言・名台詞',
-        ),
+        label: context.l10n(ko: '명대사', en: 'Quotes', ja: '名言・名台詞'),
         subtitle: context.l10n(
           ko: '캐릭터들의 인상적인 대사 모음',
           en: 'Memorable lines from characters',
@@ -1672,7 +1662,9 @@ class _MoreTab extends StatelessWidget {
         icon: Icons.collections_outlined,
         // EN: Teal — collection / completionist feel.
         // KO: 틸 — 컬렉션/도감 완성 느낌의 색상.
-        color: isDark ? const Color(0xFF2DD4BF) : GBTColors.accentTeal,
+        color: isDark
+            ? GBTSemanticColors.darkMetadataDistance
+            : GBTColors.accentTeal,
         label: context.l10n(ko: '도감', en: 'Zukan', ja: '図鑑'),
         subtitle: context.l10n(
           ko: '캐릭터 & 아이템 컬렉션을 확인하세요',
@@ -1710,8 +1702,7 @@ class _MoreTab extends StatelessWidget {
                     height: 44,
                     decoration: BoxDecoration(
                       color: entry.color.withValues(alpha: 0.12),
-                      borderRadius:
-                          BorderRadius.circular(GBTSpacing.radiusSm),
+                      borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
                     ),
                     child: Icon(entry.icon, color: entry.color, size: 22),
                   ),
@@ -1788,8 +1779,7 @@ class _InfoProjectChip extends ConsumerWidget {
         }
         final selected = projects.cast<Project?>().firstWhere(
           (p) =>
-              p?.code == selection.projectKey ||
-              p?.id == selection.projectKey,
+              p?.code == selection.projectKey || p?.id == selection.projectKey,
           orElse: () => projects.first,
         );
         return selected?.name ??
@@ -1916,8 +1906,9 @@ class _InfoProjectPickerSheet extends ConsumerWidget {
                       final isSelected =
                           selection.projectKey == key ||
                           selection.projectKey == project.id;
-                      final primaryColor =
-                          Theme.of(context).colorScheme.primary;
+                      final primaryColor = Theme.of(
+                        context,
+                      ).colorScheme.primary;
                       return ListTile(
                         leading: Icon(
                           isSelected

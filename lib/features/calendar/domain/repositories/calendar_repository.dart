@@ -13,6 +13,6 @@ abstract class CalendarRepository {
   Future<Result<List<CalendarEvent>>> fetchEvents({
     required int year,
     required int month,
-    String? projectId,
+    String? projectKey,
   });
 }

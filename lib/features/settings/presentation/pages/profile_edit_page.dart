@@ -15,16 +15,19 @@ import 'package:path/path.dart' as p;
 
 import '../../../../core/constants/profile_media_constants.dart';
 import '../../../../core/error/failure.dart';
+import '../../../../core/localization/locale_text.dart';
 import '../../../../core/providers/core_providers.dart';
 import '../../../../core/theme/gbt_colors.dart';
 import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';
 import '../../../../core/utils/result.dart';
 import '../../../../core/utils/sensitive_text_utils.dart';
+import '../../../../core/widgets/common/gbt_icon_chip.dart';
 import '../../../../core/widgets/common/gbt_image.dart';
 import '../../../../core/widgets/dialogs/gbt_adaptive_dialog.dart';
 import '../../../../core/widgets/feedback/gbt_loading.dart';
 import '../../../../core/widgets/legal/legal_policy_links_section.dart';
+import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
 import '../../../uploads/application/uploads_controller.dart';
 import '../../../uploads/utils/webp_image_converter.dart';
 import '../../application/settings_controller.dart';
@@ -183,7 +186,10 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
 
     if (!isAuthenticated) {
       return Scaffold(
-        appBar: AppBar(title: const Text('프로필 수정')),
+        appBar: gbtStandardAppBar(
+          context,
+          title: context.l10n(ko: '프로필 수정', en: 'Edit profile', ja: 'プロフィール編集'),
+        ),
         body: _LoginRequired(onLogin: () => context.push('/login')),
       );
     }
@@ -201,8 +207,13 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
       child: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         child: Scaffold(
-          appBar: AppBar(
-            title: const Text('프로필 수정'),
+          appBar: gbtStandardAppBar(
+            context,
+            title: context.l10n(
+              ko: '프로필 수정',
+              en: 'Edit profile',
+              ja: 'プロフィール編集',
+            ),
             actions: [
               Semantics(
                 button: true,
@@ -657,9 +668,9 @@ class _SectionHeader extends StatelessWidget {
       child: Text(
         title,
         style: GBTTypography.labelSmall.copyWith(
-          color: isDark ? GBTColors.darkTextTertiary : GBTColors.textTertiary,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0.5,
+          color: isDark ? GBTColors.darkPrimary : GBTColors.primary,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 1.1,
         ),
       ),
     );
@@ -678,15 +689,8 @@ class _SectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? GBTColors.darkSurfaceElevated : GBTColors.surface,
-        borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
-        border: Border.all(
-          color: isDark ? GBTColors.darkBorderSubtle : GBTColors.border,
-          width: 0.5,
-        ),
-      ),
+    return Material(
+      color: isDark ? GBTColors.darkSurface : GBTColors.surface,
       child: child,
     );
   }
@@ -780,10 +784,7 @@ class _CoverTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasImage = coverUrl != null && coverUrl!.isNotEmpty;
-    const topRadius = BorderRadius.only(
-      topLeft: Radius.circular(GBTSpacing.radiusMd),
-      topRight: Radius.circular(GBTSpacing.radiusMd),
-    );
+    const topRadius = BorderRadius.zero;
 
     return GestureDetector(
       onTap: onTap,
@@ -794,8 +795,8 @@ class _CoverTile extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // EN: Cover image or placeholder gradient
-              // KO: 커버 이미지 또는 플레이스홀더 그라디언트
+              // EN: Cover image or a quiet paper-toned placeholder.
+              // KO: 커버 이미지 또는 차분한 종이톤 플레이스홀더.
               if (hasImage)
                 GBTImage(
                   imageUrl: coverUrl!,
@@ -805,43 +806,31 @@ class _CoverTile extends StatelessWidget {
                   semanticLabel: '배경 이미지',
                 )
               else
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: isDark
-                          ? [
-                              GBTColors.darkSurfaceVariant,
-                              GBTColors.darkSurfaceElevated,
-                            ]
-                          : [
-                              GBTColors.surfaceVariant,
-                              GBTColors.surfaceAlternate,
-                            ],
-                    ),
-                  ),
+                ColoredBox(
+                  color: isDark
+                      ? GBTColors.darkSurfaceVariant
+                      : GBTColors.surfaceVariant,
                 ),
 
               // EN: Overlay with camera chip — always visible, not distracting
               // KO: 카메라 칩 오버레이 — 항상 노출, 시각적으로 방해되지 않게
               if (!isUploading)
                 Container(
-                  color: Colors.black.withValues(alpha: 0.18),
+                  color: GBTColors.overlay.withValues(alpha: 0.18),
                   child: Center(
                     child: _CameraChip(label: hasImage ? '배경 변경' : '배경 추가'),
                   ),
                 )
               else
                 Container(
-                  color: Colors.black.withValues(alpha: 0.45),
+                  color: GBTColors.overlay.withValues(alpha: 0.45),
                   child: const Center(
                     child: SizedBox(
                       width: 28,
                       height: 28,
                       child: CircularProgressIndicator(
                         strokeWidth: 2.5,
-                        color: Colors.white,
+                        color: GBTColors.textInverse,
                       ),
                     ),
                   ),
@@ -880,18 +869,22 @@ class _CameraChip extends StatelessWidget {
         vertical: GBTSpacing.xs,
       ),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.52),
+        color: GBTColors.overlay.withValues(alpha: 0.52),
         borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.camera_alt_rounded, size: 13, color: Colors.white),
+          const Icon(
+            Icons.camera_alt_rounded,
+            size: 13,
+            color: GBTColors.textInverse,
+          ),
           const SizedBox(width: GBTSpacing.xxs + 1),
           Text(
             label,
             style: GBTTypography.labelSmall.copyWith(
-              color: Colors.white,
+              color: GBTColors.textInverse,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -983,7 +976,7 @@ class _AvatarTile extends StatelessWidget {
                     Positioned.fill(
                       child: Container(
                         decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.4),
+                          color: GBTColors.overlay.withValues(alpha: 0.4),
                           shape: BoxShape.circle,
                         ),
                         child: const Center(
@@ -992,7 +985,7 @@ class _AvatarTile extends StatelessWidget {
                             height: 18,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: Colors.white,
+                              color: GBTColors.textInverse,
                             ),
                           ),
                         ),
@@ -1200,7 +1193,7 @@ class _AccountInfoCard extends StatelessWidget {
         children: [
           _AccountInfoRow(
             icon: Icons.mail_outline_rounded,
-            iconBgColor: const Color(0xFF3B82F6),
+            iconBgColor: GBTColors.accentBlue,
             label: '이메일',
             value: maskEmail(profile.email),
             isDark: isDark,
@@ -1213,7 +1206,7 @@ class _AccountInfoCard extends StatelessWidget {
           ),
           _AccountInfoRow(
             icon: Icons.verified_user_outlined,
-            iconBgColor: const Color(0xFF10B981),
+            iconBgColor: GBTColors.success,
             label: '권한',
             value:
                 '${profile.accountRole} · ${profile.effectiveAccessLevelLabel}',
@@ -1263,17 +1256,9 @@ class _AccountInfoRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // EN: Colored icon container — same as _SettingsRow 36x36
-          // KO: 컬러 아이콘 컨테이너 — _SettingsRow 36x36과 동일
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: iconBgColor.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
-            ),
-            child: Icon(icon, color: iconBgColor, size: 20),
-          ),
+          // EN: Gradient icon chip — same as _SettingsRow 36x36
+          // KO: 그라디언트 아이콘 칩 — _SettingsRow 36x36과 동일
+          GBTIconChip(icon: icon, color: iconBgColor, size: 36),
           const SizedBox(width: GBTSpacing.md),
           // EN: Label
           // KO: 라벨
@@ -1401,8 +1386,8 @@ class _AndroidInAppCropDialogState extends State<_AndroidInAppCropDialog> {
                     interactive: true,
                     fixCropRect: true,
                     radius: GBTSpacing.radiusSm,
-                    baseColor: Colors.black,
-                    maskColor: Colors.black.withValues(alpha: 0.55),
+                    baseColor: GBTColors.overlay,
+                    maskColor: GBTColors.overlay.withValues(alpha: 0.55),
                     onStatusChanged: (status) {
                       if (!mounted) return;
                       if (status != CropStatus.cropping && _isCropping) {

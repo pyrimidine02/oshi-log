@@ -2,6 +2,7 @@
 /// KO: 색상, 타이포그래피, 간격을 통합하는 GBT 테마 구성
 library;
 
+import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -114,11 +115,11 @@ class GBTTheme {
     onPrimary: GBTColors.textInverse,
     primaryContainer: GBTColors.primaryLight,
     onPrimaryContainer: GBTColors.textPrimary,
-    // EN: Secondary mapped to neutral for default usage; pink reserved for explicit use.
-    // KO: Secondary는 기본 사용시 뉴트럴로 매핑; 핑크는 명시적 사용 시에만.
-    secondary: GBTColors.textSecondary,
+    // EN: Harbor teal distinguishes places and travel metadata.
+    // KO: 하버 틸로 장소와 여행 메타데이터를 구분합니다.
+    secondary: GBTColors.secondary,
     onSecondary: GBTColors.textInverse,
-    secondaryContainer: GBTColors.surfaceVariant,
+    secondaryContainer: GBTColors.secondaryLight,
     onSecondaryContainer: GBTColors.textPrimary,
     tertiary: GBTColors.accent,
     onTertiary: GBTColors.textPrimary,
@@ -138,13 +139,13 @@ class GBTTheme {
     brightness: Brightness.dark,
     primary: GBTColors.darkPrimary,
     onPrimary: GBTColors.darkBackground,
-    primaryContainer: GBTColors.darkSurfaceElevated,
+    primaryContainer: GBTColors.darkPrimaryContainer,
     onPrimaryContainer: GBTColors.darkTextPrimary,
-    // EN: Secondary neutral for dark mode.
-    // KO: 다크 모드용 뉴트럴 Secondary.
-    secondary: GBTColors.darkTextSecondary,
+    // EN: Night-travel teal remains distinct from the blue primary.
+    // KO: 야간 여행 틸은 블루 기본색과 구분됩니다.
+    secondary: GBTColors.darkSecondary,
     onSecondary: GBTColors.darkBackground,
-    secondaryContainer: GBTColors.darkSurfaceVariant,
+    secondaryContainer: GBTColors.darkSurfaceElevated,
     onSecondaryContainer: GBTColors.darkTextPrimary,
     tertiary: GBTColors.darkAccent,
     onTertiary: GBTColors.darkBackground,
@@ -256,13 +257,13 @@ class GBTTheme {
     backgroundColor: GBTColors.appBackground,
     foregroundColor: GBTColors.textPrimary,
     elevation: 0,
-    scrolledUnderElevation: 0.5,
+    scrolledUnderElevation: 0,
     surfaceTintColor: Colors.transparent,
     toolbarHeight: GBTSpacing.appBarHeight,
     centerTitle: true,
     titleTextStyle: GBTTypography.titleMedium.copyWith(
       color: GBTColors.textPrimary,
-      fontWeight: FontWeight.w600,
+      fontWeight: FontWeight.w700,
     ),
     iconTheme: const IconThemeData(
       color: GBTColors.textPrimary,
@@ -275,13 +276,13 @@ class GBTTheme {
     backgroundColor: GBTColors.darkAppBackground,
     foregroundColor: GBTColors.darkTextPrimary,
     elevation: 0,
-    scrolledUnderElevation: 0.5,
+    scrolledUnderElevation: 0,
     surfaceTintColor: Colors.transparent,
     toolbarHeight: GBTSpacing.appBarHeight,
     centerTitle: true,
     titleTextStyle: GBTTypography.titleMedium.copyWith(
       color: GBTColors.darkTextPrimary,
-      fontWeight: FontWeight.w600,
+      fontWeight: FontWeight.w700,
     ),
     iconTheme: const IconThemeData(
       color: GBTColors.darkTextPrimary,
@@ -329,7 +330,7 @@ class GBTTheme {
     elevation: 0,
     surfaceTintColor: Colors.transparent,
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(GBTSpacing.radiusLg),
+      borderRadius: BorderRadius.circular(GBTSpacing.radiusCard),
       side: BorderSide(color: GBTColors.border.withValues(alpha: 0.5)),
     ),
     margin: EdgeInsets.zero,
@@ -340,7 +341,7 @@ class GBTTheme {
     elevation: 0,
     surfaceTintColor: Colors.transparent,
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(GBTSpacing.radiusLg),
+      borderRadius: BorderRadius.circular(GBTSpacing.radiusCard),
       side: const BorderSide(color: GBTColors.darkBorderSubtle, width: 0.5),
     ),
     margin: EdgeInsets.zero,
@@ -361,9 +362,7 @@ class GBTTheme {
             vertical: GBTSpacing.md,
           ),
           minimumSize: const Size(120, GBTSpacing.touchTarget),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
-          ),
+          shape: const StadiumBorder(),
           textStyle: GBTTypography.button,
         ),
       );
@@ -379,9 +378,7 @@ class GBTTheme {
             vertical: GBTSpacing.md,
           ),
           minimumSize: const Size(120, GBTSpacing.touchTarget),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
-          ),
+          shape: const StadiumBorder(),
           textStyle: GBTTypography.button,
         ),
       );
@@ -391,9 +388,7 @@ class GBTTheme {
       backgroundColor: GBTColors.primary,
       foregroundColor: GBTColors.textInverse,
       minimumSize: const Size(120, GBTSpacing.touchTarget),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
-      ),
+      shape: const StadiumBorder(),
       textStyle: GBTTypography.button,
     ),
   );
@@ -404,9 +399,7 @@ class GBTTheme {
           backgroundColor: GBTColors.darkPrimary,
           foregroundColor: GBTColors.darkBackground,
           minimumSize: const Size(120, GBTSpacing.touchTarget),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
-          ),
+          shape: const StadiumBorder(),
           textStyle: GBTTypography.button,
         ),
       );
@@ -420,9 +413,7 @@ class GBTTheme {
             vertical: GBTSpacing.md,
           ),
           minimumSize: const Size(120, GBTSpacing.touchTarget),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
-          ),
+          shape: const StadiumBorder(),
           side: const BorderSide(color: GBTColors.border),
           textStyle: GBTTypography.button,
         ),
@@ -437,9 +428,7 @@ class GBTTheme {
             vertical: GBTSpacing.md,
           ),
           minimumSize: const Size(120, GBTSpacing.touchTarget),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
-          ),
+          shape: const StadiumBorder(),
           side: const BorderSide(color: GBTColors.darkBorder),
           textStyle: GBTTypography.button,
         ),
@@ -706,7 +695,7 @@ class GBTTheme {
     dragHandleColor: GBTColors.textTertiary,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(
-        top: Radius.circular(GBTSpacing.radiusLg),
+        top: Radius.circular(GBTSpacing.radiusXl),
       ),
     ),
     elevation: GBTSpacing.elevationLg,
@@ -719,7 +708,7 @@ class GBTTheme {
     dragHandleColor: GBTColors.darkTextTertiary,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(
-        top: Radius.circular(GBTSpacing.radiusLg),
+        top: Radius.circular(GBTSpacing.radiusXl),
       ),
     ),
     elevation: GBTSpacing.elevationLg,

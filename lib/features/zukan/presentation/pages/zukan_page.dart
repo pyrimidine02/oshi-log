@@ -1,5 +1,7 @@
-/// EN: Zukan collections list page.
-/// KO: 도감 컬렉션 목록 페이지.
+/// EN: Zukan collections list page — a stamp-collection shelf with an
+/// overall completion meter and a grid of collectible ticket stamps.
+/// KO: 도감 컬렉션 목록 페이지 — 전체 완료도 미터와 수집 스탬프 그리드로
+/// 구성된 스탬프 컬렉션 진열장.
 library;
 
 import 'package:flutter/material.dart';
@@ -9,11 +11,12 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/localization/locale_text.dart';
 import '../../../../core/providers/core_providers.dart';
 import '../../../../core/router/app_router.dart';
-import '../../../../core/theme/gbt_colors.dart';
-import '../../../../core/theme/gbt_spacing.dart';
-import '../../../../core/theme/gbt_typography.dart';
+import '../../../../core/theme/theme.dart';
 import '../../../../core/widgets/common/gbt_image.dart';
-import '../../../../core/widgets/feedback/gbt_loading.dart';
+import '../../../../core/widgets/common/gbt_pressable.dart';
+import '../../../../core/widgets/common/gbt_stamp_badge.dart';
+import '../../../../core/widgets/feedback/gbt_empty_state.dart';
+import '../../../../core/widgets/feedback/gbt_loading.dart' hide GBTEmptyState;
 import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
 import '../../application/zukan_controller.dart';
 import '../../domain/entities/zukan_collection.dart';
@@ -21,7 +24,11 @@ import '../../domain/entities/zukan_collection.dart';
 /// EN: Displays the full list of zukan stamp collections for the selected project.
 /// KO: 선택된 프로젝트의 전체 도감 스탬프 컬렉션 목록을 표시합니다.
 class ZukanPage extends ConsumerWidget {
-  const ZukanPage({super.key});
+  const ZukanPage({super.key, this.embedded = false});
+
+  /// EN: Omits the standalone app bar inside the Explore workspace.
+  /// KO: 탐방 워크스페이스 내부에서는 독립 앱 바를 생략합니다.
+  final bool embedded;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -34,18 +41,21 @@ class ZukanPage extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: isDark ? GBTColors.darkBackground : GBTColors.background,
-      appBar: gbtStandardAppBar(
-        context,
-        title: context.l10n(
-          ko: '성지순례 도감',
-          en: 'Place Collection',
-          ja: '聖地巡礼図鑑',
-        ),
-      ),
+      appBar: embedded
+          ? null
+          : gbtStandardAppBar(
+              context,
+              title: context.l10n(
+                ko: '성지순례 도감',
+                en: 'Place Collection',
+                ja: '聖地巡礼図鑑',
+              ),
+            ),
       body: collectionsAsync.when(
-        loading: () => _ZukanShimmerList(),
+        loading: () => const _ZukanShimmerGrid(),
         error: (_, __) => GBTEmptyState(
-          message: context.l10n(
+          icon: Icons.cloud_off_rounded,
+          title: context.l10n(
             ko: '도감을 불러오지 못했어요',
             en: 'Could not load collections',
             ja: '図鑑を読み込めませんでした',
@@ -55,50 +65,89 @@ class ZukanPage extends ConsumerWidget {
         ),
         data: (collections) => collections.isEmpty
             ? GBTEmptyState(
-                message: context.l10n(
+                icon: Icons.auto_awesome_outlined,
+                title: context.l10n(
                   ko: '아직 도감이 없어요',
                   en: 'No collections yet',
                   ja: '図鑑はまだありません',
                 ),
+                subtitle: context.l10n(
+                  ko: '성지를 방문하고 첫 스탬프를 모아보세요',
+                  en: 'Visit a pilgrimage spot to earn your first stamp',
+                  ja: '聖地を訪れて最初のスタンプを集めましょう',
+                ),
               )
-            : ListView.builder(
-                padding: const EdgeInsets.all(GBTSpacing.pageHorizontal),
-                itemCount: collections.length,
-                itemBuilder: (context, index) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: GBTSpacing.md),
-                    child: _CollectionCard(
-                      collection: collections[index],
-                      onTap: () => context.pushNamed(
-                        AppRoutes.zukanDetail,
-                        pathParameters: {'collectionId': collections[index].id},
+            : CustomScrollView(
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        GBTSpacing.pageHorizontal,
+                        GBTSpacing.md,
+                        GBTSpacing.pageHorizontal,
+                        GBTSpacing.sm,
                       ),
+                      child: _ZukanOverviewHeader(collections: collections),
                     ),
-                  );
-                },
+                  ),
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(
+                      GBTSpacing.pageHorizontal,
+                      0,
+                      GBTSpacing.pageHorizontal,
+                      GBTSpacing.xl,
+                    ),
+                    sliver: SliverGrid(
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: GBTSpacing.md,
+                            mainAxisSpacing: GBTSpacing.md,
+                            childAspectRatio: 0.78,
+                          ),
+                      delegate: SliverChildBuilderDelegate((context, index) {
+                        final collection = collections[index];
+                        return _CollectionGridCard(
+                          collection: collection,
+                          onTap: () => context.pushNamed(
+                            AppRoutes.zukanDetail,
+                            pathParameters: {'collectionId': collection.id},
+                          ),
+                        );
+                      }, childCount: collections.length),
+                    ),
+                  ),
+                ],
               ),
       ),
     );
   }
 }
 
-/// EN: Shimmer placeholder list shown while collections are loading.
-/// KO: 컬렉션 로딩 중 표시되는 쉬머 플레이스홀더 목록.
-class _ZukanShimmerList extends StatelessWidget {
+/// EN: Shimmer placeholder grid shown while collections are loading.
+/// KO: 컬렉션 로딩 중 표시되는 쉬머 플레이스홀더 그리드.
+class _ZukanShimmerGrid extends StatelessWidget {
+  const _ZukanShimmerGrid();
+
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return GridView.builder(
       padding: const EdgeInsets.all(GBTSpacing.pageHorizontal),
-      itemCount: 5,
-      itemBuilder: (_, __) => Padding(
-        padding: const EdgeInsets.only(bottom: GBTSpacing.md),
-        child: GBTShimmer(
-          child: Container(
-            height: 100,
-            decoration: BoxDecoration(
-              color: GBTColors.surfaceVariant,
-              borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
-            ),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: GBTSpacing.md,
+        mainAxisSpacing: GBTSpacing.md,
+        childAspectRatio: 0.78,
+      ),
+      itemCount: 6,
+      itemBuilder: (_, __) => GBTShimmer(
+        child: Container(
+          decoration: BoxDecoration(
+            color: isDark
+                ? GBTColors.darkSurfaceVariant
+                : GBTColors.surfaceVariant,
+            borderRadius: BorderRadius.circular(GBTSpacing.radiusLg),
           ),
         ),
       ),
@@ -106,10 +155,136 @@ class _ZukanShimmerList extends StatelessWidget {
   }
 }
 
-/// EN: Card widget representing a single zukan collection summary.
-/// KO: 단일 도감 컬렉션 요약을 나타내는 카드 위젯.
-class _CollectionCard extends StatelessWidget {
-  const _CollectionCard({required this.collection, required this.onTap});
+/// EN: Overall completion summary — big gold stat number and a segmented
+/// ticket-perforation styled progress meter across all collections.
+/// KO: 전체 완료 요약 — 큰 골드 스탯 숫자와 전체 컬렉션에 걸친 티켓 절취선
+/// 스타일의 세그먼트 진행 미터.
+class _ZukanOverviewHeader extends StatelessWidget {
+  const _ZukanOverviewHeader({required this.collections});
+
+  final List<ZukanCollectionSummary> collections;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final gold = isDark ? GBTColors.darkAccent : GBTColors.accent;
+    final stamped = collections.fold<int>(0, (sum, c) => sum + c.stampedCount);
+    final total = collections.fold<int>(0, (sum, c) => sum + c.totalCount);
+    final ratio = total > 0 ? stamped / total : 0.0;
+    final percent = (ratio * 100).round();
+
+    return Container(
+      padding: const EdgeInsets.all(GBTSpacing.lg),
+      decoration: BoxDecoration(
+        color: isDark ? GBTColors.darkSurface : GBTColors.surface,
+        borderRadius: BorderRadius.circular(GBTSpacing.radiusLg),
+        boxShadow: isDark ? GBTShadows.darkSm : GBTShadows.sm,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '$stamped',
+                style: GBTTypography.statNumber.copyWith(
+                  color: gold,
+                  fontSize: 32,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 3, left: 2),
+                child: Text(
+                  '/$total',
+                  style: GBTTypography.titleMedium.copyWith(
+                    color: isDark
+                        ? GBTColors.darkTextSecondary
+                        : GBTColors.textSecondary,
+                  ),
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: GBTSpacing.sm,
+                  vertical: GBTSpacing.xxs,
+                ),
+                decoration: BoxDecoration(
+                  color: gold.withValues(alpha: isDark ? 0.2 : 0.12),
+                  borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
+                ),
+                child: Text(
+                  '$percent%',
+                  style: GBTTypography.labelMedium.copyWith(
+                    color: gold,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: GBTSpacing.xs),
+          Text(
+            context.l10n(ko: '수집한 스탬프', en: 'Stamps collected', ja: '集めたスタンプ'),
+            style: GBTTypography.bodySmall.copyWith(
+              color: isDark
+                  ? GBTColors.darkTextSecondary
+                  : GBTColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: GBTSpacing.md),
+          _SegmentedProgressBar(ratio: ratio, color: gold),
+        ],
+      ),
+    );
+  }
+}
+
+/// EN: Gold segmented progress bar — a ticket-perforation styled completion
+/// meter, used instead of a plain bar for stronger "collection" flavor.
+/// KO: 골드 세그먼트 진행 바 — 단순 바 대신 "수집" 느낌을 강화하기 위한
+/// 티켓 절취선 스타일의 완료도 미터.
+class _SegmentedProgressBar extends StatelessWidget {
+  const _SegmentedProgressBar({required this.ratio, required this.color});
+
+  final double ratio;
+  final Color color;
+
+  static const int _segments = 16;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final filled = (ratio.clamp(0.0, 1.0) * _segments).round();
+    final track = isDark
+        ? GBTColors.darkSurfaceVariant
+        : GBTColors.surfaceVariant;
+
+    return Row(
+      children: List.generate(_segments, (index) {
+        final isFilled = index < filled;
+        return Expanded(
+          child: Container(
+            margin: EdgeInsets.only(right: index == _segments - 1 ? 0 : 3),
+            height: 8,
+            decoration: BoxDecoration(
+              color: isFilled ? color : track,
+              borderRadius: BorderRadius.circular(GBTSpacing.radiusXs),
+            ),
+          ),
+        );
+      }),
+    );
+  }
+}
+
+/// EN: Grid card for a single zukan collection — a stamp badge with cover
+/// art that only renders in full color once the collection is complete.
+/// KO: 단일 도감 컬렉션의 그리드 카드 — 컬렉션이 완료됐을 때만 풀 컬러로
+/// 렌더링되는 커버 아트 스탬프 배지.
+class _CollectionGridCard extends StatelessWidget {
+  const _CollectionGridCard({required this.collection, required this.onTap});
 
   final ZukanCollectionSummary collection;
   final VoidCallback onTap;
@@ -117,9 +292,10 @@ class _CollectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final progressColor = collection.isCompleted
-        ? (isDark ? const Color(0xFF34D399) : const Color(0xFF059669))
-        : (isDark ? GBTColors.darkPrimary : GBTColors.primary);
+    final unlocked = collection.isCompleted;
+    final mint = GBTSemanticColors.getDistanceColor(
+      Theme.of(context).brightness,
+    );
 
     return Semantics(
       button: true,
@@ -129,123 +305,86 @@ class _CollectionCard extends StatelessWidget {
         en: '${collection.stampedCount}/${collection.totalCount} visited. Tap for detail',
         ja: '${collection.stampedCount}/${collection.totalCount}訪問。タップで詳細表示',
       ),
-      child: InkWell(
+      child: GBTPressable(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
         child: Container(
+          padding: const EdgeInsets.all(GBTSpacing.md),
           decoration: BoxDecoration(
             color: isDark ? GBTColors.darkSurface : GBTColors.surface,
-            borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
+            borderRadius: BorderRadius.circular(GBTSpacing.radiusLg),
+            border: Border.all(
+              color: isDark ? GBTColors.darkBorderSubtle : GBTColors.border,
+            ),
           ),
-          child: Row(
+          child: Column(
             children: [
-              // EN: Cover image or placeholder icon
-              // KO: 커버 이미지 또는 플레이스홀더 아이콘
-              if (collection.coverImageUrl != null)
-                ClipRRect(
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(GBTSpacing.radiusMd),
-                    bottomLeft: Radius.circular(GBTSpacing.radiusMd),
-                  ),
-                  child: GBTImage(
-                    imageUrl: collection.coverImageUrl!,
-                    width: 90,
-                    height: 90,
-                    fit: BoxFit.cover,
-                    semanticLabel: collection.title,
-                  ),
-                )
-              else
-                Container(
-                  width: 90,
-                  height: 90,
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? GBTColors.darkPrimary.withValues(alpha: 0.15)
-                        : GBTColors.primary.withValues(alpha: 0.1),
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(GBTSpacing.radiusMd),
-                      bottomLeft: Radius.circular(GBTSpacing.radiusMd),
-                    ),
-                  ),
-                  child: Icon(
-                    Icons.photo_album_outlined,
-                    color: isDark ? GBTColors.darkPrimary : GBTColors.primary,
-                    size: 32,
-                  ),
-                ),
-
-              // EN: Title, progress count, and progress bar
-              // KO: 제목, 진행 카운트, 진행 바
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(GBTSpacing.md),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              collection.title,
-                              style: GBTTypography.bodyMedium.copyWith(
-                                color: isDark
-                                    ? GBTColors.darkTextPrimary
-                                    : GBTColors.textPrimary,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          if (collection.isCompleted)
-                            const Icon(
-                              Icons.verified,
-                              color: Color(0xFF059669),
-                              size: 18,
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: GBTSpacing.xs),
-                      Text(
-                        context.l10n(
-                          ko: '${collection.stampedCount} / ${collection.totalCount}곳 방문',
-                          en: '${collection.stampedCount} / ${collection.totalCount} visited',
-                          ja: '${collection.stampedCount} / ${collection.totalCount}箇所訪問',
+              GBTStampBadge(
+                size: 72,
+                unlocked: unlocked,
+                // EN: Grid cells rebuild on scroll — suppress the unlock pop
+                //     so it doesn't replay for already-collected stamps.
+                // KO: 그리드 셀은 스크롤 시 재빌드됨 — 이미 수집된 스탬프에서
+                //     해금 팝이 재생되지 않도록 비활성화.
+                animateOnUnlock: false,
+                child: collection.coverImageUrl != null
+                    ? ClipOval(
+                        child: GBTImage(
+                          imageUrl: collection.coverImageUrl!,
+                          width: 72,
+                          height: 72,
+                          fit: BoxFit.cover,
+                          semanticLabel: collection.title,
                         ),
-                        style: GBTTypography.bodySmall.copyWith(
-                          color: isDark
-                              ? GBTColors.darkTextSecondary
-                              : GBTColors.textSecondary,
-                        ),
+                      )
+                    : Icon(
+                        Icons.photo_album_outlined,
+                        size: 28,
+                        color: isDark
+                            ? GBTColors.darkPrimary
+                            : GBTColors.primary,
                       ),
-                      const SizedBox(height: GBTSpacing.xs),
-                      LinearProgressIndicator(
-                        value: collection.progressRatio,
-                        backgroundColor: isDark
-                            ? GBTColors.darkSurfaceVariant
-                            : GBTColors.surfaceVariant,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          progressColor,
-                        ),
-                        minHeight: 6,
-                        borderRadius: BorderRadius.circular(3),
-                      ),
-                    ],
-                  ),
+              ),
+              const SizedBox(height: GBTSpacing.sm),
+              Text(
+                collection.title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: GBTTypography.titleSmall.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: isDark
+                      ? GBTColors.darkTextPrimary
+                      : GBTColors.textPrimary,
                 ),
               ),
-
-              // EN: Trailing chevron
-              // KO: 오른쪽 화살표
-              Padding(
-                padding: const EdgeInsets.only(right: GBTSpacing.sm),
-                child: Icon(
-                  Icons.chevron_right,
-                  color: isDark
-                      ? GBTColors.darkTextTertiary
-                      : GBTColors.textTertiary,
-                ),
+              const Spacer(),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    unlocked
+                        ? Icons.verified_rounded
+                        : Icons.lock_outline_rounded,
+                    size: 14,
+                    color: unlocked
+                        ? mint
+                        : (isDark
+                              ? GBTColors.darkTextTertiary
+                              : GBTColors.textTertiary),
+                  ),
+                  const SizedBox(width: GBTSpacing.xxs),
+                  Text(
+                    '${collection.stampedCount}/${collection.totalCount}',
+                    style: GBTTypography.labelMedium.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: unlocked
+                          ? mint
+                          : (isDark
+                                ? GBTColors.darkTextSecondary
+                                : GBTColors.textSecondary),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

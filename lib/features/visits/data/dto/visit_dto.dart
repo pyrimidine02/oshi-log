@@ -7,12 +7,17 @@ class VisitEventDto {
     required this.id,
     required this.placeId,
     required this.visitedAt,
+    this.status = '',
     this.distanceM,
   });
 
   final String id;
   final String placeId;
   final DateTime? visitedAt;
+
+  /// EN: Server-owned verification status. Missing values fail closed.
+  /// KO: 서버가 관리하는 인증 상태입니다. 누락된 값은 실패-폐쇄로 처리합니다.
+  final String status;
 
   /// EN: Distance from the place at verification time, in meters (optional).
   /// KO: 인증 시 장소로부터의 거리 (미터 단위, 선택적).
@@ -23,6 +28,7 @@ class VisitEventDto {
       id: json['id'] as String? ?? '',
       placeId: json['placeId'] as String? ?? '',
       visitedAt: _dateTime(json['visitedAt']),
+      status: (json['status'] as String? ?? '').trim(),
       distanceM: _double(json['distanceM']),
     );
   }
@@ -32,6 +38,7 @@ class VisitEventDto {
       'id': id,
       'placeId': placeId,
       'visitedAt': visitedAt?.toIso8601String(),
+      'status': status,
       if (distanceM != null) 'distanceM': distanceM,
     };
   }
@@ -42,6 +49,7 @@ class VisitEventDetailDto {
     required this.id,
     required this.placeId,
     required this.visitedAt,
+    this.status = '',
     this.distanceM,
     this.accuracy,
   });
@@ -49,6 +57,10 @@ class VisitEventDetailDto {
   final String id;
   final String placeId;
   final DateTime? visitedAt;
+
+  /// EN: Server-owned verification status. Missing values fail closed.
+  /// KO: 서버가 관리하는 인증 상태입니다. 누락된 값은 실패-폐쇄로 처리합니다.
+  final String status;
 
   /// EN: Distance from the place at verification time, in meters (optional).
   /// KO: 인증 시 장소로부터의 거리 (미터 단위, 선택적).
@@ -63,6 +75,7 @@ class VisitEventDetailDto {
       id: json['id'] as String? ?? '',
       placeId: json['placeId'] as String? ?? '',
       visitedAt: _dateTime(json['visitedAt']),
+      status: (json['status'] as String? ?? '').trim(),
       distanceM: _double(json['distanceM']),
       accuracy: _double(json['accuracy']),
     );
@@ -73,6 +86,7 @@ class VisitEventDetailDto {
       'id': id,
       'placeId': placeId,
       'visitedAt': visitedAt?.toIso8601String(),
+      'status': status,
       if (distanceM != null) 'distanceM': distanceM,
       if (accuracy != null) 'accuracy': accuracy,
     };

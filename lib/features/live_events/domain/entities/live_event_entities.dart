@@ -162,10 +162,12 @@ class LiveAttendanceState {
     required this.attended,
     required this.status,
     required this.canUndo,
+    this.attendanceId,
     this.verificationMethod,
     this.attendedAt,
   });
 
+  final String? attendanceId;
   final String liveEventId;
   final bool attended;
   final String status;
@@ -178,6 +180,7 @@ class LiveAttendanceState {
   bool get isNone => status == LiveAttendanceStatus.none;
 
   LiveAttendanceState copyWith({
+    String? attendanceId,
     String? liveEventId,
     bool? attended,
     String? status,
@@ -186,6 +189,7 @@ class LiveAttendanceState {
     DateTime? attendedAt,
   }) {
     return LiveAttendanceState(
+      attendanceId: attendanceId ?? this.attendanceId,
       liveEventId: liveEventId ?? this.liveEventId,
       attended: attended ?? this.attended,
       status: status ?? this.status,
@@ -197,6 +201,7 @@ class LiveAttendanceState {
 
   factory LiveAttendanceState.fromDto(LiveAttendanceStateDto dto) {
     return LiveAttendanceState(
+      attendanceId: dto.attendanceId,
       liveEventId: dto.liveEventId,
       attended: dto.attended,
       status: LiveAttendanceStatus.normalize(dto.status),
@@ -212,6 +217,7 @@ class LiveAttendanceState {
 
   factory LiveAttendanceState.none(String liveEventId) {
     return LiveAttendanceState(
+      attendanceId: null,
       liveEventId: liveEventId,
       attended: false,
       status: LiveAttendanceStatus.none,
@@ -223,6 +229,7 @@ class LiveAttendanceState {
 
   Map<String, dynamic> toJson() {
     return {
+      if (attendanceId != null) 'attendanceId': attendanceId,
       'liveEventId': liveEventId,
       'attended': attended,
       'status': status,
@@ -240,6 +247,7 @@ class LiveAttendanceHistoryRecord {
     required this.attended,
     required this.status,
     required this.canUndo,
+    this.attendanceId,
     this.verificationMethod,
     this.attendedAt,
     this.eventTitle,
@@ -248,6 +256,7 @@ class LiveAttendanceHistoryRecord {
   });
 
   final String projectKey;
+  final String? attendanceId;
   final String eventId;
   final bool attended;
   final String status;
@@ -267,6 +276,7 @@ class LiveAttendanceHistoryRecord {
 
   LiveAttendanceHistoryRecord copyWith({
     String? projectKey,
+    String? attendanceId,
     String? eventId,
     bool? attended,
     String? status,
@@ -279,6 +289,7 @@ class LiveAttendanceHistoryRecord {
   }) {
     return LiveAttendanceHistoryRecord(
       projectKey: projectKey ?? this.projectKey,
+      attendanceId: attendanceId ?? this.attendanceId,
       eventId: eventId ?? this.eventId,
       attended: attended ?? this.attended,
       status: status ?? this.status,
@@ -305,6 +316,7 @@ class LiveAttendanceHistoryRecord {
   }) {
     return LiveAttendanceHistoryRecord(
       projectKey: projectKey,
+      attendanceId: state.attendanceId,
       eventId: state.liveEventId,
       attended: state.attended,
       status: state.status,

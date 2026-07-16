@@ -4,7 +4,6 @@ library;
 
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/network/api_client.dart';
-import '../../../../core/error/failure.dart';
 import '../../../../core/utils/result.dart';
 import '../dto/user_ranking_dto.dart';
 import '../dto/visit_dto.dart';
@@ -52,36 +51,10 @@ class VisitsRemoteDataSource {
 
   /// EN: Fetch current user's ranking.
   /// KO: 현재 사용자의 랭킹을 조회합니다.
-  Future<Result<UserRankingDto>> fetchUserRanking({
-    required String projectId,
-  }) async {
-    final result = await _apiClient.get<Map<String, dynamic>>(
-      ApiEndpoints.rankingsUsers(projectId),
-      fromJson: (json) => _decodeRankingResponse(json),
-    );
-
-    if (result is Err<Map<String, dynamic>>) {
-      return Result.failure(result.failure);
-    }
-
-    final data = (result as Success<Map<String, dynamic>>).data;
-    final rankings =
-        data['rankings'] ?? data['users'] ?? data['items'] ?? data['content'];
-
-    if (rankings is List && rankings.isNotEmpty) {
-      final totalUsers = _extractTotalUsers(data, rankings.length);
-      final first = rankings.first;
-      if (first is Map<String, dynamic>) {
-        final dto = UserRankingDto.fromJson({
-          ...first,
-          'totalUsers': totalUsers,
-        });
-        return Result.success(dto);
-      }
-    }
-
-    return Result.failure(
-      const UnknownFailure('No ranking data', code: 'no_ranking_data'),
+  Future<Result<UserRankingDto>> fetchUserRanking({required String projectId}) {
+    return _apiClient.get<UserRankingDto>(
+      ApiEndpoints.rankingsCurrentUser(projectId),
+      fromJson: (json) => UserRankingDto.fromJson(json as Map<String, dynamic>),
     );
   }
 }
@@ -100,19 +73,4 @@ List<T> _decodeList<T>(dynamic json, T Function(Map<String, dynamic>) mapper) {
     }
   }
   return <T>[];
-}
-
-Map<String, dynamic> _decodeRankingResponse(dynamic json) {
-  if (json is Map<String, dynamic>) {
-    return json;
-  }
-  return <String, dynamic>{};
-}
-
-int _extractTotalUsers(Map<String, dynamic> data, int fallback) {
-  final value = data['totalUsers'] ?? data['totalElements'] ?? data['total'];
-  if (value is int) return value;
-  if (value is num) return value.toInt();
-  if (value is String) return int.tryParse(value) ?? fallback;
-  return fallback;
 }

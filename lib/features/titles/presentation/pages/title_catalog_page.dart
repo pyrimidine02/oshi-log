@@ -30,13 +30,20 @@ String _categoryLabel(TitleCategory category) => switch (category) {
   TitleCategory.admin => '특별',
 };
 
-/// EN: Returns the accent color associated with [category].
-/// KO: [category]에 연결된 강조 색상을 반환합니다.
-Color _categoryColor(TitleCategory category) => switch (category) {
-  TitleCategory.activity => Colors.blue.shade400,
-  TitleCategory.commemorative => Colors.amber.shade500,
-  TitleCategory.event => Colors.pink.shade400,
-  TitleCategory.admin => Colors.purple.shade400,
+/// EN: Returns the accent color associated with [category], drawn from the
+/// Journey Ticket palette: mint (activity) → gold (commemorative) → violet
+/// (event) → brand magenta (admin, the most special tier).
+/// KO: [category]에 연결된 강조 색상 — "여정의 티켓" 팔레트에서 가져옵니다:
+/// 민트(활동) → 골드(기념) → 바이올렛(이벤트) → 브랜드 마젠타(특별, 가장
+/// 특별한 등급).
+Color _categoryColor(TitleCategory category, bool isDark) => switch (category) {
+  TitleCategory.activity => GBTSemanticColors.getDistanceColor(
+    isDark ? Brightness.dark : Brightness.light,
+  ),
+  TitleCategory.commemorative =>
+    isDark ? GBTColors.darkAccent : GBTColors.accent,
+  TitleCategory.event => isDark ? GBTColors.darkSecondary : GBTColors.secondary,
+  TitleCategory.admin => isDark ? GBTColors.darkPrimary : GBTColors.primary,
 };
 
 /// EN: Returns a representative icon for the given [category].
@@ -256,24 +263,7 @@ class _TitleCatalogPageState extends ConsumerState<TitleCatalogPage> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // EN: Subtitle description
-          // KO: 부제목 설명
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              GBTSpacing.pageHorizontal,
-              GBTSpacing.md,
-              GBTSpacing.pageHorizontal,
-              GBTSpacing.sm,
-            ),
-            child: Text(
-              '활동과 이벤트 달성으로 새로운 칭호를 획득하세요',
-              style: GBTTypography.bodyMedium.copyWith(
-                color: isDark
-                    ? GBTColors.darkTextSecondary
-                    : GBTColors.textSecondary,
-              ),
-            ),
-          ),
+          const _TitleDocumentHeader(),
 
           // EN: Catalog list (expands to fill available space)
           // KO: 카탈로그 리스트 (가용 공간 채움)
@@ -302,6 +292,71 @@ class _TitleCatalogPageState extends ConsumerState<TitleCatalogPage> {
             onApply: _onApply,
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// EN: Document heading for the earned-title archive and active selection.
+/// KO: 획득 칭호 아카이브와 활성 선택을 위한 문서 헤더.
+class _TitleDocumentHeader extends StatelessWidget {
+  const _TitleDocumentHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        GBTSpacing.pageHorizontal,
+        GBTSpacing.lg,
+        GBTSpacing.pageHorizontal,
+        GBTSpacing.md,
+      ),
+      child: Semantics(
+        header: true,
+        child: Container(
+          padding: const EdgeInsets.only(bottom: GBTSpacing.md),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: isDark ? GBTColors.darkBorder : GBTColors.border,
+              ),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'PASSPORT / TITLE ARCHIVE',
+                style: GBTTypography.labelSmall.copyWith(
+                  color: isDark ? GBTColors.darkPrimary : GBTColors.primary,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1,
+                ),
+              ),
+              const SizedBox(height: GBTSpacing.xs),
+              Text(
+                '나의 여정을 나타내는 칭호',
+                style: GBTTypography.titleLarge.copyWith(
+                  color: isDark
+                      ? GBTColors.darkTextPrimary
+                      : GBTColors.textPrimary,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: GBTSpacing.xs),
+              Text(
+                '활동과 이벤트 달성으로 획득한 칭호를 골라 프로필에 표시하세요.',
+                style: GBTTypography.bodySmall.copyWith(
+                  color: isDark
+                      ? GBTColors.darkTextSecondary
+                      : GBTColors.textSecondary,
+                  height: 1.5,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -482,7 +537,7 @@ class _CategorySectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accentColor = _categoryColor(category);
+    final accentColor = _categoryColor(category, isDark);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -550,15 +605,8 @@ class _TitleTile extends StatelessWidget {
     // EN: isEarned null → treat as not earned (unauthenticated state).
     // KO: isEarned가 null이면 미획득으로 취급합니다(미인증 상태).
     final isEarned = item.isEarned ?? false;
-    final accentColor = _categoryColor(item.category);
+    final accentColor = _categoryColor(item.category, isDark);
     final primaryColor = isDark ? GBTColors.darkPrimary : GBTColors.primary;
-
-    // EN: Determine tile border: primary when selected but not yet active;
-    //     transparent otherwise to avoid layout jitter.
-    // KO: 타일 테두리 결정: 선택됐으나 활성화 전이면 primary; 그 외에는 투명.
-    final borderColor = (isSelected && !isActive)
-        ? primaryColor.withValues(alpha: 0.6)
-        : Colors.transparent;
 
     // EN: Name text color: primary when active, tertiary when locked,
     //     else standard primary text.
@@ -611,23 +659,27 @@ class _TitleTile extends StatelessWidget {
       selected: isSelected,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
         child: Container(
-          height: 64,
+          constraints: const BoxConstraints(minHeight: 72),
           margin: const EdgeInsets.symmetric(
             horizontal: GBTSpacing.pageHorizontal,
-            vertical: GBTSpacing.xxs,
           ),
-          padding: const EdgeInsets.symmetric(
-            horizontal: GBTSpacing.md,
-            vertical: GBTSpacing.sm,
-          ),
+          padding: const EdgeInsets.symmetric(vertical: GBTSpacing.sm),
           decoration: BoxDecoration(
             color: isSelected && !isActive
                 ? primaryColor.withValues(alpha: isDark ? 0.08 : 0.05)
-                : (isDark ? GBTColors.darkSurface : GBTColors.surface),
-            borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
-            border: Border.all(color: borderColor),
+                : Colors.transparent,
+            border: Border(
+              left: BorderSide(
+                color: isSelected || isActive
+                    ? primaryColor
+                    : Colors.transparent,
+                width: 3,
+              ),
+              bottom: BorderSide(
+                color: isDark ? GBTColors.darkBorderSubtle : GBTColors.divider,
+              ),
+            ),
           ),
           child: Row(
             children: [
@@ -636,6 +688,7 @@ class _TitleTile extends StatelessWidget {
               Container(
                 width: 36,
                 height: 36,
+                margin: const EdgeInsets.only(left: GBTSpacing.sm),
                 decoration: BoxDecoration(
                   color: accentColor.withValues(
                     alpha: isEarned ? (isDark ? 0.2 : 0.12) : 0.06,
@@ -669,7 +722,7 @@ class _TitleTile extends StatelessWidget {
                             ? FontWeight.w700
                             : FontWeight.w500,
                       ),
-                      maxLines: 1,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                     if (item.description?.isNotEmpty == true) ...[
@@ -679,7 +732,7 @@ class _TitleTile extends StatelessWidget {
                         style: GBTTypography.bodySmall.copyWith(
                           color: descColor,
                         ),
-                        maxLines: 1,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ],
@@ -808,6 +861,13 @@ class _ApplyBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
+    // EN: Matches the FilledButton theme's foreground so the spinner reads
+    // correctly against the pill-shaped CTA in both brightness modes.
+    // KO: 두 밝기 모드 모두에서 알약형 CTA 위에 스피너가 잘 보이도록
+    // FilledButton 테마의 전경색과 맞춥니다.
+    final onButtonColor = isDark
+        ? GBTColors.darkBackground
+        : GBTColors.textInverse;
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -827,33 +887,21 @@ class _ApplyBar extends StatelessWidget {
           GBTSpacing.pageHorizontal,
           GBTSpacing.md + bottomPadding,
         ),
-        child: SizedBox(
-          height: 48,
-          child: ElevatedButton(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 48),
+          // EN: Uses the shared FilledButton theme (pill shape, brand
+          // primary) instead of a bespoke ElevatedButton style.
+          // KO: 별도 ElevatedButton 스타일 대신 공유 FilledButton 테마
+          // (알약 모양, 브랜드 primary)를 사용합니다.
+          child: FilledButton(
             onPressed: isDisabled ? null : onApply,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: isDark
-                  ? GBTColors.darkPrimary
-                  : GBTColors.primary,
-              foregroundColor: Colors.white,
-              disabledBackgroundColor: isDark
-                  ? GBTColors.darkSurfaceVariant
-                  : GBTColors.surfaceVariant,
-              disabledForegroundColor: isDark
-                  ? GBTColors.darkTextTertiary
-                  : GBTColors.textTertiary,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
-              ),
-              elevation: 0,
-            ),
             child: isApplying
-                ? const SizedBox(
+                ? SizedBox(
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: Colors.white,
+                      color: onButtonColor,
                     ),
                   )
                 : const Text('이 칭호 적용'),

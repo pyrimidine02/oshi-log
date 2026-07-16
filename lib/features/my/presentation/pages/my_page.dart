@@ -37,12 +37,13 @@ class MyPage extends ConsumerWidget {
     // EN: Derive dark mode once and pass down to avoid repeated Theme.of calls.
     // KO: 다크 모드를 한 번 계산해 하위 위젯에 전달, 반복 Theme.of 호출 방지.
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final avatarUrl =
-        ref.watch(userProfileControllerProvider).valueOrNull?.avatarUrl;
+    final avatarUrl = ref
+        .watch(userProfileControllerProvider)
+        .valueOrNull
+        ?.avatarUrl;
 
     return Scaffold(
-      backgroundColor:
-          isDark ? GBTColors.darkBackground : GBTColors.background,
+      backgroundColor: isDark ? GBTColors.darkBackground : GBTColors.background,
       appBar: AppBar(
         elevation: 0,
         scrolledUnderElevation: 0,
@@ -109,7 +110,11 @@ class MyPage extends ConsumerWidget {
                 child: Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(GBTSpacing.md),
-                  decoration: GBTDecorations.card(isDark: isDark),
+                  // EN: Override default card radius with the 2026 bento radius.
+                  // KO: 기본 카드 반지름을 2026 벤토 반지름으로 재정의.
+                  decoration: GBTDecorations.card(isDark: isDark).copyWith(
+                    borderRadius: BorderRadius.circular(GBTSpacing.radiusCard),
+                  ),
                   child: Row(
                     children: [
                       Icon(
@@ -169,17 +174,15 @@ class MyPage extends ConsumerWidget {
             // KO: 달력 배너 분리 후 전체 너비로 표시되는 방문기록 셀.
             ActionCell(
               icon: Icons.pin_drop_outlined,
-              label: context.l10n(
-                ko: '방문 기록',
-                en: 'Visit Log',
-                ja: '訪問記録',
-              ),
+              label: context.l10n(ko: '방문 기록', en: 'Visit Log', ja: '訪問記録'),
               subtitle: context.l10n(
                 ko: '성지순례 기록',
                 en: 'Pilgrimage log',
                 ja: '巡礼記録',
               ),
-              color: isDark ? const Color(0xFF2DD4BF) : GBTColors.accentTeal,
+              color: isDark
+                  ? GBTSemanticColors.darkMetadataDistance
+                  : GBTColors.accentTeal,
               isDark: isDark,
               onTap: () => context.goToVisitHistory(),
             ),
@@ -267,7 +270,7 @@ class MyPage extends ConsumerWidget {
                       en: 'Sacred & related places',
                       ja: '聖地 & 関連スポット',
                     ),
-                    color: const Color(0xFF059669),
+                    color: GBTColors.success,
                     isDark: isDark,
                     onTap: () => context.pushNamed(AppRoutes.zukan),
                   ),
@@ -286,7 +289,7 @@ class MyPage extends ConsumerWidget {
                       en: 'Concert cheer guide',
                       ja: 'ライブ応援ガイド',
                     ),
-                    color: const Color(0xFFD97706),
+                    color: GBTColors.warning,
                     isDark: isDark,
                     onTap: () => context.pushNamed(AppRoutes.cheerGuides),
                   ),
@@ -309,7 +312,7 @@ class MyPage extends ConsumerWidget {
                       en: 'Memorable quotes',
                       ja: '名言コレクション',
                     ),
-                    color: const Color(0xFFDB2777),
+                    color: GBTColors.favorite,
                     isDark: isDark,
                     onTap: () => context.pushNamed(AppRoutes.quotes),
                   ),
@@ -318,17 +321,15 @@ class MyPage extends ConsumerWidget {
                 Expanded(
                   child: ActionCell(
                     icon: Icons.workspace_premium_rounded,
-                    label: context.l10n(
-                      ko: '칭호 관리',
-                      en: 'Titles',
-                      ja: '称号管理',
-                    ),
+                    label: context.l10n(ko: '칭호 관리', en: 'Titles', ja: '称号管理'),
                     subtitle: context.l10n(
                       ko: '획득 칭호 확인·설정',
                       en: 'View & set your title',
                       ja: '称号の確認と設定',
                     ),
-                    color: const Color(0xFF7C3AED),
+                    color: isDark
+                        ? GBTColors.darkSecondary
+                        : GBTColors.secondary,
                     isDark: isDark,
                     onTap: () => context.pushNamed(AppRoutes.titlePicker),
                   ),
@@ -339,10 +340,7 @@ class MyPage extends ConsumerWidget {
 
             // EN: Settings entry — neutral, at the bottom.
             // KO: 설정 진입 — 중립 색상, 하단 배치.
-            SettingsCard(
-              isDark: isDark,
-              onTap: () => context.goToSettings(),
-            ),
+            SettingsCard(isDark: isDark, onTap: () => context.goToSettings()),
             const SizedBox(height: GBTSpacing.xxl),
           ],
         ),

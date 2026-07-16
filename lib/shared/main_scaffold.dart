@@ -112,7 +112,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
         bottomNavigationBar: !shouldShowBottomNav
             ? null
             : isCommunityBranch
-            ? _CommunitySubBottomNav(
+            ? CommunitySubBottomNav(
                 section: _resolveCommunitySection(currentPath),
                 onBackTap: () {
                   final target = _lastNonCommunityLocation;
@@ -125,11 +125,11 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
                 onSectionChanged: (section) {
                   ref.read(currentNavIndexProvider.notifier).state = 4;
                   switch (section) {
-                    case _CommunitySubSection.feed:
+                    case CommunitySubSection.feed:
                       widget.navigationShell.goBranch(4, initialLocation: true);
-                    case _CommunitySubSection.discover:
+                    case CommunitySubSection.discover:
                       context.go('/community/discover');
-                    case _CommunitySubSection.travelReview:
+                    case CommunitySubSection.travelReview:
                       context.go('/community/travel-reviews-tab');
                   }
                 },
@@ -201,14 +201,14 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
         path == '/community/travel-reviews-tab';
   }
 
-  _CommunitySubSection _resolveCommunitySection(String path) {
+  CommunitySubSection _resolveCommunitySection(String path) {
     if (path.startsWith('/community/travel-reviews-tab')) {
-      return _CommunitySubSection.travelReview;
+      return CommunitySubSection.travelReview;
     }
     if (path.startsWith('/community/discover')) {
-      return _CommunitySubSection.discover;
+      return CommunitySubSection.discover;
     }
-    return _CommunitySubSection.feed;
+    return CommunitySubSection.feed;
   }
 
   /// EN: Handle bottom navigation tap
@@ -228,17 +228,19 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
   }
 }
 
-enum _CommunitySubSection { feed, discover, travelReview }
+/// EN: Destinations shown in the community-specific persistent navigation.
+/// KO: 커뮤니티 전용 고정 내비게이션에 표시되는 목적지입니다.
+enum CommunitySubSection { feed, discover, travelReview }
 
-extension on _CommunitySubSection {
+extension on CommunitySubSection {
   String label(BuildContext context) => switch (this) {
-    _CommunitySubSection.feed => context.l10n(ko: '피드', en: 'Feed', ja: 'フィード'),
-    _CommunitySubSection.discover => context.l10n(
+    CommunitySubSection.feed => context.l10n(ko: '피드', en: 'Feed', ja: 'フィード'),
+    CommunitySubSection.discover => context.l10n(
       ko: '발견',
       en: 'Discover',
       ja: '発見',
     ),
-    _CommunitySubSection.travelReview => context.l10n(
+    CommunitySubSection.travelReview => context.l10n(
       ko: '여행후기',
       en: 'Travel Reviews',
       ja: '旅行レビュー',
@@ -246,22 +248,25 @@ extension on _CommunitySubSection {
   };
 
   IconData get icon => switch (this) {
-    _CommunitySubSection.feed => Icons.dynamic_feed_outlined,
-    _CommunitySubSection.discover => Icons.explore_outlined,
-    _CommunitySubSection.travelReview => Icons.rate_review_outlined,
+    CommunitySubSection.feed => Icons.dynamic_feed_outlined,
+    CommunitySubSection.discover => Icons.explore_outlined,
+    CommunitySubSection.travelReview => Icons.rate_review_outlined,
   };
 }
 
-class _CommunitySubBottomNav extends StatelessWidget {
-  const _CommunitySubBottomNav({
+/// EN: Preserves the community-specific lower bar across platform layouts.
+/// KO: 플랫폼별 레이아웃에서 커뮤니티 전용 하단바를 보존합니다.
+class CommunitySubBottomNav extends StatelessWidget {
+  const CommunitySubBottomNav({
+    super.key,
     required this.section,
     required this.onBackTap,
     required this.onSectionChanged,
   });
 
-  final _CommunitySubSection section;
+  final CommunitySubSection section;
   final VoidCallback onBackTap;
-  final ValueChanged<_CommunitySubSection> onSectionChanged;
+  final ValueChanged<CommunitySubSection> onSectionChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -298,12 +303,16 @@ class _CommunitySubBottomNav extends StatelessWidget {
     final backIconColor = isDark
         ? GBTColors.darkTextPrimary
         : GBTColors.textPrimary;
+    final navHeight = GBTSpacing.scaledBottomNavHeight(
+      context,
+      baseHeight: GBTSpacing.bottomNavHeight + 8,
+    );
 
     return SafeArea(
       top: false,
       minimum: const EdgeInsets.fromLTRB(12, 0, 12, 10),
       child: Container(
-        height: GBTSpacing.bottomNavHeight + 8,
+        height: navHeight,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(navCornerRadius),
           boxShadow: [
@@ -369,7 +378,7 @@ class _CommunitySubBottomNav extends StatelessWidget {
                   ),
                   Expanded(
                     child: Row(
-                      children: _CommunitySubSection.values.map((value) {
+                      children: CommunitySubSection.values.map((value) {
                         final isSelected = value == section;
                         final itemColor = isSelected
                             ? selectedColor
@@ -471,6 +480,10 @@ class _CommunitySubBottomNav extends StatelessWidget {
     final backButtonFill = isDark
         ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.82)
         : colorScheme.surfaceContainerHighest.withValues(alpha: 0.84);
+    final navHeight = GBTSpacing.scaledBottomNavHeight(
+      context,
+      baseHeight: GBTSpacing.bottomNavHeight,
+    );
 
     return SafeArea(
       top: false,
@@ -497,7 +510,7 @@ class _CommunitySubBottomNav extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             child: SizedBox(
-              height: GBTSpacing.bottomNavHeight - 4,
+              height: navHeight,
               child: Row(
                 children: [
                   Semantics(
@@ -529,7 +542,7 @@ class _CommunitySubBottomNav extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Row(
-                      children: _CommunitySubSection.values
+                      children: CommunitySubSection.values
                           .map((value) {
                             final isSelected = value == section;
                             final itemColor = isSelected

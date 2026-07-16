@@ -48,6 +48,7 @@ void main() {
 
   test('LiveAttendanceStateDto parses v1 attendance payload', () {
     final json = {
+      'id': 'attendance-3',
       'liveEventId': 'event-3',
       'attended': true,
       'status': 'DECLARED',
@@ -55,6 +56,7 @@ void main() {
     };
 
     final dto = LiveAttendanceStateDto.fromJson(json);
+    expect(dto.attendanceId, 'attendance-3');
     expect(dto.liveEventId, 'event-3');
     expect(dto.attended, isTrue);
     expect(dto.status, 'DECLARED');

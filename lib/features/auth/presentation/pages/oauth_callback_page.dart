@@ -12,6 +12,7 @@ import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';
 import '../../../../core/utils/result.dart';
 import '../../../../core/widgets/feedback/gbt_loading.dart';
+import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
 import '../../application/auth_controller.dart';
 import '../../domain/entities/oauth_provider.dart';
 
@@ -113,10 +114,9 @@ class _OAuthCallbackPageState extends ConsumerState<OAuthCallbackPage> {
 
     if (_failure != null) {
       return Scaffold(
-        appBar: AppBar(
-          title: Text(
-            context.l10n(ko: '로그인 실패', en: 'Login failed', ja: 'ログイン失敗'),
-          ),
+        appBar: gbtStandardAppBar(
+          context,
+          title: context.l10n(ko: '로그인 실패', en: 'Login failed', ja: 'ログイン失敗'),
         ),
         body: Center(
           child: Padding(

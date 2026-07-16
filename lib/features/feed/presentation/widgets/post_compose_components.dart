@@ -415,8 +415,8 @@ class PostComposeDraftRecoveryBanner extends StatelessWidget {
     final projectLabel = projectCode?.isNotEmpty == true
         ? ' · $projectCode'
         : '';
-        
-    final cardColor = isDark 
+
+    final cardColor = isDark
         ? colorScheme.secondaryContainer.withValues(alpha: 0.15)
         : colorScheme.secondaryContainer.withValues(alpha: 0.38);
 
@@ -443,11 +443,7 @@ class PostComposeDraftRecoveryBanner extends StatelessWidget {
               color: colorScheme.secondary.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              Icons.restore,
-              color: colorScheme.secondary,
-              size: 20,
-            ),
+            child: Icon(Icons.restore, color: colorScheme.secondary, size: 20),
           ),
           const SizedBox(width: GBTSpacing.sm),
           Expanded(
@@ -476,8 +472,7 @@ class PostComposeDraftRecoveryBanner extends StatelessWidget {
             style: TextButton.styleFrom(
               foregroundColor: colorScheme.onSurfaceVariant,
               padding: const EdgeInsets.symmetric(horizontal: 8),
-              minimumSize: const Size(0, 32),
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              minimumSize: const Size(0, GBTSpacing.touchTarget),
             ),
             child: const Text('삭제'),
           ),
@@ -488,8 +483,7 @@ class PostComposeDraftRecoveryBanner extends StatelessWidget {
               backgroundColor: colorScheme.secondaryContainer,
               foregroundColor: colorScheme.onSecondaryContainer,
               padding: const EdgeInsets.symmetric(horizontal: 12),
-              minimumSize: const Size(0, 32),
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              minimumSize: const Size(0, GBTSpacing.touchTarget),
             ),
             child: const Text('복구'),
           ),
@@ -834,11 +828,7 @@ class PostComposePickedImageTile extends StatelessWidget {
                     vertical: GBTSpacing.xxs,
                   ),
                   decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [Color(0x00000000), Color(0xB3000000)],
-                    ),
+                    gradient: GBTColors.carouselCardOverlayGradient,
                   ),
                   child: Text(
                     filename,
@@ -925,11 +915,7 @@ class PostComposeRemoteImageTile extends StatelessWidget {
                     vertical: GBTSpacing.xxs,
                   ),
                   decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [Color(0x00000000), Color(0xB3000000)],
-                    ),
+                    gradient: GBTColors.carouselCardOverlayGradient,
                   ),
                   child: Text(
                     filename,

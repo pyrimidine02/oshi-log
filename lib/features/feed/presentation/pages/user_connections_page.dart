@@ -14,9 +14,11 @@ import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';
 import '../../../../core/widgets/common/gbt_image.dart';
 import '../../../../core/widgets/common/gbt_linkified_text.dart';
-import '../../../../core/widgets/feedback/gbt_loading.dart';
+import '../../../../core/widgets/feedback/gbt_empty_state.dart';
+import '../../../../core/widgets/feedback/gbt_loading.dart' hide GBTEmptyState;
 import '../../../../core/widgets/inputs/gbt_search_bar.dart';
 import '../../../../core/widgets/navigation/gbt_segmented_tab_bar.dart';
+import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
 import '../../application/user_follow_list_controller.dart';
 import '../../domain/entities/community_moderation.dart';
 
@@ -49,17 +51,16 @@ class _UserConnectionsPageState extends ConsumerState<UserConnectionsPage> {
       length: 2,
       initialIndex: widget.initialTab == UserConnectionsTab.followers ? 0 : 1,
       child: Scaffold(
-        appBar: AppBar(
-          title: Text(
-            widget.displayName == null
-                ? context.l10n(ko: '연결', en: 'Connections', ja: 'つながり')
-                : '${widget.displayName} ${context.l10n(ko: "연결", en: "connections", ja: "つながり")}',
-          ),
-          bottom: PreferredSize(
-            preferredSize: Size.fromHeight(44),
-            child: GBTSegmentedTabBar(
-              height: 44,
-              margin: EdgeInsets.symmetric(horizontal: GBTSpacing.md2),
+        appBar: gbtStandardAppBar(
+          context,
+          title: widget.displayName == null
+              ? context.l10n(ko: '연결', en: 'Connections', ja: 'つながり')
+              : '${widget.displayName} ${context.l10n(ko: "연결", en: "connections", ja: "つながり")}',
+        ),
+        body: Column(
+          children: [
+            const SizedBox(height: GBTSpacing.sm),
+            GBTSegmentedTabBar(
               tabs: [
                 Tab(
                   text: context.l10n(ko: '팔로워', en: 'Followers', ja: 'フォロワー'),
@@ -69,38 +70,41 @@ class _UserConnectionsPageState extends ConsumerState<UserConnectionsPage> {
                 ),
               ],
             ),
-          ),
-        ),
-        body: TabBarView(
-          children: [
-            _ConnectionsTabBody(
-              userId: widget.userId,
-              isFollowersTab: true,
-              query: _followersQuery,
-              onQueryChanged: (value) {
-                setState(() {
-                  _followersQuery = value;
-                });
-              },
-              emptyMessage: context.l10n(
-                ko: '아직 팔로워가 없습니다',
-                en: 'No followers yet',
-                ja: 'まだフォロワーがいません',
-              ),
-            ),
-            _ConnectionsTabBody(
-              userId: widget.userId,
-              isFollowersTab: false,
-              query: _followingQuery,
-              onQueryChanged: (value) {
-                setState(() {
-                  _followingQuery = value;
-                });
-              },
-              emptyMessage: context.l10n(
-                ko: '아직 팔로우한 사용자가 없습니다',
-                en: 'No followed users yet',
-                ja: 'まだフォローしたユーザーがいません',
+            const SizedBox(height: GBTSpacing.sm),
+            Expanded(
+              child: TabBarView(
+                children: [
+                  _ConnectionsTabBody(
+                    userId: widget.userId,
+                    isFollowersTab: true,
+                    query: _followersQuery,
+                    onQueryChanged: (value) {
+                      setState(() {
+                        _followersQuery = value;
+                      });
+                    },
+                    emptyMessage: context.l10n(
+                      ko: '아직 팔로워가 없습니다',
+                      en: 'No followers yet',
+                      ja: 'まだフォロワーがいません',
+                    ),
+                  ),
+                  _ConnectionsTabBody(
+                    userId: widget.userId,
+                    isFollowersTab: false,
+                    query: _followingQuery,
+                    onQueryChanged: (value) {
+                      setState(() {
+                        _followingQuery = value;
+                      });
+                    },
+                    emptyMessage: context.l10n(
+                      ko: '아직 팔로우한 사용자가 없습니다',
+                      en: 'No followed users yet',
+                      ja: 'まだフォローしたユーザーがいません',
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -131,11 +135,6 @@ class _ConnectionsTabBody extends ConsumerWidget {
         ? userFollowersProvider(userId)
         : userFollowingProvider(userId);
     final state = ref.watch(provider);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final mutedColor = isDark
-        ? GBTColors.darkTextSecondary
-        : GBTColors.textSecondary;
-
     return Column(
       children: [
         Padding(
@@ -176,7 +175,10 @@ class _ConnectionsTabBody extends ConsumerWidget {
               final filtered = _filter(items, query);
               if (filtered.isEmpty) {
                 return GBTEmptyState(
-                  message: query.isEmpty
+                  icon: query.isEmpty
+                      ? Icons.people_outline
+                      : Icons.search_off_rounded,
+                  title: query.isEmpty
                       ? emptyMessage
                       : context.l10n(
                           ko: '검색 결과가 없습니다',
@@ -192,117 +194,19 @@ class _ConnectionsTabBody extends ConsumerWidget {
                   await ref.read(provider.future);
                 },
                 child: ListView.separated(
-                  padding: GBTSpacing.paddingPage,
+                  padding: const EdgeInsets.only(bottom: GBTSpacing.xl),
                   itemBuilder: (context, index) {
                     final item = filtered[index];
-                    final joinedLabel = DateFormat(
-                      'yyyy.MM.dd',
-                    ).format(item.followedAt.toLocal());
-                    return InkWell(
-                      borderRadius: BorderRadius.circular(GBTSpacing.radiusLg),
+                    return UserConnectionRow(
+                      item: item,
                       onTap: () => context.goToUserProfile(item.userId),
-                      child: Ink(
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? GBTColors.darkSurface
-                              : GBTColors.surface,
-                          borderRadius: BorderRadius.circular(
-                            GBTSpacing.radiusLg,
-                          ),
-                          border: Border.all(
-                            color: isDark
-                                ? GBTColors.darkBorder
-                                : GBTColors.border,
-                          ),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(GBTSpacing.sm),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _ConnectionAvatar(url: item.avatarUrl),
-                              const SizedBox(width: GBTSpacing.sm),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            item.displayName,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: GBTTypography.bodyMedium
-                                                .copyWith(
-                                                  fontWeight: FontWeight.w700,
-                                                ),
-                                          ),
-                                        ),
-                                        const SizedBox(width: GBTSpacing.xs),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: GBTSpacing.xs,
-                                            vertical: 2,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .primaryContainer
-                                                .withValues(alpha: 0.4),
-                                            borderRadius: BorderRadius.circular(
-                                              999,
-                                            ),
-                                          ),
-                                          child: Text(
-                                            joinedLabel,
-                                            style: GBTTypography.labelSmall
-                                                .copyWith(
-                                                  color: Theme.of(
-                                                    context,
-                                                  ).colorScheme.primary,
-                                                ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    if (item.bio != null &&
-                                        item.bio!.trim().isNotEmpty) ...[
-                                      const SizedBox(height: 4),
-                                      GBTLinkifiedText(
-                                        item.bio!,
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: GBTTypography.bodySmall.copyWith(
-                                          color: mutedColor,
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: GBTSpacing.sm),
-                              FilledButton.tonal(
-                                onPressed: () =>
-                                    context.goToUserProfile(item.userId),
-                                style: FilledButton.styleFrom(
-                                  minimumSize: const Size(72, 34),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: GBTSpacing.sm,
-                                  ),
-                                ),
-                                child: Text(
-                                  context.l10n(ko: '보기', en: 'View', ja: '見る'),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
                     );
                   },
-                  separatorBuilder: (_, __) =>
-                      const SizedBox(height: GBTSpacing.sm),
+                  separatorBuilder: (_, __) => const Divider(
+                    height: 1,
+                    indent: 74,
+                    endIndent: GBTSpacing.pageHorizontal,
+                  ),
                   itemCount: filtered.length,
                 ),
               );
@@ -326,6 +230,77 @@ class _ConnectionsTabBody extends ConsumerWidget {
       final bio = (item.bio ?? '').toLowerCase();
       return name.contains(queryLower) || bio.contains(queryLower);
     }).toList();
+  }
+}
+
+/// EN: Borderless connection row with one clear navigation target.
+/// KO: 하나의 명확한 이동 대상만 제공하는 보더리스 연결 행입니다.
+class UserConnectionRow extends StatelessWidget {
+  const UserConnectionRow({super.key, required this.item, required this.onTap});
+
+  final UserFollowSummary item;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final joinedLabel = DateFormat(
+      'yyyy.MM.dd',
+    ).format(item.followedAt.toLocal());
+
+    return Semantics(
+      button: true,
+      label: '${item.displayName}, $joinedLabel',
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: GBTSpacing.pageHorizontal,
+            vertical: GBTSpacing.sm2,
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _ConnectionAvatar(url: item.avatarUrl),
+              const SizedBox(width: GBTSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.displayName,
+                      style: GBTTypography.bodyMedium.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: GBTSpacing.xxs),
+                    Text(
+                      joinedLabel,
+                      style: GBTTypography.labelSmall.copyWith(
+                        color: colors.primary,
+                      ),
+                    ),
+                    if (item.bio?.trim().isNotEmpty == true) ...[
+                      const SizedBox(height: GBTSpacing.xs),
+                      GBTLinkifiedText(
+                        item.bio!,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: GBTTypography.bodySmall.copyWith(
+                          color: colors.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(width: GBTSpacing.sm),
+              Icon(Icons.chevron_right_rounded, color: colors.onSurfaceVariant),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 

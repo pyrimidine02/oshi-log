@@ -64,8 +64,7 @@ dependencies:
   intl: ^0.20.2
   path: ^1.9.0
   connectivity_plus: ^6.1.0
-  jose: ^0.3.5
-  google_fonts: ^6.2.1
+  jose: ^0.3.5+2
   image_picker: ^1.1.2
   image_cropper: ^9.0.0
   file_picker: ^8.0.0
@@ -135,17 +134,38 @@ dependency_overrides:
 # The following section is specific to Flutter packages.
 flutter:
   generate: true
+  # EN: SPM integration breaks on non-ASCII (Korean) paths — the resolver
+  # percent-encodes "00_소스코드" and then fails to find pubspec.yaml.
+  # Keep CocoaPods until the repo moves to an ASCII path or Flutter fixes it.
+  # KO: SPM 통합이 비ASCII(한글) 경로에서 깨짐 — "00_소스코드"를 percent-
+  # 인코딩한 뒤 pubspec.yaml을 찾지 못함. 리포를 ASCII 경로로 옮기거나
+  # Flutter가 수정할 때까지 CocoaPods 유지.
+  config:
+    enable-swift-package-manager: false
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
 
-  # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
-  #   - images/a_dot_ham.jpeg
+  # EN: Bundle the custom font license alongside the font files.
+  # KO: 커스텀 폰트 라이선스를 폰트 파일과 함께 번들에 포함합니다.
+  assets:
+    - assets/fonts/Pretendard-LICENSE.txt
 
+  fonts:
+    - family: Pretendard
+      fonts:
+        - asset: assets/fonts/Pretendard-Regular.otf
+          weight: 400
+        - asset: assets/fonts/Pretendard-Medium.otf
+          weight: 500
+        - asset: assets/fonts/Pretendard-SemiBold.otf
+          weight: 600
+        - asset: assets/fonts/Pretendard-Bold.otf
+          weight: 700
+        - asset: assets/fonts/Pretendard-ExtraBold.otf
+          weight: 800
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 

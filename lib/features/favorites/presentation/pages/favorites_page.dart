@@ -4,6 +4,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/error/failure.dart';
 import '../../../../core/localization/locale_text.dart';
@@ -12,7 +13,8 @@ import '../../../../core/theme/gbt_colors.dart';
 import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';
 import '../../../../core/widgets/common/gbt_image.dart';
-import '../../../../core/widgets/feedback/gbt_loading.dart';
+import '../../../../core/widgets/feedback/gbt_empty_state.dart';
+import '../../../../core/widgets/feedback/gbt_loading.dart' hide GBTEmptyState;
 import '../../../../core/widgets/navigation/gbt_app_bar_icon_button.dart';
 import '../../../../core/widgets/navigation/gbt_segmented_tab_bar.dart';
 import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
@@ -91,12 +93,23 @@ class FavoritesPage extends ConsumerWidget {
                 children: [
                   const SizedBox(height: GBTSpacing.sm),
                   GBTEmptyState(
-                    icon: Icons.favorite_border,
-                    message: context.l10n(
-                      ko: '저장된 즐겨찾기가 없습니다.\n마음에 드는 장소, 이벤트, 뉴스를 저장해보세요.',
-                      en: 'No saved favorites.\nSave places, events, or news you like.',
-                      ja: '保存されたお気に入りがありません。\n気に入った場所、イベント、ニュースを保存してください。',
+                    icon: Icons.favorite_border_rounded,
+                    title: context.l10n(
+                      ko: '저장된 즐겨찾기가 없어요',
+                      en: 'No saved favorites yet',
+                      ja: '保存されたお気に入りがありません',
                     ),
+                    subtitle: context.l10n(
+                      ko: '마음에 드는 장소, 이벤트, 뉴스를 저장해보세요.',
+                      en: 'Save places, events, or news you like.',
+                      ja: '気に入った場所、イベント、ニュースを保存してみましょう。',
+                    ),
+                    actionLabel: context.l10n(
+                      ko: '탐색하러 가기',
+                      en: 'Explore now',
+                      ja: '探索へ行く',
+                    ),
+                    onAction: () => context.go('/explore'),
                   ),
                 ],
               );
@@ -106,7 +119,7 @@ class FavoritesPage extends ConsumerWidget {
               length: 4,
               child: Column(
                 children: [
-                  const SizedBox(height: GBTSpacing.sm),
+                  _FavoritesDocumentHeader(count: items.length),
                   GBTSegmentedTabBar(
                     margin: const EdgeInsets.symmetric(
                       horizontal: GBTSpacing.md,
@@ -155,6 +168,57 @@ class FavoritesPage extends ConsumerWidget {
   }
 }
 
+/// EN: Field-notes heading that explains the saved itinerary archive.
+/// KO: 저장한 여정 아카이브를 설명하는 필드 노트 헤더.
+class _FavoritesDocumentHeader extends StatelessWidget {
+  const _FavoritesDocumentHeader({required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        GBTSpacing.pageHorizontal,
+        GBTSpacing.lg,
+        GBTSpacing.pageHorizontal,
+        GBTSpacing.md,
+      ),
+      child: Semantics(
+        header: true,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'SAVED ROUTE / ${count.toString().padLeft(2, '0')} ITEMS',
+              style: GBTTypography.labelSmall.copyWith(
+                color: isDark ? GBTColors.darkPrimary : GBTColors.primary,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1,
+              ),
+            ),
+            const SizedBox(height: GBTSpacing.xs),
+            Text(
+              context.l10n(
+                ko: '다음 여행을 위해 모아둔 기록',
+                en: 'Notes saved for your next journey',
+                ja: '次の旅のために保存した記録',
+              ),
+              style: GBTTypography.titleLarge.copyWith(
+                color: isDark
+                    ? GBTColors.darkTextPrimary
+                    : GBTColors.textPrimary,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _FavoritesList extends StatelessWidget {
   const _FavoritesList({required this.items});
 
@@ -168,18 +232,18 @@ class _FavoritesList extends StatelessWidget {
         children: [
           const SizedBox(height: GBTSpacing.lg),
           GBTEmptyState(
-            icon: Icons.favorite_border,
-            message: context.l10n(
-              ko: '이 카테고리에 저장된 항목이 없습니다.',
-              en: 'No saved items in this category.',
-              ja: 'このカテゴリに保存された項目がありません。',
+            icon: Icons.favorite_border_rounded,
+            title: context.l10n(
+              ko: '이 카테고리엔 저장된 항목이 없어요',
+              en: 'No saved items in this category',
+              ja: 'このカテゴリに保存された項目がありません',
             ),
           ),
         ],
       );
     }
 
-    return ListView.builder(
+    return ListView.separated(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(
         GBTSpacing.pageHorizontal,
@@ -188,13 +252,15 @@ class _FavoritesList extends StatelessWidget {
         GBTSpacing.xl,
       ),
       itemCount: items.length,
-      itemBuilder: (context, index) {
-        return Padding(
-          padding: const EdgeInsets.only(bottom: GBTSpacing.sm),
-          child: _FavoriteCard(
-            item: items[index],
-            onTap: () => _openItem(context, items[index]),
-          ),
+      itemBuilder: (context, index) => _FavoriteCard(
+        item: items[index],
+        onTap: () => _openItem(context, items[index]),
+      ),
+      separatorBuilder: (context, index) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return Divider(
+          height: 1,
+          color: isDark ? GBTColors.darkBorderSubtle : GBTColors.divider,
         );
       },
     );
@@ -222,24 +288,16 @@ class _FavoriteCard extends StatelessWidget {
     final textTertiary = isDark
         ? GBTColors.darkTextTertiary
         : GBTColors.textTertiary;
-    final surfaceColor = isDark ? GBTColors.darkSurfaceElevated : Colors.white;
-    final borderColor = isDark ? GBTColors.darkBorder : GBTColors.border;
-
     return Semantics(
       label:
           '${context.l10n(ko: "즐겨찾기", en: "Favorite", ja: "お気に入り")}: ${item.title ?? context.l10n(ko: "즐겨찾기 항목", en: "Favorite item", ja: "お気に入り項目")}, ${_typeLabel(context, item.type)}',
       button: true,
       child: Material(
-        color: surfaceColor,
-        borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
-        clipBehavior: Clip.antiAlias,
+        color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          child: Container(
-            decoration: BoxDecoration(
-              border: Border.all(color: borderColor, width: 0.5),
-              borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
-            ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 80),
             child: Row(
               children: [
                 // EN: Left thumbnail (72px) — image or icon fallback
@@ -248,7 +306,6 @@ class _FavoriteCard extends StatelessWidget {
                   imageUrl: item.thumbnailUrl,
                   type: item.type,
                   color: color,
-                  isDark: isDark,
                 ),
                 const SizedBox(width: GBTSpacing.md),
                 // EN: Title and type badge
@@ -301,22 +358,16 @@ class _FavoriteThumbnail extends StatelessWidget {
     required this.imageUrl,
     required this.type,
     required this.color,
-    required this.isDark,
   });
 
   final String? imageUrl;
   final FavoriteType type;
   final Color color;
-  final bool isDark;
 
   @override
   Widget build(BuildContext context) {
     if (imageUrl != null && imageUrl!.isNotEmpty) {
       return ClipRRect(
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(GBTSpacing.radiusMd - 1),
-          bottomLeft: Radius.circular(GBTSpacing.radiusMd - 1),
-        ),
         child: GBTImage(
           imageUrl: imageUrl!,
           width: 72,
@@ -328,21 +379,18 @@ class _FavoriteThumbnail extends StatelessWidget {
       );
     }
 
+    // EN: A quiet color block replaces the old decorative gradient so the
+    // category color communicates type rather than visual decoration.
+    // KO: 카테고리 색이 장식이 아닌 유형을 전달하도록 기존 그라디언트를
+    // 차분한 색상 블록으로 교체합니다.
     return Container(
       width: 72,
       height: 72,
       decoration: BoxDecoration(
-        color: color.withValues(alpha: isDark ? 0.15 : 0.1),
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(GBTSpacing.radiusMd - 1),
-          bottomLeft: Radius.circular(GBTSpacing.radiusMd - 1),
-        ),
+        color: color.withValues(alpha: 0.12),
+        border: Border(left: BorderSide(color: color, width: 3)),
       ),
-      child: Icon(
-        _typeIcon(type),
-        size: 28,
-        color: color.withValues(alpha: 0.7),
-      ),
+      child: Icon(_typeIcon(type), size: 26, color: color),
     );
   }
 }
@@ -409,11 +457,11 @@ String _typeLabel(BuildContext context, FavoriteType type) {
 /// KO: 타입 배지에 카테고리별 액센트 색상을 반환합니다.
 Color _typeColor(FavoriteType type) {
   return switch (type) {
-    FavoriteType.place => const Color(0xFF14B8A6), // teal
-    FavoriteType.liveEvent => const Color(0xFF6366F1), // indigo
-    FavoriteType.news => const Color(0xFFF59E0B), // amber
-    FavoriteType.post => const Color(0xFFEC4899), // pink
-    FavoriteType.unknown => const Color(0xFF9E9E9E), // neutral
+    FavoriteType.place => GBTColors.accentTeal,
+    FavoriteType.liveEvent => GBTColors.secondary,
+    FavoriteType.news => GBTColors.warning,
+    FavoriteType.post => GBTColors.favorite,
+    FavoriteType.unknown => GBTColors.textSecondary,
   };
 }
 

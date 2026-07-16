@@ -14,17 +14,24 @@ import '../../domain/entities/title_entities.dart';
 // KO: 카테고리 색상 헬퍼 — [TitleCategory]를 대표 색상으로 매핑합니다.
 // =============================================================================
 
-/// EN: Returns the accent color associated with [category].
-///     Falls back to [GBTColors.primary] for null / unknown categories.
-/// KO: [category]에 연결된 강조 색상을 반환합니다.
-///     null 또는 알 수 없는 카테고리의 경우 [GBTColors.primary]로 폴백합니다.
-Color _categoryColor(TitleCategory? category) {
+/// EN: Returns the accent color associated with [category], drawn from the
+/// Journey Ticket palette (mint/gold/violet/brand magenta) — matches the
+/// mapping used in the title catalog page. Falls back to primary for null /
+/// unknown categories.
+/// KO: [category]에 연결된 강조 색상 — "여정의 티켓" 팔레트(민트/골드/
+/// 바이올렛/브랜드 마젠타)에서 가져오며, 칭호 카탈로그 페이지와 동일한
+/// 매핑을 사용합니다. null 또는 알 수 없는 카테고리는 primary로 폴백합니다.
+Color _categoryColor(TitleCategory? category, bool isDark) {
   return switch (category) {
-    TitleCategory.activity => Colors.blue.shade400,
-    TitleCategory.commemorative => Colors.amber.shade500,
-    TitleCategory.event => Colors.pink.shade400,
-    TitleCategory.admin => Colors.purple.shade400,
-    null => GBTColors.primary,
+    TitleCategory.activity => GBTSemanticColors.getDistanceColor(
+      isDark ? Brightness.dark : Brightness.light,
+    ),
+    TitleCategory.commemorative =>
+      isDark ? GBTColors.darkAccent : GBTColors.accent,
+    TitleCategory.event =>
+      isDark ? GBTColors.darkSecondary : GBTColors.secondary,
+    TitleCategory.admin ||
+    null => isDark ? GBTColors.darkPrimary : GBTColors.primary,
   };
 }
 
@@ -54,28 +61,18 @@ Color _categoryColor(TitleCategory? category) {
 class ActiveTitleBadge extends StatelessWidget {
   /// EN: Direct constructor — pass the display name and optional category.
   /// KO: 직접 생성자 — 표시 이름과 선택적 카테고리를 전달합니다.
-  const ActiveTitleBadge({
-    super.key,
-    required this.titleName,
-    this.category,
-  });
+  const ActiveTitleBadge({super.key, required this.titleName, this.category});
 
   /// EN: Factory constructor that reads fields from an [ActiveTitleItem] entity.
   /// KO: [ActiveTitleItem] 엔티티에서 필드를 읽어오는 팩토리 생성자.
   factory ActiveTitleBadge.fromActiveItem(ActiveTitleItem item) {
-    return ActiveTitleBadge(
-      titleName: item.name,
-      category: item.category,
-    );
+    return ActiveTitleBadge(titleName: item.name, category: item.category);
   }
 
   /// EN: Factory constructor that reads fields from a [TitleCatalogItem] entity.
   /// KO: [TitleCatalogItem] 엔티티에서 필드를 읽어오는 팩토리 생성자.
   factory ActiveTitleBadge.fromCatalogItem(TitleCatalogItem item) {
-    return ActiveTitleBadge(
-      titleName: item.name,
-      category: item.category,
-    );
+    return ActiveTitleBadge(titleName: item.name, category: item.category);
   }
 
   /// EN: The title name to display. An empty string hides the badge.
@@ -95,7 +92,7 @@ class ActiveTitleBadge extends StatelessWidget {
     if (titleName.isEmpty) return const SizedBox.shrink();
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accentColor = _categoryColor(category);
+    final accentColor = _categoryColor(category, isDark);
 
     // EN: Background uses low-alpha fill; border uses slightly higher alpha.
     // KO: 배경은 낮은 알파 채우기, 테두리는 약간 높은 알파를 사용합니다.
@@ -104,10 +101,7 @@ class ActiveTitleBadge extends StatelessWidget {
     return Semantics(
       label: '현재 칭호: $titleName',
       child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 8,
-          vertical: 3,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
         decoration: BoxDecoration(
           color: accentColor.withValues(alpha: bgAlpha),
           borderRadius: BorderRadius.circular(100),

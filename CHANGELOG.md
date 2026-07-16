@@ -1,5 +1,167 @@
 # Changelog
 
+## 2026-07-16
+
+- Generalized the user interest model from project/unit-only selection to one
+  project, band/unit, and voice-actor mobile contract while preserving the
+  project journey lens and both existing bottom navigation bars. Future artist
+  and anime wire values remain parseable but hidden from the current
+  girls-band surface.
+- Added generic `scopeSubjectId` discovery and a dormant server-backed
+  fan-subject detail/subscription route while retaining the legacy `projectId`
+  bridge and specialist band/voice-actor pages.
+- Kept project switching as a compact one-tap bottom sheet and added a separate
+  generalized interest sheet so explore chrome does not become taller.
+- Replaced travel-review mock screens with project-slug API list, detail,
+  create, update, and delete flows using DTO/repository/Riverpod boundaries.
+- Travel review composition now sends ordered place stops, verified visit
+  references, selected live events, trusted attendance references, trip dates,
+  route notes, and project/unit/voice-actor subject IDs.
+- Attendance proof fails closed: only a non-empty server record ID with
+  `VERIFIED` state and matching event is sent; declared or mismatched attendance
+  is never presented as verified proof.
+- Expanded global search navigation for fan subjects, posts, and public users
+  while retaining source identity for projects, bands/units, and voice actors.
+- Full `dart analyze` passed with no issues and all 508 Flutter tests passed.
+- Added `docs/adr/ADR-20260716-generalized-fan-subject-context.md`.
+- No production deployment was performed.
+
+## 2026-07-15
+
+- **ROUTE-WIDE URBAN TRAVEL FIELD NOTES DESIGN CONTRACT**:
+  - `app_router.dart`의 실제 라우트 63개·36개 페이지 구현을 전수 분류하고,
+    라우팅되는 모든 화면을 warm paper, GBT blue, 컴팩트 상단바,
+    문서형 헤더, 1px rule 기반 행으로 통일했습니다.
+  - 인증·설정, 작품·멤버·성우·음악, 응원·명대사·칭호·덕력, 검색·알림·
+    뉴스·북마크·연결, 장소·방문·통계, 커뮤니티 작성·상세 화면의
+    중첩 카드·거대 hero·장식 gradient·glass를 정리했습니다.
+  - `/visits`는 신규 `FieldVisitLedgerPage`, `/zukan`은 신규
+    `FieldZukanArchivePage`를 직접 열도록 바꾸어 탐방 내부와 별도 진입 경로의
+    디자인 불일치를 제거했습니다.
+  - 검색을 공통 56dp 크롬 안으로 이동하고, 프로필 배너 그리드를 320dp 1열·
+    일반 폰 2열·광폭 3열로 반응형화했습니다.
+  - 공통 오류·빈 상태·라우트 복구를 통일하고, 페이지 헤더의 우측 제어가
+    스크린리더에서 보존되도록 의미 노드를 분리했습니다.
+  - 앱 전역의 플랫폼별 텍스트 확대 상한을 제거해 사용자의 시스템 글자 크기를
+    그대로 따르며, 메인·커뮤니티 하단바 높이가 큰 글자에서만 적응하도록
+    바꿨습니다. 320dp·200% 텍스트에서도 라벨과 본문이 겹치지 않습니다.
+  - 검색 기록, 작성 이미지 제거, 배너 제거, 계정 도구, 운영 필터 등 남아 있던
+    작은 실행 영역을 최소 48dp로 맞추고, 긴 상단바 제목은 한 줄 말줄임으로
+    안정화했습니다.
+  - 음악 아카이브와 알림 이동도 공통 문서형 상단 크롬 및 단일 도메인 라우팅
+    해석기를 사용하도록 수렴해 구형 헤더와 `/board` 임의 폴백을 제거했습니다.
+  - 상세 결정은
+    `docs/adr/ADR-20260715-route-wide-design-contract.md`에 기록했습니다.
+
+- **JOURNEY BRIEF HOME + ONE-TAP PROJECT CONTEXT**:
+  - 홈을 콘텐츠 카탈로그가 아닌 오늘의 원정 브리핑으로 재구성했습니다.
+    가장 가까운 일정 또는 첫 추천 성지를 D-day/날짜, 제목, 명확한 행동과
+    함께 먼저 보여주며, 전체 폭 3:2 포스터는 우측 세로 이미지 스트립으로
+    축소했습니다.
+  - 대표 일정·장소를 아래 섹션에서 제거해 같은 정보의 반복을 막고,
+    그다음 일정 → 이 프로젝트의 성지 → 프로젝트 소식 순으로 여행 준비
+    흐름을 정리했습니다.
+  - 메인 하단바와 중복되던 성지·일정·커뮤니티 바로가기 행과 실제 게시물
+    데이터가 없는 커뮤니티 홍보 카드를 제거했습니다.
+  - 프로젝트 렌즈를 홈 헤더 안의 무테 여행 기준 / 프로젝트명 / 전환
+    컨트롤로 축소했습니다.
+  - 프로젝트 바텀시트의 현재 여행 중복 카드, 번호, 내부 코드·시간대,
+    초안 선택과 하단 확정 버튼을 제거했습니다. 다른 프로젝트는 한 번
+    탭해 즉시 전환하며, 현재 프로젝트 재선택은 유닛 필터를 초기화하지
+    않는 no-op입니다.
+  - 320dp, 200% 텍스트, 다크 모드, 스크린리더 선택 상태와 의도한
+    컴팩트 높이를 위젯·골든 테스트로 검증하고 iPhone 17 Pro Max
+    시뮬레이터에서 실제 API 데이터로 첫 화면을 확인했습니다.
+  - Added:
+    - docs/adr/ADR-20260715-journey-brief-home-context-switching.md
+  - Updated:
+    - lib/features/home/presentation/field_home/**
+    - lib/features/projects/presentation/widgets/field_project_*.dart
+    - test/features/home/presentation/**
+    - test/features/projects/presentation/**
+
+- **CALENDAR LIVE SCHEDULE RECOVERY (project-aware merged timeline)**:
+  - 선택한 프로젝트의 일정 조회 파라미터를 서버 계약인
+    `projectKey`(slug/code)로 바꾸고, 팬 캘린더와 프로젝트 라이브 API
+    결과를 하나의 월별 일정으로 병합합니다.
+  - 라이브 목록은 100개씩 최대 20페이지까지 순회하고, 이전 달에
+    시작해 현재 달로 이어지는 일정을 위해 조회 범위를 한 달
+    앞으로 확장합니다.
+  - `endTime`이 있는 다일 라이브는 보이는 달의 각 날짜로 불변
+    투영하되, 모든 날짜가 같은 라이브 상세 ID로 이동합니다.
+  - 두 소스 중 하나가 실패해도 정상 일정은 유지하고, 현재 달에
+    표시할 일정이 전혀 없는데 소스 실패가 있으면 빈 달로 위장하지
+    않고 오류로 표시합니다.
+  - 서버의 팬 캘린더 공개 읽기 권한과
+    `LiveEventSummaryDto.endTime` 계약이 운영에 배포되어야 전체
+    기능이 활성화됩니다. 배포 전 라이브는 시작일만 표시됩니다.
+  - Added:
+    - `docs/adr/ADR-20260715-calendar-live-schedule-aggregation.md`
+    - `test/features/calendar/data/calendar_event_dto_test.dart`
+    - `test/features/calendar/data/calendar_remote_data_source_test.dart`
+    - `test/features/calendar/data/calendar_repository_impl_test.dart`
+
+- **URBAN TRAVEL FIELD NOTES UI REBUILD (blue brand system)**:
+  - 홈, 탐방, 일정, 정보, 커뮤니티, 마이 루트 화면을 기존 API·Provider·딥링크를
+    유지한 신규 sibling presentation 모듈로 전환했습니다.
+  - 기존 브랜드 블루(`#0A66C2`, dark `#8AB4FF`)를 핵심 행동과 선택 상태로
+    복원하고, warm paper/ink/harbor teal을 보조하는 공통 디자인 토큰을
+    적용했습니다. 빨강은 오류·위험·실시간 상태에만 제한합니다.
+  - 메인 하단바 실루엣을 유지했으며, 커뮤니티의 별도
+    `뒤로가기 + 피드 + 발견 + 여행후기` 하단바도 그대로 보존했습니다.
+  - 프로젝트 선택을 현재 상태가 명확한 64dp 이상 프로젝트 행과 단일 탭
+    즉시 전환을 갖는 공용 바텀시트로 전면 재설계했습니다.
+  - 탐방 상단의 중복 대형 제목과 모드 선택기를 제거하고, `지도 · 이벤트
+    · 기록 · 도감`을 메인 하단바 위 8dp에 떠 있는 60dp 별도 도크로
+    재구성했습니다. `MainScaffold` 자체는 변경하지 않았습니다.
+  - 지도는 2행 검색·필터 pill 군집을 56dp 미션 스트립으로 교체하고,
+    프로젝트·지역·밴드·정렬을 파란 규칙선의 하단 현장 원장으로 옮겼습니다.
+    임의 좌표 거리 계산은 제거하고 실제 위치 또는 서버 순서를 사용합니다.
+  - 프로젝트 전환 시 지도·이벤트 필터를 원자적으로 초기화하고 request
+    generation으로 이전 프로젝트의 느린 응답이 새 화면을 덮지 못하게
+    보강했습니다.
+  - 이벤트 상단을 프로젝트·예정/아카이브·통합 필터가 포함된 100dp로
+    축소하고, 목록/상세를 포스터 + 날짜순 어젠다 + 티켓 문서 구조로,
+    유저 상세를 명함 + 실제 활동 원장 + 글·댓글 기록 구조로 교체했습니다.
+  - 탐방 `기록`은 샘플 카드 대신 실제 장소 방문·이벤트 출석을 날짜
+    레일과 규칙선으로 묶은 여정 원장으로, `도감`은 대표 진행 표본 1개와
+    수집 상태 색인을 사용하는 여행 표본 아카이브로 전면 교체했습니다.
+  - 기록의 빈 상태도 파란 규칙선의 첫 현장 노트로 설계했고, 이벤트 기록은
+    현재 프로젝트 범위라는 점을 표시합니다. 도감 상세도 구형 3열 그리드를
+    제거하고 표본 파일·진행률·방문 지점 원장으로 연결했습니다.
+  - 지도 controller lease, 프로젝트 복원/사용자 선택 generation, 상세 응답
+    generation을 도입해 느린 이전 요청이 최신 화면을 덮지 못하게 했습니다.
+  - 이벤트 출석 조회·outbox 조회/삭제에도 요청 generation과 프로젝트
+    소유권을 적용해 화면 이탈 또는 프로젝트 전환 뒤의 늦은 작업이 새 상태를
+    덮거나 dispose된 notifier를 갱신하지 못하게 했습니다.
+  - 도감 직접 진입에서 프로젝트 복원 실패·빈 목록을 영구 로딩으로 남기지 않고,
+    오류/빈 상태·재시도·공용 프로젝트 선택 시트로 복구할 수 있게 했습니다.
+  - 지도 검색·필터·원장 헤더, 이벤트 모드·필터·출석, 프로젝트 렌즈와 방문 행의
+    커스텀 semantics에 실행 가능한 tap action과 활성 상태를 명시했습니다.
+  - 네트워크 디버그 로그의 요청·응답·오류 경로에서 중첩 토큰,
+    URL 쿼리, 평문 JSON과 비정형 인증 문자열을 재귀·불변 방식으로 마스킹합니다.
+  - Pretendard 400–800과 SIL OFL 1.1 라이선스를 앱 번들에 포함하고 네트워크
+    폰트 의존성을 제거했습니다.
+  - 하단 안전영역, 320dp, 200% 텍스트, 라이트/다크, ko/en/ja 기본 상태와
+    스크린리더 의미 정보를 위젯 테스트로 보강했습니다.
+  - Added:
+    - `lib/features/**/presentation/field_*`
+    - `lib/features/projects/presentation/widgets/field_project_picker_sheet.dart`
+    - `lib/features/places/presentation/widgets/field_map_controls.dart`
+    - `lib/features/places/presentation/widgets/field_map_controller_lease.dart`
+    - `lib/features/places/presentation/widgets/field_place_sheet_row.dart`
+    - `lib/features/visits/presentation/field_visit_ledger/**`
+    - `lib/features/zukan/presentation/field_archive/**`
+    - `lib/features/zukan/presentation/field_detail/**`
+    - `lib/core/network/network_log_sanitizer.dart`
+    - `docs/adr/ADR-20260715-urban-travel-field-notes.md`
+  - Updated:
+    - `lib/core/router/app_router.dart`
+    - `lib/core/theme/**`
+    - `lib/core/widgets/**`
+    - `lib/features/places/presentation/pages/places_map_page.dart`
+    - `pubspec.yaml`, `pubspec.lock`
+
 ## 2026-03-31
 - **IOS NATIVE-ASSET OBJECTIVE_C LOAD FIX (simulator/device runtime crash)**:
   - iOS 런타임에서 `objective_c.framework/objective_c` 로딩 실패로

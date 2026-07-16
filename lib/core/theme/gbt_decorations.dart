@@ -111,7 +111,7 @@ class GBTDecorations {
   /// KO: 기본 카드 데코레이션 — 테두리만, 그림자 없음
   static BoxDecoration card({bool isDark = false}) => BoxDecoration(
     color: isDark ? GBTColors.darkSurfaceVariant : GBTColors.surface,
-    borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
+    borderRadius: BorderRadius.circular(GBTSpacing.radiusCard),
     border: Border.all(
       color: isDark ? GBTColors.darkBorderSubtle : GBTColors.border,
       width: isDark ? 0.5 : 1,
@@ -122,7 +122,7 @@ class GBTDecorations {
   /// KO: 높은 카드 데코레이션 — 미세한 단일 그림자
   static BoxDecoration cardElevated({bool isDark = false}) => BoxDecoration(
     color: isDark ? GBTColors.darkSurfaceElevated : GBTColors.surface,
-    borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
+    borderRadius: BorderRadius.circular(GBTSpacing.radiusCard),
     boxShadow: isDark ? GBTShadows.darkSm : GBTShadows.sm,
     border: isDark ? Border.all(color: GBTColors.darkBorder, width: 0.5) : null,
   );
@@ -194,5 +194,71 @@ class GBTDecorations {
       top: Radius.circular(GBTSpacing.radiusLg),
     ),
     boxShadow: isDark ? GBTShadows.darkLg : GBTShadows.lg,
+  );
+
+  // ========================================
+  // EN: Image-First Card Decoration (Journey Ticket cards)
+  // KO: 이미지 우선 카드 데코레이션 ("여정의 티켓" 카드)
+  // ========================================
+
+  /// EN: Image-first card shell — 2026 large-radius (radiusCard), border-subtle
+  /// for depth instead of a heavy shadow (place/event/carousel cards).
+  /// KO: 2026 라지 라운드(radiusCard)의 이미지 우선 카드 셸 — 무거운 그림자 대신
+  /// border-subtle로 깊이감을 표현합니다 (장소/이벤트/캐러셀 카드).
+  static BoxDecoration imageCard({bool isDark = false}) => BoxDecoration(
+    color: isDark ? GBTColors.darkSurface : GBTColors.surface,
+    borderRadius: BorderRadius.circular(GBTSpacing.radiusCard),
+    border: Border.all(
+      color: isDark
+          ? GBTColors.darkBorderSubtle
+          : GBTColors.border.withValues(alpha: 0.6),
+      width: isDark ? 0.75 : 1,
+    ),
+  );
+
+  // ========================================
+  // EN: Liquid-Glass Decorations (cheap, no blur)
+  // KO: 리퀴드 글래스 데코레이션 (저비용, 블러 없음)
+  // ========================================
+
+  /// EN: Cheap pseudo-glass surface for use inside lists/tracks where a real
+  /// [BackdropFilter] would be too costly per-item — translucent surfaceVariant
+  /// tint + hairline border, no blur. For real frosted blur, use GBTGlassPanel
+  /// instead (sparingly — a handful of surfaces per screen).
+  /// KO: 리스트/트랙 내부에서 실제 [BackdropFilter]를 아이템마다 쓰기엔 비용이
+  /// 큰 경우를 위한 저비용 유사 글래스 표면 — 반투명 surfaceVariant 틴트 +
+  /// 헤어라인 보더, 블러 없음. 실제 프로스티드 블러가 필요하면 GBTGlassPanel을
+  /// 사용하세요 (단, 화면당 소수 표면으로 제한).
+  static BoxDecoration glassSurface({bool isDark = false}) => BoxDecoration(
+    color: (isDark ? GBTColors.darkSurfaceVariant : GBTColors.surfaceVariant)
+        .withValues(alpha: isDark ? 0.55 : 0.7),
+    borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
+    border: Border.all(
+      color: isDark
+          ? Colors.white.withValues(alpha: 0.08)
+          : Colors.white.withValues(alpha: 0.6),
+      width: 0.75,
+    ),
+  );
+
+  /// EN: Subtle top-edge highlight for image-first cards — a soft ~8% white
+  /// hairline that fades at both ends, suggesting light catching the rim of
+  /// a glass surface. Cheap: a single 1px gradient strip, no blur.
+  /// KO: 이미지 우선 카드의 미세한 상단 하이라이트 — 양 끝이 페이드되는
+  /// 약 8% 화이트 헤어라인으로, 글래스 표면 가장자리에 빛이 닿는 느낌을
+  /// 줍니다. 저비용: 블러 없이 1px 그라디언트 스트립 하나만 사용합니다.
+  static const LinearGradient glassTopHairline = LinearGradient(
+    colors: [Colors.transparent, Color(0x14FFFFFF), Colors.transparent],
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+  );
+
+  /// EN: Top scrim gradient placed over images so badges/icons stay legible.
+  /// KO: 이미지 위 배지/아이콘의 가독성을 지키기 위한 상단 스크림 그라디언트.
+  static const LinearGradient imageTopScrim = LinearGradient(
+    colors: [Color(0x66000000), Colors.transparent],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    stops: [0.0, 0.45],
   );
 }

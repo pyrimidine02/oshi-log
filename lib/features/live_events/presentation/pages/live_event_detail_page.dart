@@ -13,6 +13,7 @@ import '../../../../core/theme/gbt_animations.dart';
 import '../../../../core/theme/gbt_colors.dart';
 import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';
+import '../../../../core/widgets/cards/gbt_ticket_card.dart';
 import '../../../../core/widgets/common/gbt_image.dart';
 import '../../../../core/widgets/feedback/gbt_loading.dart';
 import '../../../favorites/application/favorites_controller.dart';
@@ -392,57 +393,90 @@ class LiveEventDetailPage extends ConsumerWidget {
           children: [
             Padding(
               padding: GBTSpacing.paddingPage,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    event.title,
-                    style: GBTTypography.headlineSmall,
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: GBTSpacing.xs),
-                  // EN: Status chip — color-coded per status.
-                  // KO: 상태 칩 — 상태별 색상 코딩.
-                  _StatusChip(status: event.status, isDark: isDark),
-                  const SizedBox(height: GBTSpacing.lg),
-                ],
-              ),
-            ),
-            // EN: Horizontally scrollable info cards.
-            // KO: 가로 스크롤 정보 카드.
-            SizedBox(
-              height: 92,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: GBTSpacing.md),
-                children: [
-                  _InfoCard(
-                    icon: Icons.calendar_today_rounded,
-                    label: '날짜',
-                    value: event.dateLabel,
-                    accent: isDDay
-                        ? (isDark
-                              ? GBTColors.darkSecondary
-                              : GBTColors.secondary)
-                        : null,
-                    isDark: isDark,
-                  ),
-                  const SizedBox(width: GBTSpacing.sm),
-                  _InfoCard(
-                    icon: Icons.access_time_rounded,
-                    label: '시간',
-                    value: '개장 ${event.doorTimeLabel}\n시작 ${event.timeLabel}',
-                    isDark: isDark,
-                  ),
-                  const SizedBox(width: GBTSpacing.sm),
-                  _InfoCard(
-                    icon: Icons.people_outline_rounded,
-                    label: '대상',
-                    value: event.metaLabel,
-                    isDark: isDark,
-                  ),
-                ],
+              // EN: The "concert ticket" moment — title/status in the body,
+              // date·time·attendance stamp in the tear-off stub.
+              // KO: "콘서트 티켓" 모먼트 — 본문에 제목/상태, 절취선 아래
+              // 스텁에 날짜·시간·참석 스탬프를 배치합니다.
+              child: GBTTicketCard(
+                stubHeight: 64,
+                body: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      event.title,
+                      style: GBTTypography.headlineSmall,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: GBTSpacing.sm),
+                    Row(
+                      children: [
+                        // EN: Status chip — color-coded per status.
+                        // KO: 상태 칩 — 상태별 색상 코딩.
+                        _StatusChip(status: event.status, isDark: isDark),
+                        const SizedBox(width: GBTSpacing.sm),
+                        Icon(
+                          Icons.people_outline_rounded,
+                          size: GBTSpacing.iconXs,
+                          color: tertiaryColor,
+                        ),
+                        const SizedBox(width: GBTSpacing.xxs),
+                        Expanded(
+                          child: Text(
+                            event.metaLabel,
+                            style: GBTTypography.labelSmall.copyWith(
+                              color: tertiaryColor,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                stub: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            event.dateLabel,
+                            style: GBTTypography.titleSmall.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: isDDay
+                                  ? (isDark
+                                        ? GBTColors.darkSecondary
+                                        : GBTColors.secondary)
+                                  : (isDark
+                                        ? GBTColors.darkTextPrimary
+                                        : GBTColors.textPrimary),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            '개장 ${event.doorTimeLabel} · 시작 ${event.timeLabel}',
+                            style: GBTTypography.labelSmall.copyWith(
+                              color: tertiaryColor,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    // EN: Attendance stamp CTA — the ticket stub's tear-off action.
+                    // KO: 참석 스탬프 CTA — 티켓 스텁의 절취 액션.
+                    _AttendanceStubButton(
+                      state: attendanceState,
+                      onToggle: (attended) =>
+                          _toggleAttendance(context, ref, event, attended),
+                    ),
+                  ],
+                ),
               ),
             ),
             Padding(
@@ -451,11 +485,7 @@ class LiveEventDetailPage extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: GBTSpacing.lg),
-                  _LiveAttendanceSection(
-                    state: attendanceState,
-                    onToggle: (attended) =>
-                        _toggleAttendance(context, ref, event, attended),
-                  ),
+                  _LiveAttendanceSection(state: attendanceState),
                   const SizedBox(height: GBTSpacing.lg),
                   _LiveSetlistSection(
                     state: setlistState,
@@ -565,10 +595,9 @@ class LiveEventDetailPage extends ConsumerWidget {
 }
 
 class _LiveAttendanceSection extends StatelessWidget {
-  const _LiveAttendanceSection({required this.state, required this.onToggle});
+  const _LiveAttendanceSection({required this.state});
 
   final LiveAttendanceViewState state;
-  final ValueChanged<bool> onToggle;
 
   @override
   Widget build(BuildContext context) {
@@ -585,8 +614,6 @@ class _LiveAttendanceSection extends StatelessWidget {
         : GBTColors.textSecondary;
     final statusColor = _attendanceStatusColor(isDark, attendance.status);
     final isOffLocked = attendance.attended && !attendance.canUndo;
-    final switchEnabled =
-        !state.isSubmitting && !state.isLoading && !isOffLocked;
 
     return Container(
       width: double.infinity,
@@ -598,39 +625,24 @@ class _LiveAttendanceSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      context.l10n(
-                        ko: '라이브 방문',
-                        en: 'Live attendance',
-                        ja: 'ライブ参加',
-                      ),
-                      style: GBTTypography.titleSmall.copyWith(
-                        color: titleColor,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: GBTSpacing.xxs),
-                    Text(
-                      _attendanceStatusLabel(context, attendance.status),
-                      style: GBTTypography.bodySmall.copyWith(
-                        color: statusColor,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Switch.adaptive(
-                value: attendance.attended,
-                onChanged: switchEnabled ? onToggle : null,
-              ),
-            ],
+          // EN: Status readout — the primary toggle now lives on the ticket
+          // stub above; this panel reflects state and sync feedback only.
+          // KO: 상태 표시 — 메인 토글은 위쪽 티켓 스텁으로 이동했으며,
+          // 이 영역은 상태와 동기화 피드백만 보여줍니다.
+          Text(
+            context.l10n(ko: '라이브 방문', en: 'Live attendance', ja: 'ライブ参加'),
+            style: GBTTypography.titleSmall.copyWith(
+              color: titleColor,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: GBTSpacing.xxs),
+          Text(
+            _attendanceStatusLabel(context, attendance.status),
+            style: GBTTypography.bodySmall.copyWith(
+              color: statusColor,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           if (state.isLoading) ...[
             const SizedBox(height: GBTSpacing.xs),
@@ -924,95 +936,65 @@ class _StatusChip extends StatelessWidget {
   }
 }
 
-/// EN: Horizontal info card — icon + label + value in compact card.
-/// KO: 가로 정보 카드 — 아이콘 + 라벨 + 값 콤팩트 카드.
-class _InfoCard extends StatefulWidget {
-  const _InfoCard({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.isDark,
-    this.accent,
-  });
+/// EN: Compact attendance stamp CTA rendered inside the ticket stub —
+/// tapping stamps (or un-stamps) this show as attended.
+/// KO: 티켓 스텁 안에 렌더링되는 컴팩트 참석 스탬프 CTA — 탭하면 이
+/// 공연을 참석(스탬프) 처리하거나 취소합니다.
+class _AttendanceStubButton extends StatelessWidget {
+  const _AttendanceStubButton({required this.state, required this.onToggle});
 
-  final IconData icon;
-  final String label;
-  final String value;
-  final bool isDark;
-  final Color? accent;
-
-  @override
-  State<_InfoCard> createState() => _InfoCardState();
-}
-
-class _InfoCardState extends State<_InfoCard> {
-  bool _isPressed = false;
+  final LiveAttendanceViewState state;
+  final ValueChanged<bool> onToggle;
 
   @override
   Widget build(BuildContext context) {
-    final bgColor = widget.isDark
-        ? GBTColors.darkSurfaceVariant
-        : GBTColors.surfaceVariant;
-    final labelColor = widget.isDark
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final attendance = state.attendance;
+    final isOffLocked = attendance.attended && !attendance.canUndo;
+    final isEnabled = !state.isSubmitting && !state.isLoading && !isOffLocked;
+    final accent = isDark ? GBTColors.darkAccent : GBTColors.accent;
+    final idleColor = isDark
         ? GBTColors.darkTextTertiary
         : GBTColors.textTertiary;
-    final valueColor =
-        widget.accent ??
-        (widget.isDark ? GBTColors.darkTextPrimary : GBTColors.textPrimary);
-    final iconColor =
-        widget.accent ??
-        (widget.isDark ? GBTColors.darkTextSecondary : GBTColors.textSecondary);
 
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _isPressed = true),
-      onTapUp: (_) => setState(() => _isPressed = false),
-      onTapCancel: () => setState(() => _isPressed = false),
-      child: AnimatedContainer(
-        duration: GBTAnimations.fast,
-        curve: GBTAnimations.defaultCurve,
-        width: 140,
-        padding: const EdgeInsets.all(GBTSpacing.md),
-        decoration: BoxDecoration(
-          color: _isPressed ? bgColor.withValues(alpha: 0.7) : bgColor,
-          borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
-          boxShadow: _isPressed
-              ? []
-              : [
-                  BoxShadow(
-                    color: widget.isDark
-                        ? Colors.black26
-                        : Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
+    return Semantics(
+      button: true,
+      label: attendance.attended
+          ? context.l10n(ko: '참석 취소', en: 'Cancel attendance', ja: '参加取消')
+          : context.l10n(ko: '참석 기록', en: 'Mark attended', ja: '参加記録'),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
+        onTap: isEnabled ? () => onToggle(!attendance.attended) : null,
+        child: Container(
+          width: 44,
+          height: 44,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: attendance.attended
+                ? accent.withValues(alpha: isDark ? 0.24 : 0.16)
+                : Colors.transparent,
+            border: Border.all(
+              color: attendance.attended ? accent : idleColor,
+              width: 1.4,
+            ),
+          ),
+          child: state.isSubmitting
+              ? SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: accent,
                   ),
-                ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(widget.icon, size: 14, color: iconColor),
-                const SizedBox(width: GBTSpacing.xs),
-                Text(
-                  widget.label,
-                  style: GBTTypography.labelSmall.copyWith(color: labelColor),
+                )
+              : Icon(
+                  attendance.attended
+                      ? Icons.check_rounded
+                      : Icons.confirmation_num_outlined,
+                  size: 20,
+                  color: attendance.attended ? accent : idleColor,
                 ),
-              ],
-            ),
-            const SizedBox(height: GBTSpacing.xs),
-            Expanded(
-              child: Text(
-                widget.value,
-                style: GBTTypography.bodySmall.copyWith(
-                  color: valueColor,
-                  fontWeight: FontWeight.w500,
-                ),
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
         ),
       ),
     );

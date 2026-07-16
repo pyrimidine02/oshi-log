@@ -13,6 +13,8 @@ import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';
 import '../../../../core/widgets/common/gbt_image.dart';
 import '../../../../core/widgets/feedback/gbt_loading.dart';
+import '../../../../core/widgets/layout/gbt_page_header.dart';
+import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
 import '../../application/feed_controller.dart';
 import '../../domain/entities/feed_entities.dart';
 
@@ -29,8 +31,9 @@ class NewsDetailPage extends ConsumerWidget {
 
     return state.when(
       loading: () => Scaffold(
-        appBar: AppBar(
-          title: Text(context.l10n(ko: '뉴스', en: 'News', ja: 'ニュース')),
+        appBar: gbtStandardAppBar(
+          context,
+          title: context.l10n(ko: '뉴스', en: 'News', ja: 'ニュース'),
         ),
         body: GBTLoading(
           message: context.l10n(
@@ -49,8 +52,9 @@ class NewsDetailPage extends ConsumerWidget {
                 ja: 'ニュースを読み込めませんでした',
               );
         return Scaffold(
-          appBar: AppBar(
-            title: Text(context.l10n(ko: '뉴스', en: 'News', ja: 'ニュース')),
+          appBar: gbtStandardAppBar(
+            context,
+            title: context.l10n(ko: '뉴스', en: 'News', ja: 'ニュース'),
           ),
           body: GBTErrorState(
             message: message,
@@ -60,15 +64,21 @@ class NewsDetailPage extends ConsumerWidget {
           ),
         );
       },
-      data: (news) => _NewsDetailView(news: news),
+      data: (news) => Scaffold(
+        appBar: gbtStandardAppBar(
+          context,
+          title: context.l10n(ko: '뉴스', en: 'News', ja: 'ニュース'),
+        ),
+        body: SingleChildScrollView(child: NewsArticleView(news: news)),
+      ),
     );
   }
 }
 
 /// EN: News detail view widget.
 /// KO: 뉴스 상세 뷰 위젯.
-class _NewsDetailView extends StatelessWidget {
-  const _NewsDetailView({required this.news});
+class NewsArticleView extends StatelessWidget {
+  const NewsArticleView({super.key, required this.news});
 
   final NewsDetail news;
 
@@ -78,80 +88,64 @@ class _NewsDetailView extends StatelessWidget {
     // EN: Use theme-aware colors for dark mode compatibility.
     // KO: 다크 모드 호환성을 위해 테마 인식 색상을 사용합니다.
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final tertiaryColor = isDark
-        ? GBTColors.darkTextTertiary
-        : GBTColors.textTertiary;
     final bodyColor = isDark
         ? GBTColors.darkTextSecondary
         : GBTColors.textSecondary;
 
-    return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            expandedHeight: 200,
-            pinned: true,
-            flexibleSpace: FlexibleSpaceBar(
-              background: _NewsHeaderImage(
-                newsId: news.id,
-                imageUrl: news.coverImageUrl,
-              ),
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 760),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            GBTPageHeader(
+              eyebrow: 'FIELD DISPATCH',
+              title: news.title,
+              description: news.dateLabel,
             ),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.bookmark_border),
-                tooltip: context.l10n(ko: '북마크', en: 'Bookmark', ja: 'ブックマーク'),
-                onPressed: () {
-                  // EN: TODO: Toggle bookmark.
-                  // KO: TODO: 북마크 토글.
-                },
-              ),
-              IconButton(
-                icon: const Icon(Icons.share),
-                tooltip: context.l10n(ko: '공유', en: 'Share', ja: '共有'),
-                onPressed: () {
-                  // EN: TODO: Share news.
-                  // KO: TODO: 뉴스 공유.
-                },
-              ),
-            ],
-          ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: GBTSpacing.paddingPage,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    news.dateLabel,
-                    style: GBTTypography.labelSmall.copyWith(
-                      color: tertiaryColor,
+            if (news.coverImageUrl?.trim().isNotEmpty == true)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  GBTSpacing.pageHorizontal,
+                  GBTSpacing.lg,
+                  GBTSpacing.pageHorizontal,
+                  0,
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
+                  child: AspectRatio(
+                    aspectRatio: 16 / 9,
+                    child: _NewsHeaderImage(
+                      newsId: news.id,
+                      imageUrl: news.coverImageUrl,
                     ),
                   ),
-                  const SizedBox(height: GBTSpacing.md),
-                  Text(news.title, style: GBTTypography.headlineSmall),
-                  const SizedBox(height: GBTSpacing.lg),
-                  const Divider(),
-                  const SizedBox(height: GBTSpacing.lg),
-                  SelectableText(
-                    content.isNotEmpty
-                        ? content
-                        : context.l10n(
-                            ko: '기사 본문을 불러오지 못했어요.',
-                            en: 'Failed to load article body.',
-                            ja: '記事本文を読み込めませんでした。',
-                          ),
-                    style: GBTTypography.bodyMedium.copyWith(
-                      height: 1.8,
-                      color: bodyColor,
-                    ),
-                  ),
-                  const SizedBox(height: GBTSpacing.xxl),
-                ],
+                ),
+              ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                GBTSpacing.pageHorizontal,
+                GBTSpacing.lg,
+                GBTSpacing.pageHorizontal,
+                GBTSpacing.xxl,
+              ),
+              child: SelectableText(
+                content.isNotEmpty
+                    ? content
+                    : context.l10n(
+                        ko: '기사 본문을 불러오지 못했어요.',
+                        en: 'Failed to load article body.',
+                        ja: '記事本文を読み込めませんでした。',
+                      ),
+                style: GBTTypography.bodyMedium.copyWith(
+                  height: 1.8,
+                  color: bodyColor,
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

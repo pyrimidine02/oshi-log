@@ -439,6 +439,13 @@ class ApiEndpoints {
   static String commentsByAuthor(String projectCode, String userId) =>
       '$apiVersion/projects/$projectCode/comments/by-author/$userId';
 
+  // EN: Project-scoped pilgrimage travel review aggregate endpoints.
+  // KO: 프로젝트 범위 성지순례 여행 후기 애그리거트 엔드포인트.
+  static String travelReviews(String projectCode) =>
+      '$apiVersion/projects/$projectCode/travel-reviews';
+  static String travelReview(String projectCode, String reviewId) =>
+      '${travelReviews(projectCode)}/$reviewId';
+
   // EN: Community subscription endpoints.
   // KO: 커뮤니티 구독 엔드포인트.
   static const String communityRecommendedFeed =
@@ -553,6 +560,19 @@ class ApiEndpoints {
       '${project(projectId)}/rankings/trending';
   static String rankingsUsers(String projectId) =>
       '${project(projectId)}/rankings/users';
+  static String rankingsCurrentUser(String projectId) =>
+      '${rankingsUsers(projectId)}/me';
+
+  // ============================================================
+  // EN: Unified fan-subject endpoints (project, unit, voice actor)
+  // KO: 통합 팬 대상 엔드포인트 (프로젝트, 유닛, 성우)
+  // ============================================================
+  static const String fanSubjects = '$apiVersion/fan-subjects';
+  static String fanSubject(String subjectId) => '$fanSubjects/$subjectId';
+  static String fanSubjectChildren(String subjectId) =>
+      '${fanSubject(subjectId)}/children';
+  static const String myFanSubjects = '$apiVersion/users/me/fan-subjects';
+  static String myFanSubject(String subjectId) => '$myFanSubjects/$subjectId';
 
   // ============================================================
   // EN: Admin User/Role endpoints (8.21)

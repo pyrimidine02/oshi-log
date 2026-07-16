@@ -11,7 +11,10 @@ import '../../../../core/theme/gbt_colors.dart';
 import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';
 import '../../../../core/widgets/common/gbt_image.dart';
-import '../../../../core/widgets/feedback/gbt_loading.dart';
+import '../../../../core/widgets/feedback/gbt_empty_state.dart';
+import '../../../../core/widgets/feedback/gbt_loading.dart' hide GBTEmptyState;
+import '../../../../core/widgets/navigation/gbt_segmented_tab_bar.dart';
+import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
 import '../../../projects/application/projects_controller.dart';
 import '../../../projects/domain/entities/project_entities.dart';
 
@@ -50,7 +53,6 @@ class _VoiceActorDetailPageState extends ConsumerState<VoiceActorDetailPage>
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final lookupArgs = (
       projectId: widget.projectId,
       voiceActorId: widget.voiceActorId,
@@ -64,20 +66,7 @@ class _VoiceActorDetailPageState extends ConsumerState<VoiceActorDetailPage>
         context.l10n(ko: '성우', en: 'Voice actor', ja: '声優');
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: [
-            Tab(
-              text: context.l10n(ko: '담당 캐릭터', en: 'Members', ja: '担当キャラ'),
-            ),
-            Tab(
-              text: context.l10n(ko: '크레딧', en: 'Credits', ja: 'クレジット'),
-            ),
-          ],
-        ),
-      ),
+      appBar: gbtStandardAppBar(context, title: title),
       body: detailState.when(
         loading: () => const Center(child: GBTLoading()),
         error: (error, _) => _ErrorView(
@@ -97,7 +86,24 @@ class _VoiceActorDetailPageState extends ConsumerState<VoiceActorDetailPage>
         data: (detail) {
           return Column(
             children: [
-              _Header(detail: detail, isDark: isDark),
+              VoiceActorProfileHeader(detail: detail),
+              const SizedBox(height: GBTSpacing.sm),
+              GBTSegmentedTabBar(
+                controller: _tabController,
+                tabs: [
+                  Tab(
+                    text: context.l10n(
+                      ko: '담당 캐릭터',
+                      en: 'Members',
+                      ja: '担当キャラ',
+                    ),
+                  ),
+                  Tab(
+                    text: context.l10n(ko: '크레딧', en: 'Credits', ja: 'クレジット'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: GBTSpacing.sm),
               Expanded(
                 child: TabBarView(
                   controller: _tabController,
@@ -123,14 +129,14 @@ class _VoiceActorDetailPageState extends ConsumerState<VoiceActorDetailPage>
   }
 }
 
-class _Header extends StatelessWidget {
-  const _Header({required this.detail, required this.isDark});
+class VoiceActorProfileHeader extends StatelessWidget {
+  const VoiceActorProfileHeader({super.key, required this.detail});
 
   final VoiceActorDetail detail;
-  final bool isDark;
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final borderColor = isDark ? GBTColors.darkBorder : GBTColors.border;
     final secondaryColor = isDark
         ? GBTColors.darkTextSecondary
@@ -180,6 +186,15 @@ class _Header extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Text(
+                  'VOICE CAST',
+                  style: GBTTypography.labelSmall.copyWith(
+                    color: isDark ? GBTColors.darkPrimary : GBTColors.primary,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.1,
+                  ),
+                ),
+                const SizedBox(height: GBTSpacing.xs),
                 Text(
                   detail.displayName,
                   style: GBTTypography.titleMedium.copyWith(
@@ -262,9 +277,9 @@ class _MembersTab extends ConsumerWidget {
       ),
       data: (items) {
         if (items.isEmpty) {
-          return _EmptyView(
+          return GBTEmptyState(
             icon: Icons.person_search_outlined,
-            message: context.l10n(
+            title: context.l10n(
               ko: '담당 캐릭터 정보가 없습니다',
               en: 'No member credits',
               ja: '担当キャラ情報がありません',
@@ -272,9 +287,13 @@ class _MembersTab extends ConsumerWidget {
           );
         }
         return ListView.separated(
-          padding: GBTSpacing.paddingPage,
+          padding: const EdgeInsets.only(bottom: GBTSpacing.xl),
           itemCount: items.length,
-          separatorBuilder: (_, __) => const SizedBox(height: GBTSpacing.sm),
+          separatorBuilder: (_, __) => const Divider(
+            height: 1,
+            indent: 84,
+            endIndent: GBTSpacing.pageHorizontal,
+          ),
           itemBuilder: (context, index) {
             final item = items[index];
             return _InfoCard(
@@ -323,9 +342,9 @@ class _CreditsTab extends ConsumerWidget {
       ),
       data: (items) {
         if (items.isEmpty) {
-          return _EmptyView(
+          return GBTEmptyState(
             icon: Icons.featured_play_list_outlined,
-            message: context.l10n(
+            title: context.l10n(
               ko: '크레딧 정보가 없습니다',
               en: 'No credits',
               ja: 'クレジット情報がありません',
@@ -333,9 +352,13 @@ class _CreditsTab extends ConsumerWidget {
           );
         }
         return ListView.separated(
-          padding: GBTSpacing.paddingPage,
+          padding: const EdgeInsets.only(bottom: GBTSpacing.xl),
           itemCount: items.length,
-          separatorBuilder: (_, __) => const SizedBox(height: GBTSpacing.sm),
+          separatorBuilder: (_, __) => const Divider(
+            height: 1,
+            indent: 84,
+            endIndent: GBTSpacing.pageHorizontal,
+          ),
           itemBuilder: (context, index) {
             final item = items[index];
             final subtitle = [
@@ -375,14 +398,10 @@ class _InfoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      padding: const EdgeInsets.all(GBTSpacing.md),
-      decoration: BoxDecoration(
-        color: isDark ? GBTColors.darkSurface : GBTColors.surface,
-        borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
-        border: Border.all(
-          color: isDark ? GBTColors.darkBorder : GBTColors.border,
-        ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: GBTSpacing.pageHorizontal,
+        vertical: GBTSpacing.sm2,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -456,36 +475,6 @@ class _InfoCard extends StatelessWidget {
   }
 }
 
-class _EmptyView extends StatelessWidget {
-  const _EmptyView({required this.icon, required this.message});
-
-  final IconData icon;
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: GBTSpacing.paddingPage,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 28, color: GBTColors.textTertiary),
-            const SizedBox(height: GBTSpacing.sm),
-            Text(
-              message,
-              style: GBTTypography.bodySmall.copyWith(
-                color: GBTColors.textTertiary,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _ErrorView extends StatelessWidget {
   const _ErrorView({required this.message, required this.onRetry});
 
@@ -494,27 +483,11 @@ class _ErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: GBTSpacing.paddingPage,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              message,
-              style: GBTTypography.bodySmall.copyWith(
-                color: GBTColors.errorDark,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: GBTSpacing.sm),
-            FilledButton.tonal(
-              onPressed: onRetry,
-              child: Text(context.l10n(ko: '다시 시도', en: 'Retry', ja: '再試行')),
-            ),
-          ],
-        ),
-      ),
+    return GBTEmptyState(
+      icon: Icons.cloud_off_outlined,
+      title: message,
+      actionLabel: context.l10n(ko: '다시 시도', en: 'Retry', ja: '再試行'),
+      onAction: onRetry,
     );
   }
 }

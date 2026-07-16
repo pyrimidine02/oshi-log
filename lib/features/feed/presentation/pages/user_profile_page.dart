@@ -16,7 +16,8 @@ import '../../../../core/theme/gbt_typography.dart';
 import '../../../../core/utils/result.dart';
 import '../../../../core/widgets/common/gbt_image.dart';
 import '../../../../core/widgets/common/gbt_linkified_text.dart';
-import '../../../../core/widgets/feedback/gbt_loading.dart';
+import '../../../../core/widgets/feedback/gbt_empty_state.dart';
+import '../../../../core/widgets/feedback/gbt_loading.dart' hide GBTEmptyState;
 import '../../../../core/widgets/navigation/gbt_segmented_tab_bar.dart';
 import '../../../settings/application/settings_controller.dart';
 import '../../../settings/domain/entities/user_profile.dart';
@@ -489,12 +490,15 @@ class UserProfilePage extends ConsumerWidget {
                             ),
                       // EN: Bottom gradient for readability on cover.
                       // KO: 커버 위 가독성을 위한 하단 그라디언트.
-                      const DecoratedBox(
+                      DecoratedBox(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
-                            colors: [Colors.transparent, Color(0x66000000)],
+                            colors: [
+                              Colors.transparent,
+                              Colors.black.withValues(alpha: 0.4),
+                            ],
                           ),
                         ),
                       ),
@@ -1195,10 +1199,15 @@ class _ProfileFollowerRow extends StatelessWidget {
         TextSpan(
           children: [
             TextSpan(
+              // EN: statNumber applies tabular figures so follower/following
+              // counts don't visually jitter as digits change.
+              // KO: statNumber는 고정폭 숫자를 적용해 팔로워/팔로잉 수의
+              // 자릿수가 바뀌어도 시각적으로 흔들리지 않도록 합니다.
               text: count,
-              style: GBTTypography.bodyMedium.copyWith(
+              style: GBTTypography.statNumber.copyWith(
+                fontSize: 14,
+                height: 1.0,
                 color: primaryColor,
-                fontWeight: FontWeight.w700,
               ),
             ),
             TextSpan(
@@ -1374,9 +1383,13 @@ class _StatGridCell extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   stat.value,
-                  style: GBTTypography.titleSmall.copyWith(
+                  // EN: statNumber gives tabular figures so digits align
+                  // across the stat grid cells.
+                  // KO: statNumber는 고정폭 숫자를 적용해 통계 그리드 셀
+                  // 전반에서 자릿수가 정렬되도록 합니다.
+                  style: GBTTypography.statNumber.copyWith(
+                    fontSize: 18,
                     color: palette.value,
-                    fontWeight: FontWeight.w800,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -1715,7 +1728,8 @@ class _PostsTab extends StatelessWidget {
           if (posts.isEmpty) ...[
             const SizedBox(height: 80),
             GBTEmptyState(
-              message: context.l10n(
+              icon: Icons.article_outlined,
+              title: context.l10n(
                 ko: '작성한 글이 없습니다',
                 en: 'No posts yet',
                 ja: '投稿がありません',
@@ -1901,7 +1915,8 @@ class _CommentsTab extends StatelessWidget {
           if (comments.isEmpty) ...[
             const SizedBox(height: 80),
             GBTEmptyState(
-              message: context.l10n(
+              icon: Icons.mode_comment_outlined,
+              title: context.l10n(
                 ko: '작성한 댓글이 없습니다',
                 en: 'No comments yet',
                 ja: 'コメントがありません',

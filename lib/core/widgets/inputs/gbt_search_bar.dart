@@ -160,7 +160,7 @@ class _GBTSearchBarState extends State<GBTSearchBar> {
           //     null 대신 transparent를 사용해 AnimatedContainer 보간 가능.
           border: Border.all(
             color: _isFocused ? primaryColor : Colors.transparent,
-            width: 1.5,
+            width: 2,
           ),
           boxShadow: _isFocused
               ? [
@@ -176,7 +176,8 @@ class _GBTSearchBarState extends State<GBTSearchBar> {
           children: [
             Padding(
               padding: const EdgeInsets.only(left: GBTSpacing.md),
-              child: widget.leading ??
+              child:
+                  widget.leading ??
                   Icon(
                     Icons.search_rounded,
                     color: iconColor,

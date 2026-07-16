@@ -27,6 +27,8 @@ class SearchRepositoryImpl implements SearchRepository {
   Future<Result<List<SearchItem>>> search({
     required String query,
     List<String> types = const [],
+    String? projectId,
+    List<String> unitIds = const [],
     int page = 0,
     int size = 20,
     bool forceRefresh = false,
@@ -34,6 +36,8 @@ class SearchRepositoryImpl implements SearchRepository {
     final cacheKey = _cacheKey(
       query: query,
       types: types,
+      projectId: projectId,
+      unitIds: unitIds,
       page: page,
       size: size,
     );
@@ -48,8 +52,14 @@ class SearchRepositoryImpl implements SearchRepository {
         policy: policy,
         ttl: profile.ttl,
         revalidateAfter: profile.revalidateAfter,
-        fetcher: () =>
-            _fetchSearch(query: query, types: types, page: page, size: size),
+        fetcher: () => _fetchSearch(
+          query: query,
+          types: types,
+          projectId: projectId,
+          unitIds: unitIds,
+          page: page,
+          size: size,
+        ),
         toJson: (dtos) => {'items': dtos.map((dto) => dto.toJson()).toList()},
         fromJson: (json) {
           final items = json['items'];
@@ -64,7 +74,7 @@ class SearchRepositoryImpl implements SearchRepository {
       );
 
       final entities = cacheResult.data
-          .map((dto) => SearchItem.fromDto(dto))
+          .map((dto) => SearchItem.fromDto(dto, projectId: projectId))
           .toList();
       return Result.success(entities);
     } catch (e, stackTrace) {
@@ -76,12 +86,16 @@ class SearchRepositoryImpl implements SearchRepository {
   Future<List<SearchItemDto>> _fetchSearch({
     required String query,
     List<String> types = const [],
+    String? projectId,
+    List<String> unitIds = const [],
     int page = 0,
     int size = 20,
   }) async {
     final result = await _remoteDataSource.search(
       query: query,
       types: types,
+      projectId: projectId,
+      unitIds: unitIds,
       page: page,
       size: size,
     );
@@ -200,6 +214,8 @@ class SearchRepositoryImpl implements SearchRepository {
   String _cacheKey({
     required String query,
     List<String> types = const [],
+    String? projectId,
+    List<String> unitIds = const [],
     int page = 0,
     int size = 20,
   }) {
@@ -207,7 +223,20 @@ class SearchRepositoryImpl implements SearchRepository {
     final normalizedTypes = List<String>.from(types)
       ..removeWhere((type) => type.trim().isEmpty)
       ..sort();
+    final normalizedProjectId = projectId?.trim() ?? '';
+    final normalizedUnitIds =
+        unitIds
+            .map((unitId) => unitId.trim())
+            .where((unitId) => unitId.isNotEmpty)
+            .toList()
+          ..sort();
     final typeKey = normalizedTypes.isEmpty ? 'all' : normalizedTypes.join(',');
-    return 'search:$normalizedQuery:$typeKey:$page:$size';
+    final projectKey = normalizedProjectId.isEmpty
+        ? 'all-projects'
+        : normalizedProjectId;
+    final unitKey = normalizedUnitIds.isEmpty
+        ? 'all-units'
+        : normalizedUnitIds.join(',');
+    return 'search:$normalizedQuery:$typeKey:$projectKey:$unitKey:$page:$size';
   }
 }

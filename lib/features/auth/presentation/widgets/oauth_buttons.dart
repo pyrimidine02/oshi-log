@@ -129,11 +129,7 @@ class _OAuthButtonsSectionState extends ConsumerState<OAuthButtonsSection> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: GBTSpacing.sm),
               child: Text(
-                context.l10n(
-                  ko: '소셜 로그인',
-                  en: 'Social login',
-                  ja: 'ソーシャルログイン',
-                ),
+                context.l10n(ko: '소셜 로그인', en: 'Social login', ja: 'ソーシャルログイン'),
                 style: GBTTypography.labelMedium.copyWith(
                   color: GBTColors.textTertiary,
                 ),
@@ -194,10 +190,7 @@ String _buildSocialLoginErrorMessage(BuildContext context, Failure failure) {
 /// EN: Google sign-in button following official brand guidelines.
 /// KO: 공식 브랜드 가이드라인을 따르는 Google 로그인 버튼.
 class _GoogleSignInButton extends StatelessWidget {
-  const _GoogleSignInButton({
-    required this.onPressed,
-    required this.isLoading,
-  });
+  const _GoogleSignInButton({required this.onPressed, required this.isLoading});
 
   final VoidCallback onPressed;
   final bool isLoading;
@@ -207,9 +200,12 @@ class _GoogleSignInButton extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final bgColor = isDark ? const Color(0xFF131314) : const Color(0xFFFFFFFF);
-    final borderColor =
-        isDark ? const Color(0xFF8E918F) : const Color(0xFF747775);
-    final textColor = isDark ? const Color(0xFFE3E3E3) : const Color(0xFF1F1F1F);
+    final borderColor = isDark
+        ? const Color(0xFF8E918F)
+        : const Color(0xFF747775);
+    final textColor = isDark
+        ? const Color(0xFFE3E3E3)
+        : const Color(0xFF1F1F1F);
 
     return Semantics(
       button: true,
@@ -220,15 +216,15 @@ class _GoogleSignInButton extends StatelessWidget {
       ),
       child: Material(
         color: bgColor,
-        borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
+        borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
         child: InkWell(
           onTap: isLoading ? null : onPressed,
-          borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
+          borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
           child: Container(
             height: GBTSpacing.xxl,
             decoration: BoxDecoration(
               border: Border.all(color: borderColor),
-              borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
+              borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
             ),
             child: isLoading
                 ? Center(
@@ -249,9 +245,7 @@ class _GoogleSignInButton extends StatelessWidget {
                       SizedBox(
                         width: 20,
                         height: 20,
-                        child: CustomPaint(
-                          painter: const _GoogleLogoPainter(),
-                        ),
+                        child: CustomPaint(painter: const _GoogleLogoPainter()),
                       ),
                       const SizedBox(width: 12),
                       Text(
@@ -282,10 +276,7 @@ class _GoogleSignInButton extends StatelessWidget {
 /// EN: Apple sign-in button following official brand guidelines.
 /// KO: 공식 브랜드 가이드라인을 따르는 Apple 로그인 버튼.
 class _AppleSignInButton extends StatelessWidget {
-  const _AppleSignInButton({
-    required this.onPressed,
-    required this.isLoading,
-  });
+  const _AppleSignInButton({required this.onPressed, required this.isLoading});
 
   final VoidCallback onPressed;
   final bool isLoading;
@@ -308,10 +299,10 @@ class _AppleSignInButton extends StatelessWidget {
       ),
       child: Material(
         color: bgColor,
-        borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
+        borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
         child: InkWell(
           onTap: isLoading ? null : onPressed,
-          borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
+          borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
           child: SizedBox(
             height: GBTSpacing.xxl,
             child: isLoading
@@ -358,10 +349,7 @@ class _AppleSignInButton extends StatelessWidget {
 /// EN: X sign-in button following official brand guidelines.
 /// KO: 공식 브랜드 가이드라인을 따르는 X 로그인 버튼.
 class _XSignInButton extends StatelessWidget {
-  const _XSignInButton({
-    required this.onPressed,
-    required this.isLoading,
-  });
+  const _XSignInButton({required this.onPressed, required this.isLoading});
 
   final VoidCallback onPressed;
   final bool isLoading;
@@ -380,10 +368,10 @@ class _XSignInButton extends StatelessWidget {
       label: context.l10n(ko: 'X로 로그인', en: 'Sign in with X', ja: 'Xでログイン'),
       child: Material(
         color: bgColor,
-        borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
+        borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
         child: InkWell(
           onTap: isLoading ? null : onPressed,
-          borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
+          borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
           child: SizedBox(
             height: GBTSpacing.xxl,
             child: isLoading

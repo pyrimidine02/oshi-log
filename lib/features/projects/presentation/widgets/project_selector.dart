@@ -15,6 +15,7 @@ import '../../../../core/widgets/common/gbt_pressable.dart';
 import '../../../../core/widgets/feedback/gbt_loading.dart';
 import '../../application/projects_controller.dart';
 import '../../domain/entities/project_entities.dart';
+import 'field_project_picker_sheet.dart';
 
 /// EN: Full project selector — compact pill row.
 /// KO: 전체 프로젝트 선택기 — 컴팩트 필 행.
@@ -358,7 +359,7 @@ class _ProjectDropdownField extends ConsumerWidget {
               Icon(Icons.layers_outlined, size: 16, color: subtitleColor),
               const SizedBox(width: GBTSpacing.xs),
               Text(
-                '프로젝트',
+                context.l10n(ko: '프로젝트', en: 'Project', ja: 'プロジェクト'),
                 style: GBTTypography.labelMedium.copyWith(
                   color: subtitleColor,
                   fontWeight: FontWeight.w600,
@@ -463,39 +464,45 @@ class _ProjectAudienceChip extends ConsumerWidget {
           _selectProject(ref, next);
           onProjectSelected?.call(next);
         },
-        child: Container(
-          height: chipHeight,
-          padding: EdgeInsets.symmetric(
-            horizontal: dense ? GBTSpacing.xs : GBTSpacing.xs2,
-          ),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
-            border: Border.all(color: borderColor, width: 1.0),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.folder_open_outlined,
-                size: iconSize,
-                color: textColor,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: GBTSpacing.touchTarget),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Container(
+              height: chipHeight,
+              padding: EdgeInsets.symmetric(
+                horizontal: dense ? GBTSpacing.xs : GBTSpacing.xs2,
               ),
-              const SizedBox(width: GBTSpacing.xs),
-              Flexible(
-                child: Text(
-                  selectedProject.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: textStyle,
-                ),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
+                border: Border.all(color: borderColor, width: 1.0),
               ),
-              const SizedBox(width: GBTSpacing.xs),
-              Icon(
-                Icons.keyboard_arrow_down_rounded,
-                size: arrowSize,
-                color: textColor,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.folder_open_outlined,
+                    size: iconSize,
+                    color: textColor,
+                  ),
+                  const SizedBox(width: GBTSpacing.xs),
+                  Flexible(
+                    child: Text(
+                      selectedProject.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: textStyle,
+                    ),
+                  ),
+                  const SizedBox(width: GBTSpacing.xs),
+                  Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    size: arrowSize,
+                    color: textColor,
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -546,9 +553,11 @@ class _ProjectPill extends StatelessWidget {
       bgColor = isDark ? GBTColors.darkPrimary : GBTColors.primary;
       textColor = isDark ? GBTColors.darkBackground : GBTColors.textInverse;
     } else {
-      bgColor = isDark
-          ? GBTColors.darkSurfaceVariant
-          : GBTColors.surfaceVariant;
+      // EN: Ghost pill — surface + hairline border keeps unselected pills
+      //     quiet so the selected one carries the color.
+      // KO: 고스트 필 — 표면색 + 헤어라인 보더로 비선택 필을 차분하게 두어
+      //     선택된 필에만 컬러가 실리도록 합니다.
+      bgColor = isDark ? GBTColors.darkSurface : GBTColors.surface;
       textColor = isDark
           ? GBTColors.darkTextSecondary
           : GBTColors.textSecondary;
@@ -570,15 +579,21 @@ class _ProjectPill extends StatelessWidget {
           decoration: BoxDecoration(
             color: bgColor,
             borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
+            // EN: Selected glow follows the pill's own primary fill —
+            //     mixing the project palette color here clashed with it.
+            // KO: 선택 글로우는 필 자체의 프라이머리 채움색을 따름 —
+            //     프로젝트 팔레트색을 섞으면 충돌이 났습니다.
             border: isSelected
-                ? Border.all(color: paletteColor.withValues(alpha: 0.3), width: 1.5)
-                : Border.all(color: Colors.transparent, width: 1.5),
+                ? Border.all(color: Colors.transparent, width: 1.5)
+                : Border.all(
+                    color: isDark ? GBTColors.darkBorder : GBTColors.border,
+                    width: 1.0,
+                  ),
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: paletteColor.withValues(alpha: 0.25),
+                      color: bgColor.withValues(alpha: 0.30),
                       blurRadius: 12,
-                      spreadRadius: 1,
                       offset: const Offset(0, 4),
                     ),
                   ]
@@ -594,9 +609,20 @@ class _ProjectPill extends StatelessWidget {
                 height: 20,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
+                  // EN: Unselected avatar is a soft palette tint (not a
+                  //     saturated dot) so the row stays calm. The selected
+                  //     avatar gains a white ring — an unmistakable active
+                  //     marker (Weverse-style filled ring).
+                  // KO: 비선택 아바타는 채도 높은 점 대신 은은한 팔레트
+                  //     틴트로 두어 행 전체가 차분하게 유지됩니다. 선택된
+                  //     아바타에는 화이트 링을 둘러 활성 상태를 명확히
+                  //     표시합니다 (위버스식 링 마커).
                   color: isSelected
                       ? Colors.white.withValues(alpha: 0.3)
-                      : paletteColor,
+                      : paletteColor.withValues(alpha: 0.15),
+                  border: isSelected
+                      ? Border.all(color: Colors.white, width: 1.5)
+                      : null,
                 ),
                 alignment: Alignment.center,
                 child: Text(
@@ -604,7 +630,7 @@ class _ProjectPill extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
-                    color: isSelected ? textColor : Colors.white,
+                    color: isSelected ? textColor : paletteColor,
                     height: 1,
                   ),
                 ),
@@ -773,82 +799,20 @@ Future<String?> _openProjectPickerSheet({
   required List<Project> projects,
   required String selectedProjectId,
   required String sheetTitle,
-}) {
-  return showModalBottomSheet<String>(
-    context: context,
-    showDragHandle: true,
-    builder: (sheetContext) {
-      final colorScheme = Theme.of(sheetContext).colorScheme;
-      return SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                GBTSpacing.md,
-                GBTSpacing.xs,
-                GBTSpacing.md,
-                GBTSpacing.sm,
-              ),
-              child: Row(
-                children: [
-                  Text(
-                    sheetTitle,
-                    style: GBTTypography.titleLarge.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Flexible(
-              child: ListView.separated(
-                shrinkWrap: true,
-                itemCount: projects.length,
-                separatorBuilder: (_, __) =>
-                    Divider(height: 1, color: colorScheme.outlineVariant),
-                itemBuilder: (context, index) {
-                  final project = projects[index];
-                  final selected = project.id == selectedProjectId;
-                  return ListTile(
-                    leading: CircleAvatar(
-                      radius: 18,
-                      backgroundColor: selected
-                          ? colorScheme.primary.withValues(alpha: 0.16)
-                          : colorScheme.surfaceContainerHighest,
-                      child: Text(
-                        project.name.isNotEmpty ? project.name[0] : '?',
-                        style: GBTTypography.labelLarge.copyWith(
-                          color: selected
-                              ? colorScheme.primary
-                              : colorScheme.onSurfaceVariant,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                    title: Text(
-                      project.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: GBTTypography.bodyLarge.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    trailing: selected
-                        ? Icon(
-                            Icons.check_circle,
-                            color: colorScheme.primary,
-                            size: 20,
-                          )
-                        : null,
-                    onTap: () => Navigator.of(sheetContext).pop(project.id),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      );
-    },
+}) async {
+  // EN: `sheetTitle` remains in the private API for source compatibility;
+  // the shared field-notes sheet owns localized copy and hierarchy.
+  // KO: `sheetTitle`은 소스 호환성을 위해 유지하며, 지역화 문구와 위계는
+  // 공용 필드 노트 시트가 책임집니다.
+  assert(sheetTitle.isNotEmpty);
+  final selectedProject = projects.firstWhere(
+    (project) => project.id == selectedProjectId,
+    orElse: () => projects.first,
   );
+  final picked = await showFieldProjectPicker(
+    context: context,
+    projects: projects,
+    selectedProject: selectedProject,
+  );
+  return picked?.id;
 }

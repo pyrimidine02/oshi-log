@@ -2,8 +2,11 @@
 /// KO: GBT 로딩, 상태 표시, 쉬머, 스켈레톤 컴포넌트
 library;
 
+export 'gbt_empty_state.dart';
+
 import 'package:flutter/material.dart';
 
+import '../../localization/locale_text.dart';
 import '../../theme/gbt_animations.dart';
 import '../../theme/gbt_colors.dart';
 import '../../theme/gbt_spacing.dart';
@@ -29,10 +32,12 @@ class GBTLoading extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final effectiveMessage =
+        message ?? context.l10n(ko: '로딩 중', en: 'Loading', ja: '読み込み中');
 
     return Center(
       child: Semantics(
-        label: message ?? '로딩 중',
+        label: effectiveMessage,
         // EN: Mark as live region so screen readers announce loading state
         // KO: 스크린 리더가 로딩 상태를 안내하도록 라이브 리전으로 표시
         liveRegion: true,
@@ -92,13 +97,21 @@ class GBTLoadingOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final effectiveMessage =
+        message ??
+        context.l10n(
+          ko: '로딩 중입니다. 잠시만 기다려주세요.',
+          en: 'Loading. Please wait.',
+          ja: '読み込み中です。しばらくお待ちください。',
+        );
+
     return Stack(
       children: [
         child,
         if (isLoading)
           Positioned.fill(
             child: Semantics(
-              label: message ?? '로딩 중입니다. 잠시만 기다려주세요.',
+              label: effectiveMessage,
               liveRegion: true,
               child: AnimatedOpacity(
                 opacity: isLoading ? 1.0 : 0.0,
@@ -115,140 +128,6 @@ class GBTLoadingOverlay extends StatelessWidget {
   }
 }
 
-/// EN: Empty state widget with visual illustration
-/// KO: 시각적 일러스트를 포함한 빈 상태 위젯
-class GBTEmptyState extends StatelessWidget {
-  const GBTEmptyState({
-    super.key,
-    required this.message,
-    this.icon,
-    this.title,
-    this.actionLabel,
-    this.onAction,
-  });
-
-  /// EN: Message to display
-  /// KO: 표시할 메시지
-  final String message;
-
-  /// EN: Optional icon
-  /// KO: 선택적 아이콘
-  final IconData? icon;
-
-  /// EN: Optional title above the message
-  /// KO: 메시지 위의 선택적 제목
-  final String? title;
-
-  /// EN: Optional action button label
-  /// KO: 선택적 액션 버튼 라벨
-  final String? actionLabel;
-
-  /// EN: Optional action callback
-  /// KO: 선택적 액션 콜백
-  final VoidCallback? onAction;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    // EN: Build comprehensive semantic label
-    // KO: 포괄적인 시맨틱 라벨 빌드
-    final semanticParts = <String>[
-      if (title != null) title!,
-      message,
-      if (actionLabel != null) '$actionLabel 버튼 사용 가능',
-    ];
-
-    return Semantics(
-      label: semanticParts.join('. '),
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: GBTSpacing.xl),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // EN: Circular icon container with subtle background
-              // KO: 미세한 배경이 있는 원형 아이콘 컨테이너
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    colors: isDark
-                        ? [GBTColors.darkSurfaceVariant, GBTColors.darkSurfaceElevated]
-                        : [GBTColors.surfaceVariant, Colors.white],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: isDark 
-                          ? Colors.black.withValues(alpha: 0.2)
-                          : GBTColors.primary.withValues(alpha: 0.05),
-                      blurRadius: 20,
-                      spreadRadius: 5,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: Center(
-                  child: Icon(
-                    icon ?? Icons.inbox_outlined,
-                    size: 36,
-                    color: isDark
-                        ? GBTColors.darkPrimary.withValues(alpha: 0.8)
-                        : GBTColors.primary.withValues(alpha: 0.6),
-                  ),
-                ),
-              ),
-              const SizedBox(height: GBTSpacing.lg),
-              if (title != null) ...[
-                Text(
-                  title!,
-                  style: GBTTypography.titleMedium.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: isDark
-                        ? GBTColors.darkTextPrimary
-                        : GBTColors.textPrimary,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: GBTSpacing.xs),
-              ],
-              Text(
-                message,
-                style: GBTTypography.bodyMedium.copyWith(
-                  color: isDark
-                      ? GBTColors.darkTextSecondary
-                      : GBTColors.textSecondary,
-                  height: 1.5,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              if (actionLabel != null && onAction != null) ...[
-                const SizedBox(height: GBTSpacing.lg),
-                Semantics(
-                  button: true,
-                  label: actionLabel,
-                  hint: '탭하면 $actionLabel 작업을 수행합니다',
-                  child: FilledButton.tonal(
-                    onPressed: onAction,
-                    style: FilledButton.styleFrom(
-                      minimumSize: const Size(0, GBTSpacing.touchTarget),
-                    ),
-                    child: Text(actionLabel!),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 /// EN: Error state widget with visual illustration
 /// KO: 시각적 일러스트를 포함한 오류 상태 위젯
 class GBTErrorState extends StatelessWidget {
@@ -256,7 +135,7 @@ class GBTErrorState extends StatelessWidget {
     super.key,
     required this.message,
     this.onRetry,
-    this.retryLabel = '다시 시도',
+    this.retryLabel,
     this.title,
   });
 
@@ -268,9 +147,9 @@ class GBTErrorState extends StatelessWidget {
   /// KO: 선택적 재시도 콜백
   final VoidCallback? onRetry;
 
-  /// EN: Retry button label
-  /// KO: 재시도 버튼 라벨
-  final String retryLabel;
+  /// EN: Optional retry label; defaults to the current locale.
+  /// KO: 선택적 재시도 라벨이며 생략 시 현재 로케일을 따릅니다.
+  final String? retryLabel;
 
   /// EN: Optional title above the message
   /// KO: 메시지 위의 선택적 제목
@@ -279,22 +158,43 @@ class GBTErrorState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final effectiveTitle = title ?? '문제가 발생했어요';
+    final effectiveTitle =
+        title ??
+        context.l10n(
+          ko: '문제가 발생했어요',
+          en: 'Something went wrong',
+          ja: '問題が発生しました',
+        );
+    final effectiveRetryLabel =
+        retryLabel ?? context.l10n(ko: '다시 시도', en: 'Try again', ja: '再試行');
+    final retryAvailability = context.l10n(
+      ko: '$effectiveRetryLabel 버튼 사용 가능',
+      en: '$effectiveRetryLabel button available',
+      ja: '$effectiveRetryLabelボタンを利用できます',
+    );
+    final retryHint = context.l10n(
+      ko: '탭하면 다시 시도합니다',
+      en: 'Tap to try again',
+      ja: 'タップして再試行します',
+    );
 
     // EN: Build comprehensive semantic label
     // KO: 포괄적인 시맨틱 라벨 빌드
     final semanticParts = <String>[
       effectiveTitle,
       message,
-      if (onRetry != null) '$retryLabel 버튼 사용 가능',
+      if (onRetry != null) retryAvailability,
     ];
 
     return Semantics(
       label: semanticParts.join('. '),
       liveRegion: true,
       child: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: GBTSpacing.xl),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(
+            horizontal: GBTSpacing.xl,
+            vertical: GBTSpacing.lg,
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -341,12 +241,12 @@ class GBTErrorState extends StatelessWidget {
                 const SizedBox(height: GBTSpacing.lg),
                 Semantics(
                   button: true,
-                  label: retryLabel,
-                  hint: '탭하면 다시 시도합니다',
+                  label: effectiveRetryLabel,
+                  hint: retryHint,
                   child: FilledButton.icon(
                     onPressed: onRetry,
                     icon: const Icon(Icons.refresh_rounded, size: 18),
-                    label: Text(retryLabel),
+                    label: Text(effectiveRetryLabel),
                     style: FilledButton.styleFrom(
                       minimumSize: const Size(0, GBTSpacing.touchTarget),
                     ),
@@ -422,7 +322,7 @@ class _GBTShimmerState extends State<GBTShimmer>
         (isDark ? GBTColors.darkShimmerHighlight : GBTColors.shimmerHighlight);
 
     return Semantics(
-      label: '로딩 중',
+      label: context.l10n(ko: '로딩 중', en: 'Loading', ja: '読み込み中'),
       excludeSemantics: true,
       child: AnimatedBuilder(
         animation: _controller,

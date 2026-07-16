@@ -11,12 +11,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/error/failure.dart';
 import '../../../../core/localization/locale_text.dart';
+import '../../../../core/theme/gbt_colors.dart';
 import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';
 import '../../../../core/utils/result.dart';
+import '../../../../core/widgets/common/gbt_icon_chip.dart';
 import '../../../../core/widgets/dialogs/gbt_adaptive_dialog.dart'
     show showGBTAdaptiveConfirmDialog;
+import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
 import '../../../auth/application/auth_controller.dart';
+import '../widgets/field_settings_components.dart';
 
 /// EN: Displays social account connection management options.
 /// KO: 소셜 계정 연결 관리 옵션을 표시합니다.
@@ -25,145 +29,135 @@ class LinkedAccountsPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final colorScheme = Theme.of(context).colorScheme;
     final authState = ref.watch(authControllerProvider);
     final isLoading = authState.isLoading;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          context.l10n(
-            ko: '소셜 계정 연결',
-            en: 'Linked Accounts',
-            ja: 'ソーシャルアカウント連携',
-          ),
+      appBar: gbtStandardAppBar(
+        context,
+        title: context.l10n(
+          ko: '소셜 계정 연결',
+          en: 'Linked Accounts',
+          ja: 'ソーシャルアカウント連携',
         ),
       ),
       body: ListView(
         padding: GBTSpacing.paddingPage,
         children: [
           const SizedBox(height: GBTSpacing.md),
-          Text(
-            context.l10n(
-              ko: '소셜 계정을 연결하면 해당 소셜 로그인으로 앱에 접근할 수 있어요.',
-              en: 'Link a social account to sign in to the app using that provider.',
-              ja: 'ソーシャルアカウントを連携すると、そのソーシャルログインでアプリにアクセスできます。',
+          FieldSettingsIntro(
+            eyebrow: 'SIGN-IN ROUTES',
+            title: context.l10n(
+              ko: '계정에 접속할 경로를 관리하세요',
+              en: 'Manage your sign-in routes',
+              ja: 'ログイン経路を管理',
             ),
-            style: GBTTypography.bodyMedium.copyWith(
-              color: colorScheme.onSurfaceVariant,
+            description: context.l10n(
+              ko: '소셜 계정을 연결하면 해당 계정으로 앱에 접근할 수 있어요.',
+              en: 'Link a provider to use it when signing in to the app.',
+              ja: 'プロバイダーを連携してアプリのログインに使用できます。',
             ),
+            icon: Icons.route_outlined,
           ),
           const SizedBox(height: GBTSpacing.xl),
 
-          // EN: Google connect row
-          // KO: Google 연결 행
-          _SocialAccountRow(
-            icon: Icons.g_mobiledata_rounded,
-            iconColor: const Color(0xFF4285F4),
+          FieldSettingsSection(
             title: context.l10n(
-              ko: 'Google 연결',
-              en: 'Connect Google',
-              ja: 'Googleと連携',
+              ko: '로그인 제공자',
+              en: 'SIGN-IN PROVIDERS',
+              ja: 'ログイン方法',
             ),
-            isLoading: isLoading,
-            onTap: () => _handleConnectGoogle(context, ref),
-          ),
-
-          // EN: Apple connect row — iOS only (Apple guideline requirement).
-          // KO: Apple 연결 행 — iOS 전용 (Apple 가이드라인 요구사항).
-          if (Platform.isIOS) ...[
-            const Divider(height: 1),
-            _SocialAccountRow(
-              icon: Icons.apple_rounded,
-              iconColor: Colors.black,
-              title: context.l10n(
-                ko: 'Apple 연결',
-                en: 'Connect Apple',
-                ja: 'Appleと連携',
+            children: [
+              _SocialAccountRow(
+                icon: Icons.g_mobiledata_rounded,
+                iconColor: const Color(0xFF4285F4),
+                useIconChip: false,
+                title: context.l10n(
+                  ko: 'Google 연결',
+                  en: 'Connect Google',
+                  ja: 'Googleと連携',
+                ),
+                isLoading: isLoading,
+                onTap: () => _handleConnectGoogle(context, ref),
               ),
-              isLoading: isLoading,
-              onTap: () => _handleConnectApple(context, ref),
-            ),
-          ],
+              if (Platform.isIOS)
+                _SocialAccountRow(
+                  icon: Icons.apple_rounded,
+                  iconColor: Colors.black,
+                  useIconChip: false,
+                  title: context.l10n(
+                    ko: 'Apple 연결',
+                    en: 'Connect Apple',
+                    ja: 'Appleと連携',
+                  ),
+                  isLoading: isLoading,
+                  onTap: () => _handleConnectApple(context, ref),
+                ),
+            ],
+          ),
 
           const SizedBox(height: GBTSpacing.xxxl),
 
-          // EN: Disconnect section — detaches whichever provider is currently linked.
-          // KO: 연결 해제 섹션 — 현재 연결된 제공자를 해제합니다.
-          Divider(color: colorScheme.outlineVariant),
-          const SizedBox(height: GBTSpacing.lg),
-          Text(
-            context.l10n(
-              ko: '연결 해제',
-              en: 'Disconnect',
-              ja: '連携解除',
+          FieldSettingsSection(
+            title: context.l10n(ko: '연결 해제', en: 'DISCONNECT', ja: '連携解除'),
+            description: context.l10n(
+              ko: '비밀번호가 없는 소셜 계정은 먼저 비밀번호를 설정해야 연결을 해제할 수 있어요.',
+              en: 'Social-only accounts need a password before they can disconnect.',
+              ja: 'ソーシャル専用アカウントは先にパスワードを設定してください。',
             ),
-            style: GBTTypography.titleSmall.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: GBTSpacing.sm),
-          Text(
-            context.l10n(
-              ko: '비밀번호가 없는 순수 소셜 계정은 연결을 해제할 수 없어요. 먼저 비밀번호를 설정해주세요.',
-              en: 'Accounts without a password cannot disconnect. Please set a password first.',
-              ja: 'パスワードのない純粋なソーシャルアカウントは連携を解除できません。先にパスワードを設定してください。',
-            ),
-            style: GBTTypography.bodySmall.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: GBTSpacing.md),
-          _SocialAccountRow(
-            icon: Icons.link_off_rounded,
-            iconColor: const Color(0xFFEF4444),
-            title: context.l10n(
-              ko: '소셜 계정 연결 해제',
-              en: 'Disconnect social account',
-              ja: 'ソーシャルアカウントの連携解除',
-            ),
-            isLoading: isLoading,
-            onTap: () => _handleDisconnect(context, ref),
+            children: [
+              _SocialAccountRow(
+                icon: Icons.link_off_rounded,
+                iconColor: GBTColors.error,
+                useIconChip: false,
+                title: context.l10n(
+                  ko: '소셜 계정 연결 해제',
+                  en: 'Disconnect social account',
+                  ja: 'ソーシャルアカウントの連携解除',
+                ),
+                isLoading: isLoading,
+                onTap: () => _handleDisconnect(context, ref),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Future<void> _handleConnectGoogle(
-    BuildContext context,
-    WidgetRef ref,
-  ) async {
-    final result =
-        await ref.read(authControllerProvider.notifier).connectGoogle();
+  Future<void> _handleConnectGoogle(BuildContext context, WidgetRef ref) async {
+    final result = await ref
+        .read(authControllerProvider.notifier)
+        .connectGoogle();
     if (!context.mounted) return;
-    _showResultSnackBar(context, result,
-        successMessage: context.l10n(
-          ko: 'Google 계정이 연결되었습니다',
-          en: 'Google account connected',
-          ja: 'Googleアカウントが連携されました',
-        ));
+    _showResultSnackBar(
+      context,
+      result,
+      successMessage: context.l10n(
+        ko: 'Google 계정이 연결되었습니다',
+        en: 'Google account connected',
+        ja: 'Googleアカウントが連携されました',
+      ),
+    );
   }
 
-  Future<void> _handleConnectApple(
-    BuildContext context,
-    WidgetRef ref,
-  ) async {
-    final result =
-        await ref.read(authControllerProvider.notifier).connectApple();
+  Future<void> _handleConnectApple(BuildContext context, WidgetRef ref) async {
+    final result = await ref
+        .read(authControllerProvider.notifier)
+        .connectApple();
     if (!context.mounted) return;
-    _showResultSnackBar(context, result,
-        successMessage: context.l10n(
-          ko: 'Apple 계정이 연결되었습니다',
-          en: 'Apple account connected',
-          ja: 'Appleアカウントが連携されました',
-        ));
+    _showResultSnackBar(
+      context,
+      result,
+      successMessage: context.l10n(
+        ko: 'Apple 계정이 연결되었습니다',
+        en: 'Apple account connected',
+        ja: 'Appleアカウントが連携されました',
+      ),
+    );
   }
 
-  Future<void> _handleDisconnect(
-    BuildContext context,
-    WidgetRef ref,
-  ) async {
+  Future<void> _handleDisconnect(BuildContext context, WidgetRef ref) async {
     final confirm = await showGBTAdaptiveConfirmDialog(
       context: context,
       title: context.l10n(
@@ -182,8 +176,9 @@ class LinkedAccountsPage extends ConsumerWidget {
     );
     if (confirm != true || !context.mounted) return;
 
-    final result =
-        await ref.read(authControllerProvider.notifier).disconnectOAuth();
+    final result = await ref
+        .read(authControllerProvider.notifier)
+        .disconnectOAuth();
     if (!context.mounted) return;
 
     if (result is Err<void>) {
@@ -195,8 +190,9 @@ class LinkedAccountsPage extends ConsumerWidget {
               ja: 'ソーシャルアカウントの連携を解除するには、先にパスワードを設定してください',
             )
           : failure.userMessage;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
       return;
     }
 
@@ -219,35 +215,37 @@ class LinkedAccountsPage extends ConsumerWidget {
     required String successMessage,
   }) {
     if (result is Success<void>) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(successMessage)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(successMessage)));
       return;
     }
     if (result is Err<void>) {
       final failure = result.failure;
       final message = _buildConnectErrorMessage(context, failure);
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
     }
   }
 
   String _buildConnectErrorMessage(BuildContext context, Failure failure) {
     return switch (failure.code) {
       'OAUTH_ALREADY_LINKED' => context.l10n(
-          ko: '이 소셜 계정은 이미 다른 계정에 연결되어 있습니다',
-          en: 'This social account is already linked to another account',
-          ja: 'このソーシャルアカウントは既に別のアカウントに連携されています',
-        ),
+        ko: '이 소셜 계정은 이미 다른 계정에 연결되어 있습니다',
+        en: 'This social account is already linked to another account',
+        ja: 'このソーシャルアカウントは既に別のアカウントに連携されています',
+      ),
       'ACCOUNT_ALREADY_HAS_OAUTH' => context.l10n(
-          ko: '이 계정에는 이미 다른 소셜 계정이 연결되어 있습니다',
-          en: 'This account already has another social account linked',
-          ja: 'このアカウントには既に別のソーシャルアカウントが連携されています',
-        ),
+        ko: '이 계정에는 이미 다른 소셜 계정이 연결되어 있습니다',
+        en: 'This account already has another social account linked',
+        ja: 'このアカウントには既に別のソーシャルアカウントが連携されています',
+      ),
       'sign_in_cancelled' => context.l10n(
-          ko: '로그인이 취소되었습니다',
-          en: 'Sign-in was cancelled',
-          ja: 'ログインがキャンセルされました',
-        ),
+        ko: '로그인이 취소되었습니다',
+        en: 'Sign-in was cancelled',
+        ja: 'ログインがキャンセルされました',
+      ),
       _ => failure.userMessage,
     };
   }
@@ -265,6 +263,7 @@ class _SocialAccountRow extends StatelessWidget {
     required this.title,
     required this.onTap,
     this.isLoading = false,
+    this.useIconChip = true,
   });
 
   final IconData icon;
@@ -273,20 +272,29 @@ class _SocialAccountRow extends StatelessWidget {
   final VoidCallback onTap;
   final bool isLoading;
 
+  /// EN: Whether to render the gradient icon chip. Disabled for rows that
+  /// display an official brand mark, which must keep its own brand color
+  /// rather than sit on a recolored gradient.
+  /// KO: 그라디언트 아이콘 칩 렌더링 여부. 공식 브랜드 마크를 표시하는 행은
+  /// 그라디언트로 재채색되지 않고 고유 브랜드 색상을 유지해야 하므로 비활성화.
+  final bool useIconChip;
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     return ListTile(
       contentPadding: EdgeInsets.zero,
-      leading: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: iconColor.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Icon(icon, color: iconColor, size: 22),
-      ),
+      leading: useIconChip
+          ? GBTIconChip(icon: icon, color: iconColor, size: 40)
+          : Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: iconColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: iconColor, size: 22),
+            ),
       title: Text(
         title,
         style: GBTTypography.bodyMedium.copyWith(

@@ -4,7 +4,6 @@ library;
 
 import 'dart:async';
 import 'dart:io';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -26,6 +25,8 @@ import '../../../../core/utils/result.dart';
 import '../../../../core/widgets/common/gbt_image.dart';
 import '../../../../core/widgets/dialogs/gbt_adaptive_dialog.dart';
 import '../../../../core/widgets/feedback/gbt_loading.dart';
+import '../../../../core/widgets/layout/gbt_page_header.dart';
+import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
 import '../../application/feed_controller.dart';
 import '../../domain/entities/feed_entities.dart';
 import '../../../projects/presentation/widgets/project_selector.dart';
@@ -439,7 +440,6 @@ class _PostEditPageState extends ConsumerState<PostEditPage> {
   @override
   Widget build(BuildContext context) {
     final isAuthenticated = ref.watch(isAuthenticatedProvider);
-    final colorScheme = Theme.of(context).colorScheme;
     final autosaveState = ref.watch(
       postComposeAutosaveControllerProvider(_autosaveConfig),
     );
@@ -457,65 +457,46 @@ class _PostEditPageState extends ConsumerState<PostEditPage> {
         Navigator.of(this.context).pop(result);
       },
       child: Scaffold(
-        backgroundColor: colorScheme.surface,
-        extendBodyBehindAppBar: true,
-        appBar: PreferredSize(
-          preferredSize: const Size.fromHeight(kToolbarHeight),
-          child: ClipRect(
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-              child: AppBar(
-                backgroundColor: colorScheme.surface.withValues(alpha: 0.75),
-                foregroundColor: colorScheme.onSurface,
-                surfaceTintColor: Colors.transparent,
-                elevation: 0,
-                scrolledUnderElevation: 0,
-                titleSpacing: 0,
-                leadingWidth: 76,
-                leading: TextButton(
-                  onPressed: _isSubmitting ? null : _handleCancelPressed,
-                  child: Text(
-                    '취소',
-                    style: GBTTypography.bodyLarge.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        appBar: gbtStandardAppBar(
+          context,
+          title: '수정',
+          leading: IconButton(
+            onPressed: _isSubmitting ? null : _handleCancelPressed,
+            icon: const Icon(Icons.close_rounded),
+            tooltip: '수정 취소',
+          ),
+          actions: [
+            IconButton(
+              onPressed: _isSubmitting
+                  ? null
+                  : () => _openDraftShelf(autosaveState),
+              icon: const Icon(Icons.inventory_2_outlined),
+              tooltip: '임시 보관함',
+            ),
+            Padding(
+              padding: const EdgeInsets.only(right: GBTSpacing.xs),
+              child: FilledButton(
+                key: const ValueKey('post-compose-submit'),
+                onPressed: _canSubmit ? () => _submit(context) : null,
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size(56, 48),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: GBTSpacing.sm,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
                   ),
                 ),
-                actions: [
-                  TextButton(
-                    onPressed: _isSubmitting
-                        ? null
-                        : () => _openDraftShelf(autosaveState),
-                    child: Text(
-                      '임시 보관함',
-                      style: GBTTypography.bodyMedium.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                child: Text(
+                  _isSubmitting ? '수정 중' : '저장',
+                  style: GBTTypography.labelLarge.copyWith(
+                    fontWeight: FontWeight.w800,
                   ),
-                  const SizedBox(width: GBTSpacing.xs),
-                  Padding(
-                    padding: const EdgeInsets.only(right: GBTSpacing.sm),
-                    child: FilledButton(
-                      onPressed: _canSubmit ? () => _submit(context) : null,
-                      style: FilledButton.styleFrom(
-                        shape: const StadiumBorder(),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: GBTSpacing.md + 2,
-                        ),
-                      ),
-                      child: Text(
-                        _isSubmitting ? '수정 중' : '수정하기',
-                        style: GBTTypography.bodyMedium.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
-          ),
+          ],
         ),
         body: isAuthenticated
             ? _buildForm(context, autosaveState: autosaveState)
@@ -533,8 +514,6 @@ class _PostEditPageState extends ConsumerState<PostEditPage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colorScheme = Theme.of(context).colorScheme;
 
-    final topInset =
-        MediaQuery.paddingOf(context).top + kToolbarHeight + GBTSpacing.sm;
     final profile = ref.watch(userProfileControllerProvider).valueOrNull;
 
     return Stack(
@@ -547,13 +526,20 @@ class _PostEditPageState extends ConsumerState<PostEditPage> {
                 child: ListView(
                   keyboardDismissBehavior:
                       ScrollViewKeyboardDismissBehavior.onDrag,
-                  padding: EdgeInsets.fromLTRB(
+                  padding: const EdgeInsets.fromLTRB(
                     GBTSpacing.md,
-                    topInset,
+                    GBTSpacing.md,
                     GBTSpacing.md,
                     GBTSpacing.md,
                   ),
                   children: [
+                    const GBTPageHeader(
+                      eyebrow: 'COMMUNITY NOTE',
+                      title: '여행 기록 수정',
+                      description: '이미 공유한 여정의 맥락은 유지하고 내용을 더 정확하게 다듬어보세요.',
+                      padding: EdgeInsets.only(bottom: GBTSpacing.md),
+                    ),
+                    const SizedBox(height: GBTSpacing.md),
                     if (autosaveState.recoverableDraft != null) ...[
                       PostComposeDraftRecoveryBanner(
                         savedAt: autosaveState.recoverableDraft!.savedAt,
@@ -583,7 +569,7 @@ class _PostEditPageState extends ConsumerState<PostEditPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               SizedBox(
-                                height: 32,
+                                height: GBTSpacing.touchTarget,
                                 child: Stack(
                                   children: [
                                     const Positioned.fill(
@@ -726,11 +712,10 @@ class _PostEditPageState extends ConsumerState<PostEditPage> {
                                   hintText:
                                       '커뮤니티 이용규칙을 지켜주세요.\n'
                                       '광고, 비방, 도배성 글은 제재될 수 있어요.',
-                                  hintStyle: GBTTypography.bodyLarge
-                                      .copyWith(
-                                        color: colorScheme.onSurfaceVariant,
-                                        height: 1.6,
-                                      ),
+                                  hintStyle: GBTTypography.bodyLarge.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                    height: 1.6,
+                                  ),
                                   counterText: '',
                                   filled: true,
                                   fillColor: Colors.transparent,
@@ -1384,12 +1369,10 @@ class _ComposerToolbarIconButton extends StatelessWidget {
     final iconColor = isDark ? GBTColors.darkPrimary : GBTColors.primary;
 
     return SizedBox(
-      width: 34,
-      height: 34,
+      width: GBTSpacing.touchTarget,
+      height: GBTSpacing.touchTarget,
       child: IconButton(
         padding: EdgeInsets.zero,
-        visualDensity: VisualDensity.compact,
-        splashRadius: 18,
         onPressed: onTap,
         icon: Icon(
           icon,
@@ -1458,15 +1441,15 @@ class _ComposerLocalImageTile extends StatelessWidget {
               top: 4,
               right: 4,
               child: SizedBox(
-                width: 22,
-                height: 22,
+                width: GBTSpacing.touchTarget,
+                height: GBTSpacing.touchTarget,
                 child: IconButton.filled(
                   padding: EdgeInsets.zero,
                   style: IconButton.styleFrom(
                     backgroundColor: Colors.black.withValues(alpha: 0.56),
                   ),
                   onPressed: onRemove,
-                  icon: const Icon(Icons.close, size: 14),
+                  icon: const Icon(Icons.close, size: 18),
                   color: Colors.white,
                   tooltip: '삭제',
                 ),
@@ -1535,15 +1518,15 @@ class _ComposerRemoteImageTile extends StatelessWidget {
               top: 4,
               right: 4,
               child: SizedBox(
-                width: 22,
-                height: 22,
+                width: GBTSpacing.touchTarget,
+                height: GBTSpacing.touchTarget,
                 child: IconButton.filled(
                   padding: EdgeInsets.zero,
                   style: IconButton.styleFrom(
                     backgroundColor: Colors.black.withValues(alpha: 0.56),
                   ),
                   onPressed: onRemove,
-                  icon: const Icon(Icons.close, size: 14),
+                  icon: const Icon(Icons.close, size: 18),
                   color: Colors.white,
                   tooltip: '삭제',
                 ),

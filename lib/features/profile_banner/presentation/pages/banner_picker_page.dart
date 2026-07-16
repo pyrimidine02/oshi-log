@@ -11,9 +11,13 @@ import '../../../../core/theme/gbt_colors.dart';
 import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';
 import '../../../../core/widgets/common/gbt_image.dart';
-import '../../../../core/widgets/feedback/gbt_loading.dart';
+import '../../../../core/widgets/feedback/gbt_empty_state.dart';
+import '../../../../core/widgets/feedback/gbt_loading.dart' hide GBTEmptyState;
+import '../../../../core/widgets/layout/gbt_page_header.dart';
+import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
 import '../../application/banner_controller.dart';
 import '../../domain/entities/banner_entities.dart';
+import '../banner_picker_layout.dart';
 
 // =============================================================================
 // EN: Rarity visual constants
@@ -22,10 +26,10 @@ import '../../domain/entities/banner_entities.dart';
 
 Color _rarityBorderColor(BannerRarity rarity) {
   return switch (rarity) {
-    BannerRarity.common => Colors.grey.shade400,
-    BannerRarity.rare => Colors.blue.shade300,
-    BannerRarity.epic => Colors.purple.shade300,
-    BannerRarity.legendary => Colors.amber.shade400,
+    BannerRarity.common => GBTColors.textTertiary,
+    BannerRarity.rare => GBTColors.accentBlue,
+    BannerRarity.epic => GBTColors.secondary,
+    BannerRarity.legendary => GBTColors.accent,
   };
 }
 
@@ -182,52 +186,29 @@ class _BannerPickerPageState extends ConsumerState<BannerPickerPage> {
     //   2. 선택된 항목이 이미 활성 배너인 경우.
     //   3. 적용 변이가 진행 중인 경우.
     final isApplyDisabled =
-        _selectedId == null ||
-        _selectedId == activeId ||
-        _isApplying;
+        _selectedId == null || _selectedId == activeId || _isApplying;
 
-    final scaffoldBg =
-        isDark ? GBTColors.darkBackground : GBTColors.background;
+    final scaffoldBg = isDark ? GBTColors.darkBackground : GBTColors.background;
 
     return Scaffold(
       backgroundColor: scaffoldBg,
-      appBar: AppBar(
-        backgroundColor: isDark ? GBTColors.darkSurface : GBTColors.surface,
-        elevation: 0,
-        scrolledUnderElevation: 0,
+      appBar: gbtStandardAppBar(
+        context,
         leading: IconButton(
           icon: const Icon(Icons.close),
           tooltip: '닫기',
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Text(
-          '배너 꾸미기',
-          style: GBTTypography.headlineMedium.copyWith(
-            color: isDark ? GBTColors.darkTextPrimary : GBTColors.textPrimary,
-          ),
-        ),
+        title: '배너 꾸미기',
         centerTitle: false,
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // EN: Subtitle description
-          // KO: 부제목 설명
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              GBTSpacing.pageHorizontal,
-              GBTSpacing.md,
-              GBTSpacing.pageHorizontal,
-              GBTSpacing.sm,
-            ),
-            child: Text(
-              '칭호 및 티어 달성으로 새로운 배너를 해금하세요',
-              style: GBTTypography.bodyMedium.copyWith(
-                color: isDark
-                    ? GBTColors.darkTextSecondary
-                    : GBTColors.textSecondary,
-              ),
-            ),
+          const GBTPageHeader(
+            eyebrow: 'PROFILE BANNER',
+            title: '여행 여권의 표지를 고르세요',
+            description: '칭호와 티어를 달성하면 새로운 배너가 열려요.',
           ),
 
           // EN: Catalog grid (expands to fill available space)
@@ -283,31 +264,38 @@ class _BannerGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (items.isEmpty) {
-      return const Center(
-        child: Text('표시할 배너가 없습니다'),
+      return const GBTEmptyState(
+        icon: Icons.panorama_outlined,
+        title: '아직 표시할 배너가 없어요',
+        subtitle: '칭호와 티어를 확장하면 이곳에 추가됩니다.',
       );
     }
 
-    return GridView.builder(
-      padding: const EdgeInsets.fromLTRB(
-        GBTSpacing.pageHorizontal,
-        GBTSpacing.sm,
-        GBTSpacing.pageHorizontal,
-        GBTSpacing.xl,
-      ),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: GBTSpacing.sm,
-        mainAxisSpacing: GBTSpacing.sm,
-        childAspectRatio: 0.75,
-      ),
-      itemCount: items.length,
-      itemBuilder: (context, index) {
-        final item = items[index];
-        return _BannerCell(
-          item: item,
-          isSelected: item.id == selectedId,
-          onTap: () => onTap(item),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final layout = resolveBannerPickerLayout(constraints.maxWidth);
+        return GridView.builder(
+          padding: const EdgeInsets.fromLTRB(
+            GBTSpacing.pageHorizontal,
+            GBTSpacing.md,
+            GBTSpacing.pageHorizontal,
+            GBTSpacing.xl,
+          ),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: layout.columns,
+            crossAxisSpacing: GBTSpacing.sm,
+            mainAxisSpacing: GBTSpacing.sm,
+            childAspectRatio: layout.childAspectRatio,
+          ),
+          itemCount: items.length,
+          itemBuilder: (context, index) {
+            final item = items[index];
+            return _BannerCell(
+              item: item,
+              isSelected: item.id == selectedId,
+              onTap: () => onTap(item),
+            );
+          },
         );
       },
     );
@@ -339,7 +327,8 @@ class _BannerCell extends StatelessWidget {
     final borderWidth = isSelected ? 2.5 : 1.5;
 
     return Semantics(
-      label: '${item.name}, ${_rarityLabel(item.rarity)},'
+      label:
+          '${item.name}, ${_rarityLabel(item.rarity)},'
           ' ${item.isUnlocked ? "해금됨" : "잠김"}',
       button: true,
       selected: isSelected,
@@ -371,14 +360,14 @@ class _BannerCell extends StatelessWidget {
                 if (!item.isUnlocked)
                   DecoratedBox(
                     decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.55),
+                      color: GBTColors.overlay.withValues(alpha: 0.55),
                     ),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Icon(
                           Icons.lock_rounded,
-                          color: Colors.white,
+                          color: GBTColors.textInverse,
                           size: 22,
                         ),
                         if (item.unlockDescription?.isNotEmpty == true) ...[
@@ -389,9 +378,10 @@ class _BannerCell extends StatelessWidget {
                             ),
                             child: Text(
                               item.unlockDescription!,
-                              style: GBTTypography.labelSmall.copyWith(
-                                color: Colors.white.withValues(alpha: 0.9),
-                                fontSize: 9,
+                              style: GBTTypography.caption.copyWith(
+                                color: GBTColors.textInverse.withValues(
+                                  alpha: 0.9,
+                                ),
                               ),
                               textAlign: TextAlign.center,
                               maxLines: 2,
@@ -420,7 +410,7 @@ class _BannerCell extends StatelessWidget {
                         padding: EdgeInsets.all(2),
                         child: Icon(
                           Icons.check_rounded,
-                          color: Colors.white,
+                          color: GBTColors.textInverse,
                           size: 12,
                         ),
                       ),
@@ -435,7 +425,7 @@ class _BannerCell extends StatelessWidget {
                     right: GBTSpacing.xs,
                     child: DecoratedBox(
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.9),
+                        color: GBTColors.textInverse.withValues(alpha: 0.9),
                         shape: BoxShape.circle,
                       ),
                       child: Padding(
@@ -458,9 +448,9 @@ class _BannerCell extends StatelessWidget {
                   left: GBTSpacing.xs,
                   child: DecoratedBox(
                     decoration: BoxDecoration(
-                      color: _rarityBorderColor(item.rarity).withValues(
-                        alpha: 0.85,
-                      ),
+                      color: _rarityBorderColor(
+                        item.rarity,
+                      ).withValues(alpha: 0.85),
                       borderRadius: BorderRadius.circular(GBTSpacing.radiusXs),
                     ),
                     child: Padding(
@@ -470,9 +460,10 @@ class _BannerCell extends StatelessWidget {
                       ),
                       child: Text(
                         _rarityLabel(item.rarity),
-                        style: GBTTypography.labelSmall.copyWith(
-                          color: Colors.white,
-                          fontSize: 9,
+                        style: GBTTypography.caption.copyWith(
+                          color: GBTColorValidator.getContrastingTextColor(
+                            _rarityBorderColor(item.rarity),
+                          ),
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -504,30 +495,35 @@ class _BannerGridShimmer extends StatelessWidget {
         ? GBTColors.darkSurfaceVariant
         : GBTColors.surfaceVariant;
 
-    return GridView.builder(
-      padding: const EdgeInsets.fromLTRB(
-        GBTSpacing.pageHorizontal,
-        GBTSpacing.sm,
-        GBTSpacing.pageHorizontal,
-        GBTSpacing.xl,
-      ),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: GBTSpacing.sm,
-        mainAxisSpacing: GBTSpacing.sm,
-        childAspectRatio: 0.75,
-      ),
-      // EN: Show 9 shimmer cells as placeholder.
-      // KO: 플레이스홀더로 9개의 쉬머 셀을 표시합니다.
-      itemCount: 9,
-      itemBuilder: (_, __) => GBTShimmer(
-        child: Container(
-          decoration: BoxDecoration(
-            color: shimmerColor,
-            borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final layout = resolveBannerPickerLayout(constraints.maxWidth);
+        return GridView.builder(
+          padding: const EdgeInsets.fromLTRB(
+            GBTSpacing.pageHorizontal,
+            GBTSpacing.md,
+            GBTSpacing.pageHorizontal,
+            GBTSpacing.xl,
           ),
-        ),
-      ),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: layout.columns,
+            crossAxisSpacing: GBTSpacing.sm,
+            mainAxisSpacing: GBTSpacing.sm,
+            childAspectRatio: layout.childAspectRatio,
+          ),
+          // EN: Show nine placeholders while preserving the final grid width.
+          // KO: 최종 그리드 너비를 유지하며 9개 플레이스홀더를 표시합니다.
+          itemCount: 9,
+          itemBuilder: (_, __) => GBTShimmer(
+            child: Container(
+              decoration: BoxDecoration(
+                color: shimmerColor,
+                borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -553,20 +549,21 @@ class _BannerErrorState extends StatelessWidget {
           Icon(
             Icons.error_outline,
             size: 48,
-            color: isDark ? GBTColors.darkTextSecondary : GBTColors.textSecondary,
+            color: isDark
+                ? GBTColors.darkTextSecondary
+                : GBTColors.textSecondary,
           ),
           const SizedBox(height: GBTSpacing.md),
           Text(
             '배너 목록을 불러오지 못했어요',
             style: GBTTypography.bodyMedium.copyWith(
-              color: isDark ? GBTColors.darkTextSecondary : GBTColors.textSecondary,
+              color: isDark
+                  ? GBTColors.darkTextSecondary
+                  : GBTColors.textSecondary,
             ),
           ),
           const SizedBox(height: GBTSpacing.lg),
-          TextButton(
-            onPressed: onRetry,
-            child: const Text('다시 시도'),
-          ),
+          TextButton(onPressed: onRetry, child: const Text('다시 시도')),
         ],
       ),
     );
@@ -608,7 +605,9 @@ class _ApplyBar extends StatelessWidget {
         color: isDark ? GBTColors.darkSurface : GBTColors.surface,
         border: Border(
           top: BorderSide(
-            color: isDark ? GBTColors.darkSurfaceVariant : GBTColors.surfaceVariant,
+            color: isDark
+                ? GBTColors.darkSurfaceVariant
+                : GBTColors.surfaceVariant,
           ),
         ),
       ),
@@ -630,8 +629,10 @@ class _ApplyBar extends StatelessWidget {
               child: ElevatedButton(
                 onPressed: isDisabled ? null : onApply,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: isDark ? GBTColors.darkPrimary : GBTColors.primary,
-                  foregroundColor: Colors.white,
+                  backgroundColor: isDark
+                      ? GBTColors.darkPrimary
+                      : GBTColors.primary,
+                  foregroundColor: GBTColors.textInverse,
                   disabledBackgroundColor: isDark
                       ? GBTColors.darkSurfaceVariant
                       : GBTColors.surfaceVariant,
@@ -649,7 +650,7 @@ class _ApplyBar extends StatelessWidget {
                         height: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: Colors.white,
+                          color: GBTColors.textInverse,
                         ),
                       )
                     : const Text('이 배너 적용'),
@@ -661,7 +662,7 @@ class _ApplyBar extends StatelessWidget {
             if (hasActiveBanner) ...[
               const SizedBox(height: GBTSpacing.xs),
               SizedBox(
-                height: 40,
+                height: GBTSpacing.touchTarget,
                 child: TextButton(
                   onPressed: isRemoving ? null : onRemove,
                   style: TextButton.styleFrom(

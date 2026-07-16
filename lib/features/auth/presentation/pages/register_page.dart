@@ -20,9 +20,11 @@ import '../../../../core/utils/result.dart';
 import '../../../../core/widgets/buttons/gbt_button.dart';
 import '../../../../core/widgets/inputs/gbt_text_field.dart';
 import '../../../../core/widgets/legal/legal_policy_links_section.dart';
+import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
 import '../../application/auth_controller.dart';
 import '../../domain/entities/register_consent.dart';
 import '../../domain/entities/register_result.dart';
+import '../widgets/field_auth_components.dart';
 import 'email_verification_args.dart';
 
 /// EN: Register page widget.
@@ -112,6 +114,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     ref.listen<AsyncValue<void>>(authControllerProvider, (previous, next) {
       if (!mounted) return;
@@ -129,8 +132,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     final isLoading = authState.isLoading;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(context.l10n(ko: '회원가입', en: 'Sign up', ja: '会員登録')),
+      appBar: gbtStandardAppBar(
+        context,
+        title: context.l10n(ko: '회원가입', en: 'Sign up', ja: '会員登録'),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -141,17 +145,33 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: GBTSpacing.xl),
-                Text(
-                  context.l10n(
-                    ko: '새 계정을 만들어보세요',
-                    en: 'Create your new account',
-                    ja: '新しいアカウントを作成しましょう',
+                FieldAuthHeader(
+                  eyebrow: 'NEW TRAVEL ACCOUNT',
+                  title: context.l10n(
+                    ko: '나만의 탐방 여정을 시작하세요',
+                    en: 'Start your own travel log',
+                    ja: 'あなたの探訪記録を始めましょう',
                   ),
-                  style: GBTTypography.headlineSmall.copyWith(
-                    color: colorScheme.onSurface,
+                  subtitle: context.l10n(
+                    ko: '계정 정보와 필수 동의를 확인하면 바로 시작할 수 있어요.',
+                    en: 'Add your account details and required consents to begin.',
+                    ja: 'アカウント情報と必須の同意を確認して始めましょう。',
                   ),
+                  icon: Icons.person_add_alt_1_outlined,
                 ),
                 const SizedBox(height: GBTSpacing.lg),
+
+                // EN: Step 1 — basic info group.
+                // KO: 1단계 — 기본 정보 그룹.
+                _StepLabel(
+                  label: context.l10n(
+                    ko: '기본 정보',
+                    en: 'Basic info',
+                    ja: '基本情報',
+                  ),
+                  isDark: isDark,
+                ),
+                const SizedBox(height: GBTSpacing.xs),
 
                 // EN: Email field.
                 // KO: 이메일 필드.
@@ -227,7 +247,19 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     return null;
                   },
                 ),
-                const SizedBox(height: GBTSpacing.md),
+                const SizedBox(height: GBTSpacing.lg),
+
+                // EN: Step 2 — password group.
+                // KO: 2단계 — 비밀번호 그룹.
+                _StepLabel(
+                  label: context.l10n(
+                    ko: '비밀번호 설정',
+                    en: 'Set password',
+                    ja: 'パスワード設定',
+                  ),
+                  isDark: isDark,
+                ),
+                const SizedBox(height: GBTSpacing.xs),
 
                 // EN: Password field.
                 // KO: 비밀번호 필드.
@@ -699,6 +731,30 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       ko: '회원가입 처리 중 문제가 발생했습니다. 입력값을 확인하고 다시 시도해주세요.',
       en: 'Sign-up failed. Please verify your input and try again.',
       ja: '会員登録に失敗しました。入力内容を確認して再試行してください。',
+    );
+  }
+}
+
+/// EN: Small uppercase-feel section label marking a registration step
+/// (basic info / password / consents), matching the settings group label
+/// style for cross-screen consistency.
+/// KO: 회원가입 단계(기본 정보/비밀번호/동의)를 표시하는 대문자 느낌의 작은
+/// 섹션 라벨. 화면 간 일관성을 위해 설정 그룹 라벨 스타일과 통일.
+class _StepLabel extends StatelessWidget {
+  const _StepLabel({required this.label, required this.isDark});
+
+  final String label;
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      label,
+      style: GBTTypography.labelSmall.copyWith(
+        color: isDark ? GBTColors.darkTextTertiary : GBTColors.textTertiary,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.5,
+      ),
     );
   }
 }

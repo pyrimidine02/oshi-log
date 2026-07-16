@@ -1,9 +1,8 @@
-/// EN: GBT typography system based on KT UXD design system
-/// KO: KT UXD 디자인 시스템 기반 GBT 타이포그래피 시스템
+/// EN: GBT typography system — bundled Pretendard with an editorial travel hierarchy.
+/// KO: GBT 타이포그래피 시스템 — 번들 Pretendard 기반 여행 에디토리얼 위계.
 library;
 
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 /// EN: Typography constants and styles for the application
 /// KO: 앱의 타이포그래피 상수 및 스타일
@@ -15,34 +14,37 @@ class GBTTypography {
   // KO: 폰트 패밀리
   // ========================================
   static const String primaryFontFamily = 'Pretendard';
-  static const String secondaryFontFamily = 'NunitoSans';
+  static const String secondaryFontFamily = 'Pretendard';
 
-  /// EN: Get base text style with Pretendard or fallback to system font
-  /// KO: Pretendard 또는 시스템 폰트로 폴백하는 기본 텍스트 스타일 반환
-  static TextStyle get _baseStyle => GoogleFonts.notoSansKr();
+  /// EN: Base text style using bundled Pretendard with system fallbacks
+  /// KO: 번들 Pretendard + 시스템 폴백을 사용하는 기본 텍스트 스타일
+  static const TextStyle _baseStyle = TextStyle(
+    fontFamily: primaryFontFamily,
+    fontFamilyFallback: ['Apple SD Gothic Neo', 'Noto Sans KR', 'sans-serif'],
+  );
 
   // ========================================
-  // EN: Display Styles (Large titles)
-  // KO: 디스플레이 스타일 (큰 제목)
+  // EN: Display styles for concise editorial headlines.
+  // KO: 간결한 에디토리얼 헤드라인용 디스플레이 스타일.
   // ========================================
   static TextStyle get displayLarge => _baseStyle.copyWith(
-    fontSize: 32,
-    fontWeight: FontWeight.w700,
-    letterSpacing: 0,
+    fontSize: 34,
+    fontWeight: FontWeight.w800,
+    letterSpacing: -0.5,
     height: 1.15,
   );
 
   static TextStyle get displayMedium => _baseStyle.copyWith(
-    fontSize: 26,
-    fontWeight: FontWeight.w700,
-    letterSpacing: 0,
+    fontSize: 28,
+    fontWeight: FontWeight.w800,
+    letterSpacing: -0.4,
     height: 1.2,
   );
 
   static TextStyle get displaySmall => _baseStyle.copyWith(
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: FontWeight.w700,
-    letterSpacing: 0,
+    letterSpacing: -0.3,
     height: 1.25,
   );
 
@@ -53,20 +55,20 @@ class GBTTypography {
   static TextStyle get headlineLarge => _baseStyle.copyWith(
     fontSize: 22,
     fontWeight: FontWeight.w700,
-    letterSpacing: 0,
+    letterSpacing: -0.2,
     height: 1.27,
   );
 
   static TextStyle get headlineMedium => _baseStyle.copyWith(
     fontSize: 18,
-    fontWeight: FontWeight.w500,
-    letterSpacing: 0,
+    fontWeight: FontWeight.w700,
+    letterSpacing: -0.2,
     height: 1.33,
   );
 
   static TextStyle get headlineSmall => _baseStyle.copyWith(
     fontSize: 16,
-    fontWeight: FontWeight.w500,
+    fontWeight: FontWeight.w600,
     letterSpacing: 0,
     height: 1.38,
   );
@@ -76,10 +78,10 @@ class GBTTypography {
   // KO: 타이틀 스타일 (카드 제목, 리스트 아이템)
   // ========================================
   static TextStyle get titleLarge => _baseStyle.copyWith(
-    fontSize: 22,
-    fontWeight: FontWeight.w600,
-    letterSpacing: 0,
-    height: 1.27,
+    fontSize: 20,
+    fontWeight: FontWeight.w700,
+    letterSpacing: -0.2,
+    height: 1.3,
   );
 
   static TextStyle get titleMedium => _baseStyle.copyWith(
@@ -169,15 +171,15 @@ class GBTTypography {
   // KO: 특수 목적 스타일
   // ========================================
   static TextStyle get button =>
-      labelLarge.copyWith(fontWeight: FontWeight.w600);
+      labelLarge.copyWith(fontWeight: FontWeight.w700);
 
   static TextStyle get tabLabel =>
       labelMedium.copyWith(fontWeight: FontWeight.w600);
 
   static TextStyle get badge => _baseStyle.copyWith(
     fontSize: 10,
-    fontWeight: FontWeight.w500,
-    letterSpacing: 0,
+    fontWeight: FontWeight.w600,
+    letterSpacing: 0.2,
     height: 1.0,
   );
 
@@ -186,6 +188,18 @@ class GBTTypography {
 
   static TextStyle get distance =>
       bodySmall.copyWith(fontWeight: FontWeight.w500);
+
+  /// EN: Stat numbers (stamp counts, XP, distances) — tabular figures
+  /// so digits align in ticker/stat layouts.
+  /// KO: 통계 숫자 (스탬프 수, XP, 거리) — 스탯 레이아웃에서 자릿수가
+  /// 정렬되도록 고정폭 숫자 적용.
+  static TextStyle get statNumber => _baseStyle.copyWith(
+    fontSize: 24,
+    fontWeight: FontWeight.w800,
+    letterSpacing: -0.3,
+    height: 1.2,
+    fontFeatures: const [FontFeature.tabularFigures()],
+  );
 }
 
 /// EN: Extension for applying color to text styles

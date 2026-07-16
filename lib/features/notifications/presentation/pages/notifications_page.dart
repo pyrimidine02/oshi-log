@@ -13,8 +13,11 @@ import '../../../../core/localization/locale_text.dart';
 import '../../../../core/theme/gbt_colors.dart';
 import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';
-import '../../../../core/widgets/feedback/gbt_loading.dart';
+import '../../../../core/widgets/common/gbt_icon_chip.dart';
+import '../../../../core/widgets/feedback/gbt_empty_state.dart';
+import '../../../../core/widgets/feedback/gbt_loading.dart' hide GBTEmptyState;
 import '../../../../core/widgets/navigation/gbt_app_bar_icon_button.dart';
+import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
 import '../../application/notifications_controller.dart';
 import '../../domain/entities/notification_entities.dart';
 import '../../domain/entities/notification_navigation.dart';
@@ -103,8 +106,9 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage>
     final state = ref.watch(notificationsControllerProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(context.l10n(ko: '알림', en: 'Notifications', ja: '通知')),
+      appBar: gbtStandardAppBar(
+        context,
+        title: context.l10n(ko: '알림', en: 'Notifications', ja: '通知'),
         actions: [
           GBTAppBarIconButton(
             icon: Icons.done_all,
@@ -119,20 +123,12 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage>
           ),
           GBTAppBarIconButton(
             icon: Icons.delete_sweep_outlined,
-            tooltip: context.l10n(
-              ko: '전체 삭제',
-              en: 'Delete all',
-              ja: 'すべて削除',
-            ),
+            tooltip: context.l10n(ko: '전체 삭제', en: 'Delete all', ja: 'すべて削除'),
             onPressed: _confirmDeleteAll,
           ),
           GBTAppBarIconButton(
             icon: Icons.settings_outlined,
-            tooltip: context.l10n(
-              ko: '알림 설정',
-              en: 'Settings',
-              ja: '設定',
-            ),
+            tooltip: context.l10n(ko: '알림 설정', en: 'Settings', ja: '設定'),
             onPressed: () => context.push('/settings/notifications'),
           ),
         ],
@@ -198,22 +194,21 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage>
                 children: [
                   _FilterRow(
                     showUnreadOnly: _showUnreadOnly,
-                    onFilterChanged: (v) =>
-                        setState(() => _showUnreadOnly = v),
+                    onFilterChanged: (v) => setState(() => _showUnreadOnly = v),
                   ),
                   const SizedBox(height: GBTSpacing.md),
                   GBTEmptyState(
-                    icon: Icons.notifications_none,
-                    message: _showUnreadOnly
+                    icon: Icons.notifications_none_rounded,
+                    title: _showUnreadOnly
                         ? context.l10n(
-                            ko: '읽지 않은 알림이 없습니다.',
-                            en: 'No unread notifications.',
-                            ja: '未読通知はありません。',
+                            ko: '읽지 않은 알림이 없어요',
+                            en: 'No unread notifications',
+                            ja: '未読通知はありません',
                           )
                         : context.l10n(
-                            ko: '새 알림이 없습니다.',
-                            en: 'No notifications.',
-                            ja: '通知はありません。',
+                            ko: '새 소식이 오면 알려드릴게요',
+                            en: "We'll let you know when something happens",
+                            ja: '新しいお知らせがあればお知らせします',
                           ),
                   ),
                 ],
@@ -230,8 +225,7 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage>
                   padding: GBTSpacing.paddingPage,
                   child: _FilterRow(
                     showUnreadOnly: _showUnreadOnly,
-                    onFilterChanged: (v) =>
-                        setState(() => _showUnreadOnly = v),
+                    onFilterChanged: (v) => setState(() => _showUnreadOnly = v),
                   ),
                 ),
                 const SizedBox(height: GBTSpacing.sm),
@@ -275,10 +269,11 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage>
       entityId: item.entityId,
     );
 
-    final destination = targetPath ?? _fallbackPath(type);
+    final destination = targetPath;
     if (destination != null && mounted) {
-      final currentPath =
-          GoRouter.of(context).routeInformationProvider.value.uri.path;
+      final currentPath = GoRouter.of(
+        context,
+      ).routeInformationProvider.value.uri.path;
       // EN: Only navigate when destination differs from current page.
       // KO: 현재 페이지와 목적지가 다를 때만 이동합니다.
       if (destination != currentPath) {
@@ -287,22 +282,6 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage>
     }
 
     unawaited(notifier.refreshInBackground(minInterval: Duration.zero));
-  }
-
-  String? _fallbackPath(String type) {
-    return switch (type) {
-      notificationTypePostCreated ||
-      'COMMENT_CREATED' ||
-      'COMMENT_REPLY_CREATED' ||
-      'POST_LIKED' => '/board',
-      'LIVE_EVENT_UPDATED' ||
-      'LIVE_EVENT_CANCELLED' ||
-      'LIVE_EVENT_ATTENDANCE_VERIFIED' => '/visits?tab=live',
-      'MODERATION' => '/notifications',
-      // EN: System notices have no external target — stay on this page.
-      // KO: 시스템 공지는 별도 이동 대상이 없으므로 현재 페이지에 머뭅니다.
-      _ => null,
-    };
   }
 }
 
@@ -332,8 +311,7 @@ class _FilterRow extends StatelessWidget {
           ),
           ButtonSegment<bool>(
             value: true,
-            label:
-                Text(context.l10n(ko: '읽지 않음', en: 'Unread', ja: '未読')),
+            label: Text(context.l10n(ko: '읽지 않음', en: 'Unread', ja: '未読')),
           ),
         ],
         selected: {showUnreadOnly},
@@ -365,9 +343,7 @@ class _SectionHeader extends StatelessWidget {
       child: Text(
         title,
         style: GBTTypography.labelMedium.copyWith(
-          color: isDark
-              ? GBTColors.darkTextSecondary
-              : GBTColors.textSecondary,
+          color: isDark ? GBTColors.darkTextSecondary : GBTColors.textSecondary,
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -400,11 +376,7 @@ class _NotificationRow extends StatelessWidget {
       direction: DismissDirection.endToStart,
       background: _DeleteBackground(isDark: isDark),
       onDismissed: (_) => onDelete(),
-      child: _NotificationTile(
-        item: item,
-        isDark: isDark,
-        onTap: onTap,
-      ),
+      child: _NotificationTile(item: item, isDark: isDark, onTap: onTap),
     );
   }
 }
@@ -417,14 +389,18 @@ class _DeleteBackground extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ColoredBox(
-      color: isDark
-          ? const Color(0xFFB71C1C).withValues(alpha: 0.9)
-          : const Color(0xFFE53935).withValues(alpha: 0.9),
+      color: (isDark ? GBTColors.errorDark : GBTColors.error).withValues(
+        alpha: 0.9,
+      ),
       child: const Align(
         alignment: Alignment.centerRight,
         child: Padding(
           padding: EdgeInsets.only(right: GBTSpacing.lg),
-          child: Icon(Icons.delete_outline, color: Colors.white, size: 22),
+          child: Icon(
+            Icons.delete_outline,
+            color: GBTColors.textInverse,
+            size: 22,
+          ),
         ),
       ),
     );
@@ -448,14 +424,12 @@ class _NotificationTile extends StatelessWidget {
     final t = normalizeNotificationType(type);
     return switch (t) {
       notificationTypePostCreated => Icons.article_outlined,
-      'COMMENT_CREATED' || 'COMMENT_REPLY_CREATED' =>
-        Icons.chat_bubble_outline,
+      'COMMENT_CREATED' || 'COMMENT_REPLY_CREATED' => Icons.chat_bubble_outline,
       'POST_LIKED' => Icons.favorite_border,
       notificationTypeTitleEarned => Icons.workspace_premium_outlined,
       'LIVE_EVENT_UPDATED' ||
       'LIVE_EVENT_CANCELLED' ||
-      'LIVE_EVENT_ATTENDANCE_VERIFIED' =>
-        Icons.event_outlined,
+      'LIVE_EVENT_ATTENDANCE_VERIFIED' => Icons.event_outlined,
       'MODERATION' => Icons.gavel_outlined,
       notificationTypeSystemNotice => Icons.campaign_outlined,
       _ => Icons.notifications_outlined,
@@ -467,26 +441,18 @@ class _NotificationTile extends StatelessWidget {
   Color _colorForType(String? type) {
     final t = normalizeNotificationType(type);
     return switch (t) {
-      notificationTypePostCreated => isDark
-          ? GBTColors.darkPrimary
-          : GBTColors.primary,
-      'COMMENT_CREATED' || 'COMMENT_REPLY_CREATED' => isDark
-          ? GBTColors.darkSecondary
-          : GBTColors.secondary,
-      'POST_LIKED' => isDark
-          ? GBTColors.darkSecondary
-          : GBTColors.secondary,
-      notificationTypeTitleEarned => isDark
-          ? GBTColors.darkPrimary
-          : GBTColors.primary,
+      notificationTypePostCreated =>
+        isDark ? GBTColors.darkPrimary : GBTColors.primary,
+      'COMMENT_CREATED' || 'COMMENT_REPLY_CREATED' =>
+        isDark ? GBTColors.darkSecondary : GBTColors.secondary,
+      'POST_LIKED' => isDark ? GBTColors.darkSecondary : GBTColors.secondary,
+      notificationTypeTitleEarned =>
+        isDark ? GBTColors.darkPrimary : GBTColors.primary,
       'LIVE_EVENT_UPDATED' ||
       'LIVE_EVENT_CANCELLED' ||
-      'LIVE_EVENT_ATTENDANCE_VERIFIED' => isDark
-          ? GBTColors.darkPrimary
-          : GBTColors.primary,
-      'MODERATION' => isDark
-          ? const Color(0xFFEF9A9A)
-          : const Color(0xFFC62828),
+      'LIVE_EVENT_ATTENDANCE_VERIFIED' =>
+        isDark ? GBTColors.darkPrimary : GBTColors.primary,
+      'MODERATION' => isDark ? GBTColors.error : GBTColors.errorDark,
       _ => isDark ? GBTColors.darkTextSecondary : GBTColors.textSecondary,
     };
   }
@@ -494,8 +460,9 @@ class _NotificationTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final accentColor = _colorForType(item.type);
-    final textSecondary =
-        isDark ? GBTColors.darkTextSecondary : GBTColors.textSecondary;
+    final textSecondary = isDark
+        ? GBTColors.darkTextSecondary
+        : GBTColors.textSecondary;
     final bg = item.isRead
         ? Colors.transparent
         : (isDark
@@ -503,8 +470,7 @@ class _NotificationTile extends StatelessWidget {
               : GBTColors.primary.withValues(alpha: 0.04));
 
     return Semantics(
-      label:
-          '${item.isRead ? '읽음' : '읽지 않음'} 알림: ${item.title}. ${item.body}',
+      label: '${item.isRead ? '읽음' : '읽지 않음'} 알림: ${item.title}. ${item.body}',
       button: true,
       child: InkWell(
         onTap: onTap,
@@ -518,20 +484,12 @@ class _NotificationTile extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // EN: Type icon with tinted background.
-                // KO: 틴트 배경이 있는 타입 아이콘입니다.
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: accentColor.withValues(alpha: 0.12),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    _iconForType(item.type),
-                    color: accentColor,
-                    size: GBTSpacing.iconSm,
-                  ),
+                // EN: Type icon — gradient chip.
+                // KO: 타입 아이콘 — 그라디언트 칩입니다.
+                GBTIconChip(
+                  icon: _iconForType(item.type),
+                  color: accentColor,
+                  size: 40,
                 ),
                 const SizedBox(width: GBTSpacing.sm2),
                 Expanded(

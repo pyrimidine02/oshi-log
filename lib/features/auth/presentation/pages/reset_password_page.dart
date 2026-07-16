@@ -13,7 +13,9 @@ import '../../../../core/theme/gbt_typography.dart';
 import '../../../../core/utils/result.dart';
 import '../../../../core/widgets/buttons/gbt_button.dart';
 import '../../../../core/widgets/inputs/gbt_text_field.dart';
+import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
 import '../../application/auth_controller.dart';
+import '../widgets/field_auth_components.dart';
 
 /// EN: Page where the user enters the reset token and new password.
 ///     The token may be pre-filled from a deep link.
@@ -74,13 +76,12 @@ class _ResetPasswordPageState extends ConsumerState<ResetPasswordPage> {
         ref.watch(authControllerProvider).isLoading || _isSubmitting;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          context.l10n(
-            ko: '새 비밀번호 설정',
-            en: 'Set New Password',
-            ja: '新しいパスワードを設定',
-          ),
+      appBar: gbtStandardAppBar(
+        context,
+        title: context.l10n(
+          ko: '새 비밀번호 설정',
+          en: 'Set New Password',
+          ja: '新しいパスワードを設定',
         ),
       ),
       body: SafeArea(
@@ -92,15 +93,19 @@ class _ResetPasswordPageState extends ConsumerState<ResetPasswordPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: GBTSpacing.lg),
-                Text(
-                  context.l10n(
+                FieldAuthHeader(
+                  eyebrow: 'ACCOUNT RECOVERY',
+                  title: context.l10n(
+                    ko: '새 접근 키를 만드세요',
+                    en: 'Create a new access key',
+                    ja: '新しいアクセスキーを作成',
+                  ),
+                  subtitle: context.l10n(
                     ko: '이메일로 받은 코드와 새 비밀번호를 입력해주세요.',
                     en: 'Enter the code from your email and your new password.',
                     ja: 'メールで受け取ったコードと新しいパスワードを入力してください。',
                   ),
-                  style: GBTTypography.bodyMedium.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                  icon: Icons.key_outlined,
                 ),
                 const SizedBox(height: GBTSpacing.xl),
 
@@ -148,8 +153,7 @@ class _ResetPasswordPageState extends ConsumerState<ResetPasswordPage> {
                   suffixIcon: _obscureNew
                       ? Icons.visibility_outlined
                       : Icons.visibility_off_outlined,
-                  onSuffixTap: () =>
-                      setState(() => _obscureNew = !_obscureNew),
+                  onSuffixTap: () => setState(() => _obscureNew = !_obscureNew),
                   textInputAction: TextInputAction.next,
                   validator: _validatePassword,
                 ),

@@ -190,5 +190,10 @@ ProviderContainer _createContainer(PostComposeDraftStore store) {
 Future<PostComposeDraftStore> _createStore() async {
   SharedPreferences.setMockInitialValues(<String, Object>{});
   final prefs = await SharedPreferences.getInstance();
-  return PostComposeDraftStore(LocalStorage(prefs));
+  return PostComposeDraftStore(
+    LocalStorage(prefs),
+    // EN: Freeze the store clock so fixed draft fixtures never age out.
+    // KO: 고정 임시저장 픽스처가 시간 경과로 만료되지 않도록 시계를 고정합니다.
+    now: () => DateTime.parse('2026-03-06T00:00:00.000Z'),
+  );
 }

@@ -52,14 +52,19 @@ class ContributorsCreditWidget extends ConsumerWidget {
       data: (contributors) {
         if (contributors.isEmpty) return const SizedBox.shrink();
 
-        final registrant = contributors.where((c) => c.isRegistrant).firstOrNull;
+        final registrant = contributors
+            .where((c) => c.isRegistrant)
+            .firstOrNull;
         final editors = contributors.where((c) => !c.isRegistrant).toList();
 
-        if (registrant == null && editors.isEmpty) return const SizedBox.shrink();
+        if (registrant == null && editors.isEmpty) {
+          return const SizedBox.shrink();
+        }
 
         final isDark = Theme.of(context).brightness == Brightness.dark;
-        final color =
-            isDark ? GBTColors.darkTextTertiary : GBTColors.textTertiary;
+        final color = isDark
+            ? GBTColors.darkTextTertiary
+            : GBTColors.textTertiary;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -87,10 +92,11 @@ class ContributorsCreditWidget extends ConsumerWidget {
   // EN: Builds the registrant credit line.
   // KO: 최초 등록자 크레딧 문자열을 생성합니다.
   String _registrantLabel(BuildContext context, ContributorDto r) {
-    final name = r.nickname ??
-        context.l10n(ko: '알 수 없음', en: 'Unknown', ja: '不明');
-    final at =
-        r.lastModifiedAt != null ? _formatDate(context, r.lastModifiedAt!) : null;
+    final name =
+        r.nickname ?? context.l10n(ko: '알 수 없음', en: 'Unknown', ja: '不明');
+    final at = r.lastModifiedAt != null
+        ? _formatDate(context, r.lastModifiedAt!)
+        : null;
 
     if (at != null) {
       return context.l10n(
@@ -109,7 +115,8 @@ class ContributorsCreditWidget extends ConsumerWidget {
   // EN: Builds the editors credit line ("X님 외 N명이 기여" style).
   // KO: 편집자 크레딧 문자열("X님 외 N명이 기여" 형식)을 생성합니다.
   String _editorsLabel(BuildContext context, List<ContributorDto> editors) {
-    final first = editors.first.nickname ??
+    final first =
+        editors.first.nickname ??
         context.l10n(ko: '알 수 없음', en: 'Unknown', ja: '不明');
     final rest = editors.length - 1;
 
@@ -135,8 +142,18 @@ class ContributorsCreditWidget extends ConsumerWidget {
 
     if (lang == 'en') {
       const months = [
-        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
       ];
       return '${months[d.month - 1]} ${d.day}, ${d.year}';
     }
