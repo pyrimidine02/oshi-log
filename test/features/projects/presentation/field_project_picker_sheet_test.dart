@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -7,6 +9,8 @@ import 'package:girlsbandtabi_app/core/theme/gbt_theme.dart';
 import 'package:girlsbandtabi_app/core/theme/gbt_colors.dart';
 import 'package:girlsbandtabi_app/features/projects/domain/entities/project_entities.dart';
 import 'package:girlsbandtabi_app/features/projects/presentation/widgets/field_project_picker_sheet.dart';
+
+import '../../../testing/tolerant_local_file_comparator.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -213,6 +217,16 @@ void main() {
   testWidgets('matches the narrow-screen field-notes visual contract', (
     tester,
   ) async {
+    final previousComparator = goldenFileComparator;
+    goldenFileComparator = TolerantLocalFileComparator(
+      Uri.file(
+        '${Directory.current.path}/test/features/projects/presentation/'
+        'field_project_picker_sheet_test.dart',
+      ),
+      precisionTolerance: 0.015,
+    );
+    addTearDown(() => goldenFileComparator = previousComparator);
+
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 

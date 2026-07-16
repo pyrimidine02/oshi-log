@@ -5,8 +5,11 @@
     where the reorder callback deprecation direction differs.
   - Keep the compatibility regression test until every supported environment
     uses the same stable Flutter release.
+  - Remove the field-project golden's 1.5% rasterizer tolerance after the SDKs
+    are aligned and regenerate the baseline once on that pinned version.
   - Removal criteria: local, CI, Android, and Xcode Cloud builds use one pinned
-    Flutter version and `flutter analyze` passes without compatibility ignores.
+    Flutter version, `flutter analyze` passes without compatibility ignores,
+    and the field-project golden passes with exact pixel comparison.
 
 - Rotate the Facebook/Instagram credential captured by a local Playwright trace
   if it is still live (2026-07-16):

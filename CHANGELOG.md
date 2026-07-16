@@ -6,6 +6,9 @@
   page transitions and the stable `SliverReorderableList.onReorder` contract.
   Travel-review stop reordering now normalizes legacy indices through immutable
   add, remove, and reorder helpers with regression coverage.
+- Scoped the field-project golden test to a 1.5% pixel-difference ceiling so
+  Flutter 3.32 and 3.41 rasterizer drift does not block deployment while larger
+  visual regressions still fail with generated comparison artifacts.
 
 - Synchronized mobile endpoint use with the current server contract: removed
   client-awarded activity XP, switched place statistics to the exact single
