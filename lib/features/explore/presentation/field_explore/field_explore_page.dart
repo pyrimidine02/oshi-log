@@ -1,5 +1,5 @@
-/// EN: Clean-sheet Explore workspace with a floating lower mode dock.
-/// KO: 하단 플로팅 모드 도크를 사용하는 새 탐방 워크스페이스.
+/// EN: Explore workspace with a compact mode control above main navigation.
+/// KO: 메인 내비게이션 바로 위에 간결한 모드 제어를 둔 탐방 화면입니다.
 library;
 
 import 'package:flutter/material.dart';
@@ -75,7 +75,9 @@ class _FieldExplorePageState extends State<FieldExplorePage>
 
   @override
   Widget build(BuildContext context) {
-    final mainNavigationOffset = _mainNavigationOffset(context);
+    final modeBottomOffset = _mainNavigationOffset(context);
+    final modeContentClearance =
+        modeBottomOffset + FieldExploreModeDock.height + GBTSpacing.sm;
     final labels = [
       context.l10n(ko: '지도', en: 'Map', ja: 'マップ'),
       context.l10n(ko: '이벤트', en: 'Events', ja: 'イベント'),
@@ -84,56 +86,75 @@ class _FieldExplorePageState extends State<FieldExplorePage>
     ];
 
     return Scaffold(
-      body: SafeArea(
-        bottom: false,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            // EN: Reserve the entire lower navigation stack so map controls,
-            //     event rows, and archive actions never sit beneath either dock.
-            // KO: 지도 컨트롤, 이벤트 행, 도감 액션이 어느 도크에도 가리지
-            //     않도록 하단 내비게이션 스택 전체만큼 공간을 확보합니다.
-            Padding(
-              padding: EdgeInsets.only(
-                bottom:
-                    mainNavigationOffset +
-                    FieldExploreModeDock.height +
-                    GBTSpacing.sm,
-              ),
-              child: MediaQuery.removePadding(
-                context: context,
-                removeTop: true,
-                child: TabBarView(
-                  key: const ValueKey('field-explore-content'),
-                  controller: _controller,
-                  physics: const NeverScrollableScrollPhysics(),
-                  children: [
-                    PlacesMapPage(
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: TabBarView(
+              key: const ValueKey('field-explore-content'),
+              controller: _controller,
+              physics: const NeverScrollableScrollPhysics(),
+              children: [
+                PlacesMapPage(
+                  embedded: true,
+                  isActive: _controller.index == 0,
+                  bottomInset: MediaQuery.paddingOf(context).bottom,
+                  modeLabels: labels,
+                  selectedModeIndex: _controller.index,
+                  onModeSelected: _selectMode,
+                ),
+                SafeArea(
+                  bottom: false,
+                  child: Padding(
+                    key: const ValueKey('field-explore-safe-content-1'),
+                    padding: EdgeInsets.only(bottom: modeContentClearance),
+                    child: const FieldLiveEventsPage(embedded: true),
+                  ),
+                ),
+                SafeArea(
+                  bottom: false,
+                  child: KeyedSubtree(
+                    key: const ValueKey('field-explore-safe-content-2'),
+                    child: FieldVisitLedgerPage(
                       embedded: true,
-                      isActive: _controller.index == 0,
+                      bottomClearance: modeContentClearance,
+                      onOpenMap: () => _selectMode(0),
+                      onOpenEvents: () => _selectMode(1),
                     ),
-                    const FieldLiveEventsPage(embedded: true),
-                    const FieldVisitLedgerPage(
-                      embedded: true,
-                      bottomClearance: GBTSpacing.md,
-                    ),
-                    const FieldZukanArchivePage(embedded: true),
-                  ],
+                  ),
+                ),
+                SafeArea(
+                  bottom: false,
+                  child: Padding(
+                    key: const ValueKey('field-explore-safe-content-3'),
+                    padding: EdgeInsets.only(bottom: modeContentClearance),
+                    child: const FieldZukanArchivePage(embedded: true),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (_controller.index != 0)
+            Positioned(
+              key: const ValueKey('field-explore-bottom-mode-rail'),
+              left: 0,
+              right: 0,
+              bottom: modeBottomOffset,
+              child: SafeArea(
+                top: false,
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: GBTSpacing.md,
+                  ),
+                  child: FieldExploreModeDock(
+                    selectedIndex: _controller.index,
+                    labels: labels,
+                    onSelected: _selectMode,
+                  ),
                 ),
               ),
             ),
-            Positioned(
-              left: GBTSpacing.pageHorizontal,
-              right: GBTSpacing.pageHorizontal,
-              bottom: mainNavigationOffset,
-              child: FieldExploreModeDock(
-                selectedIndex: _controller.index,
-                labels: labels,
-                onSelected: _selectMode,
-              ),
-            ),
-          ],
-        ),
+        ],
       ),
     );
   }
@@ -142,15 +163,13 @@ class _FieldExplorePageState extends State<FieldExplorePage>
     final mediaQuery = MediaQuery.of(context);
     final inheritedBottom = mediaQuery.padding.bottom;
     final deviceBottom = mediaQuery.viewPadding.bottom;
-    // EN: MainScaffold.extendBody injects the measured bottom-nav height into
-    //     MediaQuery.padding. Reusing bottomNavClearanceOf here would add the
-    //     64dp bar a second time and push this dock far above the navigation.
-    // KO: MainScaffold.extendBody는 측정된 하단바 높이를 MediaQuery.padding에
-    //     주입합니다. 여기서 bottomNavClearanceOf를 다시 쓰면 64dp가 중복돼
-    //     이 도크가 내비게이션보다 과도하게 위로 올라갑니다.
+    // EN: MainScaffold.extendBody already injects the measured navigation
+    //     height into padding. Add a fallback only outside that scaffold.
+    // KO: MainScaffold.extendBody가 측정된 내비게이션 높이를 padding에 이미
+    //     주입합니다. 해당 Scaffold 밖에서만 기본 높이를 보완합니다.
     final navigationHeight = inheritedBottom >= GBTSpacing.bottomNavHeight
         ? inheritedBottom
-        : GBTSpacing.bottomNavHeight + deviceBottom;
+        : GBTSpacing.scaledBottomNavHeight(context) + deviceBottom;
     return navigationHeight + GBTSpacing.sm;
   }
 }

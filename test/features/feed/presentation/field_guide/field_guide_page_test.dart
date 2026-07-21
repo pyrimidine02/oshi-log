@@ -63,17 +63,26 @@ void main() {
     );
   }
 
-  testWidgets('starts as an editorial updates guide', (tester) async {
+  testWidgets('starts with a compact localized information header', (
+    tester,
+  ) async {
     await tester.pumpWidget(buildSubject());
     await tester.pump();
 
-    expect(find.text('FIELD GUIDE'), findsOneWidget);
+    expect(find.text('Field guide'), findsOneWidget);
+    expect(find.text('Bandori'), findsOneWidget);
+    expect(find.text('GBT / TRAVEL & FANDOM'), findsNothing);
+    expect(find.text('ISSUE 01'), findsNothing);
+    expect(find.text('01'), findsNothing);
     expect(find.text('Updates'), findsOneWidget);
     expect(find.text('Artists'), findsOneWidget);
-    expect(find.text('Field kit'), findsOneWidget);
+    expect(find.text('Fan library'), findsOneWidget);
     expect(find.text('Tour announcements and ticket guide'), findsOneWidget);
 
-    await tester.drag(find.byType(ListView), const Offset(0, -240));
+    await tester.drag(
+      find.byKey(const Key('field-guide-updates-scroll')),
+      const Offset(0, -240),
+    );
     await tester.pump();
     expect(find.text('Pop-up store field report'), findsOneWidget);
   });
@@ -93,7 +102,11 @@ void main() {
     await tester.tap(find.byKey(const Key('field-guide-section-kit')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Music archive'), findsOneWidget);
+    expect(find.text('FAN REFERENCE'), findsOneWidget);
+    expect(find.text('Schedule'), findsOneWidget);
+    expect(find.text('Music & cheering'), findsOneWidget);
+    expect(find.text('Memories & collection'), findsOneWidget);
+    expect(find.text('Music & lyrics'), findsOneWidget);
     expect(find.text('Cheer guides'), findsOneWidget);
     expect(find.text('Event calendar'), findsOneWidget);
   });
@@ -118,6 +131,33 @@ void main() {
       expect(size.height, greaterThanOrEqualTo(48));
     }
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('keeps section navigation visible and can jump to oldest news', (
+    tester,
+  ) async {
+    await tester.pumpWidget(buildSubject());
+    await tester.pump();
+
+    await tester.drag(
+      find.byKey(const Key('field-guide-updates-scroll')),
+      const Offset(0, -500),
+    );
+    await tester.pump();
+    expect(find.text('Fan library'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('field-guide-update-filter-menu')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Oldest first'));
+    await tester.pumpAndSettle();
+
+    final olderTop = tester
+        .getTopLeft(find.text('Pop-up store field report'))
+        .dy;
+    final newerTop = tester
+        .getTopLeft(find.text('Tour announcements and ticket guide'))
+        .dy;
+    expect(olderTop, lessThan(newerTop));
   });
 
   testWidgets('explains empty updates and a missing project in context', (
@@ -149,7 +189,7 @@ void main() {
     await tester.tap(find.byKey(const Key('field-guide-section-kit')));
     await tester.pump();
 
-    expect(find.text('Music archive'), findsOneWidget);
+    expect(find.text('Music & lyrics'), findsOneWidget);
 
     await tester.drag(find.byType(ListView), const Offset(0, -360));
     await tester.pump();

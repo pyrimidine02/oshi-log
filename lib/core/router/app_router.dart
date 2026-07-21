@@ -541,13 +541,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                         );
                       }
                       final songId = state.pathParameters['songId']!;
-                      final eventId = state.uri.queryParameters['eventId'];
+                      final rawEventId = state.uri.queryParameters['eventId'];
+                      final eventId = rawEventId?.trim();
                       return _buildAdaptiveDetailPage(
                         key: state.pageKey,
                         child: MusicSongDetailPage(
                           projectId: projectId,
                           songId: songId,
-                          eventId: eventId,
+                          eventId: eventId?.isEmpty == true ? null : eventId,
                         ),
                       );
                     },
@@ -1001,13 +1002,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             );
           }
           final songId = state.pathParameters['songId']!;
-          final eventId = state.uri.queryParameters['eventId'];
+          final rawEventId = state.uri.queryParameters['eventId'];
+          final eventId = rawEventId?.trim();
           return _buildAdaptiveDetailPage(
             key: state.pageKey,
             child: MusicSongDetailPage(
               projectId: projectId,
               songId: songId,
-              eventId: eventId,
+              eventId: eventId?.isEmpty == true ? null : eventId,
             ),
           );
         },
@@ -1266,9 +1268,11 @@ extension AppRouterExtension on BuildContext {
     if (trimmedProjectId.isEmpty) {
       return;
     }
+    final trimmedEventId = eventId?.trim();
     final queryParameters = <String, String>{
       'projectId': trimmedProjectId,
-      if (eventId != null && eventId.trim().isNotEmpty) 'eventId': eventId,
+      if (trimmedEventId != null && trimmedEventId.isNotEmpty)
+        'eventId': trimmedEventId,
     };
     if (_isInOverlayContext()) {
       pushNamed(

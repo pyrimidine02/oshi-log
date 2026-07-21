@@ -4,6 +4,21 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:girlsbandtabi_app/features/home/presentation/field_home/widgets/field_home_components.dart';
 
 void main() {
+  testWidgets('FieldSectionHeader keeps one clear localized heading', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: FieldSectionHeader(eyebrow: 'PILGRIMAGE', title: '프로젝트 성지'),
+        ),
+      ),
+    );
+
+    expect(find.text('프로젝트 성지'), findsOneWidget);
+    expect(find.text('PILGRIMAGE'), findsNothing);
+  });
+
   testWidgets('JourneyBriefCard keeps the next action clear at 320dp', (
     tester,
   ) async {

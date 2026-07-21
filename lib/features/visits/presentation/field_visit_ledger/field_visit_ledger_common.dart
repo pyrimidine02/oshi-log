@@ -27,144 +27,132 @@ class FieldLedgerKindSwitch extends StatelessWidget {
     final compact =
         MediaQuery.sizeOf(context).width < 380 ||
         MediaQuery.textScalerOf(context).scale(1) > 1.3;
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        border: Border(
-          top: BorderSide(color: colors.outlineVariant),
-          bottom: BorderSide(color: colors.outlineVariant),
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: GBTSpacing.md),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                context.l10n(ko: '여정 원장', en: 'Journey ledger', ja: '旅の台帳'),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.2,
-                ),
-              ),
+    final isPlaces = selected == FieldVisitLedgerKind.places;
+    final title = isPlaces
+        ? context.l10n(ko: '장소 기록', en: 'Place records', ja: '場所記録')
+        : context.l10n(ko: '이벤트 출석', en: 'Event attendance', ja: 'イベント参加');
+    final titleBlock = Semantics(
+      header: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'TRAVEL LOGBOOK',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: colors.primary,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.1,
             ),
-            if (selected == FieldVisitLedgerKind.places)
-              IconButton(
-                key: const Key('field-ledger-stats-action'),
-                tooltip: context.l10n(
-                  ko: '방문 통계',
-                  en: 'Visit statistics',
-                  ja: '訪問統計',
-                ),
-                onPressed: onOpenStats,
-                icon: const Icon(Icons.query_stats_rounded, size: 20),
-              ),
-            FieldLedgerKindButton(
-              itemKey: const Key('field-ledger-kind-places'),
-              icon: Icons.place_outlined,
-              label: context.l10n(ko: '장소', en: 'Places', ja: '場所'),
-              semanticsLabel: context.l10n(
-                ko: '장소 방문 기록 보기',
-                en: 'Show place visit records',
-                ja: '場所訪問記録を表示',
-              ),
-              selected: selected == FieldVisitLedgerKind.places,
-              showLabel: !compact,
-              onTap: () => onSelected(FieldVisitLedgerKind.places),
+          ),
+          const SizedBox(height: GBTSpacing.xxs),
+          Text(
+            title,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.3,
             ),
-            FieldLedgerKindButton(
-              itemKey: const Key('field-ledger-kind-events'),
-              icon: Icons.confirmation_number_outlined,
-              label: context.l10n(ko: '이벤트', en: 'Events', ja: 'イベント'),
-              semanticsLabel: context.l10n(
-                ko: '이벤트 출석 기록 보기',
-                en: 'Show event attendance records',
-                ja: 'イベント参加記録を表示',
-              ),
-              selected: selected == FieldVisitLedgerKind.events,
-              showLabel: !compact,
-              onTap: () => onSelected(FieldVisitLedgerKind.events),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
-  }
-}
+    final statsAction = TextButton.icon(
+      key: const Key('field-ledger-stats-action'),
+      onPressed: onOpenStats,
+      icon: const Icon(Icons.query_stats_rounded, size: 20),
+      label: Text(context.l10n(ko: '방문 통계', en: 'Visit stats', ja: '訪問統計')),
+    );
 
-class FieldLedgerKindButton extends StatelessWidget {
-  const FieldLedgerKindButton({
-    super.key,
-    required this.itemKey,
-    required this.icon,
-    required this.label,
-    required this.semanticsLabel,
-    required this.selected,
-    required this.showLabel,
-    required this.onTap,
-  });
-
-  final Key itemKey;
-  final IconData icon;
-  final String label;
-  final String semanticsLabel;
-  final bool selected;
-  final bool showLabel;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final color = selected ? colors.primary : colors.onSurfaceVariant;
-    return Semantics(
-      button: true,
-      selected: selected,
-      label: semanticsLabel,
-      excludeSemantics: true,
-      child: InkWell(
-        key: itemKey,
-        onTap: onTap,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(
-            minWidth: GBTSpacing.touchTarget,
-            minHeight: GBTSpacing.touchTarget,
-          ),
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: GBTSpacing.sm),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(icon, size: 19, color: color),
-                    if (showLabel) ...[
-                      const SizedBox(width: GBTSpacing.xs),
-                      Text(
-                        label,
-                        style: Theme.of(context).textTheme.labelMedium
-                            ?.copyWith(
-                              color: color,
-                              fontWeight: selected
-                                  ? FontWeight.w800
-                                  : FontWeight.w600,
-                            ),
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface,
+        border: Border(bottom: BorderSide(color: colors.outlineVariant)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          GBTSpacing.md,
+          GBTSpacing.sm,
+          GBTSpacing.md,
+          GBTSpacing.md,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (compact) ...[
+              titleBlock,
+              if (isPlaces)
+                Align(alignment: Alignment.centerLeft, child: statsAction),
+            ] else
+              Row(
+                children: [
+                  Expanded(child: titleBlock),
+                  if (isPlaces) statsAction,
+                ],
+              ),
+            const SizedBox(height: GBTSpacing.sm),
+            ConstrainedBox(
+              constraints: const BoxConstraints(
+                minHeight: GBTSpacing.touchTarget,
+              ),
+              child: SegmentedButton<FieldVisitLedgerKind>(
+                key: const Key('field-ledger-kind-switch'),
+                showSelectedIcon: false,
+                expandedInsets: EdgeInsets.zero,
+                segments: [
+                  ButtonSegment(
+                    value: FieldVisitLedgerKind.places,
+                    label: Semantics(
+                      key: const Key('field-ledger-kind-places'),
+                      label: context.l10n(
+                        ko: '장소 방문 기록 보기',
+                        en: 'Show place visit records',
+                        ja: '場所訪問記録を表示',
                       ),
-                    ],
-                  ],
+                      excludeSemantics: true,
+                      child: Text(
+                        context.l10n(
+                          ko: '장소 방문',
+                          en: 'Place visits',
+                          ja: '場所訪問',
+                        ),
+                        maxLines: 2,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                  ButtonSegment(
+                    value: FieldVisitLedgerKind.events,
+                    label: Semantics(
+                      key: const Key('field-ledger-kind-events'),
+                      label: context.l10n(
+                        ko: '이벤트 출석 기록 보기',
+                        en: 'Show event attendance records',
+                        ja: 'イベント参加記録を表示',
+                      ),
+                      excludeSemantics: true,
+                      child: Text(
+                        context.l10n(
+                          ko: '이벤트 출석',
+                          en: 'Event attendance',
+                          ja: 'イベント参加',
+                        ),
+                        maxLines: 2,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                ],
+                selected: {selected},
+                onSelectionChanged: (selection) => onSelected(selection.first),
+                style: const ButtonStyle(
+                  minimumSize: WidgetStatePropertyAll(
+                    Size(0, GBTSpacing.touchTarget),
+                  ),
                 ),
               ),
-              if (selected)
-                Positioned(
-                  left: GBTSpacing.xs,
-                  right: GBTSpacing.xs,
-                  bottom: 0,
-                  child: Container(height: 3, color: colors.primary),
-                ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -245,23 +233,26 @@ class FieldLedgerMonthRule extends StatelessWidget {
     final label = date == null
         ? context.l10n(ko: '날짜 미상', en: 'DATE UNKNOWN', ja: '日付不明')
         : '${date!.year} / ${date!.month.toString().padLeft(2, '0')}';
-    return Container(
-      padding: const EdgeInsets.fromLTRB(
-        GBTSpacing.md,
-        GBTSpacing.lg,
-        GBTSpacing.md,
-        GBTSpacing.sm,
-      ),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: colors.outlineVariant)),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-          color: colors.onSurfaceVariant,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 1.1,
-          fontFeatures: const [FontFeature.tabularFigures()],
+    return Semantics(
+      header: true,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(
+          GBTSpacing.md,
+          GBTSpacing.md,
+          GBTSpacing.md,
+          GBTSpacing.sm,
+        ),
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: colors.outlineVariant)),
+        ),
+        child: Text(
+          label,
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            color: colors.onSurfaceVariant,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.1,
+            fontFeatures: const [FontFeature.tabularFigures()],
+          ),
         ),
       ),
     );
@@ -317,6 +308,7 @@ class FieldLedgerMessageList extends StatelessWidget {
     this.noteKey,
     this.noteIcon,
     this.noteEyebrow,
+    this.noteTitle,
   });
 
   final Widget header;
@@ -328,6 +320,7 @@ class FieldLedgerMessageList extends StatelessWidget {
   final Key? noteKey;
   final IconData? noteIcon;
   final String? noteEyebrow;
+  final String? noteTitle;
 
   @override
   Widget build(BuildContext context) {
@@ -339,7 +332,7 @@ class FieldLedgerMessageList extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(
             GBTSpacing.md,
-            GBTSpacing.xl,
+            GBTSpacing.md,
             GBTSpacing.md,
             GBTSpacing.lg,
           ),
@@ -349,12 +342,15 @@ class FieldLedgerMessageList extends StatelessWidget {
                 const LinearProgressIndicator(minHeight: 2),
                 const SizedBox(height: GBTSpacing.lg),
               ],
-              if (noteIcon != null && noteEyebrow != null)
+              if (noteIcon != null && noteEyebrow != null && noteTitle != null)
                 _FieldLedgerEmptyNote(
                   key: noteKey,
                   icon: noteIcon!,
                   eyebrow: noteEyebrow!,
+                  title: noteTitle!,
                   message: message,
+                  actionLabel: actionLabel,
+                  onAction: onAction,
                 )
               else
                 Text(
@@ -364,7 +360,9 @@ class FieldLedgerMessageList extends StatelessWidget {
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
-              if (actionLabel != null && onAction != null) ...[
+              if (noteTitle == null &&
+                  actionLabel != null &&
+                  onAction != null) ...[
                 const SizedBox(height: GBTSpacing.md),
                 TextButton(onPressed: onAction, child: Text(actionLabel!)),
               ],
@@ -383,69 +381,93 @@ class _FieldLedgerEmptyNote extends StatelessWidget {
     super.key,
     required this.icon,
     required this.eyebrow,
+    required this.title,
     required this.message,
+    this.actionLabel,
+    this.onAction,
   });
 
   final IconData icon;
   final String eyebrow;
+  final String title;
   final String message;
+  final String? actionLabel;
+  final VoidCallback? onAction;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     return Semantics(
-      label: '$eyebrow. $message',
-      child: ExcludeSemantics(
-        child: IntrinsicHeight(
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: colors.surfaceContainerLowest,
-              border: Border(
-                top: BorderSide(color: colors.primary, width: 3),
-                bottom: BorderSide(color: colors.outlineVariant),
-              ),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    minWidth: 72,
-                    minHeight: 112,
+      container: true,
+      explicitChildNodes: true,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: colors.surfaceContainerLowest,
+          border: Border.all(color: colors.outlineVariant),
+          borderRadius: BorderRadius.circular(GBTSpacing.radiusLg),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(GBTSpacing.lg2),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: GBTSpacing.touchTarget,
+                    height: GBTSpacing.touchTarget,
+                    decoration: BoxDecoration(
+                      color: colors.primaryContainer,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(icon, size: 24, color: colors.primary),
                   ),
-                  child: ColoredBox(
-                    color: colors.primaryContainer,
-                    child: Icon(icon, size: 30, color: colors.primary),
-                  ),
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(GBTSpacing.md),
+                  const SizedBox(width: GBTSpacing.md),
+                  Expanded(
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           eyebrow,
-                          style: Theme.of(context).textTheme.labelMedium
+                          style: Theme.of(context).textTheme.labelSmall
                               ?.copyWith(
                                 color: colors.primary,
                                 fontWeight: FontWeight.w800,
-                                letterSpacing: 0.35,
+                                letterSpacing: 0.8,
                               ),
                         ),
-                        const SizedBox(height: GBTSpacing.sm),
-                        Text(
-                          message,
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(color: colors.onSurfaceVariant),
+                        const SizedBox(height: GBTSpacing.xs),
+                        Semantics(
+                          header: true,
+                          child: Text(
+                            title,
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.w800),
+                          ),
                         ),
                       ],
                     ),
                   ),
+                ],
+              ),
+              const SizedBox(height: GBTSpacing.md),
+              Text(
+                message,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: colors.onSurfaceVariant,
+                  height: 1.45,
+                ),
+              ),
+              if (actionLabel != null && onAction != null) ...[
+                const SizedBox(height: GBTSpacing.md),
+                FilledButton.icon(
+                  onPressed: onAction,
+                  icon: Icon(icon, size: 20),
+                  label: Text(actionLabel!),
                 ),
               ],
-            ),
+            ],
           ),
         ),
       ),

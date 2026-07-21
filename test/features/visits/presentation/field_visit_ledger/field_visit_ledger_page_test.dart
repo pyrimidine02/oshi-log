@@ -50,7 +50,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('Club Citta'), findsOneWidget);
-    expect(find.text('여정 원장'), findsOneWidget);
+    expect(find.text('장소 기록'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -90,7 +90,8 @@ void main() {
 
     final appBar = tester.widget<AppBar>(find.byType(AppBar));
     expect(appBar.scrolledUnderElevation, 0);
-    expect(find.text('여정 원장'), findsWidgets);
+    expect(find.text('여행 기록'), findsOneWidget);
+    expect(find.text('장소 기록'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

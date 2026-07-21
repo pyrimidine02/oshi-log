@@ -22,6 +22,7 @@ class FieldEventLedger extends StatelessWidget {
     required this.onLoadMore,
     required this.onOpenEvent,
     required this.bottomClearance,
+    this.onOpenEvents,
   });
 
   final Widget header;
@@ -31,6 +32,7 @@ class FieldEventLedger extends StatelessWidget {
   final Future<void> Function() onLoadMore;
   final ValueChanged<LiveAttendanceHistoryRecord> onOpenEvent;
   final double bottomClearance;
+  final VoidCallback? onOpenEvents;
 
   @override
   Widget build(BuildContext context) {
@@ -76,18 +78,31 @@ class FieldEventLedger extends StatelessWidget {
         child: FieldLedgerMessageList(
           header: header,
           message: context.l10n(
-            ko: '현재 프로젝트에 아직 이벤트 출석 기록이 없습니다.\n이벤트 상세에서 출석을 기록해보세요.',
-            en: 'No event attendance in the current project yet.\nRecord attendance from an event detail.',
-            ja: '現在のプロジェクトにはまだイベント参加がありません。\nイベント詳細から記録しましょう。',
+            ko: '이벤트 일정을 확인하고 상세에서 출석을 기록하면 라이브의 추억이 이곳에 쏓여요.',
+            en: 'Open an event and record attendance to keep your live memories here.',
+            ja: 'イベント詳細で参加を記録すると、ライブの思い出がここに残ります。',
           ),
           bottomClearance: bottomClearance,
           noteKey: const Key('field-ledger-empty-event-note'),
           noteIcon: Icons.confirmation_number_outlined,
           noteEyebrow: context.l10n(
-            ko: '첫 번째 이벤트 기록',
-            en: 'YOUR FIRST EVENT NOTE',
-            ja: '最初のイベント記録',
+            ko: '라이브의 첫 기록',
+            en: 'FIRST LIVE ENTRY',
+            ja: 'ライブの最初の記録',
           ),
+          noteTitle: context.l10n(
+            ko: '첫 이벤트 출석을 기록해보세요',
+            en: 'Record your first event attendance',
+            ja: '最初のイベント参加を記録しましょう',
+          ),
+          actionLabel: onOpenEvents == null
+              ? null
+              : context.l10n(
+                  ko: '이벤트 일정 보기',
+                  en: 'View event schedule',
+                  ja: 'イベント予定を見る',
+                ),
+          onAction: onOpenEvents,
         ),
       );
     }

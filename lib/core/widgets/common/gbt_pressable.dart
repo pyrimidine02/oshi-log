@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../theme/gbt_animations.dart';
+import '../../theme/gbt_spacing.dart';
 
 /// EN: Wraps a child widget with a consistent press-scale animation.
 /// Respects the user's reduced motion accessibility setting.
@@ -107,10 +108,12 @@ class _GBTPressableState extends State<GBTPressable>
     final reduceMotion = MediaQuery.of(context).disableAnimations;
 
     if (!_isActive || reduceMotion) {
-      return GestureDetector(
-        onTap: _isActive ? _onTap : null,
-        behavior: HitTestBehavior.opaque,
-        child: widget.child,
+      return _buildPressTarget(
+        GestureDetector(
+          onTap: _isActive ? _onTap : null,
+          behavior: HitTestBehavior.opaque,
+          child: widget.child,
+        ),
       );
     }
 
@@ -126,7 +129,7 @@ class _GBTPressableState extends State<GBTPressable>
     if (isApple) {
       final opacityAnimation = Tween<double>(
         begin: 1.0,
-        end: 0.5,
+        end: 0.88,
       ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
       animatedChild = FadeTransition(
         opacity: opacityAnimation,
@@ -134,13 +137,27 @@ class _GBTPressableState extends State<GBTPressable>
       );
     }
 
-    return GestureDetector(
-      onTapDown: _onTapDown,
-      onTapUp: _onTapUp,
-      onTapCancel: _onTapCancel,
-      onTap: _onTap,
-      behavior: HitTestBehavior.opaque,
-      child: animatedChild,
+    return _buildPressTarget(
+      GestureDetector(
+        onTapDown: _onTapDown,
+        onTapUp: _onTapUp,
+        onTapCancel: _onTapCancel,
+        onTap: _onTap,
+        behavior: HitTestBehavior.opaque,
+        child: animatedChild,
+      ),
     );
+  }
+
+  Widget _buildPressTarget(Widget child) {
+    final target = ConstrainedBox(
+      constraints: const BoxConstraints(
+        minWidth: GBTSpacing.minTouchTarget,
+        minHeight: GBTSpacing.minTouchTarget,
+      ),
+      child: child,
+    );
+    if (!_isActive) return target;
+    return Semantics(button: true, enabled: true, child: target);
   }
 }

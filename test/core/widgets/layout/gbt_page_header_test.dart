@@ -29,6 +29,33 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('GBTPageHeader preserves copy and can omit its divider', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: GBTTheme.light,
+        home: const Scaffold(
+          body: GBTPageHeader(
+            eyebrow: 'Travel desk',
+            title: '여정 준비',
+            showDivider: false,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Travel desk'), findsOneWidget);
+    final decoratedBox = tester.widget<DecoratedBox>(
+      find.descendant(
+        of: find.byType(GBTPageHeader),
+        matching: find.byType(DecoratedBox),
+      ),
+    );
+    final decoration = decoratedBox.decoration as BoxDecoration;
+    expect(decoration.border, isNull);
+  });
+
   testWidgets('GBTPageHeader remains usable at 320dp and 200 percent text', (
     tester,
   ) async {

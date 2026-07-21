@@ -33,6 +33,8 @@ void main() {
       160,
       scrollable: find.byType(Scrollable),
     );
+    await tester.ensureVisible(find.text('羊宮姃那'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('羊宮姃那'));
     expect(selectedActor?.id, 'voice-1');
   });

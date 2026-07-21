@@ -28,6 +28,7 @@ void main() {
     CommunityFeedViewState? state,
     _RecordingCommunityActions? actions,
     Locale locale = const Locale('en'),
+    TextScaler textScaler = TextScaler.noScaling,
   }) {
     return ProviderScope(
       overrides: [
@@ -43,18 +44,23 @@ void main() {
       child: MaterialApp(
         locale: locale,
         theme: GBTTheme.light,
-        home: FieldCommunityPage(initialSectionIndex: initialSectionIndex),
+        home: MediaQuery(
+          data: MediaQueryData(textScaler: textScaler),
+          child: FieldCommunityPage(initialSectionIndex: initialSectionIndex),
+        ),
       ),
     );
   }
 
-  testWidgets('renders real community posts as edge-to-edge field reports', (
+  testWidgets('renders posts below a compact localized community header', (
     tester,
   ) async {
     await tester.pumpWidget(buildSubject());
     await tester.pump();
 
-    expect(find.text('FIELD REPORTS'), findsOneWidget);
+    expect(find.text('Community'), findsOneWidget);
+    expect(find.text('FIELD REPORTS'), findsNothing);
+    expect(find.text('GBT / SHARED NOTES'), findsNothing);
     expect(find.text('Shimokitazawa venue access notes'), findsOneWidget);
     expect(find.text('Mina'), findsOneWidget);
     expect(find.byType(Card), findsNothing);
@@ -108,6 +114,29 @@ void main() {
       expect(tester.getSize(find.byKey(key)).height, greaterThanOrEqualTo(48));
     }
     expect(find.byKey(const Key('field-community-section-feed')), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('mode controls scroll at 320dp and 200 percent text', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      buildSubject(textScaler: const TextScaler.linear(2)),
+    );
+    await tester.pump();
+
+    expect(find.byType(SingleChildScrollView), findsWidgets);
+    expect(
+      tester
+          .getSize(find.byKey(const Key('field-community-mode-recommended')))
+          .width,
+      greaterThanOrEqualTo(128),
+    );
     expect(tester.takeException(), isNull);
   });
 

@@ -4,10 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:girlsbandtabi_app/features/places/application/places_controller.dart';
+import 'package:girlsbandtabi_app/features/places/domain/entities/place_entities.dart';
 import 'package:girlsbandtabi_app/features/places/presentation/widgets/field_map_controls.dart';
 
 void main() {
-  testWidgets('mission strip stays 56dp and keeps searches independent', (
+  testWidgets('map search stays one 48dp pill without extra actions', (
     tester,
   ) async {
     final semantics = tester.ensureSemantics();
@@ -16,7 +17,6 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     var localSearches = 0;
-    var unifiedSearches = 0;
 
     await tester.pumpWidget(
       MaterialApp(
@@ -25,9 +25,7 @@ void main() {
           body: Align(
             alignment: Alignment.topCenter,
             child: FieldMapMissionStrip(
-              placeCount: 18,
               onLocalSearch: () => localSearches += 1,
-              onUnifiedSearch: () => unifiedSearches += 1,
             ),
           ),
         ),
@@ -36,30 +34,24 @@ void main() {
 
     expect(
       tester.getSize(find.byKey(const Key('field-map-mission-strip'))).height,
-      56,
+      48,
     );
     expect(find.byType(Card), findsNothing);
     expect(find.byType(Chip), findsNothing);
+    expect(find.byIcon(Icons.route_outlined), findsNothing);
+    expect(find.byIcon(Icons.search_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.public_rounded), findsNothing);
     expect(
       find.bySemanticsLabel('Search places and regions on this map'),
       findsOneWidget,
     );
-    expect(find.bySemanticsLabel('Unified search'), findsOneWidget);
     _expectEnabledButtonWithTap(
       tester,
       find.bySemanticsLabel('Search places and regions on this map'),
     );
-    _expectEnabledButtonWithTap(
-      tester,
-      find.bySemanticsLabel('Unified search'),
-    );
 
     await tester.tap(find.byKey(const Key('field-map-local-search')));
     expect(localSearches, 1);
-    expect(unifiedSearches, 0);
-    await tester.tap(find.byKey(const Key('field-map-unified-search')));
-    expect(localSearches, 1);
-    expect(unifiedSearches, 1);
     expect(tester.takeException(), isNull);
     semantics.dispose();
   });
@@ -77,11 +69,115 @@ void main() {
         locale: const Locale('ko'),
         home: MediaQuery(
           data: const MediaQueryData(textScaler: TextScaler.linear(2)),
+          child: Scaffold(body: FieldMapMissionStrip(onLocalSearch: () {})),
+        ),
+      ),
+    );
+
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('map filters use scrollable service-style chips', (tester) async {
+    final actions = <String>[];
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('en'),
+        home: Scaffold(
+          body: FieldMapFilterChips(
+            activeFilterCount: 2,
+            projectLabel: 'Girls Band Cry',
+            regionLabel: 'Tokyo',
+            bandLabel: 'Togenashi Togeari',
+            onFiltersTap: () => actions.add('filters'),
+            onProjectTap: () => actions.add('project'),
+            onRegionTap: () => actions.add('region'),
+            onBandTap: () => actions.add('band'),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byType(SingleChildScrollView), findsOneWidget);
+    expect(find.text('Filters 2'), findsOneWidget);
+    expect(find.text('Girls Band Cry'), findsOneWidget);
+    expect(
+      tester.getSize(find.byKey(const Key('field-map-filter-all'))).height,
+      greaterThanOrEqualTo(48),
+    );
+    await tester.tap(find.text('Filters 2'));
+    await tester.tap(find.text('Tokyo'));
+    expect(actions, ['filters', 'region']);
+  });
+
+  testWidgets('half-sheet results use horizontal field-note cards', (
+    tester,
+  ) async {
+    const places = [
+      PlaceSummary(
+        id: 'first',
+        name: 'Kawasaki Station',
+        address: 'Kawasaki',
+        latitude: 35.53,
+        longitude: 139.70,
+        types: ['animation'],
+        tags: [],
+      ),
+      PlaceSummary(
+        id: 'second',
+        name: 'Club Citta',
+        address: 'Kawasaki',
+        latitude: 35.52,
+        longitude: 139.69,
+        types: ['live_house'],
+        tags: [],
+      ),
+    ];
+    final opened = <String>[];
+
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('en'),
+        home: Scaffold(
+          body: FieldMapPlaceCarousel(
+            places: places,
+            selectedPlaceId: 'first',
+            onOpen: (place) => opened.add(place.id),
+            onDirections: (_) {},
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byKey(const Key('field-map-place-carousel')), findsOneWidget);
+    expect(find.byType(ListView), findsOneWidget);
+    expect(find.text('FIELD NOTE'), findsNWidgets(2));
+    await tester.tap(
+      find.byKey(const ValueKey<String>('field-map-carousel-card-first')),
+    );
+    expect(opened, ['first']);
+  });
+
+  testWidgets('field-note carousel grows for accessibility text', (
+    tester,
+  ) async {
+    const place = PlaceSummary(
+      id: 'large-text',
+      name: 'A long field location name',
+      address: 'A long address for accessibility testing',
+      latitude: 35.53,
+      longitude: 139.70,
+      types: ['animation'],
+      tags: [],
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MediaQuery(
+          data: const MediaQueryData(textScaler: TextScaler.linear(3)),
           child: Scaffold(
-            body: FieldMapMissionStrip(
-              placeCount: 128,
-              onLocalSearch: () {},
-              onUnifiedSearch: () {},
+            body: FieldMapPlaceCarousel(
+              places: const [place],
+              onOpen: (_) {},
+              onDirections: (_) {},
             ),
           ),
         ),
@@ -89,6 +185,10 @@ void main() {
     );
 
     expect(tester.takeException(), isNull);
+    expect(
+      tester.getSize(find.byKey(const Key('field-map-place-carousel'))).height,
+      240,
+    );
   });
 
   testWidgets('field index moves all filters off the map canvas', (
@@ -121,13 +221,31 @@ void main() {
       ),
     );
 
-    expect(tester.getSize(find.byType(FieldMapFieldIndex)).height, 49);
+    expect(tester.getSize(find.byType(FieldMapFieldIndex)).height, 192);
     expect(find.byType(Chip), findsNothing);
     expect(find.byType(ActionChip), findsNothing);
     expect(find.byKey(const Key('field-map-index-project')), findsOneWidget);
     expect(find.byKey(const Key('field-map-index-region')), findsOneWidget);
     expect(find.byKey(const Key('field-map-index-band')), findsOneWidget);
     expect(find.byKey(const Key('field-map-index-mode')), findsOneWidget);
+    expect(find.byKey(const Key('field-map-index-ledger')), findsOneWidget);
+    expect(find.byKey(const Key('field-map-index-row-rule')), findsNWidgets(3));
+    expect(find.byKey(const Key('field-map-index-column-rule')), findsNothing);
+    expect(find.byType(SingleChildScrollView), findsNothing);
+    for (final category in const ['Project', 'Region', 'Band', 'Order']) {
+      expect(find.text(category), findsOneWidget);
+    }
+    for (final number in const ['01', '02', '03', '04']) {
+      expect(find.text(number), findsNothing);
+    }
+    for (final icon in const [
+      Icons.layers_outlined,
+      Icons.location_on_outlined,
+      Icons.groups_2_outlined,
+      Icons.swap_vert_rounded,
+    ]) {
+      expect(find.byIcon(icon), findsNothing);
+    }
     for (final label in const [
       'Project, Girls Band Cry',
       'Region, Tokyo',
@@ -140,14 +258,36 @@ void main() {
 
     await tester.tap(find.byKey(const Key('field-map-index-project')));
     expect(actions, contains('project'));
-    await tester.drag(
-      find.byType(SingleChildScrollView),
-      const Offset(-250, 0),
-    );
-    await tester.pump();
     await tester.tap(find.byKey(const Key('field-map-index-mode')));
     expect(actions, contains('all'));
     semantics.dispose();
+  });
+
+  testWidgets('empty map result stays compact and offers filter reset', (
+    tester,
+  ) async {
+    var resetCount = 0;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('en'),
+        home: Scaffold(
+          body: FieldMapEmptyResult(
+            hasActiveFilters: true,
+            onResetFilters: () => resetCount += 1,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byIcon(Icons.location_off_outlined), findsOneWidget);
+    expect(find.text('No places match selected filters'), findsOneWidget);
+    expect(
+      tester.getSize(find.byType(FieldMapEmptyResult)).height,
+      lessThanOrEqualTo(112),
+    );
+    await tester.tap(find.text('Reset filters'));
+    expect(resetCount, 1);
   });
 
   testWidgets('field index supports dark theme and 200 percent text', (
@@ -182,49 +322,81 @@ void main() {
       ),
     );
 
-    expect(tester.getSize(find.byType(FieldMapFieldIndex)).height, 49);
+    expect(
+      tester.getSize(find.byType(FieldMapFieldIndex)).height,
+      lessThanOrEqualTo(288),
+    );
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('canvas controls remain separate square 48dp targets', (
+  testWidgets('field index supports iOS accessibility text sizes', (
     tester,
   ) async {
-    var fitCount = 0;
-    var locationCount = 0;
+    tester.view.physicalSize = const Size(320, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
     await tester.pumpWidget(
       MaterialApp(
         locale: const Locale('en'),
-        home: Scaffold(
-          body: FieldMapCanvasControls(
-            onFitPlaces: () => fitCount += 1,
-            onCurrentLocation: () => locationCount += 1,
+        home: MediaQuery(
+          data: const MediaQueryData(textScaler: TextScaler.linear(3)),
+          child: Scaffold(
+            body: FieldMapFieldIndex(
+              projectLabel: 'Girls Band Cry',
+              regionLabel: 'All regions',
+              bandLabel: 'Togenashi Togeari',
+              mode: PlaceListMode.nearby,
+              hasRegionFilter: false,
+              hasBandFilter: false,
+              onProjectTap: () {},
+              onRegionTap: () {},
+              onBandTap: () {},
+              onModeChanged: (_) {},
+            ),
           ),
         ),
       ),
     );
 
     expect(
-      tester.getSize(find.byKey(const Key('field-map-fit-places'))),
-      const Size(48, 48),
+      tester.getSize(find.byType(FieldMapFieldIndex)).height,
+      lessThanOrEqualTo(384),
     );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('canvas keeps one circular 48dp location target', (tester) async {
+    var locationCount = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('en'),
+        home: Scaffold(
+          body: FieldMapCanvasControls(
+            onCurrentLocation: () => locationCount += 1,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byKey(const Key('field-map-fit-places')), findsNothing);
     expect(
       tester.getSize(find.byKey(const Key('field-map-current-location'))),
       const Size(48, 48),
     );
     expect(find.byType(Card), findsNothing);
 
-    await tester.tap(find.byKey(const Key('field-map-fit-places')));
     await tester.tap(find.byKey(const Key('field-map-current-location')));
-    expect(fitCount, 1);
     expect(locationCount, 1);
   });
 
-  testWidgets('ledger header keeps reset and collapse as separate actions', (
+  testWidgets('collapsed ledger header expands and owns mode switching', (
     tester,
   ) async {
     final semantics = tester.ensureSemantics();
-    var resetCount = 0;
     var collapseCount = 0;
+    var selectedMode = 0;
 
     await tester.pumpWidget(
       MaterialApp(
@@ -232,8 +404,9 @@ void main() {
         home: Scaffold(
           body: FieldMapLedgerHeader(
             placeCount: 18,
-            hasActiveFilters: true,
-            onResetFilters: () => resetCount += 1,
+            modeLabels: const ['Map', 'Events', 'Visits', 'Stamps'],
+            selectedModeIndex: selectedMode,
+            onModeSelected: (value) => selectedMode = value,
             onCollapse: () => collapseCount += 1,
           ),
         ),
@@ -244,16 +417,62 @@ void main() {
       find.bySemanticsLabel('Field ledger · 18 spots'),
     );
     expect(header.flagsCollection.isHeader, isTrue);
-    final reset = find.bySemanticsLabel('Reset filters');
-    final collapse = find.bySemanticsLabel('Collapse list');
-    _expectEnabledButtonWithTap(tester, reset);
-    _expectEnabledButtonWithTap(tester, collapse);
+    final expand = find.bySemanticsLabel('Expand list');
+    _expectEnabledButtonWithTap(tester, expand);
+    expect(find.byType(SegmentedButton<int>), findsOneWidget);
 
-    await tester.tap(reset);
-    await tester.tap(collapse);
-    expect(resetCount, 1);
+    await tester.tap(find.text('Events'));
+    await tester.tap(expand);
+    expect(selectedMode, 1);
     expect(collapseCount, 1);
     semantics.dispose();
+  });
+
+  testWidgets('map filters open as a plain value list', (tester) async {
+    final actions = <String>[];
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('en'),
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => showFieldMapFilters(
+                context: context,
+                projectLabel: 'Girls Band Cry',
+                regionLabel: 'Tokyo',
+                bandLabel: 'Togenashi Togeari',
+                mode: PlaceListMode.nearby,
+                hasRegionFilter: false,
+                hasBandFilter: false,
+                onProjectTap: () => actions.add('project'),
+                onRegionTap: () => actions.add('region'),
+                onBandTap: () => actions.add('band'),
+                onModeChanged: (mode) => actions.add(mode.name),
+                onResetFilters: () => actions.add('reset'),
+              ),
+              child: const Text('Open filters'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open filters'));
+    await tester.pumpAndSettle();
+    expect(find.text('Map filters'), findsOneWidget);
+    expect(find.text('Reset'), findsOneWidget);
+    expect(find.text('Project'), findsOneWidget);
+    expect(find.text('Girls Band Cry'), findsOneWidget);
+    expect(find.byIcon(Icons.chevron_right_rounded), findsNWidgets(4));
+    expect(find.text('01'), findsNothing);
+    expect(
+      find.text('Choose the travel layers shown on the map.'),
+      findsNothing,
+    );
+
+    await tester.tap(find.byKey(const Key('field-map-index-project')));
+    await tester.pumpAndSettle();
+    expect(actions, contains('project'));
   });
 }
 

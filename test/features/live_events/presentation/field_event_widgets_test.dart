@@ -494,7 +494,7 @@ void _expectEnabledButtonWithTap(WidgetTester tester, Finder finder) {
 final _summary = LiveEventSummary(
   id: 'live-1',
   title: 'TEST LIVE TOUR',
-  showStartTime: DateTime(2026, 7, 20, 18),
+  showStartTime: DateTime.now().add(const Duration(days: 10)),
   status: 'SCHEDULED',
   projectIds: const ['p1'],
   unitIds: const ['u1'],
@@ -503,8 +503,8 @@ final _summary = LiveEventSummary(
 final _detail = LiveEventDetail(
   id: 'live-1',
   title: 'TEST LIVE TOUR',
-  showStartTime: DateTime(2026, 7, 20, 18),
-  doorsOpenTime: DateTime(2026, 7, 20, 17),
+  showStartTime: DateTime.now().add(const Duration(days: 10)),
+  doorsOpenTime: DateTime.now().add(const Duration(days: 10, hours: -1)),
   status: 'SCHEDULED',
   projectIds: const ['p1'],
   unitIds: const ['u1'],

@@ -32,6 +32,8 @@ class FieldVisitLedgerBody extends StatefulWidget {
     this.onLoadMoreEvents,
     this.initialKind = FieldVisitLedgerKind.places,
     this.bottomClearance,
+    this.onOpenMap,
+    this.onOpenEvents,
   });
 
   final AsyncValue<List<VisitEvent>> visitsState;
@@ -46,6 +48,8 @@ class FieldVisitLedgerBody extends StatefulWidget {
   final VoidCallback onOpenStats;
   final FieldVisitLedgerKind initialKind;
   final double? bottomClearance;
+  final VoidCallback? onOpenMap;
+  final VoidCallback? onOpenEvents;
 
   @override
   State<FieldVisitLedgerBody> createState() => _FieldVisitLedgerBodyState();
@@ -89,6 +93,7 @@ class _FieldVisitLedgerBodyState extends State<FieldVisitLedgerBody> {
         onLoadMore: widget.onLoadMoreEvents ?? () async {},
         onOpenEvent: widget.onOpenEvent,
         bottomClearance: bottomClearance,
+        onOpenEvents: widget.onOpenEvents,
       );
     }
 
@@ -99,6 +104,7 @@ class _FieldVisitLedgerBodyState extends State<FieldVisitLedgerBody> {
       onRefresh: widget.onRefreshPlaces,
       onOpenVisit: widget.onOpenVisit,
       bottomClearance: bottomClearance,
+      onOpenMap: widget.onOpenMap,
     );
   }
 }

@@ -24,24 +24,35 @@ class FieldGuideSectionSwitcher extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final border = isDark ? GBTColors.darkBorder : GBTColors.border;
+    final background = isDark
+        ? GBTColors.darkSurfaceVariant
+        : GBTColors.surfaceVariant;
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        border: Border.symmetric(horizontal: BorderSide(color: border)),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        GBTSpacing.pageHorizontal,
+        0,
+        GBTSpacing.pageHorizontal,
+        GBTSpacing.sm,
       ),
-      child: Row(
-        children: FieldGuideSection.values
-            .map(
-              (section) => Expanded(
-                child: _SectionDestination(
-                  section: section,
-                  selected: selected == section,
-                  onTap: () => onSelected(section),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: background,
+          borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
+        ),
+        child: Row(
+          children: FieldGuideSection.values
+              .map(
+                (section) => Expanded(
+                  child: _SectionDestination(
+                    section: section,
+                    selected: selected == section,
+                    onTap: () => onSelected(section),
+                  ),
                 ),
-              ),
-            )
-            .toList(growable: false),
+              )
+              .toList(growable: false),
+        ),
       ),
     );
   }
@@ -66,6 +77,10 @@ class _SectionDestination extends StatelessWidget {
         ? GBTColors.darkTextSecondary
         : GBTColors.textSecondary;
     final accent = isDark ? GBTColors.darkPrimary : GBTColors.primary;
+    final selectedBackground = accent.withValues(alpha: isDark ? 0.18 : 0.12);
+    final motionDuration = MediaQuery.disableAnimationsOf(context)
+        ? Duration.zero
+        : const Duration(milliseconds: 180);
     final label = switch (section) {
       FieldGuideSection.updates => context.l10n(
         ko: '업데이트',
@@ -78,9 +93,9 @@ class _SectionDestination extends StatelessWidget {
         ja: 'アーティスト',
       ),
       FieldGuideSection.kit => context.l10n(
-        ko: '현장 키트',
-        en: 'Field kit',
-        ja: '現地キット',
+        ko: '팬 자료실',
+        en: 'Fan library',
+        ja: 'ファン資料室',
       ),
     };
     final key = switch (section) {
@@ -99,42 +114,25 @@ class _SectionDestination extends StatelessWidget {
         child: ConstrainedBox(
           constraints: const BoxConstraints(minHeight: GBTSpacing.touchTarget),
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
+            duration: motionDuration,
             padding: const EdgeInsets.symmetric(
               horizontal: GBTSpacing.xs,
               vertical: GBTSpacing.sm,
             ),
             decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: selected ? accent : Colors.transparent,
-                  width: 3,
-                ),
-              ),
+              color: selected ? selectedBackground : Colors.transparent,
+              borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  '${section.index + 1}'.padLeft(2, '0'),
-                  style: GBTTypography.labelSmall.copyWith(
-                    color: selected ? accent : muted,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(width: GBTSpacing.xs),
-                Flexible(
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GBTTypography.labelSmall.copyWith(
-                      color: selected ? ink : muted,
-                      fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
+            alignment: Alignment.center,
+            child: Text(
+              label,
+              maxLines: 2,
+              textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
+              style: GBTTypography.labelSmall.copyWith(
+                color: selected ? ink : muted,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+              ),
             ),
           ),
         ),

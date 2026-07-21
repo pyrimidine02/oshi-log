@@ -124,25 +124,12 @@ class FieldHomePage extends ConsumerWidget {
               children: [
                 Text(
                   context.l10n(
-                    ko: 'TODAY’S JOURNEY',
-                    en: 'TODAY’S JOURNEY',
-                    ja: 'TODAY’S JOURNEY',
-                  ),
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.primary,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-                const SizedBox(height: GBTSpacing.xs),
-                Text(
-                  context.l10n(
                     ko: '오늘의 원정 브리핑',
                     en: 'Today’s journey brief',
                     ja: '今日の遠征ブリーフィング',
                   ),
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                     letterSpacing: -0.6,
                   ),
                 ),
@@ -295,11 +282,11 @@ class _FieldHomeHeader extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  'GIRLS BAND TABI',
+                  'Girls Band Tabi',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: Theme.of(context).colorScheme.primary,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.4,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.2,
                   ),
                 ),
               ),

@@ -58,6 +58,11 @@ class NewsListController extends StateNotifier<AsyncValue<List<NewsSummary>>> {
     }
     final result = await repository.getNews(
       projectId: projectKey,
+      // EN: News summaries are lightweight. Keep the local archive broad
+      //     enough for title search, year filtering, and oldest-first access.
+      // KO: 뉴스 요약은 가볍습니다. 제목 검색, 연도 필터, 오래된순 접근을
+      //     위해 로컬 아카이브 범위를 충분히 넓게 유지합니다.
+      size: 200,
       forceRefresh: forceRefresh,
     );
 

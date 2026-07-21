@@ -1,5 +1,27 @@
 # TODO
 
+- Complete an automated iOS accessibility-tree audit for the redesigned map,
+  Explore transitions, and information roots when `idb` is available
+  (2026-07-21):
+  - The iPhone 17 Pro / iOS 26.5 visual pass, 44pt semantics tests, 320dp
+    layout tests, legacy Android/Dynamic Island/side-cutout safe-area tests,
+    and 200%/300% text-scale tests pass locally.
+  - The simulator audit helper cannot inspect the native accessibility tree on
+    this workstation because its `idb` dependency is not installed.
+  - Removal criteria: VoiceOver or `idb` confirms labels, selected states,
+    reading order, and actions on the Explore map sheet and its four-way mode
+    control, Information including Fan library and Music, Community, and My
+    Journey with no duplicate or unreachable nodes.
+
+- Move update-archive discovery to server-backed search and cursor pagination
+  when the retained archive exceeds the current 200-summary window
+  (2026-07-21):
+  - The client currently keeps the first 200 lightweight summaries searchable
+    by title, year, and latest/oldest order and renders them lazily.
+  - Removal criteria: the API supports query, year, sort, and cursor parameters;
+    old results remain reachable without downloading the entire archive; unit,
+    widget, and integration tests cover multi-page retrieval.
+
 - Align developer Flutter SDKs with CI Flutter 3.41 (2026-07-16):
   - CI currently compiles with Flutter 3.41 while this workstation uses 3.32.6,
     where the reorder callback deprecation direction differs.

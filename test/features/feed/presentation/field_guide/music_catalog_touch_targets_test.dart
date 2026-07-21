@@ -59,4 +59,48 @@ void main() {
     );
     expect(tester.getSize(target).height, greaterThanOrEqualTo(48));
   });
+
+  testWidgets('album track row handles long metadata at 300 percent text', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MediaQuery(
+          data: const MediaQueryData(
+            size: Size(320, 640),
+            textScaler: TextScaler.linear(3),
+          ),
+          child: Scaffold(
+            body: Align(
+              alignment: Alignment.topLeft,
+              child: MusicAlbumSheetTrackRow(
+                track: const MusicAlbumTrack(
+                  songId: 'song-1',
+                  trackNo: 12,
+                  title: 'A very long live arrangement track title',
+                  versionCode: 'LIVE ARRANGEMENT',
+                  durationMs: 372000,
+                ),
+                isDark: false,
+                accent: GBTColors.secondary,
+                isTitleTrack: true,
+                onTap: () {},
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(tester.takeException(), isNull);
+    expect(
+      tester.getSize(find.byType(MusicAlbumSheetTrackRow)).height,
+      greaterThanOrEqualTo(48),
+    );
+  });
 }

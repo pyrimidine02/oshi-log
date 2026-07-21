@@ -142,111 +142,109 @@ class _GBTSearchBarState extends State<GBTSearchBar> {
         ? primaryColor
         : (isDark ? GBTColors.darkTextSecondary : GBTColors.textSecondary);
 
-    return Semantics(
-      label: '${widget.hint} 검색 필드',
-      hint: '탭하면 검색어를 입력할 수 있습니다',
-      textField: true,
-      enabled: widget.enabled,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        curve: Curves.easeOutCubic,
-        height: GBTSpacing.touchTarget,
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
-          // EN: Transparent border in rest state — animates smoothly to primary on focus.
-          //     Using transparent (not null) enables AnimatedContainer interpolation.
-          // KO: 휴지 상태는 투명 테두리 — 포커스 시 primary로 부드럽게 보간.
-          //     null 대신 transparent를 사용해 AnimatedContainer 보간 가능.
-          border: Border.all(
-            color: _isFocused ? primaryColor : Colors.transparent,
-            width: 2,
-          ),
-          boxShadow: _isFocused
-              ? [
-                  BoxShadow(
-                    color: primaryColor.withValues(alpha: 0.14),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : null,
+    // EN: Let TextField expose its localized native semantics. A wrapper label
+    //     would duplicate the field and can mix languages with a localized hint.
+    // KO: TextField가 지역화된 네이티브 시맨틱을 제공하게 합니다.
+    //     래퍼 라벨은 필드를 중복하고 지역화 힌트와 언어를 섞을 수 있습니다.
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOutCubic,
+      height: GBTSpacing.touchTarget,
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
+        // EN: Transparent border in rest state — animates smoothly to primary on focus.
+        //     Using transparent (not null) enables AnimatedContainer interpolation.
+        // KO: 휴지 상태는 투명 테두리 — 포커스 시 primary로 부드럽게 보간.
+        //     null 대신 transparent를 사용해 AnimatedContainer 보간 가능.
+        border: Border.all(
+          color: _isFocused ? primaryColor : Colors.transparent,
+          width: 2,
         ),
-        child: Row(
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(left: GBTSpacing.md),
-              child:
-                  widget.leading ??
-                  Icon(
-                    Icons.search_rounded,
-                    color: iconColor,
-                    size: GBTSpacing.iconSm,
-                  ),
-            ),
-            Expanded(
-              child: TextField(
-                controller: _controller,
-                focusNode: _focusNode,
-                autofocus: widget.autofocus,
-                enabled: widget.enabled,
-                readOnly: widget.readOnly,
-                onChanged: widget.onChanged,
-                onSubmitted: widget.onSubmitted,
-                onTap: widget.onTap,
-                style: GBTTypography.bodyMedium.copyWith(
-                  color: isDark
-                      ? GBTColors.darkTextPrimary
-                      : GBTColors.textPrimary,
+        boxShadow: _isFocused
+            ? [
+                BoxShadow(
+                  color: primaryColor.withValues(alpha: 0.14),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
                 ),
-                textInputAction: TextInputAction.search,
-                decoration: InputDecoration(
-                  hintText: widget.hint,
-                  hintStyle: GBTTypography.bodyMedium.copyWith(
-                    color: isDark
-                        ? GBTColors.darkTextTertiary
-                        : GBTColors.textSecondary,
-                  ),
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  disabledBorder: InputBorder.none,
-                  errorBorder: InputBorder.none,
-                  focusedErrorBorder: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: GBTSpacing.sm,
-                  ),
+              ]
+            : null,
+      ),
+      child: Row(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: GBTSpacing.md),
+            child:
+                widget.leading ??
+                Icon(
+                  Icons.search_rounded,
+                  color: iconColor,
+                  size: GBTSpacing.iconSm,
+                ),
+          ),
+          Expanded(
+            child: TextField(
+              controller: _controller,
+              focusNode: _focusNode,
+              autofocus: widget.autofocus,
+              enabled: widget.enabled,
+              readOnly: widget.readOnly,
+              onChanged: widget.onChanged,
+              onSubmitted: widget.onSubmitted,
+              onTap: widget.onTap,
+              style: GBTTypography.bodyMedium.copyWith(
+                color: isDark
+                    ? GBTColors.darkTextPrimary
+                    : GBTColors.textPrimary,
+              ),
+              textInputAction: TextInputAction.search,
+              decoration: InputDecoration(
+                hintText: widget.hint,
+                hintStyle: GBTTypography.bodyMedium.copyWith(
+                  color: isDark
+                      ? GBTColors.darkTextTertiary
+                      : GBTColors.textSecondary,
+                ),
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                disabledBorder: InputBorder.none,
+                errorBorder: InputBorder.none,
+                focusedErrorBorder: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: GBTSpacing.sm,
                 ),
               ),
             ),
-            if (_hasText)
-              Tooltip(
-                message: '검색어 지우기',
-                child: IconButton(
-                  icon: Icon(
-                    Icons.close_rounded,
-                    color: isDark
-                        ? GBTColors.darkTextSecondary
-                        : GBTColors.textSecondary,
-                    size: GBTSpacing.iconSm,
-                  ),
-                  onPressed: _onClear,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(
-                    minWidth: GBTSpacing.minTouchTarget,
-                    minHeight: GBTSpacing.minTouchTarget,
-                  ),
+          ),
+          if (_hasText)
+            Tooltip(
+              message: MaterialLocalizations.of(context).deleteButtonTooltip,
+              child: IconButton(
+                icon: Icon(
+                  Icons.close_rounded,
+                  color: isDark
+                      ? GBTColors.darkTextSecondary
+                      : GBTColors.textSecondary,
+                  size: GBTSpacing.iconSm,
                 ),
-              )
-            else if (widget.trailing != null)
-              Padding(
-                padding: const EdgeInsets.only(right: GBTSpacing.sm),
-                child: widget.trailing,
-              )
-            else
-              const SizedBox(width: GBTSpacing.md),
-          ],
-        ),
+                onPressed: _onClear,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(
+                  minWidth: GBTSpacing.minTouchTarget,
+                  minHeight: GBTSpacing.minTouchTarget,
+                ),
+              ),
+            )
+          else if (widget.trailing != null)
+            Padding(
+              padding: const EdgeInsets.only(right: GBTSpacing.sm),
+              child: widget.trailing,
+            )
+          else
+            const SizedBox(width: GBTSpacing.md),
+        ],
       ),
     );
   }

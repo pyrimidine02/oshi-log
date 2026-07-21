@@ -37,7 +37,11 @@ void main() {
       ),
     );
 
-    expect(find.text('여정 원장'), findsOneWidget);
+    expect(find.text('TRAVEL LOGBOOK'), findsOneWidget);
+    expect(find.text('장소 기록'), findsOneWidget);
+    expect(find.text('장소 방문'), findsOneWidget);
+    expect(find.text('이벤트 출석'), findsOneWidget);
+    expect(find.text('여정 원장'), findsNothing);
     expect(find.byKey(const Key('field-ledger-place-row')), findsNWidgets(2));
     expect(find.byType(TabBar), findsNothing);
     expect(find.byType(Card), findsNothing);
@@ -143,6 +147,8 @@ void main() {
   testWidgets('keeps both empty ledgers actionable without fabricated rows', (
     tester,
   ) async {
+    var mapOpened = false;
+    var eventsOpened = false;
     await _pumpLedger(
       tester,
       child: FieldVisitLedgerBody(
@@ -155,28 +161,38 @@ void main() {
         onOpenVisit: (_) {},
         onOpenEvent: (_) {},
         onOpenStats: () {},
+        onOpenMap: () => mapOpened = true,
+        onOpenEvents: () => eventsOpened = true,
       ),
     );
 
-    expect(find.textContaining('아직 장소 방문 기록이 없습니다.'), findsOne);
+    expect(find.textContaining('지도에서 장소를 선택하고'), findsOne);
     expect(
       find.byKey(const Key('field-ledger-empty-place-note')),
       findsOneWidget,
     );
-    expect(find.text('첫 번째 현장 기록'), findsOneWidget);
+    expect(find.text('첫 방문 기록을 남겨보세요'), findsOneWidget);
+    expect(find.text('지도에서 장소 찾기'), findsOneWidget);
     expect(find.byKey(const Key('field-ledger-place-row')), findsNothing);
+
+    await tester.tap(find.text('지도에서 장소 찾기'));
+    expect(mapOpened, isTrue);
 
     await tester.tap(find.byKey(const Key('field-ledger-kind-events')));
     await tester.pump();
 
-    expect(find.textContaining('현재 프로젝트에 아직 이벤트 출석 기록이 없습니다.'), findsOne);
+    expect(find.textContaining('이벤트 일정을 확인하고'), findsOne);
     expect(
       find.byKey(const Key('field-ledger-empty-event-note')),
       findsOneWidget,
     );
-    expect(find.text('첫 번째 이벤트 기록'), findsOneWidget);
+    expect(find.text('첫 이벤트 출석을 기록해보세요'), findsOneWidget);
+    expect(find.text('이벤트 일정 보기'), findsOneWidget);
     expect(find.byKey(const Key('field-ledger-event-row')), findsNothing);
     expect(find.byType(Card), findsNothing);
+
+    await tester.tap(find.text('이벤트 일정 보기'));
+    expect(eventsOpened, isTrue);
     expect(tester.takeException(), isNull);
   });
 

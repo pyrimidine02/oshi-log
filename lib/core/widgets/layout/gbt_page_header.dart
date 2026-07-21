@@ -36,9 +36,9 @@ class GBTPageHeader extends StatelessWidget {
         padding ??
         EdgeInsets.fromLTRB(
           GBTResponsiveSpacing.pageHorizontal(context),
-          GBTSpacing.md,
+          GBTSpacing.sm,
           GBTResponsiveSpacing.pageHorizontal(context),
-          GBTSpacing.lg,
+          GBTSpacing.md,
         );
 
     return DecoratedBox(
@@ -69,20 +69,19 @@ class GBTPageHeader extends StatelessWidget {
                     children: [
                       if (eyebrow != null) ...[
                         Text(
-                          eyebrow!.toUpperCase(),
+                          eyebrow!,
                           style: theme.textTheme.labelSmall?.copyWith(
                             color: colors.primary,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1.1,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                         const SizedBox(height: GBTSpacing.xs2),
                       ],
                       Text(
                         title,
-                        style: theme.textTheme.headlineLarge?.copyWith(
+                        style: theme.textTheme.headlineMedium?.copyWith(
                           color: colors.onSurface,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                       if (description != null) ...[

@@ -141,8 +141,10 @@ class MusicSongsController
 
   final Ref _ref;
   final String _projectId;
+  int _loadGeneration = 0;
 
   Future<void> load({bool forceRefresh = false}) async {
+    final generation = ++_loadGeneration;
     final projectId = _projectId.trim();
     if (projectId.isEmpty || !mounted) {
       state = const MusicCursorState(
@@ -161,52 +163,74 @@ class MusicSongsController
       clearFailure: true,
     );
     final repository = await _ref.read(musicRepositoryProvider.future);
-    final result = await repository.getSongs(projectId: projectId);
-    if (!mounted) return;
-    if (result case Success<MusicCursorPage<MusicSongSummary>>(:final data)) {
-      state = state.copyWith(
-        items: data.items,
-        hasNext: data.hasNext,
-        nextCursor: data.nextCursor,
-        isLoading: false,
-        clearFailure: true,
+    if (!mounted || generation != _loadGeneration) return;
+    final songsById = <String, MusicSongSummary>{};
+    final seenCursors = <String>{};
+    String? cursor;
+    Failure? failure;
+    var completed = false;
+
+    for (var page = 0; page < 100; page++) {
+      if (!mounted || generation != _loadGeneration) return;
+      final result = await repository.getSongs(
+        projectId: projectId,
+        cursor: cursor,
+        size: 100,
       );
-      return;
+      if (!mounted || generation != _loadGeneration) return;
+      if (result case Success<MusicCursorPage<MusicSongSummary>>(:final data)) {
+        for (final song in data.items) {
+          songsById.putIfAbsent(song.id, () => song);
+        }
+        // EN: Publish each completed page so the catalog stays responsive
+        //     while the remaining cursor chain continues in the background.
+        // KO: 남은 페이지를 백그라운드에서 가져오는 동안에도 카탈로그가
+        //     반응하도록 완료된 페이지를 즉시 공개합니다.
+        state = state.copyWith(
+          items: songsById.values.toList(growable: false),
+          isLoading: true,
+          clearFailure: true,
+        );
+        final nextCursor = data.nextCursor?.trim();
+        if (!data.hasNext) {
+          completed = true;
+          break;
+        }
+        if (nextCursor == null || nextCursor.isEmpty) {
+          failure = const UnknownFailure(
+            'Song catalog hasNext without a next cursor',
+            code: 'music_song_cursor_missing',
+          );
+          break;
+        }
+        if (!seenCursors.add(nextCursor)) {
+          failure = const UnknownFailure(
+            'Song catalog repeated a cursor',
+            code: 'music_song_cursor_repeated',
+          );
+          break;
+        }
+        cursor = nextCursor;
+        continue;
+      }
+      failure = result.failureOrNull;
+      break;
     }
+    if (!completed && failure == null) {
+      failure = const UnknownFailure(
+        'Song catalog exceeded the page safety limit',
+        code: 'music_song_page_limit',
+      );
+    }
+
+    if (!mounted || generation != _loadGeneration) return;
     state = state.copyWith(
+      items: songsById.values.toList(growable: false),
+      hasNext: false,
+      nextCursor: null,
       isLoading: false,
-      failure: result.failureOrNull,
-      clearFailure: true,
-    );
-  }
-
-  Future<void> loadMore() async {
-    if (state.isLoading || state.isLoadingMore || !state.hasNext) return;
-    final projectId = _projectId.trim();
-    final cursor = state.nextCursor;
-    if (projectId.isEmpty || cursor == null || cursor.isEmpty) return;
-
-    state = state.copyWith(isLoadingMore: true, clearFailure: true);
-    final repository = await _ref.read(musicRepositoryProvider.future);
-    final result = await repository.getSongs(
-      projectId: projectId,
-      cursor: cursor,
-    );
-    if (!mounted) return;
-    if (result case Success<MusicCursorPage<MusicSongSummary>>(:final data)) {
-      state = state.copyWith(
-        items: [...state.items, ...data.items],
-        hasNext: data.hasNext,
-        nextCursor: data.nextCursor,
-        isLoadingMore: false,
-        clearFailure: true,
-      );
-      return;
-    }
-    state = state.copyWith(
-      isLoadingMore: false,
-      failure: result.failureOrNull,
-      clearFailure: true,
+      failure: failure,
+      clearFailure: failure == null,
     );
   }
 }

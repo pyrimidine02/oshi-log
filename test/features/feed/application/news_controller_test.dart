@@ -23,6 +23,7 @@ void main() {
         when(
           () => repository.getNews(
             projectId: any(named: 'projectId'),
+            size: any(named: 'size'),
             forceRefresh: any(named: 'forceRefresh'),
           ),
         ).thenAnswer((_) => completer.future);
@@ -58,7 +59,11 @@ void main() {
 
         await expectLater(loadFuture, completes);
         verify(
-          () => repository.getNews(projectId: 'project-1', forceRefresh: true),
+          () => repository.getNews(
+            projectId: 'project-1',
+            size: 200,
+            forceRefresh: true,
+          ),
         ).called(1);
       },
     );

@@ -32,47 +32,63 @@ class PassportSectionHeading extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = _SectionColors.of(context);
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Text(
-          index,
-          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-            color: colors.accent,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 1,
-          ),
-        ),
-        const SizedBox(width: GBTSpacing.sm),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                eyebrow,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: colors.mutedInk,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.1,
-                ),
+    final heading = Semantics(
+      header: true,
+      label: '$index $title',
+      child: ExcludeSemantics(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              index,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: colors.accent,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.6,
               ),
-              Text(
+            ),
+            const SizedBox(width: GBTSpacing.sm),
+            Expanded(
+              child: Text(
                 title,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   color: colors.ink,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-        if (actionLabel case final label?)
-          SizedBox(
-            height: GBTSpacing.touchTarget,
+      ),
+    );
+    final label = actionLabel;
+    final Widget? action = label == null
+        ? null
+        : ConstrainedBox(
+            constraints: const BoxConstraints(
+              minHeight: GBTSpacing.touchTarget,
+            ),
             child: TextButton(onPressed: onAction, child: Text(label)),
-          ),
+          );
+    if (action == null) return heading;
+
+    final usesStackedAction = MediaQuery.textScalerOf(context).scale(1) >= 1.8;
+    if (usesStackedAction) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          heading,
+          const SizedBox(height: GBTSpacing.xs),
+          Align(alignment: Alignment.centerRight, child: action),
+        ],
+      );
+    }
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(child: heading),
+        const SizedBox(width: GBTSpacing.sm),
+        action,
       ],
     );
   }
@@ -463,7 +479,7 @@ class _NextStopRow extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          typeLabel.toUpperCase(),
+                          typeLabel,
                           style: Theme.of(context).textTheme.labelSmall
                               ?.copyWith(
                                 color: colors.mutedInk,

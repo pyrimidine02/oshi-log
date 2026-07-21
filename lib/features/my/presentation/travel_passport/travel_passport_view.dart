@@ -80,19 +80,19 @@ class TravelPassportView extends StatelessWidget {
                             const SizedBox(height: GBTSpacing.md),
                             _PassportLoadNotice(onRetry: onRefresh),
                           ],
-                          const SizedBox(height: GBTSpacing.xl),
+                          const SizedBox(height: GBTSpacing.lg),
                           JourneyLedger(
                             data: data.ledger,
                             profileStatus: data.profileStatus,
                           ),
-                          const SizedBox(height: GBTSpacing.xl),
+                          const SizedBox(height: GBTSpacing.lg),
                           NextStopsSection(
                             stops: data.upcomingStops,
                             scheduleStatus: data.scheduleStatus,
                             onOpenCalendar: onOpenCalendar,
                             onOpenStop: onOpenStop,
                           ),
-                          const SizedBox(height: GBTSpacing.xl),
+                          const SizedBox(height: GBTSpacing.lg),
                           TravelArchiveSection(
                             ledger: data.ledger,
                             profileStatus: data.profileStatus,
@@ -173,35 +173,15 @@ class _PassportPageHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final ink = isDark ? GBTColors.darkTextPrimary : GBTColors.fieldInk;
-    final mutedInk = isDark
-        ? GBTColors.darkTextSecondary
-        : GBTColors.textSecondary;
     return Row(
       children: [
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'MY FIELD LOG',
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: mutedInk,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.4,
-                ),
-              ),
-              Text(
-                context.l10n(
-                  ko: '나의 여행 여권',
-                  en: 'Travel passport',
-                  ja: '私の旅パスポート',
-                ),
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  color: ink,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ],
+          child: Text(
+            context.l10n(ko: '나의 여행 여권', en: 'Travel passport', ja: '私の旅パスポート'),
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              color: ink,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
         Semantics(

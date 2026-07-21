@@ -58,10 +58,21 @@ class PassportDocument extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _DocumentMasthead(colors: colors),
+                  ExcludeSemantics(
+                    child: Text(
+                      'GIRLS BAND TABI · TRAVEL PASSPORT',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: colors.mutedInk,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ),
                   Padding(
                     padding: const EdgeInsets.symmetric(
-                      vertical: GBTSpacing.md,
+                      vertical: GBTSpacing.sm,
                     ),
                     child: Divider(height: 1, color: colors.rule),
                   ),
@@ -81,49 +92,6 @@ class PassportDocument extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _DocumentMasthead extends StatelessWidget {
-  const _DocumentMasthead({required this.colors});
-
-  final _PassportColors colors;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Row(
-      children: [
-        Expanded(
-          flex: 4,
-          child: Text(
-            'GIRLS BAND TABI',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: colors.ink,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1.4,
-            ),
-          ),
-        ),
-        const SizedBox(width: GBTSpacing.sm),
-        Expanded(
-          flex: 5,
-          child: Text(
-            'TRAVEL DOCUMENT  /  JP',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.end,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: colors.mutedInk,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.8,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

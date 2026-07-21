@@ -22,12 +22,10 @@ import '../../../../core/utils/result.dart';
 import '../../../../core/widgets/common/themed_builder.dart';
 import '../../../../core/widgets/feedback/gbt_loading.dart';
 import '../../../../core/widgets/inputs/gbt_search_bar.dart';
-import '../../../../core/widgets/navigation/gbt_profile_action.dart';
 import '../../../projects/application/projects_controller.dart';
 import '../../../projects/domain/entities/project_entities.dart';
 import '../../../projects/presentation/widgets/band_filter_sheet.dart';
 import '../../../projects/presentation/widgets/field_project_picker_sheet.dart';
-import '../../../settings/application/settings_controller.dart';
 import '../../../visits/application/visits_controller.dart';
 import '../../application/places_controller.dart';
 import '../../domain/entities/place_entities.dart';
@@ -46,7 +44,16 @@ import '../widgets/field_place_sheet_row.dart';
 /// EN: Places map page widget
 /// KO: 장소 지도 페이지 위젯
 class PlacesMapPage extends ConsumerStatefulWidget {
-  const PlacesMapPage({super.key, this.embedded = false, this.isActive = true});
+  const PlacesMapPage({
+    super.key,
+    this.embedded = false,
+    this.isActive = true,
+    this.topOverlayClearance = 0,
+    this.bottomInset = 0,
+    this.modeLabels = const [],
+    this.selectedModeIndex = 0,
+    this.onModeSelected,
+  });
 
   /// EN: Hides duplicated shell actions when hosted by FieldExplorePage.
   /// KO: FieldExplorePage에 포함될 때 중복 셸 액션을 숨깁니다.
@@ -56,14 +63,29 @@ class PlacesMapPage extends ConsumerStatefulWidget {
   /// KO: 포함한 탭 호스트가 네이티브 플랫폼 지도를 비활성화할 수 있습니다.
   final bool isActive;
 
+  /// EN: Reserves map chrome space for a host-owned floating control.
+  /// KO: 호스트가 소유한 플로팅 컨트롤을 위해 지도 크롬 여백을 둡니다.
+  final double topOverlayClearance;
+
+  /// EN: Keeps an embedded map sheet above host-owned bottom navigation.
+  /// KO: 포함된 지도 시트를 호스트의 하단 내비게이션 위에 유지합니다.
+  final double bottomInset;
+
+  /// EN: Optional Explore destinations shown inside the map sheet, not canvas.
+  /// KO: 지도 캔버스가 아닌 시트 안에 표시할 탐방 목적지입니다.
+  final List<String> modeLabels;
+  final int selectedModeIndex;
+  final ValueChanged<int>? onModeSelected;
+
   @override
   ConsumerState<PlacesMapPage> createState() => _PlacesMapPageState();
 }
 
 class _PlacesMapPageState extends ConsumerState<PlacesMapPage> {
-  static const double _sheetInitialSize = 0.35;
-  static const double _sheetMinSize = 0.20;
+  static const double _sheetMinSize = 0.18;
+  static const double _sheetHalfSize = 0.40;
   static const double _sheetMaxSize = 0.90;
+  static const double _fullListThreshold = 0.72;
 
   final DraggableScrollableController _sheetController =
       DraggableScrollableController();
@@ -76,6 +98,8 @@ class _PlacesMapPageState extends ConsumerState<PlacesMapPage> {
   double _currentZoom = 12;
   double _pendingZoom = 12;
   bool _centeringCallbackScheduled = false;
+  bool _showFullPlaceList = false;
+  bool _isSheetCollapsed = true;
   String? _selectedPlaceId;
 
   // EN: User's current location fetched on init.
@@ -89,6 +113,7 @@ class _PlacesMapPageState extends ConsumerState<PlacesMapPage> {
   @override
   void initState() {
     super.initState();
+    _sheetController.addListener(_handleSheetSizeChange);
     _fetchInitialLocation();
     Future<void>.microtask(
       () => ref.read(userVisitsControllerProvider.notifier).load(),
@@ -107,6 +132,7 @@ class _PlacesMapPageState extends ConsumerState<PlacesMapPage> {
 
   @override
   void dispose() {
+    _sheetController.removeListener(_handleSheetSizeChange);
     _releaseNativeMapControllers();
     _sheetController.dispose();
     super.dispose();
@@ -159,6 +185,12 @@ class _PlacesMapPageState extends ConsumerState<PlacesMapPage> {
       selectedPlaceId: _selectedPlaceId,
       visiblePlaces: places,
     );
+    final carouselPlaces = selectedPlace == null
+        ? places
+        : List<PlaceSummary>.unmodifiable([
+            selectedPlace,
+            ...places.where((place) => place.id != selectedPlace.id),
+          ]);
     final regionOptionsState = ref.watch(placesRegionOptionsControllerProvider);
     final selectedRegionCodes = ref.watch(selectedPlaceRegionCodesProvider);
     final selectedBandIds = ref.watch(selectedPlaceBandIdsProvider);
@@ -193,14 +225,14 @@ class _PlacesMapPageState extends ConsumerState<PlacesMapPage> {
       projectsState,
       projectSelection,
     );
-    final avatarUrl = ref
-        .watch(userProfileControllerProvider)
-        .valueOrNull
-        ?.avatarUrl;
     final hasActiveFilters =
         selectedRegionCodes.isNotEmpty ||
         selectedBandIds.isNotEmpty ||
         listMode != PlaceListMode.all;
+    final activeFilterCount =
+        (selectedRegionCodes.isNotEmpty ? 1 : 0) +
+        (selectedBandIds.isNotEmpty ? 1 : 0) +
+        (listMode != PlaceListMode.all ? 1 : 0);
     // EN: Schedule camera centering after frame to avoid using
     //     a disposed GoogleMapController during build.
     // KO: 빌드 중 dispose된 GoogleMapController 사용을 방지하기 위해
@@ -211,37 +243,55 @@ class _PlacesMapPageState extends ConsumerState<PlacesMapPage> {
       body: LayoutBuilder(
         builder: (context, constraints) {
           final viewportHeight = constraints.maxHeight;
+          final bottomInset = math.min(
+            math.max(widget.bottomInset, 0.0),
+            math.max(viewportHeight - 1.0, 0.0),
+          );
+          final interactiveViewportHeight = viewportHeight - bottomInset;
+          final sheetHeaderHeight = widget.modeLabels.isEmpty
+              ? FieldMapLedgerHeader.height
+              : FieldMapLedgerHeader.modeHeight;
+          final effectiveSheetMinSize = math.max(
+            _sheetMinSize,
+            ((sheetHeaderHeight + GBTSpacing.sm) / interactiveViewportHeight)
+                .clamp(_sheetMinSize, 0.36),
+          );
           return Stack(
             children: [
               // EN: Map view
               // KO: 지도 뷰
               Positioned.fill(
-                child: _PlacesMapView(
-                  places: places,
-                  zoom: _currentZoom,
-                  bottomPadding: viewportHeight * 0.35,
-                  isDarkMode: isDarkMode,
-                  isTabActive: isTabActive,
-                  initialTarget: _pendingCenterTarget ?? _userLocation,
-                  onAppleMapCreated: (controller) {
-                    _appleMapLease.attach(controller);
-                    _maybeCenterOnMap(places);
-                  },
-                  onGoogleMapCreated: (controller) {
-                    _googleMapLease.attach(controller);
-                    _maybeCenterOnMap(places);
-                  },
-                  onCameraMove: _handleCameraMove,
-                  onCameraIdle: _handleCameraIdle,
-                  onClusterTap: _zoomToCluster,
-                  onPlaceTap: _selectPlaceFromMap,
-                  onMapUnavailable: _releaseNativeMapControllers,
+                child: KeyedSubtree(
+                  key: const Key('field-map-canvas'),
+                  child: _PlacesMapView(
+                    places: places,
+                    zoom: _currentZoom,
+                    bottomPadding:
+                        interactiveViewportHeight * effectiveSheetMinSize +
+                        bottomInset,
+                    isDarkMode: isDarkMode,
+                    isTabActive: isTabActive,
+                    initialTarget: _pendingCenterTarget ?? _userLocation,
+                    onAppleMapCreated: (controller) {
+                      _appleMapLease.attach(controller);
+                      _maybeCenterOnMap(places);
+                    },
+                    onGoogleMapCreated: (controller) {
+                      _googleMapLease.attach(controller);
+                      _maybeCenterOnMap(places);
+                    },
+                    onCameraMove: _handleCameraMove,
+                    onCameraIdle: _handleCameraIdle,
+                    onClusterTap: _zoomToCluster,
+                    onPlaceTap: _selectPlaceFromMap,
+                    onMapUnavailable: _releaseNativeMapControllers,
+                  ),
                 ),
               ),
-              // EN: One mission strip keeps map chrome to 56dp.
-              // KO: 하나의 미션 스트립으로 지도 크롬을 56dp로 제한합니다.
+              // EN: Search and familiar filter chips are the only top chrome.
+              // KO: 검색과 익숙한 필터 칩만 상단에 둡니다.
               Positioned(
-                top: 0,
+                top: widget.topOverlayClearance,
                 left: GBTSpacing.md,
                 right: GBTSpacing.md,
                 child: SafeArea(
@@ -251,13 +301,36 @@ class _PlacesMapPageState extends ConsumerState<PlacesMapPage> {
                     children: [
                       const SizedBox(height: GBTSpacing.xs),
                       FieldMapMissionStrip(
-                        placeCount: places.length,
                         onLocalSearch: () =>
                             _showMapSearch(places, regionOptionsState),
-                        onUnifiedSearch: context.goToSearch,
-                        trailing: widget.embedded
-                            ? null
-                            : GBTProfileAction(avatarUrl: avatarUrl),
+                      ),
+                      const SizedBox(height: GBTSpacing.sm),
+                      FieldMapFilterChips(
+                        activeFilterCount: activeFilterCount,
+                        projectLabel: selectedProjectLabel,
+                        regionLabel: selectedRegionLabel,
+                        bandLabel: selectedBandLabel,
+                        onFiltersTap: () => showFieldMapFilters(
+                          context: context,
+                          projectLabel: selectedProjectLabel,
+                          regionLabel: selectedRegionLabel,
+                          bandLabel: selectedBandLabel,
+                          mode: listMode,
+                          hasRegionFilter: selectedRegionCodes.isNotEmpty,
+                          hasBandFilter: selectedBandIds.isNotEmpty,
+                          onProjectTap: _showProjectPicker,
+                          onRegionTap: () =>
+                              _showRegionFilter(selectedRegionCodes),
+                          onBandTap: () => _showBandFilter(selectedBandIds),
+                          onModeChanged: (mode) =>
+                              ref.read(placeListModeProvider.notifier).state =
+                                  mode,
+                          onResetFilters: _resetFilters,
+                        ),
+                        onProjectTap: _showProjectPicker,
+                        onRegionTap: () =>
+                            _showRegionFilter(selectedRegionCodes),
+                        onBandTap: () => _showBandFilter(selectedBandIds),
                       ),
                     ],
                   ),
@@ -268,116 +341,128 @@ class _PlacesMapPageState extends ConsumerState<PlacesMapPage> {
               // KO: 각진 계기판 액션으로 48dp 터치 영역을 유지합니다.
               Positioned(
                 right: GBTSpacing.md,
-                bottom: viewportHeight * _sheetInitialSize + GBTSpacing.md,
-                child: FieldMapCanvasControls(
-                  onFitPlaces: () => _fitToPlaces(places),
-                  onCurrentLocation: _centerOnCurrentLocation,
+                bottom:
+                    bottomInset +
+                    interactiveViewportHeight * effectiveSheetMinSize +
+                    GBTSpacing.md,
+                child: SafeArea(
+                  left: false,
+                  top: false,
+                  bottom: false,
+                  child: FieldMapCanvasControls(
+                    onCurrentLocation: _centerOnCurrentLocation,
+                  ),
                 ),
               ),
 
               // EN: Bottom sheet with places list
               // KO: 장소 리스트를 포함한 바텀시트
-              DraggableScrollableSheet(
-                controller: _sheetController,
-                initialChildSize: _sheetInitialSize,
-                minChildSize: _sheetMinSize,
-                maxChildSize: _sheetMaxSize,
-                // EN: Snap to defined anchor points for a predictable, fluid feel.
-                // KO: 정해진 앵커 포인트에 스냅 — 예측 가능하고 부드러운 조작감.
-                snap: true,
-                snapSizes: const [
-                  _sheetMinSize,
-                  _sheetInitialSize,
-                  _sheetMaxSize,
-                ],
-                builder: (context, scrollController) {
-                  return Container(
-                    decoration: BoxDecoration(
-                      color: isDarkMode
-                          ? GBTColors.darkSurface
-                          : GBTColors.surface,
-                      border: Border(
-                        top: BorderSide(
-                          color: isDarkMode
-                              ? GBTColors.darkPrimary
-                              : GBTColors.primary,
-                          width: 3,
+              Padding(
+                padding: EdgeInsets.only(bottom: bottomInset),
+                child: DraggableScrollableSheet(
+                  controller: _sheetController,
+                  initialChildSize: effectiveSheetMinSize,
+                  minChildSize: effectiveSheetMinSize,
+                  maxChildSize: _sheetMaxSize,
+                  // EN: Snap to defined anchor points for a predictable, fluid feel.
+                  // KO: 정해진 앵커 포인트에 스냅 — 예측 가능하고 부드러운 조작감.
+                  snap: true,
+                  snapSizes: [
+                    effectiveSheetMinSize,
+                    _sheetHalfSize,
+                    _sheetMaxSize,
+                  ],
+                  builder: (context, scrollController) {
+                    return Container(
+                      key: const Key('field-map-sheet-surface'),
+                      decoration: BoxDecoration(
+                        color: isDarkMode
+                            ? GBTColors.darkSurface
+                            : GBTColors.surface,
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(24),
                         ),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(
-                            alpha: isDarkMode ? 0.32 : 0.08,
+                        border: Border(
+                          top: BorderSide(
+                            color: isDarkMode
+                                ? GBTColors.darkBorder
+                                : GBTColors.border,
                           ),
-                          blurRadius: 8,
-                          offset: const Offset(0, -1),
                         ),
-                      ],
-                    ),
-                    // EN: CustomScrollView with pinned sticky header so the count
-                    //     label + collapse button stay visible while the list scrolls.
-                    // KO: SliverPersistentHeader로 헤더를 고정 — 리스트 스크롤 중에도
-                    //     장소 개수와 닫기 버튼이 항상 보입니다.
-                    child: RefreshIndicator(
-                      onRefresh: _refreshPlaces,
-                      child: CustomScrollView(
-                        controller: scrollController,
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        slivers: [
-                          SliverPersistentHeader(
-                            pinned: true,
-                            delegate: _SheetStickyHeader(
-                              placeCount: places.length,
-                              hasActiveFilters: hasActiveFilters,
-                              onCollapse: _collapsePlaceSheet,
-                              onResetFilters: hasActiveFilters
-                                  ? _resetFilters
-                                  : null,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(
+                              alpha: isDarkMode ? 0.32 : 0.08,
                             ),
-                          ),
-
-                          SliverToBoxAdapter(
-                            child: FieldMapExplorationOverlay(
-                              projectLabel: selectedProjectLabel,
-                              regionLabel: selectedRegionLabel,
-                              bandLabel: selectedBandLabel,
-                              mode: listMode,
-                              hasRegionFilter: selectedRegionCodes.isNotEmpty,
-                              hasBandFilter: selectedBandIds.isNotEmpty,
-                              onProjectTap: _showProjectPicker,
-                              onRegionTap: () =>
-                                  _showRegionFilter(selectedRegionCodes),
-                              onBandTap: () => _showBandFilter(selectedBandIds),
-                              onModeChanged: (mode) =>
-                                  ref
-                                          .read(placeListModeProvider.notifier)
-                                          .state =
-                                      mode,
-                              selectedPlace: selectedPlace,
-                              showDirections:
-                                  selectedPlace?.directions?.hasProviders ==
-                                  true,
-                              onOpenSelectedPlace: _navigateToPlaceDetail,
-                              onDirections: _showDirectionsForPlace,
-                            ),
-                          ),
-
-                          // ── Place list ──
-                          _PlacesSliverList(
-                            state: placesState.whenData((_) => places),
-                            onRetry: () => ref
-                                .read(placesListControllerProvider.notifier)
-                                .load(forceRefresh: true),
-                            onPlaceTap: _navigateToPlaceDetail,
-                            onDirectionsTap: _showDirectionsForPlace,
-                            hasActiveFilters: hasActiveFilters,
-                            onResetFilters: _resetFilters,
+                            blurRadius: 16,
+                            offset: const Offset(0, -4),
                           ),
                         ],
                       ),
-                    ),
-                  );
-                },
+                      clipBehavior: Clip.antiAlias,
+                      // EN: CustomScrollView with pinned sticky header so the count
+                      //     label + collapse button stay visible while the list scrolls.
+                      // KO: SliverPersistentHeader로 헤더를 고정 — 리스트 스크롤 중에도
+                      //     장소 개수와 닫기 버튼이 항상 보입니다.
+                      child: SafeArea(
+                        top: false,
+                        bottom: false,
+                        child: RefreshIndicator(
+                          key: const Key('field-map-sheet-safe-content'),
+                          onRefresh: _refreshPlaces,
+                          child: CustomScrollView(
+                            controller: scrollController,
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            slivers: [
+                              SliverPersistentHeader(
+                                pinned: true,
+                                delegate: _SheetStickyHeader(
+                                  placeCount: places.length,
+                                  modeLabels: widget.modeLabels,
+                                  selectedModeIndex: widget.selectedModeIndex,
+                                  onModeSelected: widget.onModeSelected,
+                                  isCollapsed: _isSheetCollapsed,
+                                  onCollapse: () =>
+                                      _togglePlaceSheet(effectiveSheetMinSize),
+                                ),
+                              ),
+
+                              if (!_showFullPlaceList && places.isNotEmpty)
+                                SliverToBoxAdapter(
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(
+                                      top: GBTSpacing.sm,
+                                    ),
+                                    child: FieldMapPlaceCarousel(
+                                      places: carouselPlaces,
+                                      selectedPlaceId: selectedPlace?.id,
+                                      onOpen: _navigateToPlaceDetail,
+                                      onDirections: _showDirectionsForPlace,
+                                    ),
+                                  ),
+                                ),
+
+                              // ── Place list ──
+                              if (_showFullPlaceList || places.isEmpty)
+                                _PlacesSliverList(
+                                  state: placesState.whenData((_) => places),
+                                  onRetry: () => ref
+                                      .read(
+                                        placesListControllerProvider.notifier,
+                                      )
+                                      .load(forceRefresh: true),
+                                  onPlaceTap: _navigateToPlaceDetail,
+                                  onDirectionsTap: _showDirectionsForPlace,
+                                  hasActiveFilters: hasActiveFilters,
+                                  onResetFilters: _resetFilters,
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
               ),
               // EN: Keep a persistent sheet toggle so users can collapse/expand
               // from any scroll position in the list.
@@ -388,6 +473,20 @@ class _PlacesMapPageState extends ConsumerState<PlacesMapPage> {
         },
       ),
     );
+  }
+
+  void _handleSheetSizeChange() {
+    if (!_sheetController.isAttached || !mounted) return;
+    final showFullPlaceList = _sheetController.size >= _fullListThreshold;
+    final isSheetCollapsed = _sheetController.size < _sheetHalfSize - 0.02;
+    if (showFullPlaceList == _showFullPlaceList &&
+        isSheetCollapsed == _isSheetCollapsed) {
+      return;
+    }
+    setState(() {
+      _showFullPlaceList = showFullPlaceList;
+      _isSheetCollapsed = isSheetCollapsed;
+    });
   }
 
   /// EN: Centers map based on priority: pending target > user location > first place.
@@ -489,7 +588,7 @@ class _PlacesMapPageState extends ConsumerState<PlacesMapPage> {
     if (_sheetController.isAttached) {
       unawaited(
         _sheetController.animateTo(
-          _sheetInitialSize,
+          _sheetHalfSize,
           duration: MediaQuery.disableAnimationsOf(context)
               ? Duration.zero
               : const Duration(milliseconds: 260),
@@ -560,14 +659,14 @@ class _PlacesMapPageState extends ConsumerState<PlacesMapPage> {
     );
   }
 
-  /// EN: Collapses the place list sheet to minimum height.
-  /// KO: 장소 목록 시트를 최소 높이까지 내립니다.
-  Future<void> _collapsePlaceSheet() async {
+  /// EN: Toggles the place list between compact and half detents.
+  /// KO: 장소 목록을 컴팩트와 반 높이 사이에서 전환합니다.
+  Future<void> _togglePlaceSheet(double minSize) async {
     if (!_sheetController.isAttached) {
       return;
     }
     await _sheetController.animateTo(
-      _sheetMinSize,
+      _isSheetCollapsed ? _sheetHalfSize : minSize,
       duration: const Duration(milliseconds: 220),
       curve: Curves.easeOutCubic,
     );
@@ -609,12 +708,6 @@ class _PlacesMapPageState extends ConsumerState<PlacesMapPage> {
     _googleMapLease.release();
     _appleMapLease.release();
     _didInitialCenter = false;
-  }
-
-  void _fitToPlaces(List<PlaceSummary> places) {
-    final bounds = _buildBoundsFromPlaces(places);
-    if (bounds == null) return;
-    _moveCameraToBounds(bounds);
   }
 
   RegionMapBounds? _buildBoundsFromPlaces(List<PlaceSummary> places) {
@@ -806,7 +899,7 @@ class _PlacesMapPageState extends ConsumerState<PlacesMapPage> {
       isScrollControlled: true,
       showDragHandle: true,
       builder: (context) {
-        return _MapSearchSheet(
+        return FieldMapSearchSheet(
           places: places,
           regionOptionsState: regionOptionsState,
           onSelectPlace: (place) {
@@ -1021,40 +1114,9 @@ class _PlacesSliverList extends StatelessWidget {
       data: (places) {
         if (places.isEmpty) {
           return SliverToBoxAdapter(
-            child: Padding(
-              padding: GBTSpacing.paddingHorizontalMd,
-              child: Column(
-                children: [
-                  const SizedBox(height: GBTSpacing.xl),
-                  GBTEmptyState(
-                    icon: Icons.place_outlined,
-                    message: hasActiveFilters
-                        ? context.l10n(
-                            ko: '선택한 조건에 맞는 장소가 없습니다',
-                            en: 'No places match selected filters',
-                            ja: '選択した条件に一致する場所がありません',
-                          )
-                        : context.l10n(
-                            ko: '아직 등록된 장소가 없습니다',
-                            en: 'No places registered yet',
-                            ja: 'まだ登録された場所がありません',
-                          ),
-                  ),
-                  if (hasActiveFilters && onResetFilters != null) ...[
-                    const SizedBox(height: GBTSpacing.md),
-                    TextButton(
-                      onPressed: onResetFilters,
-                      child: Text(
-                        context.l10n(
-                          ko: '필터 초기화',
-                          en: 'Reset filters',
-                          ja: 'フィルタ初期化',
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
+            child: FieldMapEmptyResult(
+              hasActiveFilters: hasActiveFilters,
+              onResetFilters: onResetFilters,
             ),
           );
         }
@@ -1589,8 +1651,9 @@ class _RegionOptionTile extends StatelessWidget {
   }
 }
 
-class _MapSearchSheet extends StatefulWidget {
-  const _MapSearchSheet({
+class FieldMapSearchSheet extends StatefulWidget {
+  const FieldMapSearchSheet({
+    super.key,
     required this.places,
     required this.regionOptionsState,
     required this.onSelectPlace,
@@ -1603,10 +1666,10 @@ class _MapSearchSheet extends StatefulWidget {
   final ValueChanged<RegionOption> onSelectRegion;
 
   @override
-  State<_MapSearchSheet> createState() => _MapSearchSheetState();
+  State<FieldMapSearchSheet> createState() => _FieldMapSearchSheetState();
 }
 
-class _MapSearchSheetState extends State<_MapSearchSheet> {
+class _FieldMapSearchSheetState extends State<FieldMapSearchSheet> {
   final TextEditingController _controller = TextEditingController();
   String _query = '';
 
@@ -1666,118 +1729,138 @@ class _MapSearchSheetState extends State<_MapSearchSheet> {
       orElse: () => <RegionOption>[],
     );
 
-    return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.only(
-          left: GBTSpacing.md,
-          right: GBTSpacing.md,
-          bottom: MediaQuery.of(context).viewInsets.bottom + GBTSpacing.md,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            GBTSearchBar(
-              controller: _controller,
-              hint: context.l10n(
-                ko: '장소/유형/지역 검색',
-                en: 'Search places/types/regions',
-                ja: '場所/タイプ/地域を検索',
+    return FractionallySizedBox(
+      key: const Key('field-map-search-sheet'),
+      heightFactor: 0.82,
+      child: SafeArea(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: GBTSpacing.md),
+          child: Column(
+            children: [
+              SizedBox(
+                key: const Key('field-map-search-field-frame'),
+                height: GBTSpacing.touchTarget,
+                child: GBTSearchBar(
+                  controller: _controller,
+                  hint: context.l10n(
+                    ko: '장소/유형/지역 검색',
+                    en: 'Search places/types/regions',
+                    ja: '場所/タイプ/地域を検索',
+                  ),
+                  autofocus: true,
+                  onChanged: (value) => setState(() => _query = value),
+                  onClear: () => setState(() => _query = ''),
+                ),
               ),
-              autofocus: true,
-              onChanged: (value) {
-                setState(() => _query = value);
-              },
-              onClear: () => setState(() => _query = ''),
-            ),
-            const SizedBox(height: GBTSpacing.md),
-            if (widget.regionOptionsState.isLoading)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: GBTSpacing.md),
-                child: CircularProgressIndicator(),
-              )
-            else if (query.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: GBTSpacing.md),
-                child: Text(
-                  context.l10n(
-                    ko: '지역, 장소 이름, 장소 유형을 입력하세요',
-                    en: 'Enter a region, place name, or place type',
-                    ja: '地域、場所名、場所タイプを入力してください',
+              const SizedBox(height: GBTSpacing.sm),
+              Expanded(
+                child: ListView(
+                  key: const Key('field-map-search-results'),
+                  padding: EdgeInsets.only(
+                    bottom:
+                        MediaQuery.viewInsetsOf(context).bottom + GBTSpacing.md,
                   ),
-                  style: GBTTypography.bodyMedium.copyWith(
-                    color: secondaryColor,
-                  ),
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  children: [
+                    if (widget.regionOptionsState.isLoading)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: GBTSpacing.xl),
+                        child: Center(child: CircularProgressIndicator()),
+                      )
+                    else if (query.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: GBTSpacing.md,
+                        ),
+                        child: Text(
+                          context.l10n(
+                            ko: '지역, 장소 이름, 장소 유형을 입력하세요',
+                            en: 'Enter a region, place name, or place type',
+                            ja: '地域、場所名、場所タイプを入力してください',
+                          ),
+                          style: GBTTypography.bodyMedium.copyWith(
+                            color: secondaryColor,
+                          ),
+                        ),
+                      )
+                    else ...[
+                      if (regionResults.isNotEmpty) ...[
+                        _MapSearchResultHeading(
+                          label: context.l10n(ko: '지역', en: 'Region', ja: '地域'),
+                        ),
+                        ...regionResults.map(
+                          (option) => ListTile(
+                            title: Text(option.name),
+                            subtitle: Text(
+                              context.l10n(
+                                ko: '장소 ${option.placeCount}개',
+                                en: '${option.placeCount} places',
+                                ja: '場所 ${option.placeCount}件',
+                              ),
+                            ),
+                            onTap: () {
+                              widget.onSelectRegion(option);
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                        ),
+                      ],
+                      if (placeResults.isNotEmpty) ...[
+                        _MapSearchResultHeading(
+                          label: context.l10n(ko: '장소', en: 'Places', ja: '場所'),
+                        ),
+                        ...placeResults.map(
+                          (place) => ListTile(
+                            title: Text(place.name),
+                            subtitle: Text(_placeSubtitle(place)),
+                            onTap: () {
+                              widget.onSelectPlace(place);
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                        ),
+                      ],
+                      if (regionResults.isEmpty && placeResults.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: GBTSpacing.md,
+                          ),
+                          child: Text(
+                            context.l10n(
+                              ko: '검색 결과가 없습니다',
+                              en: 'No search results',
+                              ja: '検索結果がありません',
+                            ),
+                            style: GBTTypography.bodyMedium.copyWith(
+                              color: secondaryColor,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ],
                 ),
-              )
-            else ...[
-              if (regionResults.isNotEmpty) ...[
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    context.l10n(ko: '지역', en: 'Region', ja: '地域'),
-                    style: GBTTypography.labelMedium.copyWith(
-                      color: secondaryColor,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: GBTSpacing.xs),
-                ...regionResults.map(
-                  (option) => ListTile(
-                    title: Text(option.name),
-                    subtitle: Text(
-                      context.l10n(
-                        ko: '장소 ${option.placeCount}개',
-                        en: '${option.placeCount} places',
-                        ja: '場所 ${option.placeCount}件',
-                      ),
-                    ),
-                    onTap: () {
-                      widget.onSelectRegion(option);
-                      Navigator.of(context).pop();
-                    },
-                  ),
-                ),
-                const SizedBox(height: GBTSpacing.sm),
-              ],
-              if (placeResults.isNotEmpty) ...[
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    context.l10n(ko: '장소', en: 'Places', ja: '場所'),
-                    style: GBTTypography.labelMedium.copyWith(
-                      color: secondaryColor,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: GBTSpacing.xs),
-                ...placeResults.map(
-                  (place) => ListTile(
-                    title: Text(place.name),
-                    subtitle: Text(_placeSubtitle(place)),
-                    onTap: () {
-                      widget.onSelectPlace(place);
-                      Navigator.of(context).pop();
-                    },
-                  ),
-                ),
-              ],
-              if (regionResults.isEmpty && placeResults.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: GBTSpacing.md),
-                  child: Text(
-                    context.l10n(
-                      ko: '검색 결과가 없습니다',
-                      en: 'No search results',
-                      ja: '検索結果がありません',
-                    ),
-                    style: GBTTypography.bodyMedium.copyWith(
-                      color: secondaryColor,
-                    ),
-                  ),
-                ),
+              ),
             ],
-          ],
+          ),
         ),
+      ),
+    );
+  }
+}
+
+class _MapSearchResultHeading extends StatelessWidget {
+  const _MapSearchResultHeading({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: GBTSpacing.sm, bottom: GBTSpacing.xs),
+      child: Text(
+        label,
+        style: GBTTypography.labelMedium.copyWith(color: context.textSecondary),
       ),
     );
   }
@@ -1870,17 +1953,23 @@ double _clusterGridSize(double zoom) {
 class _SheetStickyHeader extends SliverPersistentHeaderDelegate {
   const _SheetStickyHeader({
     required this.placeCount,
-    required this.hasActiveFilters,
     required this.onCollapse,
-    this.onResetFilters,
+    required this.modeLabels,
+    required this.selectedModeIndex,
+    required this.onModeSelected,
+    required this.isCollapsed,
   });
 
   final int placeCount;
-  final bool hasActiveFilters;
   final VoidCallback onCollapse;
-  final VoidCallback? onResetFilters;
+  final List<String> modeLabels;
+  final int selectedModeIndex;
+  final ValueChanged<int>? onModeSelected;
+  final bool isCollapsed;
 
-  static const double _height = FieldMapLedgerHeader.height;
+  double get _height => modeLabels.isEmpty
+      ? FieldMapLedgerHeader.height
+      : FieldMapLedgerHeader.modeHeight;
 
   @override
   double get minExtent => _height;
@@ -1896,15 +1985,20 @@ class _SheetStickyHeader extends SliverPersistentHeaderDelegate {
   ) {
     return FieldMapLedgerHeader(
       placeCount: placeCount,
-      hasActiveFilters: hasActiveFilters,
       onCollapse: onCollapse,
-      onResetFilters: onResetFilters,
+      modeLabels: modeLabels,
+      selectedModeIndex: selectedModeIndex,
+      onModeSelected: onModeSelected,
+      isCollapsed: isCollapsed,
     );
   }
 
   @override
   bool shouldRebuild(_SheetStickyHeader old) =>
-      placeCount != old.placeCount || hasActiveFilters != old.hasActiveFilters;
+      placeCount != old.placeCount ||
+      selectedModeIndex != old.selectedModeIndex ||
+      isCollapsed != old.isCollapsed ||
+      modeLabels != old.modeLabels;
 }
 
 // ============================================================

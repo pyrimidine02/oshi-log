@@ -170,6 +170,41 @@ void main() {
       expect(output, isNot(contains('response-sensitive-value')));
     },
   );
+
+  test('large response logs use a bounded structural summary', () {
+    final payload = <String, dynamic>{
+      'data': <String, dynamic>{
+        'lyrics': List<Map<String, dynamic>>.generate(
+          1000,
+          (index) => <String, dynamic>{
+            'lineId': 'line-$index',
+            'textOriginal': 'raw lyric text $index',
+          },
+        ),
+      },
+    };
+
+    final summary = summarizeNetworkLogData(payload).toString();
+
+    expect(summary, contains('lyrics: List(1000)'));
+    expect(summary.length, lessThan(500));
+    expect(summary, isNot(contains('raw lyric text')));
+  });
+
+  test('plain-text JSON and byte responses also use bounded summaries', () {
+    final jsonSummary = summarizeNetworkLogData(
+      jsonEncode(<String, dynamic>{
+        'lyrics': List<String>.generate(1000, (index) => 'line $index'),
+      }),
+    ).toString();
+    final byteSummary = summarizeNetworkLogData(
+      Uint8List.fromList(List<int>.filled(1000, 1)),
+    ).toString();
+
+    expect(jsonSummary, startsWith('String('));
+    expect(jsonSummary.length, lessThan(500));
+    expect(byteSummary, 'List(1000)');
+  });
 }
 
 class _NestedCredentialAdapter implements HttpClientAdapter {

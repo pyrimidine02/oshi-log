@@ -4,6 +4,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/localization/locale_text.dart';
 import '../../../../core/providers/core_providers.dart';
@@ -22,11 +23,15 @@ class FieldVisitLedgerPage extends ConsumerStatefulWidget {
     this.embedded = false,
     this.initialKind = FieldVisitLedgerKind.places,
     this.bottomClearance,
+    this.onOpenMap,
+    this.onOpenEvents,
   });
 
   final bool embedded;
   final FieldVisitLedgerKind initialKind;
   final double? bottomClearance;
+  final VoidCallback? onOpenMap;
+  final VoidCallback? onOpenEvents;
 
   @override
   ConsumerState<FieldVisitLedgerPage> createState() =>
@@ -116,6 +121,8 @@ class _FieldVisitLedgerPageState extends ConsumerState<FieldVisitLedgerPage> {
       onOpenStats: context.goToVisitStats,
       initialKind: widget.initialKind,
       bottomClearance: widget.bottomClearance,
+      onOpenMap: widget.onOpenMap ?? () => _openExploreMode(0),
+      onOpenEvents: widget.onOpenEvents ?? () => _openExploreMode(1),
     );
 
     if (widget.embedded) return body;
@@ -123,9 +130,13 @@ class _FieldVisitLedgerPageState extends ConsumerState<FieldVisitLedgerPage> {
     return Scaffold(
       appBar: gbtStandardAppBar(
         context,
-        title: context.l10n(ko: '여정 원장', en: 'Journey ledger', ja: '旅の台帳'),
+        title: context.l10n(ko: '여행 기록', en: 'Travel log', ja: '旅の記録'),
       ),
       body: body,
     );
+  }
+
+  void _openExploreMode(int index) {
+    context.goNamed(AppRoutes.explore, queryParameters: {'tab': '$index'});
   }
 }

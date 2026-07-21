@@ -2,8 +2,6 @@
 /// KO: 악곡 정보 API용 곡 상세 페이지 — 탭 기반 레이아웃입니다.
 library;
 
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -12,7 +10,6 @@ import '../../../../core/error/failure.dart';
 import '../../../../core/localization/locale_text.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/gbt_colors.dart';
-import '../../../../core/theme/gbt_decorations.dart';
 import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';
 import '../../../../core/widgets/common/gbt_image.dart';
@@ -30,8 +27,8 @@ Color _musicAccent(bool isDark) =>
 // MAIN PAGE
 // ══════════════════════════════════════════════════════════════
 
-/// EN: Song detail page with 4-tab layout: Lyrics / Info / Guide / More.
-/// KO: 4탭 레이아웃(가사 / 정보 / 가이드 / 더보기)의 곡 상세 페이지입니다.
+/// EN: Song detail page with three task-focused sections.
+/// KO: 가사·라이브 가이드·곡 기록의 세 가지 작업 중심 섹션입니다.
 class MusicSongDetailPage extends ConsumerStatefulWidget {
   const MusicSongDetailPage({
     super.key,
@@ -56,19 +53,22 @@ class _MusicSongDetailPageState extends ConsumerState<MusicSongDetailPage>
   static const bool _fetchRomanizedLyrics = true;
   static const bool _fetchTranslatedLyrics = true;
 
-  // EN: Default — romanized & translated ON, member parts OFF, call guide ON.
-  // KO: 기본값 — 로마자·번역 켜짐, 멤버 파트 꺼짐, 콜가이드 켜짐.
+  // EN: Pronunciation and translation are visual reading preferences only.
+  // KO: 발음과 번역은 가사 읽기 표시 옵션으로만 관리합니다.
   bool _includeRomanized = true;
   bool _includeTranslated = true;
-  bool _showMemberParts = false;
-  bool _showCallGuide = true;
   late String _lang;
   late TabController _tabController;
+
+  String? get _eventId {
+    final normalized = widget.eventId?.trim();
+    return normalized == null || normalized.isEmpty ? null : normalized;
+  }
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     final platformLanguage =
         WidgetsBinding.instance.platformDispatcher.locale.languageCode;
     switch (platformLanguage) {
@@ -131,12 +131,12 @@ class _MusicSongDetailPageState extends ConsumerState<MusicSongDetailPage>
     ref.invalidate(musicSongDifficultyProvider(_songKey));
     ref.invalidate(musicSongMediaLinksProvider(_songKey));
     ref.invalidate(musicSongAvailabilityProvider(_availabilityKey(context)));
-    if (widget.eventId != null) {
+    if (_eventId != null) {
       ref.invalidate(
         musicSongLiveContextProvider((
           projectId: widget.projectId,
           songId: widget.songId,
-          eventId: widget.eventId!,
+          eventId: _eventId!,
           lang: _lang,
           version: null,
           includeRomanized: _fetchRomanizedLyrics,
@@ -171,175 +171,160 @@ class _MusicSongDetailPageState extends ConsumerState<MusicSongDetailPage>
               ?.coverUrl
         : null;
 
-    return DefaultTabController(
-      length: 4,
-      child: Scaffold(
-        backgroundColor: bgColor,
-        body: NestedScrollView(
-          headerSliverBuilder: (context, innerBoxIsScrolled) {
-            return [
-              SliverAppBar(
-                expandedHeight: textScale >= 1.5 ? 460 : 360,
-                pinned: true,
-                backgroundColor: bgColor,
-                surfaceTintColor: Colors.transparent,
-                elevation: 0,
-                leading: IconButton(
-                  icon: Icon(
-                    Icons.arrow_back_ios_new_rounded,
-                    color: isDark
-                        ? GBTColors.darkTextPrimary
-                        : GBTColors.textPrimary,
-                    size: 20,
-                  ),
-                  onPressed: () => Navigator.of(context).maybePop(),
+    return Scaffold(
+      backgroundColor: bgColor,
+      body: NestedScrollView(
+        headerSliverBuilder: (context, innerBoxIsScrolled) {
+          return [
+            SliverAppBar(
+              expandedHeight: textScale >= 2 ? 320 : 220,
+              pinned: true,
+              backgroundColor: bgColor,
+              surfaceTintColor: Colors.transparent,
+              elevation: 0,
+              leading: IconButton(
+                tooltip: context.l10n(ko: '뒤로', en: 'Back', ja: '戻る'),
+                icon: Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: isDark
+                      ? GBTColors.darkTextPrimary
+                      : GBTColors.textPrimary,
+                  size: 20,
                 ),
-                // EN: Collapsed title — shown when scrolled up.
-                // KO: 축소 타이틀 — 스크롤 시 표시됩니다.
-                title: song == null
-                    ? null
-                    : Text(
-                        song.title,
-                        style: GBTTypography.titleSmall.copyWith(
+                onPressed: () => Navigator.of(context).maybePop(),
+              ),
+              // EN: Collapsed title — shown when scrolled up.
+              // KO: 축소 타이틀 — 스크롤 시 표시됩니다.
+              title: song == null
+                  ? null
+                  : Text(
+                      song.title,
+                      style: GBTTypography.titleSmall.copyWith(
+                        color: isDark
+                            ? GBTColors.darkTextPrimary
+                            : GBTColors.textPrimary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+              flexibleSpace: FlexibleSpaceBar(
+                collapseMode: CollapseMode.pin,
+                background: _SongHeroBg(
+                  songState: songState,
+                  albumCoverUrl: albumCoverUrl,
+                  isDark: isDark,
+                  accent: accent,
+                  bgColor: bgColor,
+                  onRetry: () => _refreshAll(context),
+                ),
+              ),
+              bottom: PreferredSize(
+                preferredSize: Size.fromHeight(textScale >= 1.5 ? 64 : 48),
+                child: Material(
+                  color: bgColor,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border(
+                        top: BorderSide(
                           color: isDark
-                              ? GBTColors.darkTextPrimary
-                              : GBTColors.textPrimary,
-                          fontWeight: FontWeight.w700,
+                              ? GBTColors.darkBorder
+                              : GBTColors.border,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                flexibleSpace: FlexibleSpaceBar(
-                  collapseMode: CollapseMode.pin,
-                  background: _SongHeroBg(
-                    songState: songState,
-                    albumCoverUrl: albumCoverUrl,
-                    isDark: isDark,
-                    accent: accent,
-                    bgColor: bgColor,
-                    onRetry: () => _refreshAll(context),
-                  ),
-                ),
-                bottom: PreferredSize(
-                  preferredSize: Size.fromHeight(textScale >= 1.5 ? 64 : 48),
-                  child: Material(
-                    color: bgColor,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        border: Border(
-                          top: BorderSide(
-                            color: isDark
-                                ? GBTColors.darkBorder
-                                : GBTColors.border,
-                          ),
-                          bottom: BorderSide(
-                            color: isDark
-                                ? GBTColors.darkBorder
-                                : GBTColors.border,
-                          ),
+                        bottom: BorderSide(
+                          color: isDark
+                              ? GBTColors.darkBorder
+                              : GBTColors.border,
                         ),
                       ),
-                      child: TabBar(
-                        controller: _tabController,
-                        indicatorColor: accent,
-                        indicatorWeight: 2,
-                        labelColor: accent,
-                        unselectedLabelColor: isDark
-                            ? GBTColors.darkTextSecondary
-                            : GBTColors.textSecondary,
-                        labelStyle: GBTTypography.labelSmall.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                        unselectedLabelStyle: GBTTypography.labelSmall.copyWith(
-                          fontWeight: FontWeight.w500,
-                        ),
-                        tabs: [
-                          Tab(
-                            text: context.l10n(
-                              ko: '가사',
-                              en: 'Lyrics',
-                              ja: '歌詞',
-                            ),
-                          ),
-                          Tab(
-                            text: context.l10n(ko: '정보', en: 'Info', ja: '情報'),
-                          ),
-                          Tab(
-                            text: context.l10n(
-                              ko: '가이드',
-                              en: 'Guide',
-                              ja: 'ガイド',
-                            ),
-                          ),
-                          Tab(
-                            text: context.l10n(
-                              ko: '더보기',
-                              en: 'More',
-                              ja: 'もっと',
-                            ),
-                          ),
-                        ],
+                    ),
+                    child: TabBar(
+                      controller: _tabController,
+                      isScrollable: textScale >= 1.8,
+                      tabAlignment: textScale >= 1.8
+                          ? TabAlignment.start
+                          : TabAlignment.fill,
+                      indicatorColor: accent,
+                      indicatorWeight: 2,
+                      labelColor: accent,
+                      unselectedLabelColor: isDark
+                          ? GBTColors.darkTextSecondary
+                          : GBTColors.textSecondary,
+                      labelStyle: GBTTypography.labelSmall.copyWith(
+                        fontWeight: FontWeight.w700,
                       ),
+                      unselectedLabelStyle: GBTTypography.labelSmall.copyWith(
+                        fontWeight: FontWeight.w500,
+                      ),
+                      tabs: [
+                        Tab(
+                          height: textScale >= 1.8 ? 56 : 48,
+                          text: context.l10n(ko: '가사', en: 'Lyrics', ja: '歌詞'),
+                        ),
+                        Tab(
+                          height: textScale >= 1.8 ? 56 : 48,
+                          text: context.l10n(
+                            ko: '라이브 가이드',
+                            en: 'Live guide',
+                            ja: 'ライブガイド',
+                          ),
+                        ),
+                        Tab(
+                          height: textScale >= 1.8 ? 56 : 48,
+                          text: context.l10n(
+                            ko: '곡 기록',
+                            en: 'Song record',
+                            ja: '楽曲記録',
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ),
-            ];
-          },
-          body: TabBarView(
-            controller: _tabController,
-            children: [
-              // Tab 0: Lyrics
-              _LyricsTab(
-                projectId: widget.projectId,
-                songId: widget.songId,
-                eventId: widget.eventId,
-                lang: _lang,
-                isDark: isDark,
-                accent: accent,
-                includeRomanized: _includeRomanized,
-                includeTranslated: _includeTranslated,
-                showMemberParts: _showMemberParts,
-                showCallGuide: _showCallGuide,
-                onToggleRomanized: () =>
-                    setState(() => _includeRomanized = !_includeRomanized),
-                onToggleTranslated: () =>
-                    setState(() => _includeTranslated = !_includeTranslated),
-                onToggleMemberParts: () =>
-                    setState(() => _showMemberParts = !_showMemberParts),
-                onToggleCallGuide: () =>
-                    setState(() => _showCallGuide = !_showCallGuide),
-                onRefresh: () => _refreshAll(context),
-              ),
-              // Tab 1: Info
-              _InfoTab(
-                projectId: widget.projectId,
-                songId: widget.songId,
-                isDark: isDark,
-                accent: accent,
-                onRefresh: () => _refreshAll(context),
-              ),
-              // Tab 2: Guide
-              _GuideTab(
-                projectId: widget.projectId,
-                songId: widget.songId,
-                lang: _lang,
-                isDark: isDark,
-                accent: accent,
-                onRefresh: () => _refreshAll(context),
-              ),
-              // Tab 3: More
-              _MoreTab(
-                projectId: widget.projectId,
-                songId: widget.songId,
-                eventId: widget.eventId,
-                lang: _lang,
-                isDark: isDark,
-                accent: accent,
-                onRefresh: () => _refreshAll(context),
-              ),
-            ],
-          ),
+            ),
+          ];
+        },
+        body: TabBarView(
+          controller: _tabController,
+          children: [
+            // Tab 0: Lyrics
+            _LyricsTab(
+              projectId: widget.projectId,
+              songId: widget.songId,
+              eventId: _eventId,
+              lang: _lang,
+              isDark: isDark,
+              accent: accent,
+              includeRomanized: _includeRomanized,
+              includeTranslated: _includeTranslated,
+              onToggleRomanized: () =>
+                  setState(() => _includeRomanized = !_includeRomanized),
+              onToggleTranslated: () =>
+                  setState(() => _includeTranslated = !_includeTranslated),
+              onRefresh: () => _refreshAll(context),
+            ),
+            // Tab 1: Live guide
+            _GuideTab(
+              projectId: widget.projectId,
+              songId: widget.songId,
+              eventId: _eventId,
+              lang: _lang,
+              isDark: isDark,
+              accent: accent,
+              onRefresh: () => _refreshAll(context),
+            ),
+            // Tab 2: Song record
+            _InfoTab(
+              projectId: widget.projectId,
+              songId: widget.songId,
+              eventId: _eventId,
+              lang: _lang,
+              isDark: isDark,
+              accent: accent,
+              onRefresh: () => _refreshAll(context),
+            ),
+          ],
         ),
       ),
     );
@@ -472,19 +457,6 @@ class _HeroBgData extends StatelessWidget {
         ? song.titleEn!
         : null;
     final hasCover = (albumCoverUrl ?? '').trim().isNotEmpty;
-
-    if (hasCover) {
-      // ── Cover-present layout: blur background + 140×140 card ──────────
-      return _HeroBgWithCover(
-        song: song,
-        albumCoverUrl: albumCoverUrl!,
-        accent: accent,
-        isTitleTrack: isTitleTrack,
-        altTitle: altTitle,
-      );
-    }
-
-    // ── No-cover layout: paper field note + vinyl placeholder ─────────
     final textPrimary = isDark
         ? GBTColors.darkTextPrimary
         : GBTColors.textPrimary;
@@ -492,7 +464,97 @@ class _HeroBgData extends StatelessWidget {
         ? GBTColors.darkTextSecondary
         : GBTColors.textSecondary;
 
+    final metadata = <String>[
+      if (song.bpm != null) 'BPM ${song.bpm}',
+      if (song.durationMs != null) _formatMs(song.durationMs!),
+    ];
+    final textScale = MediaQuery.textScalerOf(context).scale(1);
+    final usesLargeTextLayout = textScale >= 2;
+
+    final textualDossier = Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (!usesLargeTextLayout) ...[
+          ExcludeSemantics(
+            child: Text(
+              'TRAVEL AUDIO DOSSIER',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GBTTypography.labelSmall.copyWith(
+                color: accent,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.8,
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+        ],
+        Text(
+          song.title,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: GBTTypography.titleLarge.copyWith(
+            color: textPrimary,
+            fontWeight: FontWeight.w800,
+            height: 1.15,
+          ),
+        ),
+        if (usesLargeTextLayout) ...[
+          const SizedBox(height: GBTSpacing.xs),
+          Text(
+            [
+              if ((song.primaryUnitName ?? '').trim().isNotEmpty)
+                song.primaryUnitName!.trim(),
+              if (isTitleTrack) 'TITLE TRACK',
+              ...metadata,
+            ].join('  ·  '),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GBTTypography.labelSmall.copyWith(
+              color: accent,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ] else ...[
+          if ((song.primaryUnitName ?? '').trim().isNotEmpty) ...[
+            const SizedBox(height: 3),
+            Text(
+              song.primaryUnitName!,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GBTTypography.bodySmall.copyWith(
+                color: textSecondary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ] else if (altTitle != null) ...[
+            const SizedBox(height: 3),
+            Text(
+              altTitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GBTTypography.bodySmall.copyWith(color: textSecondary),
+            ),
+          ],
+          if (metadata.isNotEmpty || isTitleTrack) ...[
+            const SizedBox(height: GBTSpacing.xs),
+            Text(
+              [if (isTitleTrack) 'TITLE TRACK', ...metadata].join('  ·  '),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GBTTypography.labelSmall.copyWith(
+                color: accent,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ],
+      ],
+    );
+
     return Container(
+      key: const Key('music-song-dossier'),
       decoration: BoxDecoration(
         color: bgColor,
         border: Border(
@@ -505,384 +567,63 @@ class _HeroBgData extends StatelessWidget {
       child: SafeArea(
         bottom: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(
+          padding: EdgeInsets.fromLTRB(
             GBTSpacing.pageHorizontal,
-            GBTSpacing.md,
+            usesLargeTextLayout ? 56 : 58,
             GBTSpacing.pageHorizontal,
             GBTSpacing.sm,
           ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'AUDIO FIELD NOTE / TRACK DETAIL',
-                style: GBTTypography.labelSmall.copyWith(
-                  color: accent,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1,
-                ),
-              ),
-              const SizedBox(height: GBTSpacing.sm),
-              // EN: Vinyl disc style placeholder — circular gradient with
-              //     center dot and music note icon.
-              // KO: 바이닐 디스크 스타일 플레이스홀더 — 원형 그라디언트,
-              //     중앙 점, 음표 아이콘.
-              // JA: ビニール盤スタイルのプレースホルダー — 円形グラデーション。
-              Container(
-                width: 100,
-                height: 100,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      accent.withValues(alpha: 0.18),
-                      accent.withValues(alpha: 0.28),
-                      accent.withValues(alpha: 0.10),
-                    ],
-                    stops: const [0.0, 0.55, 1.0],
-                  ),
-                  border: Border.all(
-                    color: accent.withValues(alpha: 0.20),
-                    width: 1.5,
-                  ),
-                ),
-                child: Stack(
-                  alignment: Alignment.center,
+          child: usesLargeTextLayout
+              ? textualDossier
+              : Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // EN: Inner circle to mimic vinyl label.
-                    // KO: 비닐 레이블을 모방하는 내부 원.
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: accent.withValues(alpha: 0.14),
-                      ),
+                    _SongDossierCover(
+                      imageUrl: hasCover ? albumCoverUrl : null,
+                      title: song.title,
+                      accent: accent,
                     ),
-                    Icon(
-                      Icons.music_note_rounded,
-                      size: 22,
-                      color: accent.withValues(alpha: 0.55),
-                    ),
+                    const SizedBox(width: GBTSpacing.md),
+                    Expanded(child: textualDossier),
                   ],
                 ),
-              ),
-              const SizedBox(height: GBTSpacing.sm),
-
-              // EN: Title track badge.
-              // KO: 타이틀 트랙 배지.
-              if (isTitleTrack) ...[
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: accent.withValues(alpha: 0.14),
-                    borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
-                  ),
-                  child: Text(
-                    'TITLE',
-                    style: GBTTypography.caption.copyWith(
-                      color: accent,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 5),
-              ],
-
-              // EN: Song title.
-              // KO: 곡 제목.
-              Text(
-                song.title,
-                style: GBTTypography.headlineSmall.copyWith(
-                  color: textPrimary,
-                  fontWeight: FontWeight.w800,
-                  height: 1.2,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-
-              // EN: Unit name in the shared field-teal accent.
-              // KO: 공통 field-teal accent를 사용하는 유닛 이름입니다.
-              if ((song.primaryUnitName ?? '').trim().isNotEmpty) ...[
-                const SizedBox(height: 4),
-                Text(
-                  song.primaryUnitName!,
-                  style: GBTTypography.bodySmall.copyWith(
-                    color: accent,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-
-              // EN: Alternative title (italic, secondary).
-              // KO: 대체 제목 (이탤릭, secondary 색상).
-              if (altTitle != null) ...[
-                const SizedBox(height: 3),
-                Text(
-                  altTitle,
-                  style: GBTTypography.bodySmall.copyWith(
-                    color: textSecondary,
-                    fontStyle: FontStyle.italic,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-
-              const SizedBox(height: GBTSpacing.sm),
-
-              // EN: BPM + duration chips.
-              // KO: BPM + 재생시간 칩.
-              Wrap(
-                spacing: GBTSpacing.xs,
-                runSpacing: GBTSpacing.xs,
-                alignment: WrapAlignment.center,
-                children: [
-                  if (song.durationMs != null)
-                    _InfoChip(
-                      icon: Icons.schedule_rounded,
-                      label: _formatMs(song.durationMs!),
-                      isDark: isDark,
-                    ),
-                  if (song.bpm != null)
-                    _InfoChip(
-                      icon: Icons.speed_rounded,
-                      label: 'BPM ${song.bpm}',
-                      isDark: isDark,
-                    ),
-                ],
-              ),
-            ],
-          ),
         ),
       ),
     );
   }
 }
 
-// ══════════════════════════════════════════════════════════════
-// HERO WITH COVER
-// ══════════════════════════════════════════════════════════════
-
-/// EN: Hero layout when album cover URL is available.
-///     Blurred cover fills the background; a 140×140 rounded card
-///     sits at center, with text info below.
-/// KO: 앨범 커버 URL이 있을 때의 히어로 레이아웃입니다.
-///     블러 처리된 커버가 배경을 채우고, 중앙에 140×140 둥근 카드,
-///     아래에 텍스트 정보가 위치합니다.
-/// JA: アルバムカバーURLがある場合のヒーローレイアウトです。
-class _HeroBgWithCover extends StatelessWidget {
-  const _HeroBgWithCover({
-    required this.song,
-    required this.albumCoverUrl,
+class _SongDossierCover extends StatelessWidget {
+  const _SongDossierCover({
+    required this.imageUrl,
+    required this.title,
     required this.accent,
-    required this.isTitleTrack,
-    this.altTitle,
   });
 
-  final MusicSongDetail song;
-  final String albumCoverUrl;
+  final String? imageUrl;
+  final String title;
   final Color accent;
-  final bool isTitleTrack;
-  final String? altTitle;
 
   @override
   Widget build(BuildContext context) {
-    // EN: Text on blurred cover always uses the inverse text token for
-    // contrast, regardless of light/dark theme.
-    // KO: 블러 커버 위 텍스트는 라이트/다크 테마와 무관하게 항상 대비를 위한
-    // inverse 텍스트 토큰을 사용합니다.
-    // JA: ブラー背景上のテキストはコントラストのため常に反転テキストトークンを使用します。
-    const titleColor = GBTColors.textInverse;
-    final tertiaryColor = GBTColors.textInverse.withValues(alpha: 0.65);
-
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        // ── Blurred cover background ───────────────────────────
-        // EN: ImageFiltered applies a 20px Gaussian blur to the full image.
-        // KO: ImageFiltered로 전체 이미지에 20px 가우시안 블러를 적용합니다.
-        ImageFiltered(
-          imageFilter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-          child: GBTImage(
-            imageUrl: albumCoverUrl,
-            fit: BoxFit.cover,
-            useShimmer: false,
-            semanticLabel: '',
-          ),
-        ),
-
-        // EN: Dark dim overlay — 70% opacity for text legibility.
-        // KO: 텍스트 가독성을 위한 70% 어두운 오버레이.
-        Container(color: Colors.black.withValues(alpha: 0.70)),
-
-        // ── Foreground content ─────────────────────────────────
-        SafeArea(
-          bottom: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(
-              GBTSpacing.pageHorizontal,
-              GBTSpacing.md,
-              GBTSpacing.pageHorizontal,
-              GBTSpacing.sm,
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'AUDIO FIELD NOTE / TRACK DETAIL',
-                  style: GBTTypography.labelSmall.copyWith(
-                    color: GBTColors.textInverse.withValues(alpha: 0.82),
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1,
-                  ),
-                ),
-                const SizedBox(height: GBTSpacing.sm),
-                // EN: 140×140 album cover card — depth shadows plus a
-                // subtle accent-colored glow for stage-light presence.
-                // KO: 140×140 앨범 커버 카드 — 깊이감 그림자와 스테이지
-                // 라이트 느낌의 미세한 accent 글로우를 함께 적용합니다.
-                Container(
-                  width: 140,
-                  height: 140,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(GBTSpacing.radiusLg),
-                    boxShadow: [
-                      BoxShadow(
-                        color: accent.withValues(alpha: 0.35),
-                        blurRadius: 28,
-                        spreadRadius: 1,
-                      ),
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.50),
-                        blurRadius: 24,
-                        offset: const Offset(0, 8),
-                      ),
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.28),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(GBTSpacing.radiusLg),
-                    child: GBTImage(
-                      imageUrl: albumCoverUrl,
-                      fit: BoxFit.cover,
-                      semanticLabel: '${song.title} album cover',
-                    ),
-                  ),
-                ),
-                const SizedBox(height: GBTSpacing.sm),
-
-                // EN: Title track badge.
-                // KO: 타이틀 트랙 배지.
-                if (isTitleTrack) ...[
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: accent.withValues(alpha: 0.75),
-                      borderRadius: BorderRadius.circular(
-                        GBTSpacing.radiusFull,
-                      ),
-                    ),
-                    child: Text(
-                      'TITLE',
-                      style: GBTTypography.caption.copyWith(
-                        color: GBTColors.textInverse,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.8,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                ],
-
-                // EN: Song title — headlineSmall to prevent 2-line clipping.
-                // KO: 곡 제목 — 2줄 잘림 방지를 위해 headlineSmall 사용.
-                Text(
-                  song.title,
-                  style: GBTTypography.headlineSmall.copyWith(
-                    color: titleColor,
-                    fontWeight: FontWeight.w800,
-                    height: 1.2,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-
-                // EN: Unit name in accent pink (w600).
-                // KO: 유닛 이름 — 핑크 accent, w600.
-                if ((song.primaryUnitName ?? '').trim().isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    song.primaryUnitName!,
-                    style: GBTTypography.bodySmall.copyWith(
-                      color: accent,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-
-                // EN: Alternative title — italic, semi-transparent white.
-                // KO: 대체 제목 — 이탤릭, 반투명 흰색.
-                if (altTitle != null) ...[
-                  const SizedBox(height: 3),
-                  Text(
-                    altTitle!,
-                    style: GBTTypography.bodySmall.copyWith(
-                      color: tertiaryColor,
-                      fontStyle: FontStyle.italic,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-
-                const SizedBox(height: GBTSpacing.sm),
-
-                // EN: BPM + duration chips.
-                // KO: BPM + 재생시간 칩.
-                Wrap(
-                  spacing: GBTSpacing.xs,
-                  runSpacing: GBTSpacing.xs,
-                  alignment: WrapAlignment.center,
-                  children: [
-                    if (song.durationMs != null)
-                      _InfoChip(
-                        icon: Icons.schedule_rounded,
-                        label: _formatMs(song.durationMs!),
-                        isDark: true,
-                      ),
-                    if (song.bpm != null)
-                      _InfoChip(
-                        icon: Icons.speed_rounded,
-                        label: 'BPM ${song.bpm}',
-                        isDark: true,
-                      ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
+      child: SizedBox.square(
+        dimension: 104,
+        child: imageUrl != null
+            ? GBTImage(
+                imageUrl: imageUrl!,
+                fit: BoxFit.cover,
+                semanticLabel: '$title album cover',
+              )
+            : ColoredBox(
+                color: accent.withValues(alpha: 0.1),
+                child: Icon(Icons.graphic_eq_rounded, color: accent, size: 32),
+              ),
+      ),
     );
   }
 }
-
-// ══════════════════════════════════════════════════════════════
 // TAB 0: LYRICS
 // ══════════════════════════════════════════════════════════════
 
@@ -898,12 +639,8 @@ class _LyricsTab extends ConsumerWidget {
     required this.accent,
     required this.includeRomanized,
     required this.includeTranslated,
-    required this.showMemberParts,
-    required this.showCallGuide,
     required this.onToggleRomanized,
     required this.onToggleTranslated,
-    required this.onToggleMemberParts,
-    required this.onToggleCallGuide,
     required this.onRefresh,
   });
 
@@ -915,12 +652,8 @@ class _LyricsTab extends ConsumerWidget {
   final Color accent;
   final bool includeRomanized;
   final bool includeTranslated;
-  final bool showMemberParts;
-  final bool showCallGuide;
   final VoidCallback onToggleRomanized;
   final VoidCallback onToggleTranslated;
-  final VoidCallback onToggleMemberParts;
-  final VoidCallback onToggleCallGuide;
   final Future<void> Function() onRefresh;
 
   @override
@@ -933,25 +666,9 @@ class _LyricsTab extends ConsumerWidget {
       includeRomanized: true,
       includeTranslated: true,
     );
-    final partsKey = (
-      projectId: projectId,
-      songId: songId,
-      lang: lang,
-      version: null,
-    );
-    final callGuideKey = (
-      projectId: projectId,
-      songId: songId,
-      lang: lang,
-      version: null,
-    );
-
-    final lyricsState = ref.watch(musicSongLyricsProvider(lyricsKey));
-    final partsState = ref.watch(musicSongPartsProvider(partsKey));
-    final callGuideState = ref.watch(musicSongCallGuideProvider(callGuideKey));
-
-    final AsyncValue<MusicSongLiveContext?> liveContextState = eventId == null
-        ? const AsyncData<MusicSongLiveContext?>(null)
+    final usesLiveContext = eventId != null;
+    final AsyncValue<MusicSongLiveContext?>? liveContextState = !usesLiveContext
+        ? null
         : ref
               .watch(
                 musicSongLiveContextProvider((
@@ -965,57 +682,51 @@ class _LyricsTab extends ConsumerWidget {
                 )),
               )
               .whenData<MusicSongLiveContext?>((value) => value);
-
+    final liveContext = liveContextState?.valueOrNull;
+    final fallbackAfterLiveError = liveContextState?.hasError ?? false;
+    final lyricsState =
+        !usesLiveContext ||
+            fallbackAfterLiveError ||
+            (liveContext != null && liveContext.lyrics == null)
+        ? ref.watch(musicSongLyricsProvider(lyricsKey))
+        : null;
     return RefreshIndicator(
       color: accent,
       onRefresh: onRefresh,
-      child: ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
+      child: Padding(
         padding: const EdgeInsets.fromLTRB(
           GBTSpacing.pageHorizontal,
           GBTSpacing.md,
           GBTSpacing.pageHorizontal,
-          GBTSpacing.xxl,
+          0,
         ),
-        children: [
-          // EN: Filter row with 4 toggles.
-          // KO: 4개 토글이 있는 필터 행.
-          _LyricsFilterRow(
-            showMemberParts: showMemberParts,
-            showCallGuide: showCallGuide,
-            includeRomanized: includeRomanized,
-            includeTranslated: includeTranslated,
-            isDark: isDark,
-            accent: accent,
-            onToggleMemberParts: onToggleMemberParts,
-            onToggleCallGuide: onToggleCallGuide,
-            onToggleRomanized: onToggleRomanized,
-            onToggleTranslated: onToggleTranslated,
-          ),
-          const SizedBox(height: GBTSpacing.md),
-
-          // EN: Integrated lyrics panel with parts + call guide overlay,
-          // set on a layer-1 surface to lift it off the page background.
-          // KO: 파트 + 콜가이드 오버레이가 있는 통합 가사 패널을 페이지
-          // 배경 위로 띄우기 위해 layer-1 표면 위에 배치합니다.
-          Container(
-            width: double.infinity,
-            padding: GBTSpacing.paddingMd,
-            decoration: GBTDecorations.card(isDark: isDark),
-            child: _IntegratedLyricsPanel(
-              liveContextState: liveContextState,
-              lyricsState: lyricsState,
-              partsState: partsState,
-              callGuideState: callGuideState,
+        child: Column(
+          children: [
+            _LyricsFilterRow(
               includeRomanized: includeRomanized,
               includeTranslated: includeTranslated,
-              showMemberParts: showMemberParts,
-              showCallGuide: showCallGuide,
               isDark: isDark,
               accent: accent,
+              onToggleRomanized: onToggleRomanized,
+              onToggleTranslated: onToggleTranslated,
             ),
-          ),
-        ],
+            const SizedBox(height: GBTSpacing.md),
+            Expanded(
+              child: _IntegratedLyricsPanel(
+                liveContextState: liveContextState,
+                lyricsState: lyricsState,
+                partsState: null,
+                callGuideState: null,
+                includeRomanized: includeRomanized,
+                includeTranslated: includeTranslated,
+                showMemberParts: false,
+                showCallGuide: false,
+                isDark: isDark,
+                accent: accent,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1025,12 +736,14 @@ class _LyricsTab extends ConsumerWidget {
 // TAB 1: INFO
 // ══════════════════════════════════════════════════════════════
 
-/// EN: Info tab — song metadata, versions, and difficulty.
-/// KO: 정보 탭 — 곡 메타데이터, 버전, 난이도입니다.
+/// EN: Song record — streaming, metadata, versions, and reference details.
+/// KO: 곡 기록 — 스트리밍·메타데이터·버전·참고 정보를 모아 보여줍니다.
 class _InfoTab extends ConsumerWidget {
   const _InfoTab({
     required this.projectId,
     required this.songId,
+    required this.eventId,
+    required this.lang,
     required this.isDark,
     required this.accent,
     required this.onRefresh,
@@ -1038,6 +751,8 @@ class _InfoTab extends ConsumerWidget {
 
   final String projectId;
   final String songId;
+  final String? eventId;
+  final String lang;
   final bool isDark;
   final Color accent;
   final Future<void> Function() onRefresh;
@@ -1048,11 +763,30 @@ class _InfoTab extends ConsumerWidget {
     final songState = ref.watch(musicSongDetailProvider(songKey));
     final versionsState = ref.watch(musicSongVersionsProvider(songKey));
     final difficultyState = ref.watch(musicSongDifficultyProvider(songKey));
+    final mediaState = ref.watch(musicSongMediaLinksProvider(songKey));
+    final creditsState = ref.watch(musicSongCreditsProvider(songKey));
+    final availabilityState = ref.watch(
+      musicSongAvailabilityProvider((
+        projectId: projectId,
+        songId: songId,
+        country: _countryFromLocale(Localizations.localeOf(context)),
+      )),
+    );
+    final liveContextState = eventId == null
+        ? null
+        : ref.watch(
+            musicSongLiveContextProvider((
+              projectId: projectId,
+              songId: songId,
+              eventId: eventId!,
+              lang: lang,
+              version: null,
+              includeRomanized: true,
+              includeTranslated: true,
+            )),
+          );
 
     final song = songState.valueOrNull;
-    final textSecondary = isDark
-        ? GBTColors.darkTextSecondary
-        : GBTColors.textSecondary;
 
     // EN: Fetch album title from album detail so the Info tab shows a
     //     human-readable name instead of a raw UUID.
@@ -1077,6 +811,103 @@ class _InfoTab extends ConsumerWidget {
           GBTSpacing.xxl,
         ),
         children: [
+          _TabSectionHeader(
+            icon: Icons.headphones_rounded,
+            title: context.l10n(ko: '바로 듣기', en: 'Listen now', ja: '今すぐ聴く'),
+            isDark: isDark,
+            accent: accent,
+          ),
+          const SizedBox(height: GBTSpacing.sm),
+          mediaState.when(
+            data: (mediaData) {
+              final previewUrl = mediaData.preview.url;
+              final supportedLinks = mediaData.streamingLinks
+                  .where((link) => _isSupportedStreamingPlatform(link.provider))
+                  .toList(growable: false);
+              if ((previewUrl == null || previewUrl.isEmpty) &&
+                  supportedLinks.isEmpty) {
+                return _EmptyHint(
+                  text: context.l10n(
+                    ko: '연결된 스트리밍 서비스가 없습니다.',
+                    en: 'No streaming services linked.',
+                    ja: 'ストリーミングサービスがありません。',
+                  ),
+                );
+              }
+              return Column(
+                children: [
+                  if (previewUrl != null && previewUrl.isNotEmpty)
+                    _StreamingLinkRow(
+                      label: context.l10n(
+                        ko: '오디오 미리듣기',
+                        en: 'Audio preview',
+                        ja: 'オーディオ試聴',
+                      ),
+                      icon: Icons.play_circle_filled_rounded,
+                      platformColor: accent,
+                      onTap: () => _launchUrl(previewUrl),
+                      isDark: isDark,
+                    ),
+                  ...supportedLinks.map(
+                    (link) => _StreamingLinkRow(
+                      label: _streamingDisplayName(link.provider),
+                      icon: _streamingIcon(link.provider),
+                      platformColor: _streamingColor(link.provider),
+                      caption: link.regionAvailability,
+                      onTap: () => _launchUrl(link.url),
+                      isDark: isDark,
+                    ),
+                  ),
+                ],
+              );
+            },
+            loading: () => const _InlineLoading(),
+            error: (e, _) => _InlineError(message: _errorText(context, e)),
+          ),
+
+          if (liveContextState != null) ...[
+            const SizedBox(height: GBTSpacing.md),
+            liveContextState.when(
+              data: (liveContext) {
+                final items = liveContext.setlistContext?.items ?? const [];
+                if (items.isEmpty) return const SizedBox.shrink();
+                return _RecordDisclosure(
+                  initiallyExpanded: true,
+                  icon: Icons.route_rounded,
+                  title: context.l10n(
+                    ko: '이 공연의 세트리스트',
+                    en: 'Setlist for this event',
+                    ja: 'この公演のセットリスト',
+                  ),
+                  isDark: isDark,
+                  accent: accent,
+                  child: Column(
+                    children: items
+                        .map(
+                          (item) => _SetlistRow(
+                            item: item,
+                            isDark: isDark,
+                            accent: accent,
+                            onTap: !item.hasSongLink
+                                ? null
+                                : () => context.goToSongDetail(
+                                    item.songId!,
+                                    projectId: projectId,
+                                    eventId: eventId,
+                                  ),
+                          ),
+                        )
+                        .toList(growable: false),
+                  ),
+                );
+              },
+              loading: () => const _InlineLoading(),
+              error: (e, _) => _InlineError(message: _errorText(context, e)),
+            ),
+          ],
+
+          const SizedBox(height: GBTSpacing.lg),
+
           // EN: Song metadata section.
           // KO: 곡 메타데이터 섹션.
           _TabSectionHeader(
@@ -1185,15 +1016,50 @@ class _InfoTab extends ConsumerWidget {
             ),
           ],
 
-          // EN: Empty bottom spacing for readability.
-          // KO: 가독성을 위한 하단 여백.
-          Opacity(
-            opacity: 0,
-            child: Text(
-              '.',
-              style: GBTTypography.bodySmall.copyWith(color: textSecondary),
+          const SizedBox(height: GBTSpacing.lg),
+          _RecordDisclosure(
+            icon: Icons.public_rounded,
+            title: context.l10n(
+              ko: '지역별 이용 정보',
+              en: 'Regional availability',
+              ja: '地域別利用情報',
+            ),
+            isDark: isDark,
+            accent: accent,
+            child: availabilityState.when(
+              data: (availability) =>
+                  _AvailabilityRow(availability: availability, isDark: isDark),
+              loading: () => const _InlineLoading(),
+              error: (e, _) => _InlineError(message: _errorText(context, e)),
             ),
           ),
+          _RecordDisclosure(
+            icon: Icons.badge_outlined,
+            title: context.l10n(ko: '크레딧', en: 'Credits', ja: 'クレジット'),
+            isDark: isDark,
+            accent: accent,
+            child: creditsState.when(
+              data: (groups) => groups.isEmpty
+                  ? _EmptyHint(
+                      text: context.l10n(
+                        ko: '크레딧 정보가 없습니다.',
+                        en: 'No credits.',
+                        ja: 'クレジット情報がありません。',
+                      ),
+                    )
+                  : _CreditsList(
+                      groups: groups,
+                      isDark: isDark,
+                      accent: accent,
+                    ),
+              loading: () => const _InlineLoading(),
+              error: (e, _) => _InlineError(message: _errorText(context, e)),
+            ),
+          ),
+
+          // EN: Empty bottom spacing for readability.
+          // KO: 가독성을 위한 하단 여백.
+          const SizedBox(height: GBTSpacing.sm),
         ],
       ),
     );
@@ -1210,6 +1076,7 @@ class _GuideTab extends ConsumerWidget {
   const _GuideTab({
     required this.projectId,
     required this.songId,
+    required this.eventId,
     required this.lang,
     required this.isDark,
     required this.accent,
@@ -1218,6 +1085,7 @@ class _GuideTab extends ConsumerWidget {
 
   final String projectId;
   final String songId;
+  final String? eventId;
   final String lang;
   final bool isDark;
   final Color accent;
@@ -1238,436 +1106,238 @@ class _GuideTab extends ConsumerWidget {
       version: null,
     );
 
-    final partsState = ref.watch(musicSongPartsProvider(partsKey));
-    final callGuideState = ref.watch(musicSongCallGuideProvider(callGuideKey));
+    final liveContextState = eventId == null
+        ? null
+        : ref.watch(
+            musicSongLiveContextProvider((
+              projectId: projectId,
+              songId: songId,
+              eventId: eventId!,
+              lang: lang,
+              version: null,
+              includeRomanized: true,
+              includeTranslated: true,
+            )),
+          );
+    final liveContext = liveContextState?.valueOrNull;
+    final AsyncValue<MusicPartsPayload> partsState;
+    final AsyncValue<MusicCallGuidePayload> callGuideState;
+    if (liveContextState?.isLoading ?? false) {
+      partsState = const AsyncLoading();
+      callGuideState = const AsyncLoading();
+    } else {
+      final liveParts = liveContext?.parts;
+      final liveCallGuide = liveContext?.callGuide;
+      partsState = liveParts != null
+          ? AsyncData(liveParts)
+          : ref.watch(musicSongPartsProvider(partsKey));
+      callGuideState = liveCallGuide != null
+          ? AsyncData(liveCallGuide)
+          : ref.watch(musicSongCallGuideProvider(callGuideKey));
+    }
+
+    final timeline = <_GuideTimelineEntry>[
+      for (final segment in partsState.valueOrNull?.segments ?? const [])
+        _GuideTimelineEntry.part(segment),
+      for (final cue in callGuideState.valueOrNull?.cues ?? const [])
+        _GuideTimelineEntry.call(cue),
+    ]..sort((a, b) => a.startMs.compareTo(b.startMs));
+    final isLoading = partsState.isLoading || callGuideState.isLoading;
+    final error = partsState.error ?? callGuideState.error;
 
     return RefreshIndicator(
       color: accent,
       onRefresh: onRefresh,
-      child: ListView(
+      child: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(
-          GBTSpacing.pageHorizontal,
-          GBTSpacing.md,
-          GBTSpacing.pageHorizontal,
-          GBTSpacing.xxl,
-        ),
-        children: [
-          // EN: Member parts section.
-          // KO: 멤버 파트 섹션.
-          _TabSectionHeader(
-            icon: Icons.person_rounded,
-            title: context.l10n(ko: '멤버 파트', en: 'Member Parts', ja: 'メンバーパート'),
-            isDark: isDark,
-            accent: accent,
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(
+              GBTSpacing.pageHorizontal,
+              GBTSpacing.md,
+              GBTSpacing.pageHorizontal,
+              GBTSpacing.sm,
+            ),
+            sliver: SliverToBoxAdapter(
+              child: _TabSectionHeader(
+                icon: Icons.timeline_rounded,
+                title: context.l10n(
+                  ko: '파트 · 콜 타임라인',
+                  en: 'Parts · call timeline',
+                  ja: 'パート・コールタイムライン',
+                ),
+                isDark: isDark,
+                accent: accent,
+              ),
+            ),
           ),
-          const SizedBox(height: GBTSpacing.sm),
-          partsState.when(
-            data: (parts) {
-              final segs = parts.segments;
-              if (segs.isEmpty) {
-                return _EmptyHint(
-                  text: context.l10n(
-                    ko: '파트 정보가 없습니다.',
-                    en: 'No part data.',
-                    ja: 'パート情報がありません。',
-                  ),
-                );
-              }
-              // EN: Group segments by member.
-              // KO: 멤버별로 구간을 그룹화합니다.
-              final byMember = <String, List<MusicPartSegment>>{};
-              for (final s in segs) {
-                final mid = s.memberId?.trim() ?? '__none__';
-                byMember.putIfAbsent(mid, () => []).add(s);
-              }
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: byMember.entries
-                    .map((entry) {
-                      final firstSeg = entry.value.first;
-                      final memberName = firstSeg.memberName?.trim();
-                      final display =
-                          (memberName != null && memberName.isNotEmpty)
-                          ? memberName
-                          : entry.key == '__none__'
-                          ? context.l10n(ko: '미지정', en: 'Unassigned', ja: '未指定')
-                          : entry.key.substring(
-                              0,
-                              entry.key.length >= 6 ? 6 : entry.key.length,
-                            );
-                      final color = entry.key == '__none__'
-                          ? (isDark
-                                ? GBTColors.darkTextTertiary
-                                : GBTColors.textTertiary)
-                          : _memberColorFromId(entry.key, isDark);
-
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: GBTSpacing.sm),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: BoxDecoration(
-                                    color: color,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                const SizedBox(width: GBTSpacing.xs),
-                                Text(
-                                  display,
-                                  style: GBTTypography.bodySmall.copyWith(
-                                    color: color,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                const SizedBox(width: GBTSpacing.xs),
-                                Text(
-                                  context.l10n(
-                                    ko: '(${entry.value.length}구간)',
-                                    en: '(${entry.value.length} segs)',
-                                    ja: '(${entry.value.length}区間)',
-                                  ),
-                                  style: GBTTypography.caption.copyWith(
-                                    color: isDark
-                                        ? GBTColors.darkTextTertiary
-                                        : GBTColors.textTertiary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            Wrap(
-                              spacing: GBTSpacing.xs,
-                              runSpacing: GBTSpacing.xs,
-                              children: entry.value
-                                  .map((seg) {
-                                    final range =
-                                        '${_formatMs(seg.startMs)}–${_formatMs(seg.endMs)}';
-                                    final label =
-                                        (seg.partType?.trim() ?? '').isNotEmpty
-                                        ? '${seg.partType} · $range'
-                                        : range;
-                                    return Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 3,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: color.withValues(alpha: 0.12),
-                                        borderRadius: BorderRadius.circular(
-                                          GBTSpacing.radiusFull,
-                                        ),
-                                      ),
-                                      child: Text(
-                                        label,
-                                        style: GBTTypography.caption.copyWith(
-                                          color: color,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    );
-                                  })
-                                  .toList(growable: false),
-                            ),
-                          ],
+          if (timeline.isEmpty)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: GBTSpacing.pageHorizontal,
+                ),
+                child: isLoading
+                    ? const _InlineLoading()
+                    : error != null
+                    ? _InlineError(message: _errorText(context, error))
+                    : _EmptyHint(
+                        text: context.l10n(
+                          ko: '라이브 가이드 정보가 없습니다.',
+                          en: 'No live guide data.',
+                          ja: 'ライブガイド情報がありません。',
                         ),
-                      );
-                    })
-                    .toList(growable: false),
-              );
-            },
-            loading: () => const _InlineLoading(),
-            error: (e, _) => _InlineError(message: _errorText(context, e)),
-          ),
-
-          const SizedBox(height: GBTSpacing.lg),
-
-          // EN: Call guide section.
-          // KO: 콜가이드 섹션.
-          _TabSectionHeader(
-            icon: Icons.surround_sound_rounded,
-            title: context.l10n(ko: '콜가이드', en: 'Call Guide', ja: 'コールガイド'),
-            isDark: isDark,
-            accent: accent,
-          ),
-          const SizedBox(height: GBTSpacing.sm),
-          callGuideState.when(
-            data: (guide) {
-              final cues = guide.cues;
-              if (cues.isEmpty) {
-                return _EmptyHint(
-                  text: context.l10n(
-                    ko: '콜가이드 정보가 없습니다.',
-                    en: 'No call guide.',
-                    ja: 'コールガイドがありません。',
-                  ),
-                );
-              }
-              return Column(
-                children: cues
-                    .map((cue) {
-                      // EN: Intensity indicator: numeric intensity >= 3 → strong color.
-                      // KO: 강도 표시 — 숫자 강도 3 이상 시 강한 색상을 사용합니다.
-                      final isHighIntensity = (cue.intensity ?? 0) >= 3;
-                      final cueColor = isHighIntensity
-                          ? accent
-                          : GBTColors.accentBlue;
-                      final intensityLabel = cue.intensity != null
-                          ? '  ·  lv.${cue.intensity}'
-                          : '';
-                      return _SimpleRow(
-                        title: cue.cueText,
-                        subtitle:
-                            '${_formatMs(cue.startMs)} – ${_formatMs(cue.endMs)}'
-                            '$intensityLabel',
-                        badge: cue.cueType,
-                        icon: Icons.music_note_rounded,
-                        isDark: isDark,
-                        accent: cueColor,
-                      );
-                    })
-                    .toList(growable: false),
-              );
-            },
-            loading: () => const _InlineLoading(),
-            error: (e, _) => _InlineError(message: _errorText(context, e)),
-          ),
+                      ),
+              ),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(
+                GBTSpacing.pageHorizontal,
+                0,
+                GBTSpacing.pageHorizontal,
+                GBTSpacing.xxl,
+              ),
+              sliver: SliverList.builder(
+                itemCount:
+                    timeline.length + (isLoading || error != null ? 1 : 0),
+                itemBuilder: (context, index) {
+                  if (index == timeline.length) {
+                    return isLoading
+                        ? const _InlineLoading()
+                        : _InlineError(message: _errorText(context, error!));
+                  }
+                  return _GuideTimelineRow(
+                    entry: timeline[index],
+                    isDark: isDark,
+                    accent: accent,
+                  );
+                },
+              ),
+            ),
         ],
       ),
     );
   }
 }
 
-// ══════════════════════════════════════════════════════════════
-// TAB 3: MORE
-// ══════════════════════════════════════════════════════════════
+class _GuideTimelineEntry {
+  const _GuideTimelineEntry.part(MusicPartSegment this.part) : call = null;
+  const _GuideTimelineEntry.call(MusicCallCue this.call) : part = null;
 
-/// EN: More tab — streaming links, availability, credits, live setlist.
-/// KO: 더보기 탭 — 스트리밍 링크, 가용성, 크레딧, 라이브 세트리스트입니다.
-class _MoreTab extends ConsumerWidget {
-  const _MoreTab({
-    required this.projectId,
-    required this.songId,
-    required this.eventId,
-    required this.lang,
+  final MusicPartSegment? part;
+  final MusicCallCue? call;
+
+  int get startMs => part?.startMs ?? call!.startMs;
+}
+
+class _GuideTimelineRow extends StatelessWidget {
+  const _GuideTimelineRow({
+    required this.entry,
     required this.isDark,
     required this.accent,
-    required this.onRefresh,
   });
 
-  final String projectId;
-  final String songId;
-  final String? eventId;
-  final String lang;
+  final _GuideTimelineEntry entry;
   final bool isDark;
   final Color accent;
-  final Future<void> Function() onRefresh;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final songKey = (projectId: projectId, songId: songId);
-    final availabilityKey = (
-      projectId: projectId,
-      songId: songId,
-      country: _countryFromLocale(Localizations.localeOf(context)),
-    );
+  Widget build(BuildContext context) {
+    final segment = entry.part;
+    if (segment != null) {
+      final memberId = segment.memberId?.trim();
+      final memberColor = memberId == null || memberId.isEmpty
+          ? (isDark ? GBTColors.darkTextTertiary : GBTColors.textTertiary)
+          : _memberColorFromId(memberId, isDark);
+      final memberName = (segment.memberName ?? '').trim();
+      return _SimpleRow(
+        title: (segment.partType ?? '').trim().isNotEmpty
+            ? segment.partType!.trim()
+            : context.l10n(ko: '파트', en: 'Part', ja: 'パート'),
+        subtitle: [
+          if (memberName.isNotEmpty) memberName,
+          '${_formatMs(segment.startMs)} – ${_formatMs(segment.endMs)}',
+        ].join('  ·  '),
+        badge: context.l10n(ko: '파트', en: 'Part', ja: 'パート'),
+        icon: Icons.person_rounded,
+        isDark: isDark,
+        accent: memberColor,
+      );
+    }
 
-    final mediaState = ref.watch(musicSongMediaLinksProvider(songKey));
-    final creditsState = ref.watch(musicSongCreditsProvider(songKey));
-    final availabilityState = ref.watch(
-      musicSongAvailabilityProvider(availabilityKey),
-    );
-
-    final AsyncValue<MusicSongLiveContext?> liveContextState = eventId == null
-        ? const AsyncData<MusicSongLiveContext?>(null)
-        : ref
-              .watch(
-                musicSongLiveContextProvider((
-                  projectId: projectId,
-                  songId: songId,
-                  eventId: eventId!,
-                  lang: lang,
-                  version: null,
-                  includeRomanized: true,
-                  includeTranslated: true,
-                )),
-              )
-              .whenData<MusicSongLiveContext?>((value) => value);
-
-    return RefreshIndicator(
-      color: accent,
-      onRefresh: onRefresh,
-      child: ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(
-          GBTSpacing.pageHorizontal,
-          GBTSpacing.md,
-          GBTSpacing.pageHorizontal,
-          GBTSpacing.xxl,
-        ),
-        children: [
-          // EN: Streaming links section.
-          // KO: 스트리밍 링크 섹션.
-          _TabSectionHeader(
-            icon: Icons.podcasts_rounded,
-            title: context.l10n(ko: '스트리밍', en: 'Streaming', ja: 'ストリーミング'),
-            isDark: isDark,
-            accent: accent,
-          ),
-          const SizedBox(height: GBTSpacing.sm),
-          mediaState.when(
-            data: (mediaData) {
-              final previewUrl = mediaData.preview.url;
-              final supportedLinks = mediaData.streamingLinks
-                  .where((l) => _isSupportedStreamingPlatform(l.provider))
-                  .toList(growable: false);
-              if ((previewUrl == null || previewUrl.isEmpty) &&
-                  supportedLinks.isEmpty) {
-                return _EmptyHint(
-                  text: context.l10n(
-                    ko: '스트리밍 링크가 없습니다.',
-                    en: 'No streaming links.',
-                    ja: 'ストリーミングリンクがありません。',
-                  ),
-                );
-              }
-              return Column(
-                children: [
-                  if (previewUrl != null && previewUrl.isNotEmpty)
-                    _StreamingLinkRow(
-                      label: context.l10n(
-                        ko: '오디오 미리듣기',
-                        en: 'Audio preview',
-                        ja: 'オーディオ試聴',
-                      ),
-                      icon: Icons.play_circle_filled_rounded,
-                      platformColor: accent,
-                      onTap: () => _launchUrl(previewUrl),
-                      isDark: isDark,
-                    ),
-                  ...supportedLinks.map(
-                    (link) => _StreamingLinkRow(
-                      label: _streamingDisplayName(link.provider),
-                      icon: _streamingIcon(link.provider),
-                      platformColor: _streamingColor(link.provider),
-                      caption: link.regionAvailability,
-                      onTap: () => _launchUrl(link.url),
-                      isDark: isDark,
-                    ),
-                  ),
-                ],
-              );
-            },
-            loading: () => const _InlineLoading(),
-            error: (e, _) => _InlineError(message: _errorText(context, e)),
-          ),
-
-          const SizedBox(height: GBTSpacing.lg),
-
-          // EN: Availability section.
-          // KO: 가용성 섹션.
-          _TabSectionHeader(
-            icon: Icons.public_rounded,
-            title: context.l10n(ko: '가용성', en: 'Availability', ja: '利用可否'),
-            isDark: isDark,
-            accent: accent,
-          ),
-          const SizedBox(height: GBTSpacing.sm),
-          availabilityState.when(
-            data: (av) => _AvailabilityRow(availability: av, isDark: isDark),
-            loading: () => const _InlineLoading(),
-            error: (e, _) => _InlineError(message: _errorText(context, e)),
-          ),
-
-          const SizedBox(height: GBTSpacing.lg),
-
-          // EN: Credits section.
-          // KO: 크레딧 섹션.
-          _TabSectionHeader(
-            icon: Icons.badge_outlined,
-            title: context.l10n(ko: '크레딧', en: 'Credits', ja: 'クレジット'),
-            isDark: isDark,
-            accent: accent,
-          ),
-          const SizedBox(height: GBTSpacing.sm),
-          creditsState.when(
-            data: (groups) => groups.isEmpty
-                ? _EmptyHint(
-                    text: context.l10n(
-                      ko: '크레딧 정보가 없습니다.',
-                      en: 'No credits.',
-                      ja: 'クレジット情報がありません。',
-                    ),
-                  )
-                : _CreditsList(groups: groups, isDark: isDark, accent: accent),
-            loading: () => const _InlineLoading(),
-            error: (e, _) => _InlineError(message: _errorText(context, e)),
-          ),
-
-          // EN: Live setlist — only shown when eventId is provided.
-          // KO: 라이브 세트리스트 — eventId가 있을 때만 표시됩니다.
-          if (eventId != null) ...[
-            const SizedBox(height: GBTSpacing.lg),
-            _TabSectionHeader(
-              icon: Icons.playlist_play_rounded,
-              title: context.l10n(
-                ko: '라이브 세트리스트',
-                en: 'Live setlist',
-                ja: 'ライブセットリスト',
-              ),
-              isDark: isDark,
-              accent: accent,
-            ),
-            const SizedBox(height: GBTSpacing.sm),
-            liveContextState.when(
-              data: (ctx) {
-                final items = ctx?.setlistContext?.items ?? const [];
-                if (items.isEmpty) {
-                  return _EmptyHint(
-                    text: context.l10n(
-                      ko: '연결된 세트리스트가 없습니다.',
-                      en: 'No linked setlist.',
-                      ja: '連携されたセットリストがありません。',
-                    ),
-                  );
-                }
-                return Column(
-                  children: items
-                      .map((item) {
-                        return _SetlistRow(
-                          item: item,
-                          isDark: isDark,
-                          accent: accent,
-                          onTap: !item.hasSongLink
-                              ? null
-                              : () => context.goToSongDetail(
-                                  item.songId!,
-                                  projectId: projectId,
-                                  eventId: eventId,
-                                ),
-                        );
-                      })
-                      .toList(growable: false),
-                );
-              },
-              loading: () => const _InlineLoading(),
-              error: (e, _) => _InlineError(message: _errorText(context, e)),
-            ),
-          ],
-        ],
-      ),
+    final cue = entry.call!;
+    final cueColor = (cue.intensity ?? 0) >= 3 ? accent : GBTColors.accentBlue;
+    final intensityLabel = cue.intensity != null
+        ? '  ·  lv.${cue.intensity}'
+        : '';
+    return _SimpleRow(
+      title: cue.cueText,
+      subtitle:
+          '${_formatMs(cue.startMs)} – ${_formatMs(cue.endMs)}$intensityLabel',
+      badge: cue.cueType,
+      icon: Icons.surround_sound_rounded,
+      isDark: isDark,
+      accent: cueColor,
     );
   }
 }
-
 // ══════════════════════════════════════════════════════════════
 // TAB SECTION HEADER
 // ══════════════════════════════════════════════════════════════
+
+class _RecordDisclosure extends StatelessWidget {
+  const _RecordDisclosure({
+    required this.icon,
+    required this.title,
+    required this.isDark,
+    required this.accent,
+    required this.child,
+    this.initiallyExpanded = false,
+  });
+
+  final IconData icon;
+  final String title;
+  final bool isDark;
+  final Color accent;
+  final Widget child;
+  final bool initiallyExpanded;
+
+  @override
+  Widget build(BuildContext context) {
+    final border = isDark ? GBTColors.darkBorder : GBTColors.border;
+    return Container(
+      margin: const EdgeInsets.only(bottom: GBTSpacing.sm),
+      decoration: BoxDecoration(
+        border: Border.all(color: border),
+        borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
+      ),
+      child: ExpansionTile(
+        initiallyExpanded: initiallyExpanded,
+        leading: Icon(icon, color: accent, size: 20),
+        title: Text(
+          title,
+          style: GBTTypography.bodyMedium.copyWith(
+            color: isDark ? GBTColors.darkTextPrimary : GBTColors.textPrimary,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        iconColor: accent,
+        collapsedIconColor: isDark
+            ? GBTColors.darkTextSecondary
+            : GBTColors.textSecondary,
+        childrenPadding: const EdgeInsets.fromLTRB(
+          GBTSpacing.md,
+          0,
+          GBTSpacing.md,
+          GBTSpacing.md,
+        ),
+        children: [child],
+      ),
+    );
+  }
+}
 
 class _TabSectionHeader extends StatelessWidget {
   const _TabSectionHeader({
@@ -1696,11 +1366,13 @@ class _TabSectionHeader extends StatelessWidget {
           children: [
             Icon(icon, size: 15, color: accent),
             const SizedBox(width: GBTSpacing.xs),
-            Text(
-              title,
-              style: GBTTypography.titleSmall.copyWith(
-                color: titleColor,
-                fontWeight: FontWeight.w700,
+            Expanded(
+              child: Text(
+                title,
+                style: GBTTypography.titleSmall.copyWith(
+                  color: titleColor,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ],
@@ -1772,67 +1444,79 @@ class _MetaRow extends StatelessWidget {
 
 class _LyricsFilterRow extends StatelessWidget {
   const _LyricsFilterRow({
-    required this.showMemberParts,
-    required this.showCallGuide,
     required this.includeRomanized,
     required this.includeTranslated,
     required this.isDark,
     required this.accent,
-    required this.onToggleMemberParts,
-    required this.onToggleCallGuide,
     required this.onToggleRomanized,
     required this.onToggleTranslated,
   });
 
-  final bool showMemberParts;
-  final bool showCallGuide;
   final bool includeRomanized;
   final bool includeTranslated;
   final bool isDark;
   final Color accent;
-  final VoidCallback onToggleMemberParts;
-  final VoidCallback onToggleCallGuide;
   final VoidCallback onToggleRomanized;
   final VoidCallback onToggleTranslated;
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          _TogglePill(
-            label: context.l10n(ko: '로마자', en: 'Romaji', ja: 'ローマ字'),
-            active: includeRomanized,
-            isDark: isDark,
-            accent: accent,
-            onTap: onToggleRomanized,
+    final textScale = MediaQuery.textScalerOf(context).scale(1);
+    final textColor = isDark
+        ? GBTColors.darkTextSecondary
+        : GBTColors.textSecondary;
+    return Align(
+      alignment: Alignment.centerRight,
+      child: PopupMenuButton<String>(
+        tooltip: context.l10n(
+          ko: '가사 표시 옵션',
+          en: 'Lyrics display options',
+          ja: '歌詞表示オプション',
+        ),
+        onSelected: (value) {
+          if (value == 'romanized') onToggleRomanized();
+          if (value == 'translated') onToggleTranslated();
+        },
+        itemBuilder: (context) => [
+          CheckedPopupMenuItem<String>(
+            value: 'romanized',
+            checked: includeRomanized,
+            child: Text(
+              context.l10n(ko: '발음 표기', en: 'Pronunciation', ja: '読み方'),
+            ),
           ),
-          const SizedBox(width: GBTSpacing.xs),
-          _TogglePill(
-            label: context.l10n(ko: '번역', en: 'Trans.', ja: '翻訳'),
-            active: includeTranslated,
-            isDark: isDark,
-            accent: accent,
-            onTap: onToggleTranslated,
-          ),
-          const SizedBox(width: GBTSpacing.xs),
-          _TogglePill(
-            label: context.l10n(ko: '파트', en: 'Parts', ja: 'パート'),
-            active: showMemberParts,
-            isDark: isDark,
-            accent: accent,
-            onTap: onToggleMemberParts,
-          ),
-          const SizedBox(width: GBTSpacing.xs),
-          _TogglePill(
-            label: context.l10n(ko: '콜', en: 'Call', ja: 'コール'),
-            active: showCallGuide,
-            isDark: isDark,
-            accent: accent,
-            onTap: onToggleCallGuide,
+          CheckedPopupMenuItem<String>(
+            value: 'translated',
+            checked: includeTranslated,
+            child: Text(context.l10n(ko: '번역', en: 'Translation', ja: '翻訳')),
           ),
         ],
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: GBTSpacing.xs),
+            child: textScale >= 2
+                ? Icon(Icons.tune_rounded, size: 22, color: accent)
+                : Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.tune_rounded, size: 18, color: accent),
+                      const SizedBox(width: GBTSpacing.xs),
+                      Text(
+                        context.l10n(
+                          ko: '표시 옵션',
+                          en: 'Display options',
+                          ja: '表示オプション',
+                        ),
+                        style: GBTTypography.labelMedium.copyWith(
+                          color: textColor,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+        ),
       ),
     );
   }
@@ -1869,9 +1553,9 @@ class _IntegratedLyricsPanel extends StatefulWidget {
   });
 
   final AsyncValue<MusicSongLiveContext?>? liveContextState;
-  final AsyncValue<MusicLyricsPayload> lyricsState;
-  final AsyncValue<MusicPartsPayload> partsState;
-  final AsyncValue<MusicCallGuidePayload> callGuideState;
+  final AsyncValue<MusicLyricsPayload>? lyricsState;
+  final AsyncValue<MusicPartsPayload>? partsState;
+  final AsyncValue<MusicCallGuidePayload>? callGuideState;
   final bool includeRomanized;
   final bool includeTranslated;
   final bool showMemberParts;
@@ -1889,9 +1573,9 @@ class _IntegratedLyricsPanelState extends State<_IntegratedLyricsPanel> {
   @override
   Widget build(BuildContext context) {
     final liveCtx = widget.liveContextState?.valueOrNull;
-    final lyrics = liveCtx?.lyrics ?? widget.lyricsState.valueOrNull;
-    final parts = liveCtx?.parts ?? widget.partsState.valueOrNull;
-    final callGuide = liveCtx?.callGuide ?? widget.callGuideState.valueOrNull;
+    final lyrics = liveCtx?.lyrics ?? widget.lyricsState?.valueOrNull;
+    final parts = liveCtx?.parts ?? widget.partsState?.valueOrNull;
+    final callGuide = liveCtx?.callGuide ?? widget.callGuideState?.valueOrNull;
 
     final lines = [...(lyrics?.lines ?? const <MusicLyricLine>[])]
       ..sort((a, b) => a.order.compareTo(b.order));
@@ -1904,33 +1588,47 @@ class _IntegratedLyricsPanelState extends State<_IntegratedLyricsPanel> {
 
     final isLoading =
         (widget.liveContextState?.isLoading ?? false) ||
-        widget.lyricsState.isLoading ||
-        (widget.showMemberParts && widget.partsState.isLoading) ||
-        (widget.showCallGuide && widget.callGuideState.isLoading);
+        (widget.lyricsState?.isLoading ?? false) ||
+        (widget.showMemberParts && (widget.partsState?.isLoading ?? false)) ||
+        (widget.showCallGuide && (widget.callGuideState?.isLoading ?? false));
 
     if (isLoading && lines.isEmpty && segments.isEmpty && cues.isEmpty) {
-      return const _InlineLoading();
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: GBTSpacing.paddingMd,
+        children: const [_InlineLoading()],
+      );
     }
 
     final hasError =
         (widget.liveContextState?.hasError ?? false) ||
-        widget.lyricsState.hasError ||
-        (widget.showMemberParts && widget.partsState.hasError) ||
-        (widget.showCallGuide && widget.callGuideState.hasError);
+        (widget.lyricsState?.hasError ?? false) ||
+        (widget.showMemberParts && (widget.partsState?.hasError ?? false)) ||
+        (widget.showCallGuide && (widget.callGuideState?.hasError ?? false));
 
     final effectiveError =
-        widget.liveContextState?.error ?? widget.lyricsState.error;
+        widget.liveContextState?.error ?? widget.lyricsState?.error;
     if (hasError && lines.isEmpty && segments.isEmpty && cues.isEmpty) {
-      return _InlineError(message: _errorText(context, effectiveError));
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: GBTSpacing.paddingMd,
+        children: [_InlineError(message: _errorText(context, effectiveError))],
+      );
     }
 
     if (lines.isEmpty && segments.isEmpty && cues.isEmpty) {
-      return _EmptyHint(
-        text: context.l10n(
-          ko: '가사/파트/콜가이드 정보가 없습니다.',
-          en: 'No lyrics, parts, or call guide.',
-          ja: '歌詞/パート/コールガイド情報がありません。',
-        ),
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: GBTSpacing.paddingMd,
+        children: [
+          _EmptyHint(
+            text: context.l10n(
+              ko: '가사/파트/콜가이드 정보가 없습니다.',
+              en: 'No lyrics, parts, or call guide.',
+              ja: '歌詞/パート/コールガイド情報がありません。',
+            ),
+          ),
+        ],
       );
     }
 
@@ -1984,135 +1682,156 @@ class _IntegratedLyricsPanelState extends State<_IntegratedLyricsPanel> {
         .where((o) => o.memberId == _selectedMemberId)
         .firstOrNull;
 
-    // Group consecutive lines by section
-    final groups = <({String section, List<MusicLyricLine> lines})>[];
-    for (final line in lines) {
-      if (groups.isEmpty || groups.last.section != line.section) {
-        groups.add((section: line.section, lines: [line]));
-      } else {
-        groups.last.lines.add(line);
-      }
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Member filter
-        if (widget.showMemberParts && memberOptions.isNotEmpty) ...[
-          _MemberFilterBar(
-            memberOptions: memberOptions,
-            selectedMemberId: _selectedMemberId,
-            isDark: widget.isDark,
-            accent: widget.accent,
-            onSelectAll: () => setState(() => _selectedMemberId = null),
-            onSelectMember: (id) => setState(() {
-              _selectedMemberId = _selectedMemberId == id ? null : id;
-            }),
-          ),
-          if (selectedMember != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 6, bottom: 2),
-              child: Row(
-                children: [
-                  Container(
-                    width: 6,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: selectedMember.color,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 5),
-                  Text(
-                    context.l10n(
-                      ko: '${selectedMember.displayName} 파트',
-                      en: '${selectedMember.displayName}\'s part',
-                      ja: '${selectedMember.displayName}のパート',
-                    ),
-                    style: GBTTypography.labelSmall.copyWith(
-                      color: selectedMember.color,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          const SizedBox(height: GBTSpacing.sm),
-        ],
-
-        // Lyrics grouped by section
-        if (lines.isNotEmpty)
-          ...groups.expand((group) sync* {
-            yield _LyricsSectionDivider(
-              section: group.section,
+    final itemBuilders = <Widget Function()>[];
+    if (widget.showMemberParts && memberOptions.isNotEmpty) {
+      itemBuilders.add(
+        () => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _MemberFilterBar(
+              memberOptions: memberOptions,
+              selectedMemberId: _selectedMemberId,
               isDark: widget.isDark,
               accent: widget.accent,
-            );
-            yield const SizedBox(height: GBTSpacing.xs);
-            for (final line in group.lines) {
-              yield _LyricLine(
-                line: line,
-                includeRomanized: widget.includeRomanized,
-                includeTranslated: widget.includeTranslated,
-                isDark: widget.isDark,
-                lineParts: partsByLineId[line.lineId] ?? const [],
-                lineCues: cuesByLineId[line.lineId] ?? const [],
-                selectedMemberId: _selectedMemberId,
-                memberColorMap: colorMap,
-                onPartTap: (seg) {
-                  final mid = seg.memberId?.trim();
-                  if (mid == null || mid.isEmpty) return;
-                  setState(() {
-                    _selectedMemberId = _selectedMemberId == mid ? null : mid;
-                  });
-                },
-              );
-            }
-            yield const SizedBox(height: GBTSpacing.sm);
-          })
-        else
-          _EmptyHint(
-            text: context.l10n(
-              ko: '가사 라인이 없습니다.',
-              en: 'No lyric lines.',
-              ja: '歌詞行がありません。',
+              onSelectAll: () => setState(() => _selectedMemberId = null),
+              onSelectMember: (id) => setState(() {
+                _selectedMemberId = _selectedMemberId == id ? null : id;
+              }),
             ),
-          ),
+            if (selectedMember != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 6, bottom: 2),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: selectedMember.color,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      context.l10n(
+                        ko: '${selectedMember.displayName} 파트',
+                        en: '${selectedMember.displayName}\'s part',
+                        ja: '${selectedMember.displayName}のパート',
+                      ),
+                      style: GBTTypography.labelSmall.copyWith(
+                        color: selectedMember.color,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            const SizedBox(height: GBTSpacing.sm),
+          ],
+        ),
+      );
+    }
 
-        // Unmapped parts
-        if (widget.showMemberParts && unmatchedParts.isNotEmpty) ...[
-          _UnmappedHeader(
-            label: context.l10n(
-              ko: '미매핑 파트',
-              en: 'Unmapped parts',
-              ja: '未マッピングパート',
+    for (var index = 0; index < lines.length; index++) {
+      final line = lines[index];
+      final startsSection =
+          index == 0 || lines[index - 1].section != line.section;
+      itemBuilders.add(
+        () => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (startsSection) ...[
+              _LyricsSectionDivider(
+                section: line.section,
+                isDark: widget.isDark,
+                accent: widget.accent,
+              ),
+              const SizedBox(height: GBTSpacing.xs),
+            ],
+            _LyricLine(
+              line: line,
+              includeRomanized: widget.includeRomanized,
+              includeTranslated: widget.includeTranslated,
+              isDark: widget.isDark,
+              lineParts: partsByLineId[line.lineId] ?? const [],
+              lineCues: cuesByLineId[line.lineId] ?? const [],
+              selectedMemberId: _selectedMemberId,
+              memberColorMap: colorMap,
+              onPartTap: (segment) {
+                final memberId = segment.memberId?.trim();
+                if (memberId == null || memberId.isEmpty) return;
+                setState(() {
+                  _selectedMemberId = _selectedMemberId == memberId
+                      ? null
+                      : memberId;
+                });
+              },
             ),
-            isDark: widget.isDark,
+            if (index == lines.length - 1 ||
+                lines[index + 1].section != line.section)
+              const SizedBox(height: GBTSpacing.sm),
+          ],
+        ),
+      );
+    }
+
+    if (lines.isEmpty) {
+      itemBuilders.add(
+        () => _EmptyHint(
+          text: context.l10n(
+            ko: '가사 라인이 없습니다.',
+            en: 'No lyric lines.',
+            ja: '歌詞行がありません。',
           ),
-          ...unmatchedParts.map(
-            (seg) => _SimpleRow(
-              title: _partDisplayLabel(context, seg),
-              subtitle: '${_formatMs(seg.startMs)} – ${_formatMs(seg.endMs)}',
-              badge: seg.partType,
+        ),
+      );
+    }
+
+    for (var index = 0; index < unmatchedParts.length; index++) {
+      final segment = unmatchedParts[index];
+      itemBuilders.add(
+        () => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (index == 0)
+              _UnmappedHeader(
+                label: context.l10n(
+                  ko: '미매핑 파트',
+                  en: 'Unmapped parts',
+                  ja: '未マッピングパート',
+                ),
+                isDark: widget.isDark,
+              ),
+            _SimpleRow(
+              title: _partDisplayLabel(context, segment),
+              subtitle:
+                  '${_formatMs(segment.startMs)} – ${_formatMs(segment.endMs)}',
+              badge: segment.partType,
               icon: Icons.multitrack_audio_rounded,
               isDark: widget.isDark,
               accent: widget.accent,
             ),
-          ),
-        ],
+          ],
+        ),
+      );
+    }
 
-        // Unmapped cues
-        if (widget.showCallGuide && unmatchedCues.isNotEmpty) ...[
-          _UnmappedHeader(
-            label: context.l10n(
-              ko: '미매핑 콜가이드',
-              en: 'Unmapped call guide',
-              ja: '未マッピングコールガイド',
-            ),
-            isDark: widget.isDark,
-          ),
-          ...unmatchedCues.map(
-            (cue) => _SimpleRow(
+    for (var index = 0; index < unmatchedCues.length; index++) {
+      final cue = unmatchedCues[index];
+      itemBuilders.add(
+        () => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (index == 0)
+              _UnmappedHeader(
+                label: context.l10n(
+                  ko: '미매핑 콜가이드',
+                  en: 'Unmapped call guide',
+                  ja: '未マッピングコールガイド',
+                ),
+                isDark: widget.isDark,
+              ),
+            _SimpleRow(
               title: cue.cueText,
               subtitle: '${_formatMs(cue.startMs)} – ${_formatMs(cue.endMs)}',
               badge: cue.cueType,
@@ -2120,17 +1839,36 @@ class _IntegratedLyricsPanelState extends State<_IntegratedLyricsPanel> {
               isDark: widget.isDark,
               accent: widget.accent,
             ),
-          ),
-        ],
+          ],
+        ),
+      );
+    }
 
-        // Error hints
-        if (widget.showMemberParts && widget.partsState.hasError)
-          _InlineError(message: _errorText(context, widget.partsState.error)),
-        if (widget.showCallGuide && widget.callGuideState.hasError)
-          _InlineError(
-            message: _errorText(context, widget.callGuideState.error),
-          ),
-      ],
+    if (widget.showMemberParts && (widget.partsState?.hasError ?? false)) {
+      itemBuilders.add(
+        () => _InlineError(
+          message: _errorText(context, widget.partsState?.error),
+        ),
+      );
+    }
+    if (widget.showCallGuide && (widget.callGuideState?.hasError ?? false)) {
+      itemBuilders.add(
+        () => _InlineError(
+          message: _errorText(context, widget.callGuideState?.error),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(
+        GBTSpacing.md,
+        GBTSpacing.md,
+        GBTSpacing.md,
+        GBTSpacing.xxl,
+      ),
+      itemCount: itemBuilders.length,
+      itemBuilder: (context, index) => itemBuilders[index](),
     );
   }
 
@@ -2276,127 +2014,126 @@ class _LyricLine extends StatelessWidget {
       child: AnimatedOpacity(
         duration: const Duration(milliseconds: 150),
         opacity: (isSelMode && !isSelLine) ? 0.32 : 1.0,
-        child: IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Left accent bar (member color)
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                width: leftBorderColor != null ? 3 : 0,
-                decoration: BoxDecoration(
-                  color: leftBorderColor,
-                  borderRadius: BorderRadius.circular(2),
-                ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Left accent bar (member color)
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: leftBorderColor != null ? 3 : 0,
+              height: leftBorderColor != null ? 44 : 0,
+              decoration: BoxDecoration(
+                color: leftBorderColor,
+                borderRadius: BorderRadius.circular(2),
               ),
-              SizedBox(width: leftBorderColor != null ? GBTSpacing.sm : 0),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: GBTSpacing.xs),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Original lyric
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: _GradientText(
-                              text: line.textOriginal,
-                              style: GBTTypography.bodyLarge.copyWith(
-                                color: lyricColor,
-                                fontWeight: FontWeight.w700,
-                                height: 1.4,
-                              ),
-                              gradientColors: gradientColors,
+            ),
+            SizedBox(width: leftBorderColor != null ? GBTSpacing.sm : 0),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: GBTSpacing.xs),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Original lyric
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: _GradientText(
+                            text: line.textOriginal,
+                            style: GBTTypography.bodyLarge.copyWith(
+                              color: lyricColor,
+                              fontWeight: FontWeight.w700,
+                              height: 1.4,
+                            ),
+                            gradientColors: gradientColors,
+                          ),
+                        ),
+                        // Timestamp
+                        Padding(
+                          padding: const EdgeInsets.only(
+                            left: GBTSpacing.sm,
+                            top: 3,
+                          ),
+                          child: Text(
+                            _formatMs(line.startMs),
+                            style: GBTTypography.caption.copyWith(
+                              color: textTertiary,
                             ),
                           ),
-                          // Timestamp
-                          Padding(
-                            padding: const EdgeInsets.only(
-                              left: GBTSpacing.sm,
-                              top: 3,
-                            ),
-                            child: Text(
-                              _formatMs(line.startMs),
-                              style: GBTTypography.caption.copyWith(
-                                color: textTertiary,
-                              ),
-                            ),
+                        ),
+                      ],
+                    ),
+                    // Romanized
+                    if (includeRomanized &&
+                        (line.textRomanized ?? '').trim().isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 3),
+                        child: Text(
+                          line.textRomanized!,
+                          style: GBTTypography.bodySmall.copyWith(
+                            color: textSecondary,
+                            fontStyle: FontStyle.italic,
+                            height: 1.4,
                           ),
-                        ],
+                        ),
                       ),
-                      // Romanized
-                      if (includeRomanized &&
-                          (line.textRomanized ?? '').trim().isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 3),
-                          child: Text(
-                            line.textRomanized!,
-                            style: GBTTypography.bodySmall.copyWith(
-                              color: textSecondary,
-                              fontStyle: FontStyle.italic,
-                              height: 1.4,
-                            ),
+                    // Translation
+                    if (includeTranslated &&
+                        (line.textTranslated ?? '').trim().isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Text(
+                          line.textTranslated!,
+                          style: GBTTypography.bodySmall.copyWith(
+                            color: textSecondary,
+                            height: 1.4,
                           ),
                         ),
-                      // Translation
-                      if (includeTranslated &&
-                          (line.textTranslated ?? '').trim().isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 2),
-                          child: Text(
-                            line.textTranslated!,
-                            style: GBTTypography.bodySmall.copyWith(
-                              color: textSecondary,
-                              height: 1.4,
-                            ),
-                          ),
-                        ),
-                      // Part & cue badges
-                      if (lineParts.isNotEmpty || lineCues.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(top: GBTSpacing.xs),
-                          child: Wrap(
-                            spacing: GBTSpacing.xs,
-                            runSpacing: GBTSpacing.xs,
-                            children: [
-                              ...lineParts.map((seg) {
-                                final mc = memberColorMap[seg.memberId?.trim()];
-                                final isGradient =
-                                    _isMixedPartType(seg.partType) &&
-                                    lineMemberColors.length >= 2;
-                                return _PartBadge(
-                                  label: _partDisplayLabel(context, seg),
-                                  partType: seg.partType,
-                                  solidColor: isGradient ? null : mc,
-                                  gradientColors: isGradient
-                                      ? lineMemberColors.take(3).toList()
-                                      : null,
-                                  isSelected:
-                                      selectedMemberId != null &&
-                                      seg.memberId?.trim() == selectedMemberId,
-                                  isDark: isDark,
-                                  onTap: onPartTap == null
-                                      ? null
-                                      : () => onPartTap!(seg),
-                                );
-                              }),
-                              ...lineCues.map(
-                                (cue) => _CueBadge(
-                                  label: cue.cueText,
-                                  cueType: cue.cueType,
-                                ),
+                      ),
+                    // Part & cue badges
+                    if (lineParts.isNotEmpty || lineCues.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: GBTSpacing.xs),
+                        child: Wrap(
+                          spacing: GBTSpacing.xs,
+                          runSpacing: GBTSpacing.xs,
+                          children: [
+                            ...lineParts.map((seg) {
+                              final mc = memberColorMap[seg.memberId?.trim()];
+                              final isGradient =
+                                  _isMixedPartType(seg.partType) &&
+                                  lineMemberColors.length >= 2;
+                              return _PartBadge(
+                                label: _partDisplayLabel(context, seg),
+                                partType: seg.partType,
+                                solidColor: isGradient ? null : mc,
+                                gradientColors: isGradient
+                                    ? lineMemberColors.take(3).toList()
+                                    : null,
+                                isSelected:
+                                    selectedMemberId != null &&
+                                    seg.memberId?.trim() == selectedMemberId,
+                                isDark: isDark,
+                                onTap: onPartTap == null
+                                    ? null
+                                    : () => onPartTap!(seg),
+                              );
+                            }),
+                            ...lineCues.map(
+                              (cue) => _CueBadge(
+                                label: cue.cueText,
+                                cueType: cue.cueType,
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                    ],
-                  ),
+                      ),
+                  ],
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -3072,67 +2809,72 @@ class _SetlistRow extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
         onTap: onTap,
-        child: Ink(
-          padding: const EdgeInsets.symmetric(
-            horizontal: GBTSpacing.sm,
-            vertical: GBTSpacing.xs2,
-          ),
-          decoration: BoxDecoration(
-            color: surfaceVar,
-            borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
-          ),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 28,
-                child: Text(
-                  '#${item.order.toString().padLeft(2, '0')}',
-                  style: GBTTypography.labelSmall.copyWith(
-                    color: accent,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              const SizedBox(width: GBTSpacing.xs),
-              Expanded(
-                child: Text(
-                  item.songTitle ?? '-',
-                  style: GBTTypography.bodySmall.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              if (item.isEncore)
-                Container(
-                  margin: const EdgeInsets.only(left: GBTSpacing.xs),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: GBTSpacing.xs,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: accent.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
-                  ),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 48),
+          child: Ink(
+            padding: const EdgeInsets.symmetric(
+              horizontal: GBTSpacing.sm,
+              vertical: GBTSpacing.xs2,
+            ),
+            decoration: BoxDecoration(
+              color: surfaceVar,
+              borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
+            ),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 28,
                   child: Text(
-                    'Encore',
-                    style: GBTTypography.caption.copyWith(
+                    '#${item.order.toString().padLeft(2, '0')}',
+                    style: GBTTypography.labelSmall.copyWith(
                       color: accent,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                 ),
-              if (onTap != null)
-                Padding(
-                  padding: const EdgeInsets.only(left: 4),
-                  child: Icon(
-                    Icons.chevron_right_rounded,
-                    size: 16,
-                    color: textSecondary,
+                const SizedBox(width: GBTSpacing.xs),
+                Expanded(
+                  child: Text(
+                    item.songTitle ?? '-',
+                    style: GBTTypography.bodySmall.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-            ],
+                if (item.isEncore)
+                  Container(
+                    margin: const EdgeInsets.only(left: GBTSpacing.xs),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: GBTSpacing.xs,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: accent.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(
+                        GBTSpacing.radiusFull,
+                      ),
+                    ),
+                    child: Text(
+                      'Encore',
+                      style: GBTTypography.caption.copyWith(
+                        color: accent,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                if (onTap != null)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 4),
+                    child: Icon(
+                      Icons.chevron_right_rounded,
+                      size: 16,
+                      color: textSecondary,
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),
@@ -3268,54 +3010,6 @@ class _InfoChip extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _TogglePill extends StatelessWidget {
-  const _TogglePill({
-    required this.label,
-    required this.active,
-    required this.isDark,
-    required this.accent,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool active;
-  final bool isDark;
-  final Color accent;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final inactiveBg = isDark
-        ? GBTColors.darkSurfaceVariant
-        : GBTColors.surfaceVariant;
-    final inactiveText = isDark
-        ? GBTColors.darkTextSecondary
-        : GBTColors.textSecondary;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          color: active ? accent.withValues(alpha: 0.14) : inactiveBg,
-          borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
-          border: Border.all(
-            color: active ? accent.withValues(alpha: 0.45) : Colors.transparent,
-          ),
-        ),
-        child: Text(
-          label,
-          style: GBTTypography.labelSmall.copyWith(
-            color: active ? accent : inactiveText,
-            fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-          ),
-        ),
       ),
     );
   }

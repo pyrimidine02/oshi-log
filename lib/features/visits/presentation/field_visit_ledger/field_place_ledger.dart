@@ -21,6 +21,7 @@ class FieldPlaceLedger extends StatelessWidget {
     required this.onRefresh,
     required this.onOpenVisit,
     required this.bottomClearance,
+    this.onOpenMap,
   });
 
   final Widget header;
@@ -29,6 +30,7 @@ class FieldPlaceLedger extends StatelessWidget {
   final Future<void> Function() onRefresh;
   final ValueChanged<FieldPlaceLedgerEntry> onOpenVisit;
   final double bottomClearance;
+  final VoidCallback? onOpenMap;
 
   @override
   Widget build(BuildContext context) {
@@ -63,18 +65,31 @@ class FieldPlaceLedger extends StatelessWidget {
             return FieldLedgerMessageList(
               header: header,
               message: context.l10n(
-                ko: '아직 장소 방문 기록이 없습니다.\n지도에서 현장 방문을 기록해보세요.',
-                en: 'No place visits yet.\nRecord a field visit from the map.',
-                ja: 'まだ場所訪問はありません。\nマップから現地訪問を記録しましょう。',
+                ko: '지도에서 장소를 선택하고 방문을 기록하면 여행의 장면이 이곳에 쏓여요.',
+                en: 'Choose a place on the map and record your visit to build your travel log.',
+                ja: 'マップで場所を選び、訪問を記録すると旅の記録がここに残ります。',
               ),
               bottomClearance: bottomClearance,
               noteKey: const Key('field-ledger-empty-place-note'),
-              noteIcon: Icons.route_outlined,
+              noteIcon: Icons.map_outlined,
               noteEyebrow: context.l10n(
-                ko: '첫 번째 현장 기록',
-                en: 'YOUR FIRST FIELD NOTE',
-                ja: '最初の現地記録',
+                ko: '여행의 첫 기록',
+                en: 'FIRST ENTRY',
+                ja: '旅の最初の記録',
               ),
+              noteTitle: context.l10n(
+                ko: '첫 방문 기록을 남겨보세요',
+                en: 'Record your first place visit',
+                ja: '最初の場所訪問を記録しましょう',
+              ),
+              actionLabel: onOpenMap == null
+                  ? null
+                  : context.l10n(
+                      ko: '지도에서 장소 찾기',
+                      en: 'Find a place on the map',
+                      ja: 'マップで場所を探す',
+                    ),
+              onAction: onOpenMap,
             );
           }
           if (placesMapState.isLoading && !placesMapState.hasValue) {

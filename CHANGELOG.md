@@ -1,5 +1,97 @@
 # Changelog
 
+## 2026-07-21
+
+- Rebuilt the music archive as a restrained `TRAVEL AUDIO INDEX`: counts appear
+  once, album and song modes use one flat switcher, unit filtering lives in a
+  single menu, album art is no longer covered by text, and song rows use slim
+  track rails instead of repeated placeholder icons. Album details now open in
+  a draggable dossier sheet with the cover and metadata beside the track list.
+- Replaced the four-way song detail with a compact audio dossier and three
+  task-focused destinations: Lyrics, Live guide, and Song record. Lyrics keep
+  only pronunciation and translation display options; member parts and calls
+  stay in the live guide; streaming comes first in the song record, followed by
+  metadata, versions, difficulty, and collapsed availability and credits.
+  Event-linked setlists retain `eventId` while navigating between songs.
+- Added 300% text-scale, 320dp, 48dp tab-target, live-context de-duplication,
+  event-key preservation, lazy 200-line lyric, lazy 1,000-entry live-guide,
+  and progressive multi-page loading regression coverage. Large-text song and
+  album dossiers now prioritize readable metadata over fixed cover art, and
+  live parts and calls share one chronological timeline. Removed the former
+  blurred-cover hero and unreachable More-tab implementation.
+- Removed the song-detail freeze path by lazily building lyric rows, removing
+  intrinsic-height layout from each row, avoiding duplicate live-context and
+  standalone lyric requests, and summarizing large network bodies instead of
+  recursively copying and printing their full contents.
+- Changed the song catalog to collect every cursor page internally in 100-item
+  batches while publishing each completed page immediately. The visible list
+  no longer depends on bottom-scroll pagination; duplicate song IDs and
+  repeated cursors are safely handled, disposed loads stop, and partial
+  failures expose a retry action.
+- Replaced the crowded Explore map chrome with one search field, horizontally
+  scrollable service-style filter chips, a single current-location action, and
+  a detented place sheet. Compact and half states use horizontal field-note
+  cards; the full state uses the detailed vertical ledger.
+- Put the Map, Events, Visits, and Stamps selector inside the map sheet and in
+  one consistent lower position on the three non-map pages. Removed the former
+  top popup and the empty top reservation it created.
+- Corrected an `extendBody` inset regression that counted the 64dp main
+  navigation two to three times. Non-map content regained more than 100dp on
+  the verified iPhone viewport, and the Explore selector now sits 8dp above
+  main navigation. The embedded map alone keeps the host navigation inset so
+  its selector remains visible.
+- Reframed Field kit as `팬 자료실` (`FAN REFERENCE`), so schedules,
+  music and lyrics, call guides, and collection references remain easy to
+  reach outside trip preparation. Added a persistent update-archive toolbar
+  with title search, year filtering, latest/oldest sorting, and a lazy sliver
+  list for large archives.
+- Rebuilt place and event history as a `TRAVEL LOGBOOK` with clearer visit
+  statistics, responsive record types, and actionable empty states that open
+  the map or event schedule.
+- Fixed map search so its sheet uses a stable 82% viewport height and the
+  search field remains exactly 48dp whether there are zero, one, or many
+  results. Only the result list now changes and scrolls.
+- Made the native map canvas full-bleed behind status bars and rounded display
+  corners while keeping search, filters, canvas actions, sheet content, and
+  non-map Explore pages inside platform safe areas. Added regression cases for
+  a 24dp legacy Android status bar, a 59dp Dynamic Island inset, and landscape
+  side cutouts.
+- Verified Map → Events → Visits transitions, corrected spacing, and the
+  fixed search sheet before and after entering `DICE` on an iPhone 17 Pro
+  simulator running iOS 26.5. Added regression coverage for scaffold-injected
+  navigation padding, the map-specific host inset, and search geometry. Static
+  analysis passes with no issues and the full 579-test Flutter suite passes.
+
+## 2026-07-20
+
+- Installed and applied the `apple-design` skill to reduce decorative chrome
+  and clarify the hierarchy across Home, Explore, Information, Community, and
+  My Journey without changing routes or state contracts.
+- Moved Explore's map/event/visit/zukan control above the content so it no
+  longer stacks over the global bottom navigation. Replaced its pill segments
+  with flat underlined tabs, reduced the persistent map filters to one summary
+  row, and moved project, region, band, and order into an on-demand vertical
+  Map filters sheet. Simplified the map search, canvas actions, place rows,
+  selected-place card, draggable-sheet header, and empty result into compact
+  single-purpose controls. Large text switches the tabs to wider horizontal
+  destinations instead of clipping their labels.
+- Rebuilt Field kit as one `TRAVEL FIELD KIT` document ordered by the travel
+  lifecycle: Before you go, On site, and After the trip. Removed the isolated
+  music hero, colored icon boxes, shadows, clipped descriptions, and repeated
+  cards while preserving all five destinations and callbacks.
+- Restored restrained travel-passport identity through one document masthead,
+  folio indices, thin rules, and a colored spine. Passport section actions now
+  stack at large text sizes and headings expose proper header semantics.
+- Replaced numbered or repeated English section labels with localized headings,
+  standardized compact shared headers, and kept pressable controls at the iOS
+  44pt minimum with explicit button semantics and gentler press feedback.
+- Verified the redesigned map on an iPhone 17 Pro simulator running iOS 26.5,
+  including the native Apple map, filter overflow, empty state, bottom-sheet
+  clearance, and global navigation. Static analysis passed with no issues and
+  the full 558-test Flutter suite passed. A date-fragile live-event fixture was
+  changed from a fixed same-day timestamp to a relative future timestamp.
+- Added `docs/adr/ADR-20260720-apple-map-information-hierarchy.md`.
+
 ## 2026-07-16
 
 - Restored Flutter 3.41 CI compatibility by using the SDK's platform-default

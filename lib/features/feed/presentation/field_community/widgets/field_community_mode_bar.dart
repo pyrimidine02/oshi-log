@@ -27,28 +27,51 @@ class FieldCommunityModeBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final border = isDark ? GBTColors.darkBorderSubtle : GBTColors.divider;
+    final textScaler = MediaQuery.textScalerOf(context);
+    final usesScrollableDestinations = textScaler.scale(1) >= 1.8;
+    final background = isDark
+        ? GBTColors.darkSurfaceVariant
+        : GBTColors.surfaceVariant;
+    final destinations = [
+      for (final mode in modes)
+        _ModeDestination(
+          mode: mode,
+          selected: mode == selected,
+          onTap: () => onSelected(mode),
+        ),
+    ];
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        border: Border.symmetric(horizontal: BorderSide(color: border)),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        GBTSpacing.pageHorizontal,
+        0,
+        GBTSpacing.pageHorizontal,
+        GBTSpacing.sm,
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: GBTSpacing.pageHorizontal,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: background,
+          borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
         ),
-        child: Row(
-          children: [
-            for (final mode in modes)
-              Expanded(
-                child: _ModeDestination(
-                  mode: mode,
-                  selected: mode == selected,
-                  onTap: () => onSelected(mode),
+        child: usesScrollableDestinations
+            ? SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    for (final destination in destinations)
+                      SizedBox(
+                        width: textScaler.scale(88).clamp(128.0, 180.0),
+                        child: destination,
+                      ),
+                  ],
                 ),
+              )
+            : Row(
+                children: [
+                  for (final destination in destinations)
+                    Expanded(child: destination),
+                ],
               ),
-          ],
-        ),
       ),
     );
   }
@@ -69,10 +92,15 @@ class _ModeDestination extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accent = isDark ? GBTColors.darkSecondary : GBTColors.secondary;
+    final ink = isDark ? GBTColors.darkTextPrimary : GBTColors.textPrimary;
     final muted = isDark
         ? GBTColors.darkTextSecondary
         : GBTColors.textSecondary;
     final label = _modeLabel(context, mode);
+    final selectedBackground = accent.withValues(alpha: isDark ? 0.18 : 0.12);
+    final motionDuration = MediaQuery.disableAnimationsOf(context)
+        ? Duration.zero
+        : const Duration(milliseconds: 180);
 
     return Semantics(
       button: true,
@@ -81,24 +109,26 @@ class _ModeDestination extends StatelessWidget {
       child: InkWell(
         key: Key('field-community-mode-${mode.name}'),
         onTap: onTap,
-        child: Container(
-          constraints: const BoxConstraints(minHeight: GBTSpacing.touchTarget),
+        child: AnimatedContainer(
+          duration: motionDuration,
+          constraints: BoxConstraints(
+            minHeight: MediaQuery.textScalerOf(
+              context,
+            ).scale(GBTSpacing.touchTarget).clamp(GBTSpacing.touchTarget, 72),
+          ),
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            border: Border(
-              bottom: BorderSide(
-                color: selected ? accent : Colors.transparent,
-                width: 2,
-              ),
-            ),
+            color: selected ? selectedBackground : Colors.transparent,
+            borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
           ),
           child: Text(
             label,
-            maxLines: 1,
+            maxLines: 2,
+            textAlign: TextAlign.center,
             overflow: TextOverflow.ellipsis,
             style: GBTTypography.labelLarge.copyWith(
-              color: selected ? accent : muted,
-              fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+              color: selected ? ink : muted,
+              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
             ),
           ),
         ),

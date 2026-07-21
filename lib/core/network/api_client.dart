@@ -633,15 +633,15 @@ class _LoggingInterceptor extends Interceptor {
       sanitizeNetworkLogUri(options.uri).toString(),
       tag: 'Request',
     );
-    if (options.queryParameters.isNotEmpty) {
+    if (kDebugMode && options.queryParameters.isNotEmpty) {
       AppLogger.debug(
         'Query: ${sanitizeNetworkLogData(options.queryParameters)}',
         tag: 'Request',
       );
     }
-    if (options.data != null) {
+    if (kDebugMode && options.data != null) {
       AppLogger.debug(
-        'Body: ${sanitizeNetworkLogData(options.data)}',
+        'Body: ${summarizeNetworkLogData(options.data)}',
         tag: 'Request',
       );
     }
@@ -663,9 +663,9 @@ class _LoggingInterceptor extends Interceptor {
       responseTimeMs: responseTime,
       tag: 'Response',
     );
-    if (response.data != null) {
+    if (kDebugMode && response.data != null) {
       AppLogger.debug(
-        'Body: ${sanitizeNetworkLogData(response.data)}',
+        'Body: ${summarizeNetworkLogData(response.data)}',
         tag: 'Response',
       );
     }
@@ -681,9 +681,9 @@ class _LoggingInterceptor extends Interceptor {
       statusCode: err.response?.statusCode,
       tag: 'Error',
     );
-    if (err.response?.data != null) {
+    if (kDebugMode && err.response?.data != null) {
       AppLogger.debug(
-        'Body: ${sanitizeNetworkLogData(err.response?.data)}',
+        'Body: ${summarizeNetworkLogData(err.response?.data)}',
         tag: 'Error',
       );
     }

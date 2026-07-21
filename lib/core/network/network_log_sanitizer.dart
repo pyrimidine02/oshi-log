@@ -44,6 +44,55 @@ dynamic sanitizeNetworkLogData(dynamic data) {
   return data;
 }
 
+/// EN: Return a bounded structural summary for potentially large bodies.
+/// KO: 큰 본문을 위해 크기가 제한된 구조 요약을 반환합니다.
+dynamic summarizeNetworkLogData(dynamic data, {int depth = 0}) {
+  if (depth >= 3) return _summaryLeaf(data);
+
+  if (data is Map) {
+    final entries = data.entries.take(12);
+    return <dynamic, dynamic>{
+      for (final entry in entries)
+        entry.key: _isSensitiveKey(entry.key)
+            ? redactedNetworkLogValue
+            : summarizeNetworkLogData(entry.value, depth: depth + 1),
+      if (data.length > 12) '...': '${data.length - 12} more keys',
+    };
+  }
+
+  if (data is List) return 'List(${data.length})';
+  if (data is String) {
+    if (data.length > 4096) return 'String(${data.length})';
+    final sanitized = _sanitizeNetworkLogString(data);
+    if (sanitized is! String) {
+      return summarizeNetworkLogData(sanitized, depth: depth);
+    }
+    if (sanitized.length <= 160) return sanitized;
+    return '${sanitized.substring(0, 160)}… (${sanitized.length} chars)';
+  }
+
+  return data == null || data is num || data is bool
+      ? data
+      : data.runtimeType.toString();
+}
+
+dynamic _summaryLeaf(dynamic data) {
+  if (data is Map) return 'Map(${data.length})';
+  if (data is List) return 'List(${data.length})';
+  if (data is String) {
+    if (data.length > 4096) return 'String(${data.length})';
+    final sanitized = _sanitizeNetworkLogString(data);
+    if (sanitized is! String) return _summaryLeaf(sanitized);
+    if (sanitized.length > 80) {
+      return '${sanitized.substring(0, 80)}… (${sanitized.length} chars)';
+    }
+    return sanitized;
+  }
+  return data == null || data is num || data is bool
+      ? data
+      : data.runtimeType.toString();
+}
+
 dynamic _sanitizeNetworkLogString(String value) {
   final trimmed = value.trimLeft();
   if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
