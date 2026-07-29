@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/features/places/presentation/widgets/field_place_sheet_row.dart';
+import 'package:oshi_log/features/places/presentation/widgets/field_place_sheet_row.dart';
 
 void main() {
   testWidgets('renders a borderless place row at 320dp', (tester) async {

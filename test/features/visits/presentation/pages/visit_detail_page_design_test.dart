@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:girlsbandtabi_app/features/visits/presentation/pages/visit_detail_page.dart';
+import 'package:oshi_log/features/visits/presentation/pages/visit_detail_page.dart';
 
 void main() {
   testWidgets('visit record header survives 320dp and 200% text', (

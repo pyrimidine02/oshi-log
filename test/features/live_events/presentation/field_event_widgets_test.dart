@@ -4,15 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/core/theme/gbt_theme.dart';
-import 'package:girlsbandtabi_app/features/live_events/domain/entities/live_event_entities.dart';
-import 'package:girlsbandtabi_app/features/live_events/application/live_events_controller.dart';
-import 'package:girlsbandtabi_app/features/live_events/presentation/field_events/field_event_agenda_widgets.dart';
-import 'package:girlsbandtabi_app/features/live_events/presentation/field_events/field_event_detail_widgets.dart';
-import 'package:girlsbandtabi_app/features/live_events/presentation/field_events/field_event_detail_sections.dart';
-import 'package:girlsbandtabi_app/features/live_events/presentation/field_events/field_live_event_detail_page.dart';
-import 'package:girlsbandtabi_app/features/live_events/presentation/field_events/field_live_events_page.dart';
-import 'package:girlsbandtabi_app/features/music/domain/entities/music_entities.dart';
+import 'package:oshi_log/core/theme/gbt_theme.dart';
+import 'package:oshi_log/features/live_events/domain/entities/live_event_entities.dart';
+import 'package:oshi_log/features/live_events/application/live_events_controller.dart';
+import 'package:oshi_log/features/live_events/presentation/field_events/field_event_agenda_widgets.dart';
+import 'package:oshi_log/features/live_events/presentation/field_events/field_event_detail_widgets.dart';
+import 'package:oshi_log/features/live_events/presentation/field_events/field_event_detail_sections.dart';
+import 'package:oshi_log/features/live_events/presentation/field_events/field_live_event_detail_page.dart';
+import 'package:oshi_log/features/live_events/presentation/field_events/field_live_events_page.dart';
+import 'package:oshi_log/features/music/domain/entities/music_entities.dart';
 
 void main() {
   test('field event route entries are constructible', () {

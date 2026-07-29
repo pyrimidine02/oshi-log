@@ -105,7 +105,7 @@ final user = await ref.read(userProvider.future);
 
 ```dart
 // Before
-import 'package:girlsbandtabi_app/features/settings/application/settings_controller.dart';
+import 'package:oshi_log/features/settings/application/settings_controller.dart';
 
 // After: 콜백 파라미터로 역전
 class GbtProfileAction extends StatelessWidget {

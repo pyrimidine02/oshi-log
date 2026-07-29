@@ -3,16 +3,16 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:girlsbandtabi_app/core/providers/core_providers.dart';
-import 'package:girlsbandtabi_app/core/utils/result.dart';
-import 'package:girlsbandtabi_app/features/calendar/application/calendar_controller.dart';
-import 'package:girlsbandtabi_app/features/calendar/domain/entities/calendar_event.dart';
-import 'package:girlsbandtabi_app/features/fan_level/application/fan_level_controller.dart';
-import 'package:girlsbandtabi_app/features/fan_level/domain/entities/fan_level.dart';
-import 'package:girlsbandtabi_app/features/fan_level/domain/repositories/fan_level_repository.dart';
-import 'package:girlsbandtabi_app/features/my/presentation/travel_passport/travel_passport_page.dart';
-import 'package:girlsbandtabi_app/features/settings/application/settings_controller.dart';
-import 'package:girlsbandtabi_app/features/settings/domain/entities/user_profile.dart';
+import 'package:oshi_log/core/providers/core_providers.dart';
+import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/features/calendar/application/calendar_controller.dart';
+import 'package:oshi_log/features/calendar/domain/entities/calendar_event.dart';
+import 'package:oshi_log/features/fan_level/application/fan_level_controller.dart';
+import 'package:oshi_log/features/fan_level/domain/entities/fan_level.dart';
+import 'package:oshi_log/features/fan_level/domain/repositories/fan_level_repository.dart';
+import 'package:oshi_log/features/my/presentation/travel_passport/travel_passport_page.dart';
+import 'package:oshi_log/features/settings/application/settings_controller.dart';
+import 'package:oshi_log/features/settings/domain/entities/user_profile.dart';
 
 void main() {
   testWidgets('refresh stays active until both calendar months finish', (

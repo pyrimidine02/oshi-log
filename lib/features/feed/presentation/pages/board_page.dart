@@ -2206,9 +2206,9 @@ class _FeedSponsoredCampaign {
           accentColor: GBTColors.accentTeal,
           badgeLabel: context.l10n(ko: '광고', en: 'AD', ja: '広告'),
           sponsorLabel: context.l10n(
-            ko: 'GirlsBandTabi 추천',
-            en: 'GirlsBandTabi Sponsored',
-            ja: 'GirlsBandTabi スポンサー',
+            ko: 'oshi@log 추천',
+            en: 'oshi@log Sponsored',
+            ja: 'oshi@log スポンサー',
           ),
           onTap: () => context.go('/explore'),
         );
@@ -2233,9 +2233,9 @@ class _FeedSponsoredCampaign {
           accentColor: GBTColors.secondary,
           badgeLabel: context.l10n(ko: '광고', en: 'AD', ja: '広告'),
           sponsorLabel: context.l10n(
-            ko: 'GirlsBandTabi 추천',
-            en: 'GirlsBandTabi Sponsored',
-            ja: 'GirlsBandTabi スポンサー',
+            ko: 'oshi@log 추천',
+            en: 'oshi@log Sponsored',
+            ja: 'oshi@log スポンサー',
           ),
           onTap: () => context.goNamed(AppRoutes.travelReviewTab),
         );
@@ -2260,9 +2260,9 @@ class _FeedSponsoredCampaign {
           accentColor: GBTColors.accentBlue,
           badgeLabel: context.l10n(ko: '광고', en: 'AD', ja: '広告'),
           sponsorLabel: context.l10n(
-            ko: 'GirlsBandTabi 추천',
-            en: 'GirlsBandTabi Sponsored',
-            ja: 'GirlsBandTabi スポンサー',
+            ko: 'oshi@log 추천',
+            en: 'oshi@log Sponsored',
+            ja: 'oshi@log スポンサー',
           ),
           onTap: () => context.go('/explore?tab=1'),
         );

@@ -60,7 +60,7 @@ class PassportDocument extends StatelessWidget {
                 children: [
                   ExcludeSemantics(
                     child: Text(
-                      'GIRLS BAND TABI · TRAVEL PASSPORT',
+                      'OSHI@LOG · TRAVEL PASSPORT',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(

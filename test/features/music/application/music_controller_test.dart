@@ -4,11 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-import 'package:girlsbandtabi_app/core/error/failure.dart';
-import 'package:girlsbandtabi_app/core/utils/result.dart';
-import 'package:girlsbandtabi_app/features/music/application/music_controller.dart';
-import 'package:girlsbandtabi_app/features/music/domain/entities/music_entities.dart';
-import 'package:girlsbandtabi_app/features/music/domain/repositories/music_repository.dart';
+import 'package:oshi_log/core/error/failure.dart';
+import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/features/music/application/music_controller.dart';
+import 'package:oshi_log/features/music/domain/entities/music_entities.dart';
+import 'package:oshi_log/features/music/domain/repositories/music_repository.dart';
 
 class _MockMusicRepository extends Mock implements MusicRepository {}
 

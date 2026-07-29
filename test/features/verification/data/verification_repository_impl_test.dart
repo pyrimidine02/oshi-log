@@ -1,11 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart' hide VerificationResult;
 
-import 'package:girlsbandtabi_app/core/utils/result.dart';
-import 'package:girlsbandtabi_app/features/verification/data/datasources/verification_remote_data_source.dart';
-import 'package:girlsbandtabi_app/features/verification/data/dto/verification_dto.dart';
-import 'package:girlsbandtabi_app/features/verification/data/repositories/verification_repository_impl.dart';
-import 'package:girlsbandtabi_app/features/verification/domain/entities/verification_entities.dart';
+import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/features/verification/data/datasources/verification_remote_data_source.dart';
+import 'package:oshi_log/features/verification/data/dto/verification_dto.dart';
+import 'package:oshi_log/features/verification/data/repositories/verification_repository_impl.dart';
+import 'package:oshi_log/features/verification/domain/entities/verification_entities.dart';
 
 class MockVerificationRemoteDataSource extends Mock
     implements VerificationRemoteDataSource {}

@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/features/home/data/dto/home_summary_dto.dart';
-import 'package:girlsbandtabi_app/features/home/domain/entities/home_summary.dart';
+import 'package:oshi_log/features/home/data/dto/home_summary_dto.dart';
+import 'package:oshi_log/features/home/domain/entities/home_summary.dart';
 
 void main() {
   group('HomeSummary empty-state policy', () {

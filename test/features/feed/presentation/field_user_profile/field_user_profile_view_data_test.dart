@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:girlsbandtabi_app/features/feed/presentation/field_user_profile/field_user_profile_view_data.dart';
-import 'package:girlsbandtabi_app/features/settings/domain/entities/user_profile.dart';
+import 'package:oshi_log/features/feed/presentation/field_user_profile/field_user_profile_view_data.dart';
+import 'package:oshi_log/features/settings/domain/entities/user_profile.dart';
 
 void main() {
   group('FieldUserProfileViewData', () {

@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/core/config/app_config.dart';
-import 'package:girlsbandtabi_app/core/utils/media_url.dart';
+import 'package:oshi_log/core/config/app_config.dart';
+import 'package:oshi_log/core/utils/media_url.dart';
 
 void main() {
   setUpAll(() {

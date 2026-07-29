@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/features/places/domain/utils/place_type_search.dart';
+import 'package:oshi_log/features/places/domain/utils/place_type_search.dart';
 
 void main() {
   group('normalizePlaceSearchText', () {

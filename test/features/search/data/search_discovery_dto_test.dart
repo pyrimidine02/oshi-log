@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/features/search/data/dto/search_discovery_dto.dart';
+import 'package:oshi_log/features/search/data/dto/search_discovery_dto.dart';
 
 void main() {
   group('Search discovery DTO', () {

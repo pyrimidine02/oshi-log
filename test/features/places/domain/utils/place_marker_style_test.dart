@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/features/places/domain/utils/place_marker_style.dart';
+import 'package:oshi_log/features/places/domain/utils/place_marker_style.dart';
 
 void main() {
   group('placeMarkerHueForVisit', () {

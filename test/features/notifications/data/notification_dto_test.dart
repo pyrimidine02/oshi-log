@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/features/notifications/data/dto/notification_dto.dart';
+import 'package:oshi_log/features/notifications/data/dto/notification_dto.dart';
 
 void main() {
   test('NotificationItemDto parses swagger keys', () {

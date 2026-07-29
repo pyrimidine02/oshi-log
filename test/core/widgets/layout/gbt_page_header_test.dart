@@ -3,8 +3,8 @@ import 'dart:ui' show SemanticsAction;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/core/theme/gbt_theme.dart';
-import 'package:girlsbandtabi_app/core/widgets/layout/gbt_page_header.dart';
+import 'package:oshi_log/core/theme/gbt_theme.dart';
+import 'package:oshi_log/core/widgets/layout/gbt_page_header.dart';
 
 void main() {
   testWidgets('GBTPageHeader exposes the shared editorial hierarchy', (

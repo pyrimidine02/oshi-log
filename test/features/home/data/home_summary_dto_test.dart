@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/features/home/data/dto/home_summary_dto.dart';
+import 'package:oshi_log/features/home/data/dto/home_summary_dto.dart';
 
 void main() {
   test('HomeSummaryDto parses swagger keys', () {

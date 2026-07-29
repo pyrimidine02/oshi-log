@@ -3,12 +3,12 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:girlsbandtabi_app/core/providers/core_providers.dart';
-import 'package:girlsbandtabi_app/core/utils/result.dart';
-import 'package:girlsbandtabi_app/features/places/application/places_controller.dart';
-import 'package:girlsbandtabi_app/features/places/domain/entities/place_entities.dart';
-import 'package:girlsbandtabi_app/features/places/domain/entities/place_region_entities.dart';
-import 'package:girlsbandtabi_app/features/places/domain/repositories/places_repository.dart';
+import 'package:oshi_log/core/providers/core_providers.dart';
+import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/features/places/application/places_controller.dart';
+import 'package:oshi_log/features/places/domain/entities/place_entities.dart';
+import 'package:oshi_log/features/places/domain/entities/place_region_entities.dart';
+import 'package:oshi_log/features/places/domain/repositories/places_repository.dart';
 
 void main() {
   group('PlacesListController', () {

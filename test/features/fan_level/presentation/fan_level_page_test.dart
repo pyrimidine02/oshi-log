@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/core/error/failure.dart';
-import 'package:girlsbandtabi_app/core/utils/result.dart';
-import 'package:girlsbandtabi_app/features/fan_level/application/fan_level_controller.dart';
-import 'package:girlsbandtabi_app/features/fan_level/domain/entities/fan_level.dart';
-import 'package:girlsbandtabi_app/features/fan_level/domain/repositories/fan_level_repository.dart';
-import 'package:girlsbandtabi_app/features/fan_level/presentation/pages/fan_level_page.dart';
+import 'package:oshi_log/core/error/failure.dart';
+import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/features/fan_level/application/fan_level_controller.dart';
+import 'package:oshi_log/features/fan_level/domain/entities/fan_level.dart';
+import 'package:oshi_log/features/fan_level/domain/repositories/fan_level_repository.dart';
+import 'package:oshi_log/features/fan_level/presentation/pages/fan_level_page.dart';
 
 class _FakeFanLevelRepository implements FanLevelRepository {
   const _FakeFanLevelRepository(this.profile);

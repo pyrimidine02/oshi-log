@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/features/places/presentation/widgets/field_map_platform_gate.dart';
+import 'package:oshi_log/features/places/presentation/widgets/field_map_platform_gate.dart';
 
 void main() {
   test('native map renders only for the active onstage explore surface', () {

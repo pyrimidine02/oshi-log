@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/core/providers/core_providers.dart';
-import 'package:girlsbandtabi_app/core/utils/result.dart';
-import 'package:girlsbandtabi_app/features/feed/application/travel_reviews_controller.dart';
-import 'package:girlsbandtabi_app/features/feed/domain/entities/feed_entities.dart';
-import 'package:girlsbandtabi_app/features/feed/domain/entities/travel_review.dart';
-import 'package:girlsbandtabi_app/features/feed/domain/repositories/travel_reviews_repository.dart';
-import 'package:girlsbandtabi_app/features/feed/presentation/pages/travel_review_create_page.dart';
-import 'package:girlsbandtabi_app/features/feed/presentation/pages/travel_review_detail_page.dart';
+import 'package:oshi_log/core/providers/core_providers.dart';
+import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/features/feed/application/travel_reviews_controller.dart';
+import 'package:oshi_log/features/feed/domain/entities/feed_entities.dart';
+import 'package:oshi_log/features/feed/domain/entities/travel_review.dart';
+import 'package:oshi_log/features/feed/domain/repositories/travel_reviews_repository.dart';
+import 'package:oshi_log/features/feed/presentation/pages/travel_review_create_page.dart';
+import 'package:oshi_log/features/feed/presentation/pages/travel_review_detail_page.dart';
 
 void main() {
   test('travel review reorder keeps legacy Flutter index semantics', () {

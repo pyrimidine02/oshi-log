@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/core/theme/gbt_theme.dart';
-import 'package:girlsbandtabi_app/features/settings/presentation/widgets/field_settings_components.dart';
+import 'package:oshi_log/core/theme/gbt_theme.dart';
+import 'package:oshi_log/features/settings/presentation/widgets/field_settings_components.dart';
 
 void main() {
   testWidgets('renders document rows without nested card containers', (

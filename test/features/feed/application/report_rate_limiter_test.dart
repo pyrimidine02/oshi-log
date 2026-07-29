@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/features/feed/application/report_rate_limiter.dart';
+import 'package:oshi_log/features/feed/application/report_rate_limiter.dart';
 
 void main() {
   test('canReport returns true for first report', () {

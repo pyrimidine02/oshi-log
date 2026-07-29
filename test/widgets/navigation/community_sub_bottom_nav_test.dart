@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/shared/main_scaffold.dart';
+import 'package:oshi_log/shared/main_scaffold.dart';
 
 void main() {
   testWidgets(

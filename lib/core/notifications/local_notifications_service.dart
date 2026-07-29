@@ -74,7 +74,7 @@ class LocalNotificationsService {
   DateTime? _lastTapAt;
 
   static const String _channelId = 'gbt_notifications_high';
-  static const String _channelName = 'GBT Notifications';
+  static const String _channelName = 'oshi@log Notifications';
   static const String _channelDescription =
       'Realtime community and system notifications';
 

@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/features/home/domain/entities/home_summary.dart';
-import 'package:girlsbandtabi_app/features/home/presentation/field_home/field_home_view_data.dart';
+import 'package:oshi_log/features/home/domain/entities/home_summary.dart';
+import 'package:oshi_log/features/home/presentation/field_home/field_home_view_data.dart';
 
 void main() {
   group('resolveFieldHomeContentState', () {

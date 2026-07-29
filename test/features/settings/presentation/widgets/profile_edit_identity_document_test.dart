@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:girlsbandtabi_app/features/settings/presentation/widgets/profile_edit_identity_document.dart';
+import 'package:oshi_log/features/settings/presentation/widgets/profile_edit_identity_document.dart';
 
 void main() {
   late TextEditingController displayNameController;

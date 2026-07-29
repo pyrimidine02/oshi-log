@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/features/visits/data/dto/visit_dto.dart';
-import 'package:girlsbandtabi_app/features/visits/domain/entities/visit_entities.dart';
+import 'package:oshi_log/features/visits/data/dto/visit_dto.dart';
+import 'package:oshi_log/features/visits/domain/entities/visit_entities.dart';
 
 void main() {
   test('visit list DTO preserves the server verification status', () {

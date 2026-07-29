@@ -2,10 +2,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-import 'package:girlsbandtabi_app/core/utils/result.dart';
-import 'package:girlsbandtabi_app/features/visits/application/visits_controller.dart';
-import 'package:girlsbandtabi_app/features/visits/domain/entities/visit_entities.dart';
-import 'package:girlsbandtabi_app/features/visits/domain/repositories/visits_repository.dart';
+import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/features/visits/application/visits_controller.dart';
+import 'package:oshi_log/features/visits/domain/entities/visit_entities.dart';
+import 'package:oshi_log/features/visits/domain/repositories/visits_repository.dart';
 
 class _MockVisitsRepository extends Mock implements VisitsRepository {}
 

@@ -4,7 +4,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:girlsbandtabi_app/core/accessibility/a11y_wrapper.dart';
+import 'package:oshi_log/core/accessibility/a11y_wrapper.dart';
 
 void main() {
   group('A11yScalableText', () {

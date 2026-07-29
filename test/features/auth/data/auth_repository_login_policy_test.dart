@@ -1,15 +1,15 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:girlsbandtabi_app/core/error/failure.dart';
-import 'package:girlsbandtabi_app/core/security/secure_storage.dart';
-import 'package:girlsbandtabi_app/core/utils/result.dart';
-import 'package:girlsbandtabi_app/features/auth/data/datasources/auth_remote_data_source.dart';
-import 'package:girlsbandtabi_app/features/auth/data/dto/account_recovery_password_request.dart';
-import 'package:girlsbandtabi_app/features/auth/data/dto/login_request.dart';
-import 'package:girlsbandtabi_app/features/auth/data/dto/token_response.dart';
-import 'package:girlsbandtabi_app/features/auth/data/repositories/auth_repository_impl.dart';
-import 'package:girlsbandtabi_app/features/auth/domain/entities/auth_tokens.dart';
+import 'package:oshi_log/core/error/failure.dart';
+import 'package:oshi_log/core/security/secure_storage.dart';
+import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/features/auth/data/datasources/auth_remote_data_source.dart';
+import 'package:oshi_log/features/auth/data/dto/account_recovery_password_request.dart';
+import 'package:oshi_log/features/auth/data/dto/login_request.dart';
+import 'package:oshi_log/features/auth/data/dto/token_response.dart';
+import 'package:oshi_log/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:oshi_log/features/auth/domain/entities/auth_tokens.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _MockAuthRemoteDataSource extends Mock implements AuthRemoteDataSource {}

@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:girlsbandtabi_app/core/theme/gbt_theme.dart';
-import 'package:girlsbandtabi_app/features/live_events/application/live_events_controller.dart';
-import 'package:girlsbandtabi_app/features/live_events/domain/entities/live_event_entities.dart';
-import 'package:girlsbandtabi_app/features/places/domain/entities/place_entities.dart';
-import 'package:girlsbandtabi_app/features/projects/application/projects_controller.dart';
-import 'package:girlsbandtabi_app/features/projects/domain/entities/project_entities.dart';
-import 'package:girlsbandtabi_app/features/visits/application/visits_controller.dart';
-import 'package:girlsbandtabi_app/features/visits/domain/entities/visit_entities.dart';
-import 'package:girlsbandtabi_app/features/visits/presentation/field_visit_ledger/field_visit_ledger_page.dart';
+import 'package:oshi_log/core/theme/gbt_theme.dart';
+import 'package:oshi_log/features/live_events/application/live_events_controller.dart';
+import 'package:oshi_log/features/live_events/domain/entities/live_event_entities.dart';
+import 'package:oshi_log/features/places/domain/entities/place_entities.dart';
+import 'package:oshi_log/features/projects/application/projects_controller.dart';
+import 'package:oshi_log/features/projects/domain/entities/project_entities.dart';
+import 'package:oshi_log/features/visits/application/visits_controller.dart';
+import 'package:oshi_log/features/visits/domain/entities/visit_entities.dart';
+import 'package:oshi_log/features/visits/presentation/field_visit_ledger/field_visit_ledger_page.dart';
 
 void main() {
   testWidgets('provider-wired page renders API-backed visit state', (

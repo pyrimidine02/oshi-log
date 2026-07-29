@@ -6,7 +6,7 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:girlsbandtabi_app/core/accessibility/a11y_wrapper.dart';
+import 'package:oshi_log/core/accessibility/a11y_wrapper.dart';
 
 /// EN: Example screen demonstrating A11yScalableText usage
 /// KO: A11yScalableText 사용법을 보여주는 예제 화면

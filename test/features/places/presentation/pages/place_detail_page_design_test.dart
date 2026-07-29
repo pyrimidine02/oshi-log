@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:girlsbandtabi_app/features/places/presentation/pages/place_detail_page.dart';
+import 'package:oshi_log/features/places/presentation/pages/place_detail_page.dart';
 
 void main() {
   Future<void> pumpHeader(

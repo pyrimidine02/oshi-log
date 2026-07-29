@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/features/places/domain/entities/place_entities.dart';
-import 'package:girlsbandtabi_app/features/places/domain/utils/place_distance_ordering.dart';
+import 'package:oshi_log/features/places/domain/entities/place_entities.dart';
+import 'package:oshi_log/features/places/domain/utils/place_distance_ordering.dart';
 
 void main() {
   group('orderPlacesForUserLocation', () {

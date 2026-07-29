@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/features/notifications/domain/entities/notification_navigation.dart';
+import 'package:oshi_log/features/notifications/domain/entities/notification_navigation.dart';
 
 void main() {
   test('normalizeNotificationType maps legacy aliases', () {

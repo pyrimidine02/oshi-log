@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-07-29
+
+- Renamed the user-visible product brand to `oshi@log`, including Flutter
+  titles, localized app names, native Android/iOS display names, notification
+  fallbacks, account and passport mastheads, sponsor labels, and README copy.
+- Renamed the private Dart package from `girlsbandtabi_app` to `oshi_log` and
+  updated package imports without changing `0.0.2+1`.
+- Preserved Play Store and App Store continuity by keeping Android
+  `applicationId`/namespace, iOS bundle identifiers, signing, Firebase/OAuth
+  configuration, the `girlsbandtabi://` deep link, policy URLs, legacy media
+  buckets, cache keys, and notification channel IDs unchanged.
+- Added a source contract covering both the new brand and the intentionally
+  retained compatibility identifiers.
+
 ## 2026-07-21
 
 - Rebuilt the music archive as a restrained `TRAVEL AUDIO INDEX`: counts appear

@@ -1,11 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-import 'package:girlsbandtabi_app/core/constants/api_constants.dart';
-import 'package:girlsbandtabi_app/core/network/api_client.dart';
-import 'package:girlsbandtabi_app/core/utils/result.dart';
-import 'package:girlsbandtabi_app/features/search/data/datasources/search_remote_data_source.dart';
-import 'package:girlsbandtabi_app/features/search/data/dto/search_item_dto.dart';
+import 'package:oshi_log/core/constants/api_constants.dart';
+import 'package:oshi_log/core/network/api_client.dart';
+import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/features/search/data/datasources/search_remote_data_source.dart';
+import 'package:oshi_log/features/search/data/dto/search_item_dto.dart';
 
 void main() {
   test('sends selected project and unit scope to global search', () async {

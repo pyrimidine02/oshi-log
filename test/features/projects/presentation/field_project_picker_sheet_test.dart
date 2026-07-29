@@ -5,10 +5,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/core/theme/gbt_theme.dart';
-import 'package:girlsbandtabi_app/core/theme/gbt_colors.dart';
-import 'package:girlsbandtabi_app/features/projects/domain/entities/project_entities.dart';
-import 'package:girlsbandtabi_app/features/projects/presentation/widgets/field_project_picker_sheet.dart';
+import 'package:oshi_log/core/theme/gbt_theme.dart';
+import 'package:oshi_log/core/theme/gbt_colors.dart';
+import 'package:oshi_log/features/projects/domain/entities/project_entities.dart';
+import 'package:oshi_log/features/projects/presentation/widgets/field_project_picker_sheet.dart';
 
 import '../../../testing/tolerant_local_file_comparator.dart';
 

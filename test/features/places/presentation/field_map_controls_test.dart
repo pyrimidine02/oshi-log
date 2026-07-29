@@ -3,9 +3,9 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/features/places/application/places_controller.dart';
-import 'package:girlsbandtabi_app/features/places/domain/entities/place_entities.dart';
-import 'package:girlsbandtabi_app/features/places/presentation/widgets/field_map_controls.dart';
+import 'package:oshi_log/features/places/application/places_controller.dart';
+import 'package:oshi_log/features/places/domain/entities/place_entities.dart';
+import 'package:oshi_log/features/places/presentation/widgets/field_map_controls.dart';
 
 void main() {
   testWidgets('map search stays one 48dp pill without extra actions', (

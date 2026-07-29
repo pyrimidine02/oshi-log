@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/features/feed/application/travel_reviews_controller.dart';
-import 'package:girlsbandtabi_app/features/live_events/domain/entities/live_event_entities.dart';
-import 'package:girlsbandtabi_app/features/visits/domain/entities/visit_entities.dart';
+import 'package:oshi_log/features/feed/application/travel_reviews_controller.dart';
+import 'package:oshi_log/features/live_events/domain/entities/live_event_entities.dart';
+import 'package:oshi_log/features/visits/domain/entities/visit_entities.dart';
 
 void main() {
   test('uses only a VERIFIED attendance row as travel-review proof', () {

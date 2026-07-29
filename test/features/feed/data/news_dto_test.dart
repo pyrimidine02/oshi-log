@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/features/feed/data/dto/news_dto.dart';
+import 'package:oshi_log/features/feed/data/dto/news_dto.dart';
 
 void main() {
   test('NewsSummaryDto parses swagger keys', () {

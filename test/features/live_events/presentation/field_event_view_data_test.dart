@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/features/live_events/domain/entities/live_event_entities.dart';
-import 'package:girlsbandtabi_app/features/live_events/presentation/field_events/field_event_view_data.dart';
+import 'package:oshi_log/features/live_events/domain/entities/live_event_entities.dart';
+import 'package:oshi_log/features/live_events/presentation/field_events/field_event_view_data.dart';
 
 void main() {
   final now = DateTime(2026, 7, 15, 12);

@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/core/security/user_access_level.dart';
+import 'package:oshi_log/core/security/user_access_level.dart';
 
 void main() {
   group('UserAccessLevelX.resolve', () {

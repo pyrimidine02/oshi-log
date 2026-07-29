@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/features/calendar/domain/entities/calendar_event.dart';
-import 'package:girlsbandtabi_app/features/calendar/presentation/field_calendar/field_calendar_page.dart';
-import 'package:girlsbandtabi_app/features/calendar/presentation/field_calendar/field_month_grid.dart';
+import 'package:oshi_log/features/calendar/domain/entities/calendar_event.dart';
+import 'package:oshi_log/features/calendar/presentation/field_calendar/field_calendar_page.dart';
+import 'package:oshi_log/features/calendar/presentation/field_calendar/field_month_grid.dart';
 
 void main() {
   testWidgets('FieldMonthGrid keeps empty days tappable at 320dp', (

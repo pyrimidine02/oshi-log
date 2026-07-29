@@ -58,7 +58,7 @@ Option C: DTO를 domain 패키지로 이동 (shared DTO)
 
 ```
 // lib/core/widgets/navigation/gbt_profile_action.dart:12
-import 'package:girlsbandtabi_app/features/settings/application/settings_controller.dart';
+import 'package:oshi_log/features/settings/application/settings_controller.dart';
 ```
 
 core 위젯이 특정 feature의 controller를 직접 참조하고 있습니다. core 패키지는 어떤 feature도 알아서는 안 됩니다.

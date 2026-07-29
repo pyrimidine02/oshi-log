@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/core/theme/gbt_theme.dart';
-import 'package:girlsbandtabi_app/features/music/application/music_controller.dart';
-import 'package:girlsbandtabi_app/features/music/domain/entities/music_entities.dart';
-import 'package:girlsbandtabi_app/features/music/presentation/pages/music_song_detail_page.dart';
+import 'package:oshi_log/core/theme/gbt_theme.dart';
+import 'package:oshi_log/features/music/application/music_controller.dart';
+import 'package:oshi_log/features/music/domain/entities/music_entities.dart';
+import 'package:oshi_log/features/music/presentation/pages/music_song_detail_page.dart';
 
 void main() {
   const projectId = 'project';

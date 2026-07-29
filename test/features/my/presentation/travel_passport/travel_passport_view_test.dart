@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:girlsbandtabi_app/features/calendar/domain/entities/calendar_event.dart';
-import 'package:girlsbandtabi_app/features/fan_level/domain/entities/fan_level.dart';
-import 'package:girlsbandtabi_app/features/my/presentation/travel_passport/passport_sections.dart';
-import 'package:girlsbandtabi_app/features/my/presentation/travel_passport/travel_passport_view.dart';
-import 'package:girlsbandtabi_app/features/my/presentation/travel_passport/travel_passport_view_data.dart';
+import 'package:oshi_log/features/calendar/domain/entities/calendar_event.dart';
+import 'package:oshi_log/features/fan_level/domain/entities/fan_level.dart';
+import 'package:oshi_log/features/my/presentation/travel_passport/passport_sections.dart';
+import 'package:oshi_log/features/my/presentation/travel_passport/travel_passport_view.dart';
+import 'package:oshi_log/features/my/presentation/travel_passport/travel_passport_view_data.dart';
 
 void main() {
   testWidgets('passport section heading reflows and remains a header at 300%', (
@@ -89,7 +89,7 @@ void main() {
       expect(find.text('MY FIELD LOG'), findsNothing);
       expect(find.text('TRAVEL DOCUMENT  /  JP'), findsNothing);
       expect(find.text('Travel passport'), findsOneWidget);
-      expect(find.text('GIRLS BAND TABI · TRAVEL PASSPORT'), findsOneWidget);
+      expect(find.text('OSHI@LOG · TRAVEL PASSPORT'), findsOneWidget);
       final sectionHeadings = find.byType(PassportSectionHeading);
       for (final folio in const ['01', '02', '03']) {
         expect(

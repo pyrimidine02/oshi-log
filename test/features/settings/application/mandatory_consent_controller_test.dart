@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:girlsbandtabi_app/features/settings/application/mandatory_consent_controller.dart';
+import 'package:oshi_log/features/settings/application/mandatory_consent_controller.dart';
 
 void main() {
   group('parseMandatoryConsentStatusPayload', () {

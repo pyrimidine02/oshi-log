@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/features/settings/data/dto/user_access_level_dto.dart';
-import 'package:girlsbandtabi_app/features/settings/data/dto/user_profile_dto.dart';
+import 'package:oshi_log/features/settings/data/dto/user_access_level_dto.dart';
+import 'package:oshi_log/features/settings/data/dto/user_profile_dto.dart';
 
 void main() {
   test('UserProfileDto parses swagger keys', () {

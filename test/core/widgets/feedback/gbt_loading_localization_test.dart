@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:girlsbandtabi_app/core/widgets/feedback/gbt_loading.dart';
+import 'package:oshi_log/core/widgets/feedback/gbt_loading.dart';
 
 void main() {
   group('GBT feedback localization', () {

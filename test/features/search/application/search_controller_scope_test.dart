@@ -1,11 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/core/providers/core_providers.dart';
-import 'package:girlsbandtabi_app/core/utils/result.dart';
-import 'package:girlsbandtabi_app/features/search/application/search_controller.dart';
-import 'package:girlsbandtabi_app/features/search/domain/entities/search_entities.dart';
-import 'package:girlsbandtabi_app/features/search/domain/repositories/search_repository.dart';
+import 'package:oshi_log/core/providers/core_providers.dart';
+import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/features/search/application/search_controller.dart';
+import 'package:oshi_log/features/search/domain/entities/search_entities.dart';
+import 'package:oshi_log/features/search/domain/repositories/search_repository.dart';
 
 void main() {
   test('forwards the active project and unit lens to the repository', () async {

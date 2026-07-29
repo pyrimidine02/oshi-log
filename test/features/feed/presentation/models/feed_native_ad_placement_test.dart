@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:girlsbandtabi_app/features/feed/presentation/models/feed_native_ad_placement.dart';
+import 'package:oshi_log/features/feed/presentation/models/feed_native_ad_placement.dart';
 
 void main() {
   group('FeedNativeAdPlacement', () {

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/core/theme/gbt_colors.dart';
-import 'package:girlsbandtabi_app/core/widgets/common/gbt_icon_chip.dart';
+import 'package:oshi_log/core/theme/gbt_colors.dart';
+import 'package:oshi_log/core/widgets/common/gbt_icon_chip.dart';
 
 void main() {
   testWidgets('GBTIconChip chooses an accessible glyph color', (tester) async {

@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/core/providers/core_providers.dart';
-import 'package:girlsbandtabi_app/features/cheer_guides/application/cheer_guides_controller.dart';
-import 'package:girlsbandtabi_app/features/cheer_guides/domain/entities/cheer_guide.dart';
-import 'package:girlsbandtabi_app/features/cheer_guides/presentation/pages/cheer_guides_page.dart';
+import 'package:oshi_log/core/providers/core_providers.dart';
+import 'package:oshi_log/features/cheer_guides/application/cheer_guides_controller.dart';
+import 'package:oshi_log/features/cheer_guides/domain/entities/cheer_guide.dart';
+import 'package:oshi_log/features/cheer_guides/presentation/pages/cheer_guides_page.dart';
 
 void main() {
   testWidgets(

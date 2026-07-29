@@ -4,12 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-import 'package:girlsbandtabi_app/core/providers/core_providers.dart';
-import 'package:girlsbandtabi_app/core/utils/result.dart';
-import 'package:girlsbandtabi_app/features/feed/application/feed_repository_provider.dart';
-import 'package:girlsbandtabi_app/features/feed/application/news_controller.dart';
-import 'package:girlsbandtabi_app/features/feed/domain/entities/feed_entities.dart';
-import 'package:girlsbandtabi_app/features/feed/domain/repositories/feed_repository.dart';
+import 'package:oshi_log/core/providers/core_providers.dart';
+import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/features/feed/application/feed_repository_provider.dart';
+import 'package:oshi_log/features/feed/application/news_controller.dart';
+import 'package:oshi_log/features/feed/domain/entities/feed_entities.dart';
+import 'package:oshi_log/features/feed/domain/repositories/feed_repository.dart';
 
 class _MockFeedRepository extends Mock implements FeedRepository {}
 

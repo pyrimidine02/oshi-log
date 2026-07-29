@@ -1,9 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/core/providers/core_providers.dart';
-import 'package:girlsbandtabi_app/core/router/app_router.dart';
-import 'package:girlsbandtabi_app/core/security/secure_storage.dart';
+import 'package:oshi_log/core/providers/core_providers.dart';
+import 'package:oshi_log/core/router/app_router.dart';
+import 'package:oshi_log/core/security/secure_storage.dart';
 
 void main() {
   test('fan subject named route keeps generic subject identity', () {

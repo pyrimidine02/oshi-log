@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail_image_network/mocktail_image_network.dart';
 
-import 'package:girlsbandtabi_app/core/widgets/common/gbt_image.dart';
+import 'package:oshi_log/core/widgets/common/gbt_image.dart';
 
 void main() {
   testWidgets('GBTImage renders with semantic label', (tester) async {

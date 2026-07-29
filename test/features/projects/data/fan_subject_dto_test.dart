@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:girlsbandtabi_app/features/projects/data/dto/fan_subject_dto.dart';
+import 'package:oshi_log/features/projects/data/dto/fan_subject_dto.dart';
 
 void main() {
   test('known fan subject kinds preserve their wire contract', () {

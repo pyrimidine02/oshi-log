@@ -37,7 +37,7 @@ void registerRemotePushBackgroundHandler() {
 }
 
 const String _kPushChannelId = 'gbt_notifications_high';
-const String _kPushChannelName = 'GBT Notifications';
+const String _kPushChannelName = 'oshi@log Notifications';
 const String _kPushChannelDescription =
     'Realtime community and system notifications';
 final FlutterLocalNotificationsPlugin _backgroundNotificationsPlugin =
@@ -98,7 +98,7 @@ Future<void> _showBackgroundLocalNotificationIfNeeded(
     return;
   }
 
-  final title = _firstNonEmpty(_resolvePushTitle(message), 'GirlsBandTabi');
+  final title = _firstNonEmpty(_resolvePushTitle(message), 'oshi@log');
   final body = _resolvePushBody(message);
   if (title == null || body == null || body.isEmpty) {
     return;
@@ -800,7 +800,7 @@ class RemotePushService {
       return null;
     }
 
-    final title = _firstNonEmpty(_resolvePushTitle(message), 'GirlsBandTabi');
+    final title = _firstNonEmpty(_resolvePushTitle(message), 'oshi@log');
     final body = _firstNonEmpty(_resolvePushBody(message), '');
     if (title == null || body == null) {
       return null;

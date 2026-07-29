@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/core/widgets/feedback/gbt_empty_state.dart';
+import 'package:oshi_log/core/widgets/feedback/gbt_empty_state.dart';
 
 void main() {
   testWidgets('GBTEmptyState supports the canonical title and subtitle API', (

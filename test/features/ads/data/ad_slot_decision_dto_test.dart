@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:girlsbandtabi_app/features/ads/data/dto/ad_slot_decision_dto.dart';
-import 'package:girlsbandtabi_app/features/ads/domain/entities/ad_slot_entities.dart';
+import 'package:oshi_log/features/ads/data/dto/ad_slot_decision_dto.dart';
+import 'package:oshi_log/features/ads/domain/entities/ad_slot_entities.dart';
 
 void main() {
   group('AdSlotDecisionDto', () {

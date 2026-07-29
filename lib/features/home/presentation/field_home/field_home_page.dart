@@ -282,7 +282,7 @@ class _FieldHomeHeader extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  'Girls Band Tabi',
+                  'oshi@log',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: Theme.of(context).colorScheme.primary,
                     fontWeight: FontWeight.w700,

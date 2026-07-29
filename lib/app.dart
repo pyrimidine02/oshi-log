@@ -144,7 +144,7 @@ class GBTApp extends ConsumerWidget {
     final appLocale = ref.watch(localeProvider);
 
     return MaterialApp.router(
-      title: 'Girls Band Tabi',
+      title: 'oshi@log',
       debugShowCheckedModeBanner: false,
 
       // EN: Theme configuration

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/features/feed/presentation/widgets/post_compose_components.dart';
+import 'package:oshi_log/features/feed/presentation/widgets/post_compose_components.dart';
 
 void main() {
   group('PostComposeDocumentEditor', () {

@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/features/auth/data/dto/token_response.dart';
+import 'package:oshi_log/features/auth/data/dto/token_response.dart';
 
 void main() {
   test('TokenResponse parses expiry fields', () {

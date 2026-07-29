@@ -5,12 +5,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
-import 'package:girlsbandtabi_app/core/router/app_router.dart';
-import 'package:girlsbandtabi_app/core/theme/gbt_colors.dart';
-import 'package:girlsbandtabi_app/core/theme/gbt_theme.dart';
-import 'package:girlsbandtabi_app/features/zukan/application/zukan_controller.dart';
-import 'package:girlsbandtabi_app/features/zukan/domain/entities/zukan_collection.dart';
-import 'package:girlsbandtabi_app/features/zukan/presentation/pages/zukan_detail_page.dart';
+import 'package:oshi_log/core/router/app_router.dart';
+import 'package:oshi_log/core/theme/gbt_colors.dart';
+import 'package:oshi_log/core/theme/gbt_theme.dart';
+import 'package:oshi_log/features/zukan/application/zukan_controller.dart';
+import 'package:oshi_log/features/zukan/domain/entities/zukan_collection.dart';
+import 'package:oshi_log/features/zukan/presentation/pages/zukan_detail_page.dart';
 
 void main() {
   final collection = ZukanCollection(

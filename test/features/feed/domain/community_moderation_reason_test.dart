@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/features/feed/domain/entities/community_moderation.dart';
+import 'package:oshi_log/features/feed/domain/entities/community_moderation.dart';
 
 void main() {
   group('CommunityReportReasonX', () {

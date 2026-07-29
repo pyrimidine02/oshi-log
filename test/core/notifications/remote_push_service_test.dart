@@ -3,14 +3,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:girlsbandtabi_app/core/config/app_config.dart';
-import 'package:girlsbandtabi_app/core/constants/api_constants.dart';
-import 'package:girlsbandtabi_app/core/network/api_client.dart';
-import 'package:girlsbandtabi_app/core/notifications/local_notifications_service.dart';
-import 'package:girlsbandtabi_app/core/notifications/remote_push_service.dart';
-import 'package:girlsbandtabi_app/core/security/secure_storage.dart';
-import 'package:girlsbandtabi_app/core/storage/local_storage.dart';
-import 'package:girlsbandtabi_app/core/utils/result.dart';
+import 'package:oshi_log/core/config/app_config.dart';
+import 'package:oshi_log/core/constants/api_constants.dart';
+import 'package:oshi_log/core/network/api_client.dart';
+import 'package:oshi_log/core/notifications/local_notifications_service.dart';
+import 'package:oshi_log/core/notifications/remote_push_service.dart';
+import 'package:oshi_log/core/security/secure_storage.dart';
+import 'package:oshi_log/core/storage/local_storage.dart';
+import 'package:oshi_log/core/utils/result.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

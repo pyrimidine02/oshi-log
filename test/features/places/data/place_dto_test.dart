@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/features/places/data/dto/place_dto.dart';
+import 'package:oshi_log/features/places/data/dto/place_dto.dart';
 
 void main() {
   test('PlaceSummaryDto parses flexible keys', () {

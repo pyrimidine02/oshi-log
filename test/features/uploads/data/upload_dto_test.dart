@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/features/uploads/data/dto/upload_dto.dart';
+import 'package:oshi_log/features/uploads/data/dto/upload_dto.dart';
 
 void main() {
   test('UploadInfoResponse parses alternate key variants', () {

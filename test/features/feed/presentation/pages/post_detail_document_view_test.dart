@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/core/theme/gbt_theme.dart';
-import 'package:girlsbandtabi_app/features/feed/domain/entities/feed_entities.dart';
-import 'package:girlsbandtabi_app/features/feed/presentation/pages/post_detail_page.dart';
-import 'package:girlsbandtabi_app/features/titles/application/titles_controller.dart';
+import 'package:oshi_log/core/theme/gbt_theme.dart';
+import 'package:oshi_log/features/feed/domain/entities/feed_entities.dart';
+import 'package:oshi_log/features/feed/presentation/pages/post_detail_page.dart';
+import 'package:oshi_log/features/titles/application/titles_controller.dart';
 
 void main() {
   testWidgets('post detail reads as one ordered field-note document', (

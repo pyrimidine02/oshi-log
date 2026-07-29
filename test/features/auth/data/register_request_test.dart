@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/features/auth/data/dto/register_request.dart';
-import 'package:girlsbandtabi_app/features/auth/domain/entities/register_consent.dart';
+import 'package:oshi_log/features/auth/data/dto/register_request.dart';
+import 'package:oshi_log/features/auth/domain/entities/register_consent.dart';
 
 void main() {
   test('RegisterRequest serializes legacy payload when consents are empty', () {

@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/features/verification/data/dto/verification_dto.dart';
+import 'package:oshi_log/features/verification/data/dto/verification_dto.dart';
 
 void main() {
   test('VerificationChallengeDto parses nonce', () {

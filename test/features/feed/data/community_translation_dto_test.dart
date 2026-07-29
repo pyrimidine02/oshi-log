@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/features/feed/data/dto/community_translation_dto.dart';
+import 'package:oshi_log/features/feed/data/dto/community_translation_dto.dart';
 
 void main() {
   test(

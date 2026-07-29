@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/core/theme/gbt_theme.dart';
-import 'package:girlsbandtabi_app/core/widgets/navigation/gbt_search_app_bar.dart';
+import 'package:oshi_log/core/theme/gbt_theme.dart';
+import 'package:oshi_log/core/widgets/navigation/gbt_search_app_bar.dart';
 
 void main() {
   testWidgets('compact search bar stays inside the shared page chrome', (

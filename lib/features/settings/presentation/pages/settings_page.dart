@@ -457,7 +457,7 @@ class SettingsPage extends ConsumerWidget {
               child: Column(
                 children: [
                   Text(
-                    'Girls Band Tabi',
+                    'oshi@log',
                     style: GBTTypography.labelMedium.copyWith(
                       color: isDark
                           ? GBTColors.darkTextTertiary

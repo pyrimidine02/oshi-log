@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/features/calendar/domain/entities/calendar_event.dart';
-import 'package:girlsbandtabi_app/features/calendar/presentation/field_calendar/calendar_view_data.dart';
+import 'package:oshi_log/features/calendar/domain/entities/calendar_event.dart';
+import 'package:oshi_log/features/calendar/presentation/field_calendar/calendar_view_data.dart';
 
 void main() {
   final live = CalendarEvent(

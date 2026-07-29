@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:girlsbandtabi_app/features/live_events/domain/entities/live_event_entities.dart';
+import 'package:oshi_log/features/live_events/domain/entities/live_event_entities.dart';
 
 void main() {
   group('LiveAttendanceHistoryRecord', () {

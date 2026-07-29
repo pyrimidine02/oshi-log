@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/core/theme/gbt_theme.dart';
-import 'package:girlsbandtabi_app/features/feed/domain/entities/feed_entities.dart';
-import 'package:girlsbandtabi_app/features/feed/presentation/pages/news_detail_page.dart';
+import 'package:oshi_log/core/theme/gbt_theme.dart';
+import 'package:oshi_log/features/feed/domain/entities/feed_entities.dart';
+import 'package:oshi_log/features/feed/presentation/pages/news_detail_page.dart';
 
 void main() {
   testWidgets('news article uses a compact document hierarchy', (tester) async {

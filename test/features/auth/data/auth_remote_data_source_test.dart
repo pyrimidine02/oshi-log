@@ -1,14 +1,14 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-import 'package:girlsbandtabi_app/core/constants/api_constants.dart';
-import 'package:girlsbandtabi_app/core/network/api_client.dart';
-import 'package:girlsbandtabi_app/core/utils/result.dart';
-import 'package:girlsbandtabi_app/features/auth/data/datasources/auth_remote_data_source.dart';
-import 'package:girlsbandtabi_app/features/auth/data/dto/account_recovery_password_request.dart';
-import 'package:girlsbandtabi_app/features/auth/data/dto/apple_oauth_request.dart';
-import 'package:girlsbandtabi_app/features/auth/data/dto/google_oauth_request.dart';
-import 'package:girlsbandtabi_app/features/auth/data/dto/token_response.dart';
+import 'package:oshi_log/core/constants/api_constants.dart';
+import 'package:oshi_log/core/network/api_client.dart';
+import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/features/auth/data/datasources/auth_remote_data_source.dart';
+import 'package:oshi_log/features/auth/data/dto/account_recovery_password_request.dart';
+import 'package:oshi_log/features/auth/data/dto/apple_oauth_request.dart';
+import 'package:oshi_log/features/auth/data/dto/google_oauth_request.dart';
+import 'package:oshi_log/features/auth/data/dto/token_response.dart';
 
 void main() {
   late _MockApiClient apiClient;

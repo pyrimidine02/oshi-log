@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/features/projects/data/dto/unit_dto.dart';
+import 'package:oshi_log/features/projects/data/dto/unit_dto.dart';
 
 void main() {
   test('UnitDto parses flexible keys', () {

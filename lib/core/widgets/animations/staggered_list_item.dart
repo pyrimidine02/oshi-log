@@ -3,7 +3,7 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:girlsbandtabi_app/core/theme/gbt_animations.dart';
+import 'package:oshi_log/core/theme/gbt_animations.dart';
 
 /// EN: A widget that applies staggered fade and slide animations to list items.
 /// Useful for creating sequential reveal effects in lists and grids.

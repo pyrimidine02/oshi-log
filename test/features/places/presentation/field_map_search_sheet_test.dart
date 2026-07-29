@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/features/places/domain/entities/place_entities.dart';
-import 'package:girlsbandtabi_app/features/places/domain/entities/place_region_entities.dart';
-import 'package:girlsbandtabi_app/features/places/presentation/pages/places_map_page.dart';
+import 'package:oshi_log/features/places/domain/entities/place_entities.dart';
+import 'package:oshi_log/features/places/domain/entities/place_region_entities.dart';
+import 'package:oshi_log/features/places/presentation/pages/places_map_page.dart';
 
 void main() {
   testWidgets('map search keeps a fixed field and sheet as results change', (

@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/core/constants/api_constants.dart';
-import 'package:girlsbandtabi_app/core/constants/api_v3_endpoints_catalog.dart';
+import 'package:oshi_log/core/constants/api_constants.dart';
+import 'package:oshi_log/core/constants/api_v3_endpoints_catalog.dart';
 
 void main() {
   group('ApiEndpoints contract (v3 api-docs snapshot)', () {

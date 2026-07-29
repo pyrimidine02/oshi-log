@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/core/utils/result.dart';
-import 'package:girlsbandtabi_app/features/projects/application/fan_subjects_controller.dart';
-import 'package:girlsbandtabi_app/features/projects/data/dto/fan_subject_dto.dart';
-import 'package:girlsbandtabi_app/features/projects/domain/entities/fan_subject.dart';
-import 'package:girlsbandtabi_app/features/projects/domain/repositories/fan_subjects_repository.dart';
-import 'package:girlsbandtabi_app/features/projects/presentation/pages/fan_subject_detail_page.dart';
+import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/features/projects/application/fan_subjects_controller.dart';
+import 'package:oshi_log/features/projects/data/dto/fan_subject_dto.dart';
+import 'package:oshi_log/features/projects/domain/entities/fan_subject.dart';
+import 'package:oshi_log/features/projects/domain/repositories/fan_subjects_repository.dart';
+import 'package:oshi_log/features/projects/presentation/pages/fan_subject_detail_page.dart';
 
 void main() {
   const subject = FanSubject(

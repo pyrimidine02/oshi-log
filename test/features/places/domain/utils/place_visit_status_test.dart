@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/features/places/domain/entities/place_entities.dart';
-import 'package:girlsbandtabi_app/features/places/domain/utils/place_visit_status.dart';
+import 'package:oshi_log/features/places/domain/entities/place_entities.dart';
+import 'package:oshi_log/features/places/domain/utils/place_visit_status.dart';
 
 void main() {
   test('applyVisitedPlaceIds returns immutable enriched copies', () {

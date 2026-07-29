@@ -3,18 +3,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:girlsbandtabi_app/core/config/app_config.dart';
-import 'package:girlsbandtabi_app/core/providers/core_providers.dart';
-import 'package:girlsbandtabi_app/core/storage/local_storage.dart';
-import 'package:girlsbandtabi_app/core/utils/result.dart';
-import 'package:girlsbandtabi_app/features/feed/application/post_compose_autosave_controller.dart';
-import 'package:girlsbandtabi_app/features/feed/application/post_compose_draft_store.dart';
-import 'package:girlsbandtabi_app/features/feed/domain/entities/feed_entities.dart';
-import 'package:girlsbandtabi_app/features/feed/presentation/pages/post_create_page.dart';
-import 'package:girlsbandtabi_app/features/feed/presentation/pages/post_edit_page.dart';
-import 'package:girlsbandtabi_app/features/projects/application/projects_controller.dart';
-import 'package:girlsbandtabi_app/features/projects/domain/entities/project_entities.dart';
-import 'package:girlsbandtabi_app/features/projects/domain/repositories/projects_repository.dart';
+import 'package:oshi_log/core/config/app_config.dart';
+import 'package:oshi_log/core/providers/core_providers.dart';
+import 'package:oshi_log/core/storage/local_storage.dart';
+import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/features/feed/application/post_compose_autosave_controller.dart';
+import 'package:oshi_log/features/feed/application/post_compose_draft_store.dart';
+import 'package:oshi_log/features/feed/domain/entities/feed_entities.dart';
+import 'package:oshi_log/features/feed/presentation/pages/post_create_page.dart';
+import 'package:oshi_log/features/feed/presentation/pages/post_edit_page.dart';
+import 'package:oshi_log/features/projects/application/projects_controller.dart';
+import 'package:oshi_log/features/projects/domain/entities/project_entities.dart';
+import 'package:oshi_log/features/projects/domain/repositories/projects_repository.dart';
 
 void main() {
   group('Post compose autosave integration', () {

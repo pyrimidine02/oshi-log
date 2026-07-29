@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/core/theme/gbt_colors.dart';
-import 'package:girlsbandtabi_app/features/music/domain/entities/music_entities.dart';
-import 'package:girlsbandtabi_app/features/music/presentation/widgets/music_catalog_tab.dart';
+import 'package:oshi_log/core/theme/gbt_colors.dart';
+import 'package:oshi_log/features/music/domain/entities/music_entities.dart';
+import 'package:oshi_log/features/music/presentation/widgets/music_catalog_tab.dart';
 
 void main() {
   testWidgets('short music filter keeps a 48dp touch target', (tester) async {

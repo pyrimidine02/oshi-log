@@ -4,14 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:girlsbandtabi_app/core/connectivity/connectivity_service.dart';
-import 'package:girlsbandtabi_app/core/providers/core_providers.dart';
-import 'package:girlsbandtabi_app/core/storage/local_storage.dart';
-import 'package:girlsbandtabi_app/core/utils/result.dart';
-import 'package:girlsbandtabi_app/features/live_events/application/live_events_controller.dart';
-import 'package:girlsbandtabi_app/features/live_events/application/pending_live_attendance_mutation.dart';
-import 'package:girlsbandtabi_app/features/live_events/domain/entities/live_event_entities.dart';
-import 'package:girlsbandtabi_app/features/live_events/domain/repositories/live_events_repository.dart';
+import 'package:oshi_log/core/connectivity/connectivity_service.dart';
+import 'package:oshi_log/core/providers/core_providers.dart';
+import 'package:oshi_log/core/storage/local_storage.dart';
+import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/features/live_events/application/live_events_controller.dart';
+import 'package:oshi_log/features/live_events/application/pending_live_attendance_mutation.dart';
+import 'package:oshi_log/features/live_events/domain/entities/live_event_entities.dart';
+import 'package:oshi_log/features/live_events/domain/repositories/live_events_repository.dart';
 
 void main() {
   group('resolveLiveEventProjectContext', () {

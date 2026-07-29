@@ -2,10 +2,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:girlsbandtabi_app/core/providers/core_providers.dart';
-import 'package:girlsbandtabi_app/core/storage/local_storage.dart';
-import 'package:girlsbandtabi_app/features/feed/application/post_compose_autosave_controller.dart';
-import 'package:girlsbandtabi_app/features/feed/application/post_compose_draft_store.dart';
+import 'package:oshi_log/core/providers/core_providers.dart';
+import 'package:oshi_log/core/storage/local_storage.dart';
+import 'package:oshi_log/features/feed/application/post_compose_autosave_controller.dart';
+import 'package:oshi_log/features/feed/application/post_compose_draft_store.dart';
 
 void main() {
   group('PostComposeAutosaveController', () {

@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:girlsbandtabi_app/core/cache/cache_manager.dart';
-import 'package:girlsbandtabi_app/core/error/failure.dart';
-import 'package:girlsbandtabi_app/core/storage/local_storage.dart';
+import 'package:oshi_log/core/cache/cache_manager.dart';
+import 'package:oshi_log/core/error/failure.dart';
+import 'package:oshi_log/core/storage/local_storage.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

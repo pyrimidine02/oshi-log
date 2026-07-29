@@ -2,7 +2,7 @@
 
 ## Executive summary
 
-본 제안서는 **토스 앱(특히 증권 영역)의 화면 전환·하단 탭 애니메이션·피드(게시판) UI/UX를 “동일하거나 유사하게”** 구현하려는 목표를, **현재 GitHub 저장소 `pyrimidine02/girlsbandtabi_app`의 코드 베이스(Flutter + go_router + Riverpod) 위에서 실현**하기 위한 설계·모션·구현 방안을 통합적으로 제시한다.
+본 제안서는 **토스 앱(특히 증권 영역)의 화면 전환·하단 탭 애니메이션·피드(게시판) UI/UX를 “동일하거나 유사하게”** 구현하려는 목표를, **현재 GitHub 저장소 `pyrimidine02/oshi-log`의 코드 베이스(Flutter + go_router + Riverpod) 위에서 실현**하기 위한 설계·모션·구현 방안을 통합적으로 제시한다.
 
 핵심 결론은 다음과 같다.
 
@@ -19,7 +19,7 @@
 
 ### 현행 기술 스택·구조 요약
 
-저장소 `pyrimidine02/girlsbandtabi_app`는 **Flutter** 기반의 모바일 앱이며, 다음의 아키텍처 특징이 “토스 유사 UX” 구현에 직접적으로 유리하다.
+저장소 `pyrimidine02/oshi-log`는 **Flutter** 기반의 모바일 앱이며, 다음의 아키텍처 특징이 “토스 유사 UX” 구현에 직접적으로 유리하다.
 
 라우팅은 `go_router`의 **StatefulShellRoute.indexedStack**로 구성되어, 하단 탭 간 이동 시 각 탭의 내비게이션 스택/스크롤 상태를 유지하는 “토스류 앱”의 체감에 가깝다(탭별 독립 Navigator). 이는 go_router 문서가 설명하는 “stateful nested navigation” 패턴과 동일한 축이다. citeturn19search0
 

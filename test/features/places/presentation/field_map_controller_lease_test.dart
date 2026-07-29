@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/features/places/presentation/widgets/field_map_controller_lease.dart';
+import 'package:oshi_log/features/places/presentation/widgets/field_map_controller_lease.dart';
 
 void main() {
   test('release clears the reference before disposing the controller', () {

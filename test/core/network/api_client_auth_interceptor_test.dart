@@ -2,10 +2,10 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:girlsbandtabi_app/core/config/app_config.dart';
-import 'package:girlsbandtabi_app/core/constants/api_constants.dart';
-import 'package:girlsbandtabi_app/core/network/api_client.dart';
-import 'package:girlsbandtabi_app/core/security/secure_storage.dart';
+import 'package:oshi_log/core/config/app_config.dart';
+import 'package:oshi_log/core/constants/api_constants.dart';
+import 'package:oshi_log/core/network/api_client.dart';
+import 'package:oshi_log/core/security/secure_storage.dart';
 
 void main() {
   test('account recovery requests bypass stale authentication state', () async {

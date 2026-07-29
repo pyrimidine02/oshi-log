@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:girlsbandtabi_app/core/theme/gbt_spacing.dart';
+import 'package:oshi_log/core/theme/gbt_spacing.dart';
 
 void main() {
   group('GBTSpacing.bottomNavClearanceOf', () {

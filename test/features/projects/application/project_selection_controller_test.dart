@@ -5,12 +5,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:girlsbandtabi_app/core/providers/core_providers.dart';
-import 'package:girlsbandtabi_app/core/storage/local_storage.dart';
-import 'package:girlsbandtabi_app/core/utils/result.dart';
-import 'package:girlsbandtabi_app/features/projects/application/projects_controller.dart';
-import 'package:girlsbandtabi_app/features/projects/domain/entities/project_entities.dart';
-import 'package:girlsbandtabi_app/features/projects/domain/repositories/projects_repository.dart';
+import 'package:oshi_log/core/providers/core_providers.dart';
+import 'package:oshi_log/core/storage/local_storage.dart';
+import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/features/projects/application/projects_controller.dart';
+import 'package:oshi_log/features/projects/domain/entities/project_entities.dart';
+import 'package:oshi_log/features/projects/domain/repositories/projects_repository.dart';
 
 void main() {
   const projects = <Project>[

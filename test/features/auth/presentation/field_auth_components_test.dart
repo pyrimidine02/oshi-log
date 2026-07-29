@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/core/theme/gbt_theme.dart';
-import 'package:girlsbandtabi_app/features/auth/presentation/widgets/field_auth_components.dart';
-import 'package:girlsbandtabi_app/features/auth/presentation/widgets/account_recovery_dialog.dart';
+import 'package:oshi_log/core/theme/gbt_theme.dart';
+import 'package:oshi_log/features/auth/presentation/widgets/field_auth_components.dart';
+import 'package:oshi_log/features/auth/presentation/widgets/account_recovery_dialog.dart';
 
 void main() {
   testWidgets('uses a solid blue field-note account header', (tester) async {

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:girlsbandtabi_app/core/providers/core_providers.dart';
-import 'package:girlsbandtabi_app/features/explore/presentation/field_explore/field_explore_mode_dock.dart';
-import 'package:girlsbandtabi_app/features/explore/presentation/field_explore/field_explore_page.dart';
-import 'package:girlsbandtabi_app/features/places/presentation/pages/places_map_page.dart';
-import 'package:girlsbandtabi_app/features/projects/application/projects_controller.dart';
-import 'package:girlsbandtabi_app/features/settings/application/settings_controller.dart';
-import 'package:girlsbandtabi_app/features/visits/application/visits_controller.dart';
+import 'package:oshi_log/core/providers/core_providers.dart';
+import 'package:oshi_log/features/explore/presentation/field_explore/field_explore_mode_dock.dart';
+import 'package:oshi_log/features/explore/presentation/field_explore/field_explore_page.dart';
+import 'package:oshi_log/features/places/presentation/pages/places_map_page.dart';
+import 'package:oshi_log/features/projects/application/projects_controller.dart';
+import 'package:oshi_log/features/settings/application/settings_controller.dart';
+import 'package:oshi_log/features/visits/application/visits_controller.dart';
 
 void main() {
   testWidgets('FieldExplorePage follows an updated initial tab index', (

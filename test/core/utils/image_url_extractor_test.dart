@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/core/config/app_config.dart';
-import 'package:girlsbandtabi_app/core/utils/image_url_extractor.dart';
+import 'package:oshi_log/core/config/app_config.dart';
+import 'package:oshi_log/core/utils/image_url_extractor.dart';
 
 void main() {
   setUpAll(() {

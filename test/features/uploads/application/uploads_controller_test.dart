@@ -3,12 +3,12 @@ import 'dart:typed_data';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/core/error/failure.dart';
-import 'package:girlsbandtabi_app/core/utils/result.dart';
-import 'package:girlsbandtabi_app/features/uploads/application/uploads_controller.dart';
-import 'package:girlsbandtabi_app/features/uploads/data/dto/upload_dto.dart';
-import 'package:girlsbandtabi_app/features/uploads/domain/entities/upload_entity.dart';
-import 'package:girlsbandtabi_app/features/uploads/domain/repositories/uploads_repository.dart';
+import 'package:oshi_log/core/error/failure.dart';
+import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/features/uploads/application/uploads_controller.dart';
+import 'package:oshi_log/features/uploads/data/dto/upload_dto.dart';
+import 'package:oshi_log/features/uploads/domain/entities/upload_entity.dart';
+import 'package:oshi_log/features/uploads/domain/repositories/uploads_repository.dart';
 
 class _FakeUploadsRepository implements UploadsRepository {
   int directCalls = 0;

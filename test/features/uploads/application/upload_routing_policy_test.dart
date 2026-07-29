@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/features/uploads/application/upload_routing_policy.dart';
+import 'package:oshi_log/features/uploads/application/upload_routing_policy.dart';
 
 void main() {
   group('shouldUseDirectUploadForContentType', () {

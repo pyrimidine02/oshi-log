@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/features/admin_ops/domain/entities/admin_ops_entities.dart';
+import 'package:oshi_log/features/admin_ops/domain/entities/admin_ops_entities.dart';
 
 void main() {
   group('hasAdminOpsAccess', () {

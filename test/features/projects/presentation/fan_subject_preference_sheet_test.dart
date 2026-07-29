@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/core/providers/core_providers.dart';
-import 'package:girlsbandtabi_app/core/theme/gbt_theme.dart';
-import 'package:girlsbandtabi_app/core/utils/result.dart';
-import 'package:girlsbandtabi_app/features/projects/application/fan_subjects_controller.dart';
-import 'package:girlsbandtabi_app/features/projects/domain/entities/fan_subject.dart';
-import 'package:girlsbandtabi_app/features/projects/domain/repositories/fan_subjects_repository.dart';
-import 'package:girlsbandtabi_app/features/projects/presentation/widgets/fan_subject_preference_sheet.dart';
+import 'package:oshi_log/core/providers/core_providers.dart';
+import 'package:oshi_log/core/theme/gbt_theme.dart';
+import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/features/projects/application/fan_subjects_controller.dart';
+import 'package:oshi_log/features/projects/domain/entities/fan_subject.dart';
+import 'package:oshi_log/features/projects/domain/repositories/fan_subjects_repository.dart';
+import 'package:oshi_log/features/projects/presentation/widgets/fan_subject_preference_sheet.dart';
 
 void main() {
   testWidgets('keeps mobile filters scoped to current girls-band subjects', (

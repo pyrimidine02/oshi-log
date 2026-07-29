@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/features/calendar/data/dto/calendar_event_dto.dart';
-import 'package:girlsbandtabi_app/features/calendar/domain/entities/calendar_event.dart';
+import 'package:oshi_log/features/calendar/data/dto/calendar_event_dto.dart';
+import 'package:oshi_log/features/calendar/domain/entities/calendar_event.dart';
 
 void main() {
   group('CalendarEventDto backend contract', () {

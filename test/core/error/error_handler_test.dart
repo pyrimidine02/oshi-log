@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:girlsbandtabi_app/core/error/error_handler.dart';
-import 'package:girlsbandtabi_app/core/error/failure.dart';
+import 'package:oshi_log/core/error/error_handler.dart';
+import 'package:oshi_log/core/error/failure.dart';
 
 void main() {
   group('ErrorHandler.mapDioError', () {

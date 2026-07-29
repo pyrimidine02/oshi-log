@@ -1,12 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-import 'package:girlsbandtabi_app/core/error/failure.dart';
-import 'package:girlsbandtabi_app/core/utils/result.dart';
-import 'package:girlsbandtabi_app/features/calendar/data/datasources/calendar_remote_data_source.dart';
-import 'package:girlsbandtabi_app/features/calendar/data/dto/calendar_event_dto.dart';
-import 'package:girlsbandtabi_app/features/calendar/data/repositories/calendar_repository_impl.dart';
-import 'package:girlsbandtabi_app/features/calendar/domain/entities/calendar_event.dart';
+import 'package:oshi_log/core/error/failure.dart';
+import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/features/calendar/data/datasources/calendar_remote_data_source.dart';
+import 'package:oshi_log/features/calendar/data/dto/calendar_event_dto.dart';
+import 'package:oshi_log/features/calendar/data/repositories/calendar_repository_impl.dart';
+import 'package:oshi_log/features/calendar/domain/entities/calendar_event.dart';
 
 void main() {
   late _MockCalendarRemoteDataSource remoteDataSource;

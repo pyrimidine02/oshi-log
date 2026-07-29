@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/features/feed/presentation/widgets/community_fab_layout.dart';
+import 'package:oshi_log/features/feed/presentation/widgets/community_fab_layout.dart';
 
 void main() {
   group('resolveCommunityFabBottomPadding', () {

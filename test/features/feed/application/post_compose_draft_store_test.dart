@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:girlsbandtabi_app/features/feed/application/post_compose_draft_store.dart';
-import 'package:girlsbandtabi_app/core/storage/local_storage.dart';
+import 'package:oshi_log/features/feed/application/post_compose_draft_store.dart';
+import 'package:oshi_log/core/storage/local_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {

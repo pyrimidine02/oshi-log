@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:girlsbandtabi_app/features/places/domain/entities/place_entities.dart';
-import 'package:girlsbandtabi_app/features/projects/domain/entities/project_entities.dart';
-import 'package:girlsbandtabi_app/features/visits/domain/entities/visit_entities.dart';
-import 'package:girlsbandtabi_app/features/visits/presentation/field_visit_ledger/field_visit_ledger_navigation.dart';
-import 'package:girlsbandtabi_app/features/visits/presentation/field_visit_ledger/field_visit_ledger_view_data.dart';
+import 'package:oshi_log/features/places/domain/entities/place_entities.dart';
+import 'package:oshi_log/features/projects/domain/entities/project_entities.dart';
+import 'package:oshi_log/features/visits/domain/entities/visit_entities.dart';
+import 'package:oshi_log/features/visits/presentation/field_visit_ledger/field_visit_ledger_navigation.dart';
+import 'package:oshi_log/features/visits/presentation/field_visit_ledger/field_visit_ledger_view_data.dart';
 
 void main() {
   test('selects the visit project before opening detail', () async {

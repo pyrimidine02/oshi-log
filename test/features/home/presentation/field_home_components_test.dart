@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/features/home/presentation/field_home/widgets/field_home_components.dart';
+import 'package:oshi_log/features/home/presentation/field_home/widgets/field_home_components.dart';
 
 void main() {
   testWidgets('FieldSectionHeader keeps one clear localized heading', (

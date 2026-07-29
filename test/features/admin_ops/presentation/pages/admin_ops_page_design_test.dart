@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/core/theme/gbt_theme.dart';
-import 'package:girlsbandtabi_app/features/admin_ops/domain/entities/admin_ops_entities.dart';
-import 'package:girlsbandtabi_app/features/admin_ops/presentation/pages/admin_ops_page.dart';
+import 'package:oshi_log/core/theme/gbt_theme.dart';
+import 'package:oshi_log/features/admin_ops/domain/entities/admin_ops_entities.dart';
+import 'package:oshi_log/features/admin_ops/presentation/pages/admin_ops_page.dart';
 
 void main() {
   testWidgets('operations navigation stays scrollable with 48dp targets', (

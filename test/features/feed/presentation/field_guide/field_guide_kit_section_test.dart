@@ -3,7 +3,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/features/feed/presentation/field_guide/sections/field_guide_kit_section.dart';
+import 'package:oshi_log/features/feed/presentation/field_guide/sections/field_guide_kit_section.dart';
 
 void main() {
   Widget buildSubject({TextScaler textScaler = TextScaler.noScaling}) {

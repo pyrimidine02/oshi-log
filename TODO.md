@@ -1,5 +1,16 @@
 # TODO
 
+- Consider renaming internal `GBT*`/`gbt_*` design-system symbols in a separate
+  mechanical refactor after current map and router work is committed
+  (2026-07-29):
+  - These identifiers are not user-visible and do not affect the completed
+    `oshi@log` product rename.
+  - Do not rename `gbt_notifications_high`; it is a persistent Android
+    notification channel ID whose replacement would reset user settings.
+  - Removal criteria: no overlapping dirty files, IDE-assisted symbol rename,
+    zero old imports, full analysis/test/build pass, and explicit approval for
+    the large source-only diff.
+
 - Complete an automated iOS accessibility-tree audit for the redesigned map,
   Explore transitions, and information roots when `idb` is available
   (2026-07-21):

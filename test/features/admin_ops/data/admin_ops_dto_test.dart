@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/features/admin_ops/data/dto/admin_ops_dto.dart';
+import 'package:oshi_log/features/admin_ops/data/dto/admin_ops_dto.dart';
 
 void main() {
   group('AdminDashboardDto', () {

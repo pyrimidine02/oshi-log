@@ -5,18 +5,18 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:girlsbandtabi_app/core/error/failure.dart';
-import 'package:girlsbandtabi_app/core/providers/core_providers.dart';
-import 'package:girlsbandtabi_app/core/security/secure_storage.dart';
-import 'package:girlsbandtabi_app/core/storage/local_storage.dart';
-import 'package:girlsbandtabi_app/core/utils/result.dart';
-import 'package:girlsbandtabi_app/features/settings/application/settings_controller.dart';
-import 'package:girlsbandtabi_app/features/settings/domain/entities/account_tools.dart';
-import 'package:girlsbandtabi_app/features/settings/domain/entities/consent_history.dart';
-import 'package:girlsbandtabi_app/features/settings/domain/entities/notification_settings.dart';
-import 'package:girlsbandtabi_app/features/settings/domain/entities/privacy_rights.dart';
-import 'package:girlsbandtabi_app/features/settings/domain/entities/user_profile.dart';
-import 'package:girlsbandtabi_app/features/settings/domain/repositories/settings_repository.dart';
+import 'package:oshi_log/core/error/failure.dart';
+import 'package:oshi_log/core/providers/core_providers.dart';
+import 'package:oshi_log/core/security/secure_storage.dart';
+import 'package:oshi_log/core/storage/local_storage.dart';
+import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/features/settings/application/settings_controller.dart';
+import 'package:oshi_log/features/settings/domain/entities/account_tools.dart';
+import 'package:oshi_log/features/settings/domain/entities/consent_history.dart';
+import 'package:oshi_log/features/settings/domain/entities/notification_settings.dart';
+import 'package:oshi_log/features/settings/domain/entities/privacy_rights.dart';
+import 'package:oshi_log/features/settings/domain/entities/user_profile.dart';
+import 'package:oshi_log/features/settings/domain/repositories/settings_repository.dart';
 
 void main() {
   group('UserProfileController', () {

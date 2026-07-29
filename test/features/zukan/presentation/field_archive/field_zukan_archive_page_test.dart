@@ -7,18 +7,18 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:girlsbandtabi_app/core/providers/core_providers.dart';
-import 'package:girlsbandtabi_app/core/router/app_router.dart';
-import 'package:girlsbandtabi_app/core/storage/local_storage.dart';
-import 'package:girlsbandtabi_app/core/theme/gbt_colors.dart';
-import 'package:girlsbandtabi_app/core/theme/gbt_theme.dart';
-import 'package:girlsbandtabi_app/core/utils/result.dart';
-import 'package:girlsbandtabi_app/features/projects/application/projects_controller.dart';
-import 'package:girlsbandtabi_app/features/projects/domain/entities/project_entities.dart';
-import 'package:girlsbandtabi_app/features/projects/domain/repositories/projects_repository.dart';
-import 'package:girlsbandtabi_app/features/zukan/application/zukan_controller.dart';
-import 'package:girlsbandtabi_app/features/zukan/domain/entities/zukan_collection.dart';
-import 'package:girlsbandtabi_app/features/zukan/presentation/field_archive/field_zukan_archive_page.dart';
+import 'package:oshi_log/core/providers/core_providers.dart';
+import 'package:oshi_log/core/router/app_router.dart';
+import 'package:oshi_log/core/storage/local_storage.dart';
+import 'package:oshi_log/core/theme/gbt_colors.dart';
+import 'package:oshi_log/core/theme/gbt_theme.dart';
+import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/features/projects/application/projects_controller.dart';
+import 'package:oshi_log/features/projects/domain/entities/project_entities.dart';
+import 'package:oshi_log/features/projects/domain/repositories/projects_repository.dart';
+import 'package:oshi_log/features/zukan/application/zukan_controller.dart';
+import 'package:oshi_log/features/zukan/domain/entities/zukan_collection.dart';
+import 'package:oshi_log/features/zukan/presentation/field_archive/field_zukan_archive_page.dart';
 
 void main() {
   const collections = [

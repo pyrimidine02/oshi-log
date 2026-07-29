@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/core/theme/gbt_theme.dart';
-import 'package:girlsbandtabi_app/features/feed/presentation/pages/member_detail_page.dart';
-import 'package:girlsbandtabi_app/features/projects/domain/entities/project_entities.dart';
+import 'package:oshi_log/core/theme/gbt_theme.dart';
+import 'package:oshi_log/features/feed/presentation/pages/member_detail_page.dart';
+import 'package:oshi_log/features/projects/domain/entities/project_entities.dart';
 
 void main() {
   testWidgets('member dossier uses indexed borderless record sections', (

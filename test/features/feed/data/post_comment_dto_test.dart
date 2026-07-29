@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/features/feed/data/dto/post_comment_dto.dart';
+import 'package:oshi_log/features/feed/data/dto/post_comment_dto.dart';
 
 void main() {
   test('PostCreateRequestDto sends v3 required fields', () {

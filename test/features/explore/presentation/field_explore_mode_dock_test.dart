@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/core/theme/gbt_theme.dart';
-import 'package:girlsbandtabi_app/features/explore/presentation/field_explore/field_explore_mode_dock.dart';
+import 'package:oshi_log/core/theme/gbt_theme.dart';
+import 'package:oshi_log/features/explore/presentation/field_explore/field_explore_mode_dock.dart';
 
 void main() {
   testWidgets('bottom Explore bar exposes all destinations and changes mode', (

@@ -120,7 +120,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('Girls Band Tabi'),
+        title: const Text('oshi@log'),
         titleTextStyle: appBarTitleStyle,
         backgroundColor: appBarBgColor,
         elevation: 0,
@@ -706,9 +706,9 @@ class _HomeSponsoredSlot extends StatelessWidget {
       fallback: SponsoredFallbackContent(
         badgeLabel: context.l10n(ko: '광고', en: 'AD', ja: '広告'),
         sponsorLabel: context.l10n(
-          ko: 'GirlsBandTabi 추천',
-          en: 'GirlsBandTabi Sponsored',
-          ja: 'GirlsBandTabi スポンサー',
+          ko: 'oshi@log 추천',
+          en: 'oshi@log Sponsored',
+          ja: 'oshi@log スポンサー',
         ),
         title: context.l10n(
           ko: '성지 방문 전, 장소 태그와 동선을 먼저 확인해보세요',

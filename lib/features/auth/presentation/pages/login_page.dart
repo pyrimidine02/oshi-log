@@ -103,7 +103,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 const SizedBox(height: GBTSpacing.xxxl),
 
                 FieldAuthHeader(
-                  eyebrow: 'GIRLS BAND TABI · ACCOUNT',
+                  eyebrow: 'OSHI@LOG · ACCOUNT',
                   title: context.l10n(
                     ko: '여정을 이어가세요',
                     en: 'Continue your journey',

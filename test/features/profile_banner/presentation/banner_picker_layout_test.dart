@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/features/profile_banner/presentation/banner_picker_layout.dart';
+import 'package:oshi_log/features/profile_banner/presentation/banner_picker_layout.dart';
 
 void main() {
   group('resolveBannerPickerLayout', () {

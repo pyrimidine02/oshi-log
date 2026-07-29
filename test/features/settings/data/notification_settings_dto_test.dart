@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/features/settings/data/dto/notification_settings_dto.dart';
+import 'package:oshi_log/features/settings/data/dto/notification_settings_dto.dart';
 
 void main() {
   test(

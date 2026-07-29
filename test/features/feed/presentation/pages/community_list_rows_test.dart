@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:girlsbandtabi_app/core/theme/gbt_theme.dart';
-import 'package:girlsbandtabi_app/features/feed/application/local_post_bookmarks_controller.dart';
-import 'package:girlsbandtabi_app/features/feed/domain/entities/community_moderation.dart';
-import 'package:girlsbandtabi_app/features/feed/presentation/pages/post_bookmarks_page.dart';
-import 'package:girlsbandtabi_app/features/feed/presentation/pages/user_connections_page.dart';
+import 'package:oshi_log/core/theme/gbt_theme.dart';
+import 'package:oshi_log/features/feed/application/local_post_bookmarks_controller.dart';
+import 'package:oshi_log/features/feed/domain/entities/community_moderation.dart';
+import 'package:oshi_log/features/feed/presentation/pages/post_bookmarks_page.dart';
+import 'package:oshi_log/features/feed/presentation/pages/user_connections_page.dart';
 
 void main() {
   testWidgets('connection row remains readable without a duplicate view CTA', (
