@@ -4,6 +4,24 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
 IOS_PLIST_PATH="$ROOT_DIR/ios/Runner/GoogleService-Info.plist"
 
+log() {
+  printf '[ci_post_clone] %s\n' "$1"
+}
+
+run_with_retry() {
+  local description="$1"
+  shift
+
+  log "Running $description"
+  if "$@"; then
+    return 0
+  fi
+
+  log "$description failed; retrying once in 5 seconds"
+  sleep 5
+  "$@"
+}
+
 decode_base64_to_file() {
   local encoded="$1"
   local output="$2"
@@ -118,8 +136,15 @@ EOF
   exit 1
 }
 
-create_ios_google_service_info_plist
+main() {
+  create_ios_google_service_info_plist
+  run_with_retry "flutter pub get" flutter pub get
+  (
+    cd "$ROOT_DIR/ios"
+    run_with_retry "pod install --repo-update" pod install --repo-update
+  )
+}
 
-flutter pub get
-cd ios
-pod install --repo-update
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  main "$@"
+fi

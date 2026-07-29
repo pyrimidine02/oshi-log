@@ -13,6 +13,9 @@
   buckets, cache keys, and notification channel IDs unchanged.
 - Added a source contract covering both the new brand and the intentionally
   retained compatibility identifiers.
+- Stabilized Xcode Cloud bootstrap by removing a dangling Claude worktree
+  gitlink and retrying transient Flutter/CocoaPods dependency setup once with
+  explicit step logging.
 
 ## 2026-07-21
 

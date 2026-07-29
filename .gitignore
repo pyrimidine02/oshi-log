@@ -51,6 +51,7 @@ ios/Runner/GoogleService-Info.plist
 # Claude Code local settings
 .claude/settings.local.json
 .claude/scheduled_tasks.lock
+.claude/worktrees/
 
 # Local browser automation artifacts (may contain credentials)
 .playwright-mcp/
