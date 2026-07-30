@@ -1,8 +1,27 @@
 # Changelog
 
+## 2026-07-30
+
+- Capitalized the user-visible brand to `Oshi@log` across Flutter titles,
+  localized app names, native Android/iOS display names, notification
+  fallbacks, sponsor labels, and docs. Machine identifiers, the `oshi_log`
+  package name, and the all-caps `OSHI@LOG` eyebrow labels are unchanged.
+- Fixed the duplicated signup consent: registration now awaits the server
+  policy list and records consent against the versions the server currently
+  requires, instead of silently falling back to bundled versions that made the
+  mandatory-consent gate re-ask right after signup. `legalPoliciesProvider`
+  now fails instead of substituting bundled constants, and signup is blocked
+  with an explanatory message when the latest terms cannot be loaded.
+- Settings and the verification sheet now show server policy versions through
+  `resolveLegalPolicy` instead of bundled constants.
+- Location-collection consent is asked once: after the first agreement the
+  verification sheet starts verification directly with no consent step.
+  Settings shows the consent date, allows withdrawing it, and records the
+  withdrawal timestamp in an append-only local log.
+
 ## 2026-07-29
 
-- Renamed the user-visible product brand to `oshi@log`, including Flutter
+- Renamed the user-visible product brand to `Oshi@log`, including Flutter
   titles, localized app names, native Android/iOS display names, notification
   fallbacks, account and passport mastheads, sponsor labels, and README copy.
 - Renamed the private Dart package from `girlsbandtabi_app` to `oshi_log` and

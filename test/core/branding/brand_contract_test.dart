@@ -3,12 +3,12 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
-/// EN: Source contract for the oshi@log rename — user-visible strings must be
+/// EN: Source contract for the Oshi@log rename — user-visible strings must be
 ///     rebranded while machine identifiers stay untouched for compatibility.
-/// KO: oshi@log 리네임 소스 계약 — 사용자에게 보이는 문자열은 리브랜딩하되
+/// KO: Oshi@log 리네임 소스 계약 — 사용자에게 보이는 문자열은 리브랜딩하되
 ///     기계 식별자는 호환성을 위해 그대로 유지해야 한다.
 void main() {
-  const displayName = 'oshi@log';
+  const displayName = 'Oshi@log';
 
   /// EN: Legacy branding literals that must disappear from presentation source.
   /// KO: 프레젠테이션 소스에서 사라져야 하는 레거시 브랜딩 리터럴.
@@ -36,21 +36,21 @@ void main() {
       );
     });
 
-    test('English and Korean ARB appTitle are oshi@log', () {
+    test('English and Korean ARB appTitle are Oshi@log', () {
       for (final arb in const ['l10n/app_en.arb', 'l10n/app_ko.arb']) {
         final decoded = jsonDecode(read(arb)) as Map<String, dynamic>;
         expect(decoded['appTitle'], displayName, reason: '$arb appTitle');
       }
     });
 
-    test('Android android:label is oshi@log', () {
+    test('Android android:label is Oshi@log', () {
       expect(
         read('android/app/src/main/AndroidManifest.xml'),
         matches(RegExp('android:label\\s*=\\s*"$displayName"')),
       );
     });
 
-    test('iOS display and bundle names are oshi@log', () {
+    test('iOS display and bundle names are Oshi@log', () {
       final plist = read('ios/Runner/Info.plist');
       for (final key in const ['CFBundleDisplayName', 'CFBundleName']) {
         expect(

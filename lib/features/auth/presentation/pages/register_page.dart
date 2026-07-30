@@ -434,19 +434,32 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       return;
     }
 
-    final consentConfirmed = await _showConsentConfirmDialog();
+    // EN: Consent must be recorded against the versions the server currently
+    //     requires. Submitting a bundled fallback version makes the server ask
+    //     for the same consents again right after signup.
+    // KO: 동의는 서버가 현재 요구하는 버전으로 기록해야 합니다. 내장 폴백
+    //     버전으로 제출하면 가입 직후 서버가 같은 동의를 다시 요구합니다.
+    final policies = await _loadLatestPolicies();
+    if (!mounted) return;
+    if (policies == null) {
+      _showPolicyUnavailableMessage();
+      return;
+    }
+
+    final consentConfirmed = await _showConsentConfirmDialog(policies);
     if (!consentConfirmed || !mounted) return;
 
+    final consents = _buildRegisterConsents(policies);
     final controller = ref.read(authControllerProvider.notifier);
     final result = await controller.register(
       username: _emailController.text.trim(),
       password: _passwordController.text,
       nickname: _nicknameController.text.trim(),
-      consents: _buildRegisterConsents(),
+      consents: consents,
     );
 
     if (result is Success<RegisterResult> && mounted) {
-      await _persistConsentHistory();
+      await _persistConsentHistory(consents);
       if (!mounted) return;
       if (result.data.verificationRequired) {
         final pendingEmail =
@@ -464,10 +477,38 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     }
   }
 
-  Future<void> _persistConsentHistory() async {
+  /// EN: Loads the policy set the server currently requires.
+  ///     Returns null when it cannot be fetched — signup must not proceed
+  ///     with an unknown consent version.
+  /// KO: 서버가 현재 요구하는 정책 세트를 불러옵니다.
+  ///     조회 실패 시 null을 반환합니다 — 알 수 없는 동의 버전으로는
+  ///     가입을 진행하지 않아야 합니다.
+  Future<List<LegalPolicyInfo>?> _loadLatestPolicies() async {
+    try {
+      return await ref.read(legalPoliciesProvider.future);
+    } on Object {
+      return null;
+    }
+  }
+
+  void _showPolicyUnavailableMessage() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          context.l10n(
+            ko: '최신 약관 정보를 불러올 수 없습니다. 네트워크를 확인한 뒤 다시 시도해주세요.',
+            en: 'Could not load the latest terms. Check your network and retry.',
+            ja: '最新の規約情報を取得できません。ネットワークを確認して再試行してください。',
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _persistConsentHistory(List<RegisterConsent> consents) async {
     try {
       final storage = await ref.read(localStorageProvider.future);
-      final consentRecords = _buildRegisterConsents()
+      final consentRecords = consents
           .map(
             (consent) => {
               'type': consent.type,
@@ -484,19 +525,11 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     }
   }
 
-  List<RegisterConsent> _buildRegisterConsents() {
+  List<RegisterConsent> _buildRegisterConsents(List<LegalPolicyInfo> policies) {
     final now = DateTime.now();
-    // EN: Use server-fetched policy versions when available; fall back to constants.
-    // KO: 서버에서 가져온 정책 버전을 우선 사용하며, 없으면 상수로 폴백합니다.
-    final fetchedPolicies = ref.read(legalPoliciesProvider).valueOrNull;
 
     String versionFor(LegalPolicyType type) {
-      if (fetchedPolicies != null) {
-        for (final p in fetchedPolicies) {
-          if (p.type == type) return p.version;
-        }
-      }
-      return LegalPolicyConstants.byType(type).version;
+      return resolveLegalPolicy(policies, type).version;
     }
 
     final termsVersion = versionFor(LegalPolicyType.termsOfService);
@@ -573,11 +606,14 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     );
   }
 
-  Future<bool> _showConsentConfirmDialog() {
+  Future<bool> _showConsentConfirmDialog(List<LegalPolicyInfo> policies) {
     final now = DateTime.now().toLocal();
-    final terms = LegalPolicyConstants.byType(LegalPolicyType.termsOfService);
-    final privacy = LegalPolicyConstants.byType(LegalPolicyType.privacyPolicy);
-    final location = LegalPolicyConstants.byType(LegalPolicyType.locationTerms);
+    final terms = resolveLegalPolicy(policies, LegalPolicyType.termsOfService);
+    final privacy = resolveLegalPolicy(policies, LegalPolicyType.privacyPolicy);
+    final location = resolveLegalPolicy(
+      policies,
+      LegalPolicyType.locationTerms,
+    );
     Widget buildConfirmBody(BuildContext buildContext) {
       return Column(
         mainAxisSize: MainAxisSize.min,

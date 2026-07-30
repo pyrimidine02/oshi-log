@@ -144,7 +144,7 @@ class GBTApp extends ConsumerWidget {
     final appLocale = ref.watch(localeProvider);
 
     return MaterialApp.router(
-      title: 'oshi@log',
+      title: 'Oshi@log',
       debugShowCheckedModeBanner: false,
 
       // EN: Theme configuration

@@ -2,12 +2,16 @@
 /// KO: 인증 바텀시트 위젯.
 library;
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/accessibility/a11y_wrapper.dart';
 import '../../../../core/constants/legal_policy_constants.dart';
 import '../../../../core/error/failure.dart';
+import '../../../../core/location/location_notice_consent.dart';
+import '../../../../core/providers/core_providers.dart';
 import '../../../../core/theme/theme.dart';
 import '../../../../core/utils/result.dart';
 import '../../../../core/widgets/common/gbt_stamp_badge.dart';
@@ -36,10 +40,47 @@ class VerificationSheet extends ConsumerStatefulWidget {
 class _VerificationSheetState extends ConsumerState<VerificationSheet> {
   bool _agreedLocationNotice = false;
 
+  // EN: True once the user has agreed to the location notice before. The
+  //     notice then stays visible as information without asking again.
+  // KO: 사용자가 이전에 위치 고지에 동의한 경우 true입니다. 이후에는 고지를
+  //     안내용으로만 표시하고 다시 동의를 요구하지 않습니다.
+  bool _acknowledgedBefore = false;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_loadNoticeAcknowledgement());
+  }
+
+  Future<void> _loadNoticeAcknowledgement() async {
+    final consent = await ref.read(locationNoticeConsentProvider.future);
+    if (!mounted || !consent.isAgreed) return;
+    setState(() {
+      _acknowledgedBefore = true;
+      _agreedLocationNotice = true;
+    });
+  }
+
+  Future<void> _persistNoticeAcknowledgement() async {
+    try {
+      final store = await ref.read(locationNoticeConsentStoreProvider.future);
+      await store.agree(DateTime.now());
+      ref.invalidate(locationNoticeConsentProvider);
+      if (!mounted) return;
+      setState(() => _acknowledgedBefore = true);
+    } on Exception catch (_) {
+      // EN: A failed write only means the notice is shown again next time.
+      // KO: 저장 실패는 다음 번에 고지를 다시 표시하는 것 외에 영향이 없습니다.
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(verificationControllerProvider);
-    final locationTerms = LegalPolicyConstants.byType(
+    // EN: Location terms version comes from the server policy list.
+    // KO: 위치정보 이용약관 버전은 서버 정책 목록에서 가져옵니다.
+    final locationTerms = resolveLegalPolicy(
+      ref.watch(legalPoliciesProvider).valueOrNull,
       LegalPolicyType.locationTerms,
     );
 
@@ -76,13 +117,18 @@ class _VerificationSheetState extends ConsumerState<VerificationSheet> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: GBTSpacing.md),
-          _LocationNoticeCard(
-            agreed: _agreedLocationNotice,
-            versionLabel: locationTerms.version,
-            onChanged: (value) {
-              setState(() => _agreedLocationNotice = value);
-            },
-          ),
+          // EN: Shown only until the notice is agreed once; afterwards
+          //     verification starts directly with no consent step.
+          // KO: 고지에 1회 동의할 때까지만 표시하며, 이후에는 동의 단계 없이
+          //     바로 인증을 시작합니다.
+          if (!_acknowledgedBefore)
+            _LocationNoticeCard(
+              agreed: _agreedLocationNotice,
+              versionLabel: locationTerms.version,
+              onChanged: (value) {
+                setState(() => _agreedLocationNotice = value);
+              },
+            ),
           const SizedBox(height: GBTSpacing.lg),
           state.when(
             loading: () => const GBTLoading(message: '인증 처리 중...'),
@@ -209,6 +255,11 @@ class _VerificationSheetState extends ConsumerState<VerificationSheet> {
     if (!_agreedLocationNotice) {
       _showConsentRequired();
       return;
+    }
+    // EN: Remember the first agreement so later verifications never re-ask.
+    // KO: 첫 동의를 저장해 이후 인증에서는 다시 동의를 요구하지 않습니다.
+    if (!_acknowledgedBefore) {
+      await _persistNoticeAcknowledgement();
     }
     ref.read(verificationControllerProvider.notifier).reset();
     await widget.onVerify();

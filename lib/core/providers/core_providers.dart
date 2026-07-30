@@ -13,6 +13,7 @@ import '../logging/app_logger.dart';
 import '../connectivity/connectivity_service.dart';
 import '../cache/cache_manager.dart';
 import '../constants/legal_policy_constants.dart';
+import '../error/failure.dart';
 import '../network/api_client.dart';
 import '../analytics/analytics_service.dart';
 import '../location/location_service.dart';
@@ -402,11 +403,15 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
 // ========================================
 
 /// EN: Fetches the latest legal policy list from the public server endpoint.
-///     Falls back to [LegalPolicyConstants.policies] on any network error
-///     so that registration remains usable when the server is unreachable.
+///     Fails instead of falling back to bundled constants: a consent recorded
+///     against a stale local version makes the server demand re-consent right
+///     after signup. Display surfaces may still fall back through
+///     [resolveLegalPolicy]; consent submission must await this provider.
 /// KO: 공개 서버 엔드포인트에서 최신 법률 정책 목록을 가져옵니다.
-///     네트워크 오류 시 [LegalPolicyConstants.policies]로 폴백하여
-///     서버 불가 시에도 회원가입 화면이 정상 동작합니다.
+///     내장 상수로 폴백하지 않고 실패합니다 — 오래된 로컬 버전으로 동의를
+///     기록하면 가입 직후 서버가 재동의를 요구하기 때문입니다. 화면 표시는
+///     [resolveLegalPolicy]로 폴백할 수 있지만, 동의 제출은 이 프로바이더를
+///     반드시 await 해야 합니다.
 final legalPoliciesProvider = FutureProvider<List<LegalPolicyInfo>>((
   ref,
 ) async {
@@ -424,7 +429,10 @@ final legalPoliciesProvider = FutureProvider<List<LegalPolicyInfo>>((
     }.every((t) => parsed.any((p) => p.type == t));
     if (hasAll) return parsed;
   }
-  return LegalPolicyConstants.policies;
+  throw const ServerFailure(
+    'Legal policies unavailable',
+    code: 'LEGAL_POLICIES_UNAVAILABLE',
+  );
 });
 
 /// EN: Auth state notifier provider

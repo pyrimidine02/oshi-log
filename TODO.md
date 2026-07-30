@@ -1,10 +1,20 @@
 # TODO
 
+- Move the location-notice consent record to the server when a per-device
+  consent endpoint exists (2026-07-30):
+  - `location_notice_consent_log` is device-local, so the agreed and withdrawn
+    dates shown in settings do not follow the account to another device.
+  - Bundled `LegalPolicyConstants.policies` stays only as a display fallback;
+    consent submission already requires the server version.
+  - Removal criteria: server exposes location-notice consent read/write,
+    settings and the verification sheet read it, the local log is migrated once
+    and then deleted.
+
 - Consider renaming internal `GBT*`/`gbt_*` design-system symbols in a separate
   mechanical refactor after current map and router work is committed
   (2026-07-29):
   - These identifiers are not user-visible and do not affect the completed
-    `oshi@log` product rename.
+    `Oshi@log` product rename.
   - Do not rename `gbt_notifications_high`; it is a persistent Android
     notification channel ID whose replacement would reset user settings.
   - Removal criteria: no overlapping dirty files, IDE-assisted symbol rename,

@@ -21,6 +21,12 @@ class LocalStorageKeys {
   static const String notificationDeviceIdLegacy = 'notifications_device_id';
   static const String notificationPushToken = 'notification_push_token';
   static const String userConsents = 'user_consents';
+  // EN: Append-only log of location-notice consent actions (agree / revoke)
+  //     with timestamps, so settings can show when consent was given or
+  //     withdrawn.
+  // KO: 위치 수집 고지 동의/철회 이력을 시각과 함께 append-only로 기록합니다.
+  //     설정 화면에서 동의일과 철회일을 표시하기 위해 사용합니다.
+  static const String locationNoticeConsentLog = 'location_notice_consent_log';
   static const String autoTranslationEnabled = 'auto_translation_enabled';
   static const String privacyRequestHistory = 'privacy_request_history';
 

@@ -45,11 +45,22 @@ class LocationService {
   ///     location is detected, and queues [TelemetryEventTypes.gpsAccuracyAnomaly]
   ///     when accuracy ≤ 0.
   ///     [authToken] is forwarded to the telemetry service for security events.
+  ///     When [requestPermission] is false, never triggers the OS permission
+  ///     dialog — throws [LocationFailure] instead if permission is missing.
+  ///     Passive callers (e.g. screen-entry auto-fetch) must pass false so the
+  ///     system prompt only appears after an explicit user action.
   /// KO: 현재 위치를 조회하거나 [LocationFailure]를 발생시킵니다.
   ///     모의 위치 감지 시 [TelemetryEventTypes.gpsMockDetected]를 즉시 전송하고,
   ///     정확도 ≤ 0이면 [TelemetryEventTypes.gpsAccuracyAnomaly]를 큐에 추가합니다.
   ///     [authToken]은 보안 이벤트 전송 시 텔레메트리 서비스로 전달됩니다.
-  Future<LocationSnapshot> getCurrentLocation({String? authToken}) async {
+  ///     [requestPermission]이 false면 OS 권한 팝업을 절대 띄우지 않습니다 —
+  ///     권한이 없으면 [LocationFailure]를 던집니다. 화면 진입 시 자동 조회 같은
+  ///     수동적 호출은 false를 전달해 사용자의 명시적 행동 이후에만
+  ///     시스템 권한 요청이 노출되도록 해야 합니다.
+  Future<LocationSnapshot> getCurrentLocation({
+    String? authToken,
+    bool requestPermission = true,
+  }) async {
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       throw const LocationFailure(
@@ -59,7 +70,7 @@ class LocationService {
     }
 
     var permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
+    if (permission == LocationPermission.denied && requestPermission) {
       permission = await Geolocator.requestPermission();
     }
 

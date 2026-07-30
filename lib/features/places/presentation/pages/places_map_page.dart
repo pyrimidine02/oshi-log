@@ -106,6 +106,14 @@ class _PlacesMapPageState extends ConsumerState<PlacesMapPage> {
   // KO: 초기화 시 가져온 사용자 현재 위치.
   _MapTarget? _userLocation;
 
+  // EN: Whether OS location permission is confirmed granted. Gates the map's
+  //     myLocationEnabled flag — apple_maps_flutter auto-requests permission
+  //     natively when that flag is set, which must not happen before consent.
+  // KO: OS 위치 권한이 허용 확정된 상태인지 여부. 지도의 myLocationEnabled를
+  //     이 값으로 게이트합니다 — apple_maps_flutter는 해당 플래그 설정 시
+  //     네이티브에서 권한을 자동 요청하므로 동의 전에 켜지면 안 됩니다.
+  bool _hasLocationPermission = false;
+
   // EN: Place to center on when returning from detail page.
   // KO: 상세 페이지에서 돌아올 때 중앙에 놓을 장소.
   _MapTarget? _pendingCenterTarget;
@@ -138,15 +146,23 @@ class _PlacesMapPageState extends ConsumerState<PlacesMapPage> {
     super.dispose();
   }
 
-  /// EN: Fetches user location on startup and centers map.
-  /// KO: 앱 시작 시 사용자 위치를 가져와 지도 중앙에 놓습니다.
+  /// EN: Fetches user location on startup and centers map. Never triggers the
+  ///     OS permission dialog — a passive screen entry must not prompt before
+  ///     the user has consented and explicitly acted (app review requirement).
+  /// KO: 앱 시작 시 사용자 위치를 가져와 지도 중앙에 놓습니다. OS 권한 팝업은
+  ///     절대 띄우지 않습니다 — 화면 진입만으로는 사용자 동의·명시적 행동 전에
+  ///     권한을 요청하면 안 됩니다 (앱 심사 요건).
   Future<void> _fetchInitialLocation() async {
     try {
       final locationService = ref.read(locationServiceProvider);
-      final snapshot = await locationService.getCurrentLocation();
+      final snapshot =
+          await locationService.getCurrentLocation(requestPermission: false);
       if (!mounted) return;
       final target = _MapTarget(snapshot.latitude, snapshot.longitude);
-      setState(() => _userLocation = target);
+      setState(() {
+        _userLocation = target;
+        _hasLocationPermission = true;
+      });
       if (!_didInitialCenter || _didCenterOnSafeDefault) {
         _moveCameraTo(snapshot.latitude, snapshot.longitude, zoom: 14);
         _didInitialCenter = true;
@@ -271,6 +287,7 @@ class _PlacesMapPageState extends ConsumerState<PlacesMapPage> {
                         bottomInset,
                     isDarkMode: isDarkMode,
                     isTabActive: isTabActive,
+                    myLocationEnabled: _hasLocationPermission,
                     initialTarget: _pendingCenterTarget ?? _userLocation,
                     onAppleMapCreated: (controller) {
                       _appleMapLease.attach(controller);
@@ -611,7 +628,16 @@ class _PlacesMapPageState extends ConsumerState<PlacesMapPage> {
   Future<void> _centerOnCurrentLocation() async {
     try {
       final locationService = ref.read(locationServiceProvider);
+      // EN: User-initiated tap — the only map path allowed to show the OS
+      //     permission prompt (after mandatory location-terms consent).
+      // KO: 사용자가 직접 누른 경우 — 필수 위치약관 동의 이후이므로 지도에서
+      //     유일하게 OS 권한 팝업을 띄울 수 있는 경로입니다.
       final snapshot = await locationService.getCurrentLocation();
+      if (!mounted) return;
+      setState(() {
+        _userLocation = _MapTarget(snapshot.latitude, snapshot.longitude);
+        _hasLocationPermission = true;
+      });
       _moveCameraTo(snapshot.latitude, snapshot.longitude, zoom: 14);
     } catch (error) {
       if (!mounted) return;
@@ -1157,6 +1183,7 @@ class _PlacesMapView extends StatelessWidget {
     required this.bottomPadding,
     required this.isDarkMode,
     required this.isTabActive,
+    required this.myLocationEnabled,
     required this.onAppleMapCreated,
     required this.onGoogleMapCreated,
     required this.onCameraMove,
@@ -1172,6 +1199,12 @@ class _PlacesMapView extends StatelessWidget {
   final double bottomPadding;
   final bool isDarkMode;
   final bool isTabActive;
+
+  // EN: Only true once OS permission is confirmed granted. Passing true while
+  //     undetermined makes apple_maps_flutter request permission natively.
+  // KO: OS 권한 허용이 확정된 경우에만 true. 미결정 상태에서 true를 넘기면
+  //     apple_maps_flutter가 네이티브에서 권한을 자동 요청합니다.
+  final bool myLocationEnabled;
   final ValueChanged<amaps.AppleMapController> onAppleMapCreated;
   final ValueChanged<gmaps.GoogleMapController> onGoogleMapCreated;
   final ValueChanged<double> onCameraMove;
@@ -1220,7 +1253,7 @@ class _PlacesMapView extends StatelessWidget {
         onMapCreated: onAppleMapCreated,
         onCameraMove: (position) => onCameraMove(position.zoom),
         onCameraIdle: onCameraIdle,
-        myLocationEnabled: true,
+        myLocationEnabled: myLocationEnabled,
         myLocationButtonEnabled: false,
         compassEnabled: true,
         rotateGesturesEnabled: true,
@@ -1250,7 +1283,7 @@ class _PlacesMapView extends StatelessWidget {
       onMapCreated: onGoogleMapCreated,
       onCameraMove: (position) => onCameraMove(position.zoom),
       onCameraIdle: onCameraIdle,
-      myLocationEnabled: true,
+      myLocationEnabled: myLocationEnabled,
       myLocationButtonEnabled: false,
       compassEnabled: true,
       zoomControlsEnabled: false,

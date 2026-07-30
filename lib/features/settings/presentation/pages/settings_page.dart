@@ -5,10 +5,12 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/constants/legal_policy_constants.dart';
 import '../../../../core/localization/locale_text.dart';
+import '../../../../core/location/location_notice_consent.dart';
 import '../../../../core/providers/core_providers.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/gbt_colors.dart';
@@ -42,6 +44,21 @@ class SettingsPage extends ConsumerWidget {
         profileState?.valueOrNull?.canAccessAdminOps ?? false;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final appVersionState = ref.watch(appVersionProvider);
+    // EN: Show the versions the server currently publishes, not bundled ones.
+    // KO: 내장 상수가 아니라 서버가 현재 게시한 버전을 표시합니다.
+    final legalPolicies = ref.watch(legalPoliciesProvider).valueOrNull;
+    final termsPolicy = resolveLegalPolicy(
+      legalPolicies,
+      LegalPolicyType.termsOfService,
+    );
+    final privacyPolicy = resolveLegalPolicy(
+      legalPolicies,
+      LegalPolicyType.privacyPolicy,
+    );
+    final locationPolicy = resolveLegalPolicy(
+      legalPolicies,
+      LegalPolicyType.locationTerms,
+    );
 
     return Scaffold(
       appBar: gbtStandardAppBar(
@@ -258,15 +275,8 @@ class SettingsPage extends ConsumerWidget {
                       en: 'Terms of service',
                       ja: '利用規約',
                     ),
-                    subtitle: LegalPolicyConstants.byType(
-                      LegalPolicyType.termsOfService,
-                    ).version,
-                    onTap: () => _openPolicy(
-                      context,
-                      LegalPolicyConstants.byType(
-                        LegalPolicyType.termsOfService,
-                      ).url,
-                    ),
+                    subtitle: termsPolicy.version,
+                    onTap: () => _openPolicy(context, termsPolicy.url),
                   ),
                   _SettingsRow(
                     icon: Icons.privacy_tip_rounded,
@@ -275,15 +285,8 @@ class SettingsPage extends ConsumerWidget {
                       en: 'Privacy policy',
                       ja: 'プライバシーポリシー',
                     ),
-                    subtitle: LegalPolicyConstants.byType(
-                      LegalPolicyType.privacyPolicy,
-                    ).version,
-                    onTap: () => _openPolicy(
-                      context,
-                      LegalPolicyConstants.byType(
-                        LegalPolicyType.privacyPolicy,
-                      ).url,
-                    ),
+                    subtitle: privacyPolicy.version,
+                    onTap: () => _openPolicy(context, privacyPolicy.url),
                   ),
                   _SettingsRow(
                     icon: Icons.location_on_rounded,
@@ -292,15 +295,25 @@ class SettingsPage extends ConsumerWidget {
                       en: 'Location terms',
                       ja: '位置情報利用規約',
                     ),
-                    subtitle: LegalPolicyConstants.byType(
-                      LegalPolicyType.locationTerms,
-                    ).version,
-                    onTap: () => _openPolicy(
-                      context,
-                      LegalPolicyConstants.byType(
-                        LegalPolicyType.locationTerms,
-                      ).url,
+                    subtitle: locationPolicy.version,
+                    onTap: () => _openPolicy(context, locationPolicy.url),
+                  ),
+                  // EN: One-time location-collection consent — shows when it
+                  //     was given or withdrawn and allows withdrawing it.
+                  // KO: 위치 수집 1회 동의 — 동의/철회 시각을 표시하고
+                  //     철회할 수 있게 합니다.
+                  _SettingsRow(
+                    icon: Icons.my_location_rounded,
+                    title: context.l10n(
+                      ko: '위치 수집 동의',
+                      en: 'Location collection consent',
+                      ja: '位置情報収集の同意',
                     ),
+                    subtitle: _locationConsentSubtitle(
+                      context,
+                      ref.watch(locationNoticeConsentProvider).valueOrNull,
+                    ),
+                    onTap: () => _handleLocationConsentTap(context, ref),
                     isLast: true,
                   ),
                 ],
@@ -457,7 +470,7 @@ class SettingsPage extends ConsumerWidget {
               child: Column(
                 children: [
                   Text(
-                    'oshi@log',
+                    'Oshi@log',
                     style: GBTTypography.labelMedium.copyWith(
                       color: isDark
                           ? GBTColors.darkTextTertiary
@@ -496,6 +509,101 @@ class SettingsPage extends ConsumerWidget {
               height: GBTSpacing.xl + MediaQuery.of(context).padding.bottom,
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  /// EN: Renders the consent date, or the withdrawal date once revoked.
+  /// KO: 동의 시각을 표시하고, 철회된 경우 철회 시각을 표시합니다.
+  String _locationConsentSubtitle(
+    BuildContext context,
+    LocationNoticeConsent? consent,
+  ) {
+    if (consent == null) {
+      return context.l10n(ko: '불러오는 중…', en: 'Loading…', ja: '読み込み中…');
+    }
+    if (consent.isAgreed) {
+      return context.l10n(
+        ko: '동의일 ${_formatConsentDate(consent.agreedAt!)}',
+        en: 'Agreed on ${_formatConsentDate(consent.agreedAt!)}',
+        ja: '同意日 ${_formatConsentDate(consent.agreedAt!)}',
+      );
+    }
+    final revokedAt = consent.lastRevokedAt;
+    if (revokedAt != null) {
+      return context.l10n(
+        ko: '철회일 ${_formatConsentDate(revokedAt)} · 인증 시 다시 동의 필요',
+        en: 'Withdrawn on ${_formatConsentDate(revokedAt)} · consent needed again',
+        ja: '撤回日 ${_formatConsentDate(revokedAt)} · 認証時に再同意が必要',
+      );
+    }
+    return context.l10n(
+      ko: '아직 동의하지 않음 · 첫 장소 인증 시 동의',
+      en: 'Not agreed yet · asked at first place verification',
+      ja: '未同意 · 初回の場所認証時に同意',
+    );
+  }
+
+  String _formatConsentDate(DateTime value) {
+    return DateFormat('yyyy-MM-dd HH:mm').format(value.toLocal());
+  }
+
+  /// EN: Withdraws the location-collection consent, recording the timestamp.
+  ///     Already-withdrawn consent only explains how to agree again.
+  /// KO: 위치 수집 동의를 철회하고 철회 시각을 기록합니다.
+  ///     이미 철회된 경우에는 재동의 방법만 안내합니다.
+  Future<void> _handleLocationConsentTap(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final consent = ref.read(locationNoticeConsentProvider).valueOrNull;
+    if (consent == null) return;
+
+    if (!consent.isAgreed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            context.l10n(
+              ko: '장소 인증을 시작할 때 위치 수집 고지에 동의할 수 있어요.',
+              en: 'You can agree to the location notice when starting a place verification.',
+              ja: '場所認証を開始する際に位置情報の告知に同意できます。',
+            ),
+          ),
+        ),
+      );
+      return;
+    }
+
+    final confirmed = await showGBTAdaptiveConfirmDialog(
+      context: context,
+      title: context.l10n(
+        ko: '위치 수집 동의 철회',
+        en: 'Withdraw location consent',
+        ja: '位置情報収集の同意を撤回',
+      ),
+      message: context.l10n(
+        ko: '철회하면 다음 장소 인증에서 다시 동의를 요청합니다. 철회 시각이 기록됩니다.',
+        en: 'After withdrawal, the next place verification asks for consent again. The withdrawal time is recorded.',
+        ja: '撤回すると次回の場所認証で再度同意を求めます。撤回時刻が記録されます。',
+      ),
+      confirmLabel: context.l10n(ko: '철회', en: 'Withdraw', ja: '撤回'),
+      isDestructive: true,
+    );
+    if (confirmed != true) return;
+
+    final store = await ref.read(locationNoticeConsentStoreProvider.future);
+    await store.revoke(DateTime.now());
+    ref.invalidate(locationNoticeConsentProvider);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          context.l10n(
+            ko: '위치 수집 동의를 철회했습니다.',
+            en: 'Location collection consent withdrawn.',
+            ja: '位置情報収集の同意を撤回しました。',
+          ),
         ),
       ),
     );

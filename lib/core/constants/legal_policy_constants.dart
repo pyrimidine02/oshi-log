@@ -36,10 +36,11 @@ class LegalPolicyInfo {
     if (type == null) return null;
     return LegalPolicyInfo(
       type: type,
-      version: ((json['version'] as String?) ??
-              (json['requiredVersion'] as String?) ??
-              '-')
-          .trim(),
+      version:
+          ((json['version'] as String?) ??
+                  (json['requiredVersion'] as String?) ??
+                  '-')
+              .trim(),
       effectiveDate: ((json['effectiveDate'] as String?) ?? '-').trim(),
       url: ((json['policyUrl'] as String?) ?? (json['url'] as String?) ?? '')
           .trim(),
@@ -76,6 +77,25 @@ class LegalPolicyConstants {
   static LegalPolicyInfo byType(LegalPolicyType type) {
     return policies.firstWhere((policy) => policy.type == type);
   }
+}
+
+/// EN: Resolves the server-fetched policy of [type], falling back to the
+///     bundled constants when the server list is unavailable.
+///     Display only — never record a consent with the fallback version,
+///     because a stale version makes the server demand re-consent.
+/// KO: 서버에서 받은 [type] 정책을 찾고, 서버 목록이 없으면 내장 상수로
+///     폴백합니다. 표시 전용입니다 — 폴백 버전으로 동의를 기록하면
+///     서버가 재동의를 요구하므로 동의 기록에는 사용하지 않습니다.
+LegalPolicyInfo resolveLegalPolicy(
+  List<LegalPolicyInfo>? policies,
+  LegalPolicyType type,
+) {
+  if (policies != null) {
+    for (final policy in policies) {
+      if (policy.type == type) return policy;
+    }
+  }
+  return LegalPolicyConstants.byType(type);
 }
 
 extension LegalPolicyTypeLabel on LegalPolicyType {
