@@ -61,10 +61,12 @@ Implemented and locally verified on 2026-09-12.
 - Local SDK observed: Flutter 3.47.2, Dart 3.13.2. CI currently pins 3.41.0;
   compatibility must be checked when choosing APIs and lockfile updates.
 - The first CI run passed analysis and 656 tests; only the three new home
-  goldens failed (4.92-6.63% pixel differences). Their first baselines had been
-  generated with 3.47.2. Golden generation and comparison must use CI's pinned
+  goldens failed (4.92-6.63% pixel differences). Regeneration with 3.41.0 passed
+  locally, but Linux CI still differed by 4.82-6.48%; SDK alignment alone was
+  insufficient. Capture actual CI images before attributing the difference to
+  fonts or rendering. Golden generation and comparison must use CI's pinned
   Flutter 3.41.0 (official tag `44a626f4f0`, Dart 3.11.0). Keep the existing
-  1.5% comparator tolerance; do not mask SDK drift by widening it.
+  1.5% comparator tolerance; do not mask renderer drift by widening it.
   See the [official SDK archive](https://docs.flutter.dev/install/archive).
 - `flutter analyze` crashes on this Korean checkout path with Flutter issue
   [191309](https://github.com/flutter/flutter/issues/191309). `dart analyze`

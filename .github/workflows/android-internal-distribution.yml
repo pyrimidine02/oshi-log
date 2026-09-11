@@ -39,6 +39,15 @@ jobs:
       - name: Unit and widget tests
         run: flutter test --no-pub
 
+      - name: Upload golden failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: golden-failures
+          path: test/**/failures/*.png
+          retention-days: 7
+          if-no-files-found: ignore
+
   deploy_internal:
     name: Build and Deploy (Internal)
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
