@@ -35,6 +35,21 @@ REPO_ROOT="$(resolve_repo_root)"
 cd "$REPO_ROOT" # change working directory to the root of your cloned repo.
 log "Repository root: $REPO_ROOT"
 
+# EN: Xcode Cloud defaults to staging; production builds must opt in with an
+#     explicit APP_ENV workflow variable.
+# KO: Xcode Cloud는 staging을 기본으로 사용하며, 운영 빌드는 워크플로우 변수에서
+#     APP_ENV를 명시적으로 지정해야 합니다.
+APP_ENV="${APP_ENV:-staging}"
+case "$APP_ENV" in
+  development|staging|production)
+    ;;
+  *)
+    log "Unsupported APP_ENV: $APP_ENV"
+    exit 1
+    ;;
+esac
+export APP_ENV
+
 IOS_PLIST_PATH="$REPO_ROOT/ios/Runner/GoogleService-Info.plist"
 
 decode_base64_to_file() {
@@ -170,7 +185,7 @@ flutter pub get
 
 # Sync pubspec.yaml version into project.pbxproj.
 log "Running flutter build ios --release --config-only"
-flutter build ios --release --config-only
+flutter build ios --release --config-only --dart-define="APP_ENV=$APP_ENV"
 
 # Install CocoaPods only when unavailable.
 if command -v pod >/dev/null 2>&1; then

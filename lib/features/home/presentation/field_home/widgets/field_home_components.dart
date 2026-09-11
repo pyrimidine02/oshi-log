@@ -6,43 +6,13 @@ import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/theme.dart';
 import '../../../../../core/widgets/common/gbt_image.dart';
+import '../../../../../core/widgets/layout/gbt_field_primitives.dart';
 
 /// EN: Section heading with a quiet rule and optional action.
 /// KO: 얇은 규칙선과 선택 액션이 있는 섹션 제목입니다.
-class FieldSectionHeader extends StatelessWidget {
-  const FieldSectionHeader({
-    super.key,
-    required this.eyebrow,
-    required this.title,
-    this.actionLabel,
-    this.onAction,
-  });
-
-  final String eyebrow;
-  final String title;
-  final String? actionLabel;
-  final VoidCallback? onAction;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Expanded(
-          child: Text(
-            title,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w700,
-              letterSpacing: -0.3,
-            ),
-          ),
-        ),
-        if (actionLabel != null && onAction != null)
-          TextButton(onPressed: onAction, child: Text(actionLabel!)),
-      ],
-    );
-  }
-}
+/// EN: Compatibility alias for callers migrating to the shared heading.
+/// KO: 공용 헤딩으로 이전하는 호출자를 위한 호환 별칭입니다.
+typedef FieldSectionHeader = GBTFieldSectionHeader;
 
 /// EN: Compact, action-first briefing for the next event or pilgrimage stop.
 /// KO: 다음 이벤트나 성지를 보여주는 행동 중심의 컴팩트 브리핑입니다.
@@ -73,131 +43,123 @@ class JourneyBriefCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    return Semantics(
-      container: true,
-      child: Material(
-        color: colors.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(GBTSpacing.radiusCard),
-          side: BorderSide(color: colors.outline),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final artWidth = constraints.maxWidth < 330 ? 88.0 : 112.0;
-            return IntrinsicHeight(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(minHeight: 176),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Container(width: 4, color: colors.primary),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(
-                          GBTSpacing.md,
-                          GBTSpacing.md,
-                          GBTSpacing.sm,
-                          GBTSpacing.sm,
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Wrap(
-                              spacing: GBTSpacing.sm,
-                              runSpacing: GBTSpacing.xs,
-                              crossAxisAlignment: WrapCrossAlignment.center,
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: GBTSpacing.sm,
-                                    vertical: GBTSpacing.xxs,
-                                  ),
-                                  color: colors.primary,
-                                  child: Text(
-                                    markerLabel,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .labelSmall
-                                        ?.copyWith(
-                                          color: colors.onPrimary,
-                                          fontWeight: FontWeight.w800,
-                                          fontFeatures: const [
-                                            FontFeature.tabularFigures(),
-                                          ],
-                                        ),
-                                  ),
+    return GBTFieldSurface(
+      accentColor: colors.primary,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final largeText = MediaQuery.textScalerOf(context).scale(1) > 1.3;
+          final artWidth = constraints.maxWidth < 330 ? 88.0 : 112.0;
+          return IntrinsicHeight(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 176),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        GBTSpacing.md,
+                        GBTSpacing.md,
+                        GBTSpacing.sm,
+                        GBTSpacing.sm,
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Wrap(
+                            spacing: GBTSpacing.sm,
+                            runSpacing: GBTSpacing.xs,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: GBTSpacing.sm,
+                                  vertical: GBTSpacing.xxs,
                                 ),
-                                Text(
-                                  eyebrow.toUpperCase(),
+                                color: colors.primary,
+                                child: Text(
+                                  markerLabel,
                                   style: Theme.of(context).textTheme.labelSmall
                                       ?.copyWith(
-                                        color: colors.primary,
+                                        color: colors.onPrimary,
                                         fontWeight: FontWeight.w800,
-                                        letterSpacing: 0.8,
+                                        fontFeatures: const [
+                                          FontFeature.tabularFigures(),
+                                        ],
                                       ),
                                 ),
-                              ],
-                            ),
-                            const SizedBox(height: GBTSpacing.sm),
-                            Text(
-                              title,
-                              maxLines: 3,
-                              overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context).textTheme.titleLarge
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: -0.4,
-                                  ),
-                            ),
-                            const SizedBox(height: GBTSpacing.xs),
-                            Text(
-                              meta,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(color: colors.onSurfaceVariant),
-                            ),
-                            const SizedBox(height: GBTSpacing.sm),
-                            Wrap(
-                              spacing: GBTSpacing.xs,
-                              runSpacing: GBTSpacing.xs,
-                              children: [
-                                FilledButton(
-                                  onPressed: onPrimaryAction,
-                                  style: FilledButton.styleFrom(
-                                    minimumSize: const Size(
-                                      0,
-                                      GBTSpacing.touchTarget,
+                              ),
+                              Text(
+                                eyebrow.toUpperCase(),
+                                style: Theme.of(context).textTheme.labelSmall
+                                    ?.copyWith(
+                                      color: colors.primary,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 0.8,
                                     ),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: GBTSpacing.md,
-                                    ),
-                                    visualDensity: VisualDensity.compact,
-                                  ),
-                                  child: Text(primaryActionLabel),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: GBTSpacing.sm),
+                          Text(
+                            title,
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: -0.4,
                                 ),
-                                TextButton(
-                                  onPressed: onSecondaryAction,
-                                  style: TextButton.styleFrom(
-                                    minimumSize: const Size(
-                                      0,
-                                      GBTSpacing.touchTarget,
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: GBTSpacing.sm,
-                                    ),
-                                    visualDensity: VisualDensity.compact,
+                          ),
+                          const SizedBox(height: GBTSpacing.xs),
+                          Text(
+                            meta,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: colors.onSurfaceVariant),
+                          ),
+                          const SizedBox(height: GBTSpacing.sm),
+                          Wrap(
+                            spacing: GBTSpacing.xs,
+                            runSpacing: GBTSpacing.xs,
+                            children: [
+                              FilledButton(
+                                onPressed: onPrimaryAction,
+                                style: FilledButton.styleFrom(
+                                  minimumSize: const Size(
+                                    0,
+                                    GBTSpacing.touchTarget,
                                   ),
-                                  child: Text(secondaryActionLabel),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: GBTSpacing.md,
+                                  ),
+                                  visualDensity: VisualDensity.compact,
                                 ),
-                              ],
-                            ),
-                          ],
-                        ),
+                                child: Text(primaryActionLabel),
+                              ),
+                              TextButton(
+                                onPressed: onSecondaryAction,
+                                style: TextButton.styleFrom(
+                                  minimumSize: const Size(
+                                    0,
+                                    GBTSpacing.touchTarget,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: GBTSpacing.sm,
+                                  ),
+                                  visualDensity: VisualDensity.compact,
+                                ),
+                                child: Text(secondaryActionLabel),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
+                  ),
+                  if (!largeText)
                     SizedBox(
                       width: artWidth,
                       child: imageUrl == null || imageUrl!.trim().isEmpty
@@ -210,12 +172,11 @@ class JourneyBriefCard extends StatelessWidget {
                               ),
                             ),
                     ),
-                  ],
-                ),
+                ],
               ),
-            );
-          },
-        ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -330,79 +291,88 @@ class _RouteNodeRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final nodeColor = node.isEmphasized ? colors.primary : colors.secondary;
-    return InkWell(
+    return Semantics(
+      button: node.onTap != null,
+      label: '${node.label}, ${node.meta}',
       onTap: node.onTap,
-      child: IntrinsicHeight(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: GBTSpacing.touchTarget),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              SizedBox(
-                width: 36,
-                child: Column(
-                  children: [
-                    Container(
-                      width: 26,
-                      height: 26,
-                      decoration: BoxDecoration(
-                        color: node.isEmphasized ? nodeColor : colors.surface,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: nodeColor, width: 2),
-                      ),
-                      child: Icon(
-                        node.icon,
-                        size: 14,
-                        color: node.isEmphasized
-                            ? GBTColorValidator.getContrastingTextColor(
-                                nodeColor,
-                              )
-                            : nodeColor,
-                      ),
-                    ),
-                    if (showConnector)
-                      Expanded(
-                        child: Container(
-                          width: 2,
-                          color: colors.outlineVariant,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: GBTSpacing.sm),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: GBTSpacing.md),
+      excludeSemantics: node.onTap != null,
+      child: InkWell(
+        onTap: node.onTap,
+        excludeFromSemantics: node.onTap != null,
+        child: IntrinsicHeight(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              minHeight: GBTSpacing.touchTarget,
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SizedBox(
+                  width: 36,
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        node.meta.toUpperCase(),
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: nodeColor,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.7,
+                      Container(
+                        width: 26,
+                        height: 26,
+                        decoration: BoxDecoration(
+                          color: node.isEmphasized ? nodeColor : colors.surface,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: nodeColor, width: 2),
+                        ),
+                        child: Icon(
+                          node.icon,
+                          size: 14,
+                          color: node.isEmphasized
+                              ? GBTColorValidator.getContrastingTextColor(
+                                  nodeColor,
+                                )
+                              : nodeColor,
                         ),
                       ),
-                      Text(
-                        node.label,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
+                      if (showConnector)
+                        Expanded(
+                          child: Container(
+                            width: 2,
+                            color: colors.outlineVariant,
+                          ),
                         ),
-                      ),
                     ],
                   ),
                 ),
-              ),
-              if (node.onTap != null)
-                Icon(
-                  Icons.chevron_right_rounded,
-                  color: colors.onSurfaceVariant,
+                const SizedBox(width: GBTSpacing.sm),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: GBTSpacing.md),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          node.meta.toUpperCase(),
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                color: nodeColor,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.7,
+                              ),
+                        ),
+                        Text(
+                          node.label,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodyLarge
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-            ],
+                if (node.onTap != null)
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    color: colors.onSurfaceVariant,
+                  ),
+              ],
+            ),
           ),
         ),
       ),
@@ -429,79 +399,89 @@ class FieldPlaceFeature extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    return Material(
-      color: colors.surfaceContainerLow,
-      borderRadius: BorderRadius.circular(GBTSpacing.radiusCard),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final imageWidth = constraints.maxWidth * 0.38;
-            return IntrinsicHeight(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(minHeight: 132),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    SizedBox(
-                      width: imageWidth,
-                      child: imageUrl == null || imageUrl!.trim().isEmpty
-                          ? ColoredBox(
-                              color: colors.secondaryContainer,
-                              child: Icon(
-                                Icons.map_outlined,
-                                size: 38,
-                                color: colors.secondary,
+    return Semantics(
+      button: true,
+      label: '$title, $meta',
+      onTap: onTap,
+      excludeSemantics: true,
+      child: Material(
+        color: colors.surfaceContainerLow,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(GBTSpacing.radiusCard),
+          side: BorderSide(color: colors.outlineVariant),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          excludeFromSemantics: true,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final imageWidth = constraints.maxWidth * 0.38;
+              return IntrinsicHeight(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 132),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      SizedBox(
+                        width: imageWidth,
+                        child: imageUrl == null || imageUrl!.trim().isEmpty
+                            ? ColoredBox(
+                                color: colors.secondaryContainer,
+                                child: Icon(
+                                  Icons.map_outlined,
+                                  size: 38,
+                                  color: colors.secondary,
+                                ),
+                              )
+                            : GBTImage(
+                                imageUrl: imageUrl!,
+                                fit: BoxFit.cover,
+                                semanticLabel: title,
                               ),
-                            )
-                          : GBTImage(
-                              imageUrl: imageUrl!,
-                              fit: BoxFit.cover,
-                              semanticLabel: title,
-                            ),
-                    ),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.all(GBTSpacing.md),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              meta.toUpperCase(),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context).textTheme.labelSmall
-                                  ?.copyWith(
-                                    color: colors.secondary,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: 0.6,
-                                  ),
-                            ),
-                            const SizedBox(height: GBTSpacing.xs),
-                            Text(
-                              title,
-                              maxLines: 3,
-                              overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context).textTheme.titleMedium
-                                  ?.copyWith(fontWeight: FontWeight.w800),
-                            ),
-                            const SizedBox(height: GBTSpacing.sm),
-                            Icon(
-                              Icons.arrow_forward_rounded,
-                              color: colors.primary,
-                              size: 20,
-                            ),
-                          ],
+                      ),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.all(GBTSpacing.md),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                meta.toUpperCase(),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.labelSmall
+                                    ?.copyWith(
+                                      color: colors.secondary,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 0.6,
+                                    ),
+                              ),
+                              const SizedBox(height: GBTSpacing.xs),
+                              Text(
+                                title,
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(fontWeight: FontWeight.w800),
+                              ),
+                              const SizedBox(height: GBTSpacing.sm),
+                              Icon(
+                                Icons.arrow_forward_rounded,
+                                color: colors.primary,
+                                size: 20,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
       ),
     );
@@ -527,63 +507,74 @@ class FieldPlaceRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    return InkWell(
+    return Semantics(
+      button: true,
+      label: '$title, $meta',
       onTap: onTap,
-      child: Container(
-        constraints: const BoxConstraints(minHeight: 88),
-        padding: const EdgeInsets.symmetric(vertical: GBTSpacing.sm),
-        decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: colors.outlineVariant)),
-        ),
-        child: Row(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
-              child: SizedBox(
-                width: 88,
-                height: 66,
-                child: imageUrl == null || imageUrl!.trim().isEmpty
-                    ? ColoredBox(
-                        color: colors.secondaryContainer,
-                        child: Icon(
-                          Icons.place_outlined,
-                          color: colors.secondary,
+      excludeSemantics: true,
+      child: InkWell(
+        onTap: onTap,
+        excludeFromSemantics: true,
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 88),
+          padding: const EdgeInsets.symmetric(vertical: GBTSpacing.sm),
+          decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: colors.outlineVariant)),
+          ),
+          child: Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
+                child: SizedBox(
+                  width: 88,
+                  height: 66,
+                  child: imageUrl == null || imageUrl!.trim().isEmpty
+                      ? ColoredBox(
+                          color: colors.secondaryContainer,
+                          child: Icon(
+                            Icons.place_outlined,
+                            color: colors.secondary,
+                          ),
+                        )
+                      : GBTImage(
+                          imageUrl: imageUrl!,
+                          fit: BoxFit.cover,
+                          semanticLabel: title,
                         ),
-                      )
-                    : GBTImage(
-                        imageUrl: imageUrl!,
-                        fit: BoxFit.cover,
-                        semanticLabel: title,
+                ),
+              ),
+              const SizedBox(width: GBTSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
                       ),
-              ),
-            ),
-            const SizedBox(width: GBTSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w700,
                     ),
-                  ),
-                  const SizedBox(height: GBTSpacing.xs),
-                  Text(
-                    meta,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: colors.onSurfaceVariant,
+                    const SizedBox(height: GBTSpacing.xs),
+                    Text(
+                      meta,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: colors.onSurfaceVariant,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            Icon(Icons.arrow_forward_rounded, color: colors.primary, size: 20),
-          ],
+              Icon(
+                Icons.arrow_forward_rounded,
+                color: colors.primary,
+                size: 20,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -609,53 +600,62 @@ class FieldAgendaTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    return InkWell(
+    return Semantics(
+      button: true,
+      label: '$title, $dateLabel, $typeLabel',
       onTap: onTap,
-      child: Container(
-        constraints: const BoxConstraints(minHeight: 76),
-        decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: colors.outlineVariant)),
-        ),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 72,
-              child: Text(
-                dateLabel,
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: colors.primary,
-                  fontWeight: FontWeight.w800,
+      excludeSemantics: true,
+      child: InkWell(
+        onTap: onTap,
+        excludeFromSemantics: true,
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 76),
+          decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: colors.outlineVariant)),
+          ),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 72,
+                child: Text(
+                  dateLabel,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: colors.primary,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
-            ),
-            Container(width: 1, height: 44, color: colors.outlineVariant),
-            const SizedBox(width: GBTSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    typeLabel.toUpperCase(),
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: colors.secondary,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.8,
+              Container(width: 1, height: 44, color: colors.outlineVariant),
+              const SizedBox(width: GBTSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      typeLabel.toUpperCase(),
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: colors.secondary,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.8,
+                      ),
                     ),
-                  ),
-                  Text(
-                    title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w700,
+                    Text(
+                      title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            Icon(Icons.chevron_right_rounded, color: colors.onSurfaceVariant),
-          ],
+              Icon(Icons.chevron_right_rounded, color: colors.onSurfaceVariant),
+            ],
+          ),
         ),
       ),
     );
@@ -683,65 +683,72 @@ class FieldDispatchRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    return InkWell(
+    return Semantics(
+      button: true,
+      label: '$title, $meta${summary == null ? '' : ', $summary'}',
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: GBTSpacing.md),
-        decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: colors.outlineVariant)),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    meta.toUpperCase(),
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: colors.secondary,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-                  const SizedBox(height: GBTSpacing.xs),
-                  Text(
-                    title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  if (summary != null && summary!.trim().isNotEmpty) ...[
-                    const SizedBox(height: GBTSpacing.xs),
+      excludeSemantics: true,
+      child: InkWell(
+        onTap: onTap,
+        excludeFromSemantics: true,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: GBTSpacing.md),
+          decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: colors.outlineVariant)),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      summary!,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: colors.onSurfaceVariant,
+                      meta.toUpperCase(),
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: colors.secondary,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.8,
                       ),
                     ),
+                    const SizedBox(height: GBTSpacing.xs),
+                    Text(
+                      title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    if (summary != null && summary!.trim().isNotEmpty) ...[
+                      const SizedBox(height: GBTSpacing.xs),
+                      Text(
+                        summary!,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: colors.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
                   ],
-                ],
-              ),
-            ),
-            if (imageUrl != null && imageUrl!.trim().isNotEmpty) ...[
-              const SizedBox(width: GBTSpacing.md),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
-                child: GBTImage(
-                  imageUrl: imageUrl!,
-                  width: 88,
-                  height: 66,
-                  fit: BoxFit.cover,
-                  semanticLabel: title,
                 ),
               ),
+              if (imageUrl != null && imageUrl!.trim().isNotEmpty) ...[
+                const SizedBox(width: GBTSpacing.md),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
+                  child: GBTImage(
+                    imageUrl: imageUrl!,
+                    width: 88,
+                    height: 66,
+                    fit: BoxFit.cover,
+                    semanticLabel: title,
+                  ),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

@@ -4,10 +4,6 @@ library;
 
 import 'package:intl/intl.dart';
 
-import '../../data/dto/news_dto.dart';
-import '../../data/dto/community_translation_dto.dart';
-import '../../data/dto/post_comment_dto.dart';
-import '../../data/dto/post_dto.dart';
 import 'community_moderation.dart';
 
 class NewsSummary {
@@ -25,15 +21,6 @@ class NewsSummary {
 
   String get dateLabel {
     return DateFormat('yyyy.MM.dd').format(publishedAt.toLocal());
-  }
-
-  factory NewsSummary.fromDto(NewsSummaryDto dto) {
-    return NewsSummary(
-      id: dto.id,
-      title: dto.title,
-      publishedAt: dto.publishedAt,
-      thumbnailUrl: dto.thumbnailUrl,
-    );
   }
 }
 
@@ -58,22 +45,6 @@ class NewsDetail {
 
   String get dateLabel {
     return DateFormat('yyyy.MM.dd').format(publishedAt.toLocal());
-  }
-
-  factory NewsDetail.fromDto(NewsDetailDto dto) {
-    final images = dto.images.map((image) => image.url).toList();
-    final cover =
-        dto.coverImage?.url ?? (images.isNotEmpty ? images.first : null);
-
-    return NewsDetail(
-      id: dto.id,
-      title: dto.title,
-      body: dto.body,
-      status: dto.status,
-      publishedAt: dto.publishedAt,
-      coverImageUrl: cover,
-      imageUrls: images,
-    );
   }
 }
 
@@ -113,28 +84,6 @@ class PostSummary {
   final ContentModerationStatus? moderationStatus;
 
   String get timeAgoLabel => _formatTimeAgo(createdAt);
-
-  factory PostSummary.fromDto(PostSummaryDto dto) {
-    return PostSummary(
-      id: dto.id,
-      projectId: dto.projectId,
-      authorId: dto.authorId,
-      title: dto.title,
-      createdAt: dto.createdAt,
-      imageUrls: dto.imageUrls,
-      tags: dto.tags,
-      content: dto.content,
-      topic: dto.topic,
-      thumbnailUrl: dto.thumbnailUrl,
-      authorName: dto.authorName,
-      authorAvatarUrl: dto.authorAvatarUrl,
-      commentCount: dto.commentCount,
-      likeCount: dto.likeCount,
-      moderationStatus: ContentModerationStatusX.fromApiValue(
-        dto.moderationStatus,
-      ),
-    );
-  }
 }
 
 class PostDetail {
@@ -173,28 +122,6 @@ class PostDetail {
   final ContentModerationStatus? moderationStatus;
 
   String get timeAgoLabel => _formatTimeAgo(createdAt);
-
-  factory PostDetail.fromDto(PostDetailDto dto) {
-    return PostDetail(
-      id: dto.id,
-      projectId: dto.projectId,
-      authorId: dto.authorId,
-      title: dto.title,
-      createdAt: dto.createdAt,
-      imageUrls: dto.imageUrls,
-      tags: dto.tags,
-      content: dto.content,
-      topic: dto.topic,
-      updatedAt: dto.updatedAt,
-      authorName: dto.authorName,
-      authorAvatarUrl: dto.authorAvatarUrl,
-      commentCount: dto.commentCount,
-      likeCount: dto.likeCount,
-      moderationStatus: ContentModerationStatusX.fromApiValue(
-        dto.moderationStatus,
-      ),
-    );
-  }
 }
 
 class PostComment {
@@ -227,23 +154,6 @@ class PostComment {
   final int? replyCount;
 
   String get timeAgoLabel => _formatTimeAgo(createdAt);
-
-  factory PostComment.fromDto(PostCommentDto dto) {
-    return PostComment(
-      id: dto.id,
-      postId: dto.postId,
-      projectId: dto.projectId,
-      authorId: dto.authorId,
-      content: dto.content,
-      createdAt: dto.createdAt,
-      updatedAt: dto.updatedAt,
-      authorName: dto.authorName,
-      authorAvatarUrl: dto.authorAvatarUrl,
-      parentCommentId: dto.parentCommentId,
-      depth: dto.depth,
-      replyCount: dto.replyCount,
-    );
-  }
 }
 
 /// EN: On-demand translation result for community content.
@@ -271,16 +181,6 @@ class CommunityTranslation {
     }
     return translatedValue != source;
   }
-
-  factory CommunityTranslation.fromDto(CommunityTranslationDto dto) {
-    return CommunityTranslation(
-      originalText: dto.originalText,
-      translatedText: dto.translatedText,
-      sourceLanguage: dto.sourceLanguage,
-      targetLanguage: dto.targetLanguage,
-      translated: dto.translated,
-    );
-  }
 }
 
 class PostLikeStatus {
@@ -293,14 +193,6 @@ class PostLikeStatus {
   final String postId;
   final bool isLiked;
   final int likeCount;
-
-  factory PostLikeStatus.fromDto(PostLikeStatusDto dto) {
-    return PostLikeStatus(
-      postId: dto.postId,
-      isLiked: dto.isLiked,
-      likeCount: dto.likeCount,
-    );
-  }
 }
 
 class PostBookmarkStatus {
@@ -313,14 +205,6 @@ class PostBookmarkStatus {
   final String postId;
   final bool isBookmarked;
   final DateTime? bookmarkedAt;
-
-  factory PostBookmarkStatus.fromDto(PostBookmarkStatusDto dto) {
-    return PostBookmarkStatus(
-      postId: dto.postId,
-      isBookmarked: dto.isBookmarked,
-      bookmarkedAt: dto.bookmarkedAt,
-    );
-  }
 }
 
 /// EN: Single topic/tag option item for compose metadata.
@@ -335,14 +219,6 @@ class PostTaxonomyOption {
   final String id;
   final String name;
   final int? sortOrder;
-
-  factory PostTaxonomyOption.fromDto(PostTaxonomyOptionDto dto) {
-    return PostTaxonomyOption(
-      id: dto.id,
-      name: dto.name,
-      sortOrder: dto.sortOrder,
-    );
-  }
 }
 
 /// EN: Topic/tag option payload for compose and edit pages.
@@ -352,15 +228,6 @@ class PostComposeOptions {
 
   final List<PostTaxonomyOption> topics;
   final List<PostTaxonomyOption> tags;
-
-  factory PostComposeOptions.fromDto(PostComposeOptionsDto dto) {
-    return PostComposeOptions(
-      topics: dto.topics
-          .map(PostTaxonomyOption.fromDto)
-          .toList(growable: false),
-      tags: dto.tags.map(PostTaxonomyOption.fromDto).toList(growable: false),
-    );
-  }
 }
 
 class PostCursorPage {
@@ -373,14 +240,6 @@ class PostCursorPage {
   final List<PostSummary> items;
   final String? nextCursor;
   final bool hasNext;
-
-  factory PostCursorPage.fromDto(PostCursorPageDto dto) {
-    return PostCursorPage(
-      items: dto.items.map(PostSummary.fromDto).toList(),
-      nextCursor: dto.nextCursor,
-      hasNext: dto.hasNext,
-    );
-  }
 }
 
 class CommentThreadNode {
@@ -393,14 +252,6 @@ class CommentThreadNode {
   final PostComment comment;
   final List<CommentThreadNode> replies;
   final bool hasMoreReplies;
-
-  factory CommentThreadNode.fromDto(CommentThreadNodeDto dto) {
-    return CommentThreadNode(
-      comment: PostComment.fromDto(dto.comment),
-      replies: dto.replies.map(CommentThreadNode.fromDto).toList(),
-      hasMoreReplies: dto.hasMoreReplies,
-    );
-  }
 }
 
 class ProjectSubscriptionSummary {
@@ -415,17 +266,6 @@ class ProjectSubscriptionSummary {
   final String projectCode;
   final String projectName;
   final DateTime subscribedAt;
-
-  factory ProjectSubscriptionSummary.fromDto(
-    ProjectSubscriptionSummaryDto dto,
-  ) {
-    return ProjectSubscriptionSummary(
-      projectId: dto.projectId,
-      projectCode: dto.projectCode,
-      projectName: dto.projectName,
-      subscribedAt: dto.subscribedAt,
-    );
-  }
 }
 
 String _formatTimeAgo(DateTime? dateTime) {

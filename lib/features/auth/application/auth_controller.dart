@@ -14,6 +14,10 @@ import '../../../core/security/secure_storage.dart';
 import '../../../core/storage/local_storage.dart';
 import '../../../core/utils/result.dart';
 import '../../settings/application/settings_controller.dart';
+import '../../favorites/application/favorites_controller.dart';
+import '../../feed/application/local_post_bookmarks_controller.dart';
+import '../../feed/application/reaction_controller.dart';
+import '../../live_events/application/live_events_controller.dart';
 import '../data/datasources/auth_remote_data_source.dart';
 import '../data/repositories/auth_repository_impl.dart';
 import '../domain/entities/auth_tokens.dart';
@@ -58,6 +62,22 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
   final Future<LocalStorage> _localStorageFuture;
   final Ref _ref;
 
+  // EN: Login-capable operations wait for logout cleanup to finish. This
+  //     prevents a new session from writing tokens while the previous
+  //     session is still being removed.
+  // KO: 로그인 가능한 작업은 로그아웃 정리가 끝날 때까지 기다립니다. 이전
+  //     세션을 삭제하는 중에 새 세션 토큰이 기록되는 것을 방지합니다.
+  Future<void>? _pendingAuthCleanup;
+
+  // EN: Keep an in-flight login ahead of logout cleanup in the same
+  //     serialized session transition. This closes the opposite race where
+  //     logout starts while a login request is still persisting tokens.
+  // KO: 진행 중인 로그인을 로그아웃 정리와 같은 세션 전환 순서로 관리합니다.
+  //     로그인 요청이 토큰을 저장하는 중 로그아웃이 시작되는 반대 경주를 막습니다.
+  int _authSessionGeneration = 0;
+  int _activeAuthOperations = 0;
+  Completer<void>? _authOperationsDrained;
+
   /// EN: Pending OAuth credentials stored during EMAIL_ACCOUNT_CONFLICT flow.
   /// KO: EMAIL_ACCOUNT_CONFLICT 플로우 중 임시 보관되는 OAuth 자격증명.
   _PendingOAuthConflict? _pendingConflict;
@@ -74,16 +94,22 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
     required String username,
     required String password,
   }) async {
-    state = const AsyncLoading();
-    final result = await _repository.login(
-      username: username,
-      password: password,
-    );
-    return _handleAuthResult(
-      result,
-      analyticsType: _AuthAnalyticsType.login,
-      analyticsMethod: 'password',
-    );
+    final sessionGeneration = await _beginAuthSessionOperation();
+    try {
+      state = const AsyncLoading();
+      final result = await _repository.login(
+        username: username,
+        password: password,
+      );
+      return await _handleAuthResult(
+        result,
+        operationGeneration: sessionGeneration,
+        analyticsType: _AuthAnalyticsType.login,
+        analyticsMethod: 'password',
+      );
+    } finally {
+      _endAuthSessionOperation();
+    }
   }
 
   /// EN: Restore an inactive password account after explicit user consent.
@@ -92,16 +118,19 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
     required String email,
     required String password,
   }) async {
-    state = const AsyncLoading();
-    final result = await _repository.recoverWithPassword(
-      email: email,
-      password: password,
-    );
-    return _handleAuthResult(
-      result,
-      analyticsType: _AuthAnalyticsType.login,
-      analyticsMethod: 'password',
-    );
+    return _runAuthSessionOperation((sessionGeneration) async {
+      state = const AsyncLoading();
+      final result = await _repository.recoverWithPassword(
+        email: email,
+        password: password,
+      );
+      return _handleAuthResult(
+        result,
+        operationGeneration: sessionGeneration,
+        analyticsType: _AuthAnalyticsType.login,
+        analyticsMethod: 'password',
+      );
+    });
   }
 
   /// EN: Register with username/password.
@@ -116,51 +145,102 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
     required String nickname,
     List<RegisterConsent> consents = const [],
   }) async {
-    state = const AsyncLoading();
-    final result = await _repository.register(
-      username: username,
-      password: password,
-      nickname: nickname,
-      consents: consents,
-    );
-
-    if (result is Err<RegisterResult>) {
-      state = AsyncError(result.failure, StackTrace.current);
-      return result;
-    }
-
-    final registerResult = (result as Success<RegisterResult>).data;
-
-    if (registerResult.verificationRequired) {
-      // EN: Email verification required — do not set authenticated.
-      // KO: 이메일 인증 필요 — 인증 상태로 전환하지 않습니다.
-      state = const AsyncData(null);
-      return result;
-    }
-
-    // EN: Tokens were persisted by the repository; validate before setting authenticated.
-    // KO: 리포지토리가 토큰을 저장했습니다. 인증 상태 설정 전 재검증합니다.
-    final hasTokens = await _secureStorage.hasValidTokens();
-    if (!hasTokens) {
-      const failure = AuthFailure(
-        'Authentication succeeded but tokens were not persisted',
-        code: 'token_not_persisted',
+    final sessionGeneration = await _beginAuthSessionOperation();
+    try {
+      state = const AsyncLoading();
+      final result = await _repository.register(
+        username: username,
+        password: password,
+        nickname: nickname,
+        consents: consents,
       );
-      state = AsyncError(failure, StackTrace.current);
-      return Result.failure(failure);
-    }
 
-    await _clearAppCaches();
-    _authStateNotifier.setAuthenticated();
-    state = const AsyncData(null);
-    unawaited(_requestNotificationPermissionOnLogin());
-    unawaited(
-      _logAuthSuccess(
-        analyticsType: _AuthAnalyticsType.signup,
-        method: 'password',
-      ),
-    );
-    return result;
+      if (result is Err<RegisterResult>) {
+        state = AsyncError(result.failure, StackTrace.current);
+        return result;
+      }
+
+      final registerResult = (result as Success<RegisterResult>).data;
+
+      if (registerResult.verificationRequired) {
+        // EN: Email verification required — do not set authenticated.
+        // KO: 이메일 인증 필요 — 인증 상태로 전환하지 않습니다.
+        state = const AsyncData(null);
+        return result;
+      }
+
+      // EN: Tokens were persisted by the repository; validate before setting authenticated.
+      // KO: 리포지토리가 토큰을 저장했습니다. 인증 상태 설정 전 재검증합니다.
+      final hasTokens = await _secureStorage.hasValidTokens();
+      if (!_isCurrentAuthOperation(sessionGeneration)) {
+        return Result.failure(
+          const AuthFailure(
+            'Authentication session was superseded',
+            code: 'auth_session_superseded',
+          ),
+        );
+      }
+      if (!hasTokens) {
+        const failure = AuthFailure(
+          'Authentication succeeded but tokens were not persisted',
+          code: 'token_not_persisted',
+        );
+        state = AsyncError(failure, StackTrace.current);
+        return Result.failure(failure);
+      }
+
+      await _clearAppCaches();
+      if (!_isCurrentAuthOperation(sessionGeneration)) {
+        return Result.failure(
+          const AuthFailure(
+            'Authentication session was superseded',
+            code: 'auth_session_superseded',
+          ),
+        );
+      }
+      final mutationsCleared = await _clearUserScopedMutations();
+      if (!mutationsCleared) {
+        _authStateNotifier.setUnauthenticated();
+        final secureStorageCleared = await _clearSecureStorage();
+        final failure = secureStorageCleared
+            ? const AuthFailure(
+                'Unable to clear previous session data',
+                code: 'user_data_cleanup_failed',
+              )
+            : const AuthFailure(
+                'Unable to roll back persisted authentication',
+                code: 'auth_rollback_failed',
+              );
+        if (!secureStorageCleared) {
+          AppLogger.error(
+            'Failed to roll back tokens after registration cleanup failure',
+            tag: 'AuthController',
+          );
+        }
+        state = AsyncError(failure, StackTrace.current);
+        return Result.failure(failure);
+      }
+      if (!_isCurrentAuthOperation(sessionGeneration)) {
+        return Result.failure(
+          const AuthFailure(
+            'Authentication session was superseded',
+            code: 'auth_session_superseded',
+          ),
+        );
+      }
+      _authStateNotifier.setAuthenticated();
+      state = const AsyncData(null);
+      unawaited(_requestNotificationPermissionOnLogin());
+      unawaited(
+        _logAuthSuccess(
+          analyticsType: _AuthAnalyticsType.signup,
+          method: 'password',
+        ),
+      );
+      return result;
+    } finally {
+      _endAuthSessionOperation();
+    }
   }
 
   /// EN: Send (or resend) a verification email.
@@ -198,39 +278,52 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
     required String code,
     String? stateParam,
   }) async {
-    state = const AsyncLoading();
-    final result = await _repository.exchangeOAuthCode(
-      provider: provider,
-      code: code,
-      state: stateParam,
-    );
-    return _handleAuthResult(
-      result,
-      analyticsType: _AuthAnalyticsType.login,
-      analyticsMethod: provider.id,
-    );
+    return _runAuthSessionOperation((sessionGeneration) async {
+      state = const AsyncLoading();
+      final result = await _repository.exchangeOAuthCode(
+        provider: provider,
+        code: code,
+        state: stateParam,
+      );
+      return _handleAuthResult(
+        result,
+        operationGeneration: sessionGeneration,
+        analyticsType: _AuthAnalyticsType.login,
+        analyticsMethod: provider.id,
+      );
+    });
   }
 
   /// EN: Launch OAuth login flow (generic web-redirect, non-PKCE providers).
   /// KO: OAuth 로그인 플로우 실행 (일반 웹 리다이렉트, PKCE 미사용 제공자).
   Future<Result<void>> startOAuthLogin(OAuthProvider provider) async {
-    return _oauthService.launch(provider);
+    return _runAuthSessionOperation((sessionGeneration) async {
+      final result = await _oauthService.launch(provider);
+      if (!_isCurrentAuthOperation(sessionGeneration)) {
+        return _authSessionSupersededResult();
+      }
+      return result;
+    });
   }
 
   /// EN: Launch X (Twitter) OAuth 2.0 + PKCE authorization flow.
   ///     Generates PKCE pair, saves the verifier to SecureStorage, then
   ///     opens the X authorization page in the system browser.
-  ///     After the user approves, X redirects to the Universal Link
-  ///     https://api.noraneko.cc/oauth/x/callback, which the OS intercepts
-  ///     and routes to the app via [completeTwitterLogin].
+  ///     After the user approves, X redirects to the configured callback URI,
+  ///     which the OS intercepts and routes to [completeTwitterLogin].
   /// KO: X (Twitter) OAuth 2.0 + PKCE 인가 플로우를 실행합니다.
   ///     PKCE 쌍을 생성하고 verifier를 SecureStorage에 저장한 뒤,
   ///     시스템 브라우저에서 X 인가 페이지를 엽니다.
-  ///     사용자 승인 후 X가 유니버설 링크
-  ///     https://api.noraneko.cc/oauth/x/callback으로 리다이렉트하면
-  ///     OS가 앱을 실행하고 [completeTwitterLogin]이 처리합니다.
+  ///     사용자 승인 후 X가 설정된 콜백 URI로 리다이렉트하면 OS가 앱을
+  ///     실행하고 [completeTwitterLogin]이 처리합니다.
   Future<Result<void>> startTwitterLogin() async {
-    return _oauthService.launchTwitterPkce();
+    return _runAuthSessionOperation((sessionGeneration) async {
+      final result = await _oauthService.launchTwitterPkce();
+      if (!_isCurrentAuthOperation(sessionGeneration)) {
+        return _authSessionSupersededResult();
+      }
+      return result;
+    });
   }
 
   /// EN: Complete X (Twitter) PKCE login after the OAuth callback is received.
@@ -243,42 +336,59 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
     required String code,
     String? stateParam,
   }) async {
-    state = const AsyncLoading();
+    return _runAuthSessionOperation((sessionGeneration) async {
+      state = const AsyncLoading();
 
-    // EN: Validate and consume the CSRF state nonce.
-    // KO: CSRF state nonce를 검증하고 소모합니다.
-    final stateValidation = await _oauthService.validateAndConsumeState(
-      provider: OAuthProvider.twitter,
-      callbackState: stateParam,
-    );
-    if (stateValidation is Err<void>) {
-      state = AsyncError(stateValidation.failure, StackTrace.current);
-      return Result.failure(stateValidation.failure);
-    }
-
-    // EN: Retrieve and immediately clear the code_verifier stored before browser launch.
-    // KO: 브라우저 실행 전 저장했던 code_verifier를 읽고 즉시 삭제합니다.
-    final codeVerifier = await _secureStorage.getAndClearTwitterCodeVerifier();
-    if (codeVerifier == null || codeVerifier.isEmpty) {
-      const failure = ValidationFailure(
-        'Twitter PKCE code_verifier missing — '
-        'session may have expired or the callback arrived after a restart.',
-        code: 'twitter_code_verifier_missing',
+      // EN: Validate and consume the CSRF state nonce.
+      // KO: CSRF state nonce를 검증하고 소모합니다.
+      final stateValidation = await _oauthService.validateAndConsumeState(
+        provider: OAuthProvider.twitter,
+        callbackState: stateParam,
       );
-      state = AsyncError(failure, StackTrace.current);
-      return Result.failure(failure);
-    }
+      if (stateValidation is Err<void>) {
+        state = AsyncError(stateValidation.failure, StackTrace.current);
+        return Result.failure(stateValidation.failure);
+      }
 
-    final result = await _repository.loginWithTwitter(
-      code: code,
-      codeVerifier: codeVerifier,
-      redirectUri: 'https://api.noraneko.cc/oauth/x/callback',
-    );
-    return _handleAuthResult(
-      result,
-      analyticsType: _AuthAnalyticsType.login,
-      analyticsMethod: OAuthProvider.twitter.id,
-    );
+      // EN: Retrieve and immediately clear the code_verifier stored before browser launch.
+      // KO: 브라우저 실행 전 저장했던 code_verifier를 읽고 즉시 삭제합니다.
+      final codeVerifier = await _secureStorage
+          .getAndClearTwitterCodeVerifier();
+      if (codeVerifier == null || codeVerifier.isEmpty) {
+        const failure = ValidationFailure(
+          'Twitter PKCE code_verifier missing — '
+          'session may have expired or the callback arrived after a restart.',
+          code: 'twitter_code_verifier_missing',
+        );
+        state = AsyncError(failure, StackTrace.current);
+        return Result.failure(failure);
+      }
+      if (!_isCurrentAuthOperation(sessionGeneration)) {
+        return _authSessionSupersededResult();
+      }
+
+      final redirectUri = _oauthService.twitterRedirectUri;
+      if (redirectUri == null) {
+        const failure = ValidationFailure(
+          'Twitter redirect URI is invalid.',
+          code: 'twitter_redirect_uri_invalid',
+        );
+        state = AsyncError(failure, StackTrace.current);
+        return Result.failure(failure);
+      }
+
+      final result = await _repository.loginWithTwitter(
+        code: code,
+        codeVerifier: codeVerifier,
+        redirectUri: redirectUri,
+      );
+      return _handleAuthResult(
+        result,
+        operationGeneration: sessionGeneration,
+        analyticsType: _AuthAnalyticsType.login,
+        analyticsMethod: OAuthProvider.twitter.id,
+      );
+    });
   }
 
   /// EN: Native Google Sign-In — calls Google SDK then exchanges idToken with backend.
@@ -290,42 +400,48 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
   ///     EMAIL_ACCOUNT_CONFLICT(409) 시 pending 자격증명을 저장하고 충돌 실패를 반환하여
   ///     UI가 충돌 해결 화면으로 이동할 수 있도록 합니다.
   Future<Result<void>> loginWithGoogle() async {
-    state = const AsyncLoading();
-    _pendingInactiveRecovery = null;
-    final tokenResult = await _nativeSocialLoginService.signInWithGoogle();
-    if (tokenResult is Err<String>) {
-      state = AsyncError(tokenResult.failure, StackTrace.current);
-      return Result.failure(tokenResult.failure);
-    }
-    final idToken = (tokenResult as Success<String>).data;
-    final authResult = await _repository.loginWithGoogle(idToken: idToken);
-
-    // EN: Detect EMAIL_ACCOUNT_CONFLICT and store idToken for link-existing flow.
-    // KO: EMAIL_ACCOUNT_CONFLICT 감지 시 link-existing 플로우를 위해 idToken을 저장합니다.
-    final authFailure = authResult.failureOrNull;
-    if (authFailure?.code == 'ACCOUNT_INACTIVE') {
-      _pendingInactiveRecovery = _PendingInactiveRecovery(
-        provider: OAuthProvider.google,
-        token: idToken,
-      );
-    }
-    if (authFailure != null && authFailure.code == 'EMAIL_ACCOUNT_CONFLICT') {
-      var conflictEmail = '';
-      if (authFailure is ValidationFailure) {
-        conflictEmail = (authFailure.details?['email'] as String?) ?? '';
+    return _runAuthSessionOperation((sessionGeneration) async {
+      state = const AsyncLoading();
+      _pendingInactiveRecovery = null;
+      final tokenResult = await _nativeSocialLoginService.signInWithGoogle();
+      if (tokenResult is Err<String>) {
+        state = AsyncError(tokenResult.failure, StackTrace.current);
+        return Result.failure(tokenResult.failure);
       }
-      _pendingConflict = _PendingOAuthConflict(
-        provider: OAuthProvider.google,
-        token: idToken,
-        conflictEmail: conflictEmail,
-      );
-    }
+      if (!_isCurrentAuthOperation(sessionGeneration)) {
+        return _authSessionSupersededResult();
+      }
+      final idToken = (tokenResult as Success<String>).data;
+      final authResult = await _repository.loginWithGoogle(idToken: idToken);
 
-    return _handleAuthResult(
-      authResult,
-      analyticsType: _AuthAnalyticsType.login,
-      analyticsMethod: OAuthProvider.google.id,
-    );
+      // EN: Detect EMAIL_ACCOUNT_CONFLICT and store idToken for link-existing flow.
+      // KO: EMAIL_ACCOUNT_CONFLICT 감지 시 link-existing 플로우를 위해 idToken을 저장합니다.
+      final authFailure = authResult.failureOrNull;
+      if (authFailure?.code == 'ACCOUNT_INACTIVE') {
+        _pendingInactiveRecovery = _PendingInactiveRecovery(
+          provider: OAuthProvider.google,
+          token: idToken,
+        );
+      }
+      if (authFailure != null && authFailure.code == 'EMAIL_ACCOUNT_CONFLICT') {
+        var conflictEmail = '';
+        if (authFailure is ValidationFailure) {
+          conflictEmail = (authFailure.details?['email'] as String?) ?? '';
+        }
+        _pendingConflict = _PendingOAuthConflict(
+          provider: OAuthProvider.google,
+          token: idToken,
+          conflictEmail: conflictEmail,
+        );
+      }
+
+      return _handleAuthResult(
+        authResult,
+        operationGeneration: sessionGeneration,
+        analyticsType: _AuthAnalyticsType.login,
+        analyticsMethod: OAuthProvider.google.id,
+      );
+    });
   }
 
   /// EN: Restore an inactive Google account with the fresh proof obtained by
@@ -333,22 +449,27 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
   /// KO: 바로 앞선 로그인 시도에서 얻은 최신 Google 소유권 증명으로
   ///     비활성 계정을 복구합니다.
   Future<Result<void>> recoverWithGoogle() async {
-    state = const AsyncLoading();
-    final pending = _takeInactiveRecovery(OAuthProvider.google);
-    if (pending == null) {
-      const failure = ValidationFailure(
-        'Google recovery proof is missing or expired.',
-        code: 'recovery_proof_missing',
+    return _runAuthSessionOperation((sessionGeneration) async {
+      state = const AsyncLoading();
+      final pending = _takeInactiveRecovery(OAuthProvider.google);
+      if (pending == null) {
+        const failure = ValidationFailure(
+          'Google recovery proof is missing or expired.',
+          code: 'recovery_proof_missing',
+        );
+        state = AsyncError(failure, StackTrace.current);
+        return Result.failure(failure);
+      }
+      final result = await _repository.recoverWithGoogle(
+        idToken: pending.token,
       );
-      state = AsyncError(failure, StackTrace.current);
-      return Result.failure(failure);
-    }
-    final result = await _repository.recoverWithGoogle(idToken: pending.token);
-    return _handleAuthResult(
-      result,
-      analyticsType: _AuthAnalyticsType.login,
-      analyticsMethod: OAuthProvider.google.id,
-    );
+      return _handleAuthResult(
+        result,
+        operationGeneration: sessionGeneration,
+        analyticsType: _AuthAnalyticsType.login,
+        analyticsMethod: OAuthProvider.google.id,
+      );
+    });
   }
 
   /// EN: Native Apple Sign-In — calls Apple SDK then exchanges identityToken with backend.
@@ -358,52 +479,59 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
   ///     사용자가 로그인 시트를 닫으면 code 'sign_in_cancelled' [AuthFailure]를 반환합니다.
   ///     EMAIL_ACCOUNT_CONFLICT(409) 시 link-existing 플로우를 위해 pending 자격증명을 저장합니다.
   Future<Result<void>> loginWithApple() async {
-    state = const AsyncLoading();
-    _pendingInactiveRecovery = null;
-    final credentialResult = await _nativeSocialLoginService.signInWithApple();
-    if (credentialResult is Err<AppleSignInCredentials>) {
-      state = AsyncError(credentialResult.failure, StackTrace.current);
-      return Result.failure(credentialResult.failure);
-    }
-    final credentials =
-        (credentialResult as Success<AppleSignInCredentials>).data;
-    final authResult = await _repository.loginWithApple(
-      identityToken: credentials.identityToken,
-      email: credentials.email,
-      fullName: credentials.fullName,
-    );
-
-    // EN: Detect EMAIL_ACCOUNT_CONFLICT and store credentials for link-existing flow.
-    // KO: EMAIL_ACCOUNT_CONFLICT 감지 시 link-existing 플로우를 위해 자격증명을 저장합니다.
-    final appleAuthFailure = authResult.failureOrNull;
-    if (appleAuthFailure?.code == 'ACCOUNT_INACTIVE') {
-      _pendingInactiveRecovery = _PendingInactiveRecovery(
-        provider: OAuthProvider.apple,
-        token: credentials.identityToken,
+    return _runAuthSessionOperation((sessionGeneration) async {
+      state = const AsyncLoading();
+      _pendingInactiveRecovery = null;
+      final credentialResult = await _nativeSocialLoginService
+          .signInWithApple();
+      if (credentialResult is Err<AppleSignInCredentials>) {
+        state = AsyncError(credentialResult.failure, StackTrace.current);
+        return Result.failure(credentialResult.failure);
+      }
+      if (!_isCurrentAuthOperation(sessionGeneration)) {
+        return _authSessionSupersededResult();
+      }
+      final credentials =
+          (credentialResult as Success<AppleSignInCredentials>).data;
+      final authResult = await _repository.loginWithApple(
+        identityToken: credentials.identityToken,
         email: credentials.email,
         fullName: credentials.fullName,
       );
-    }
-    if (appleAuthFailure != null &&
-        appleAuthFailure.code == 'EMAIL_ACCOUNT_CONFLICT') {
-      var conflictEmail = '';
-      if (appleAuthFailure is ValidationFailure) {
-        conflictEmail = (appleAuthFailure.details?['email'] as String?) ?? '';
-      }
-      _pendingConflict = _PendingOAuthConflict(
-        provider: OAuthProvider.apple,
-        token: credentials.identityToken,
-        conflictEmail: conflictEmail,
-        appleEmail: credentials.email,
-        fullName: credentials.fullName,
-      );
-    }
 
-    return _handleAuthResult(
-      authResult,
-      analyticsType: _AuthAnalyticsType.login,
-      analyticsMethod: OAuthProvider.apple.id,
-    );
+      // EN: Detect EMAIL_ACCOUNT_CONFLICT and store credentials for link-existing flow.
+      // KO: EMAIL_ACCOUNT_CONFLICT 감지 시 link-existing 플로우를 위해 자격증명을 저장합니다.
+      final appleAuthFailure = authResult.failureOrNull;
+      if (appleAuthFailure?.code == 'ACCOUNT_INACTIVE') {
+        _pendingInactiveRecovery = _PendingInactiveRecovery(
+          provider: OAuthProvider.apple,
+          token: credentials.identityToken,
+          email: credentials.email,
+          fullName: credentials.fullName,
+        );
+      }
+      if (appleAuthFailure != null &&
+          appleAuthFailure.code == 'EMAIL_ACCOUNT_CONFLICT') {
+        var conflictEmail = '';
+        if (appleAuthFailure is ValidationFailure) {
+          conflictEmail = (appleAuthFailure.details?['email'] as String?) ?? '';
+        }
+        _pendingConflict = _PendingOAuthConflict(
+          provider: OAuthProvider.apple,
+          token: credentials.identityToken,
+          conflictEmail: conflictEmail,
+          appleEmail: credentials.email,
+          fullName: credentials.fullName,
+        );
+      }
+
+      return _handleAuthResult(
+        authResult,
+        operationGeneration: sessionGeneration,
+        analyticsType: _AuthAnalyticsType.login,
+        analyticsMethod: OAuthProvider.apple.id,
+      );
+    });
   }
 
   /// EN: Restore an inactive Apple account with the fresh proof obtained by
@@ -411,26 +539,29 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
   /// KO: 바로 앞선 로그인 시도에서 얻은 최신 Apple 소유권 증명으로
   ///     비활성 계정을 복구합니다.
   Future<Result<void>> recoverWithApple() async {
-    state = const AsyncLoading();
-    final pending = _takeInactiveRecovery(OAuthProvider.apple);
-    if (pending == null) {
-      const failure = ValidationFailure(
-        'Apple recovery proof is missing or expired.',
-        code: 'recovery_proof_missing',
+    return _runAuthSessionOperation((sessionGeneration) async {
+      state = const AsyncLoading();
+      final pending = _takeInactiveRecovery(OAuthProvider.apple);
+      if (pending == null) {
+        const failure = ValidationFailure(
+          'Apple recovery proof is missing or expired.',
+          code: 'recovery_proof_missing',
+        );
+        state = AsyncError(failure, StackTrace.current);
+        return Result.failure(failure);
+      }
+      final result = await _repository.recoverWithApple(
+        identityToken: pending.token,
+        email: pending.email,
+        fullName: pending.fullName,
       );
-      state = AsyncError(failure, StackTrace.current);
-      return Result.failure(failure);
-    }
-    final result = await _repository.recoverWithApple(
-      identityToken: pending.token,
-      email: pending.email,
-      fullName: pending.fullName,
-    );
-    return _handleAuthResult(
-      result,
-      analyticsType: _AuthAnalyticsType.login,
-      analyticsMethod: OAuthProvider.apple.id,
-    );
+      return _handleAuthResult(
+        result,
+        operationGeneration: sessionGeneration,
+        analyticsType: _AuthAnalyticsType.login,
+        analyticsMethod: OAuthProvider.apple.id,
+      );
+    });
   }
 
   _PendingInactiveRecovery? _takeInactiveRecovery(OAuthProvider provider) {
@@ -449,24 +580,40 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
     required String currentPassword,
     required String newPassword,
   }) async {
-    state = const AsyncLoading();
-    final result = await _repository.changePassword(
-      currentPassword: currentPassword,
-      newPassword: newPassword,
-    );
-    if (result is Err<void>) {
-      state = AsyncError(result.failure, StackTrace.current);
-      return Result.failure(result.failure);
-    }
-    // EN: Password changed — revoke all sessions. Clear all local data.
-    // KO: 비밀번호 변경 완료 — 모든 세션 만료. 로컬 데이터 전체 삭제.
-    await _clearAppCaches();
-    await _clearSecureStorage();
-    await _clearUserLocalStorage();
-    _invalidateUserProviders();
-    _authStateNotifier.setUnauthenticated();
-    state = const AsyncData(null);
-    return const Result.success(null);
+    return _runAuthSessionOperation((sessionGeneration) async {
+      state = const AsyncLoading();
+      final result = await _repository.changePassword(
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+      );
+      if (result is Err<void>) {
+        state = AsyncError(result.failure, StackTrace.current);
+        return Result.failure(result.failure);
+      }
+      if (!_isCurrentAuthOperation(sessionGeneration)) {
+        return _authSessionSupersededResult();
+      }
+      // EN: Password changed — revoke all sessions. Clear all local data.
+      // KO: 비밀번호 변경 완료 — 모든 세션 만료. 로컬 데이터 전체 삭제.
+      _authSessionGeneration += 1;
+      _authStateNotifier.setUnauthenticated();
+      await _clearAppCaches();
+      final secureStorageCleared = await _clearSecureStorage();
+      final userLocalStorageCleared = await _clearUserLocalStorage();
+      _invalidateUserProviders();
+      _pendingConflict = null;
+      _pendingInactiveRecovery = null;
+      if (!secureStorageCleared || !userLocalStorageCleared) {
+        const failure = AuthFailure(
+          'Unable to finish password-change cleanup',
+          code: 'session_cleanup_failed',
+        );
+        state = AsyncError(failure, StackTrace.current);
+        return Result.failure(failure);
+      }
+      state = const AsyncData(null);
+      return const Result.success(null);
+    });
   }
 
   /// EN: Request a password-reset email (Step 1 of forgot-password flow).
@@ -490,35 +637,162 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
     required String token,
     required String newPassword,
   }) async {
-    state = const AsyncLoading();
-    final result = await _repository.confirmPasswordReset(
-      token: token,
-      newPassword: newPassword,
-    );
-    if (result is Err<void>) {
-      state = AsyncError(result.failure, StackTrace.current);
-      return Result.failure(result.failure);
-    }
-    // EN: All sessions revoked after reset. Clear local data.
-    // KO: 재설정 후 모든 세션 만료. 로컬 데이터 삭제.
-    await _clearAppCaches();
-    await _clearSecureStorage();
-    await _clearUserLocalStorage();
-    _invalidateUserProviders();
-    _authStateNotifier.setUnauthenticated();
-    state = const AsyncData(null);
-    return const Result.success(null);
+    return _runAuthSessionOperation((sessionGeneration) async {
+      state = const AsyncLoading();
+      final result = await _repository.confirmPasswordReset(
+        token: token,
+        newPassword: newPassword,
+      );
+      if (result is Err<void>) {
+        state = AsyncError(result.failure, StackTrace.current);
+        return Result.failure(result.failure);
+      }
+      if (!_isCurrentAuthOperation(sessionGeneration)) {
+        return _authSessionSupersededResult();
+      }
+      // EN: All sessions revoked after reset. Clear local data.
+      // KO: 재설정 후 모든 세션 만료. 로컬 데이터 삭제.
+      _authSessionGeneration += 1;
+      _authStateNotifier.setUnauthenticated();
+      await _clearAppCaches();
+      final secureStorageCleared = await _clearSecureStorage();
+      final userLocalStorageCleared = await _clearUserLocalStorage();
+      _invalidateUserProviders();
+      if (!secureStorageCleared || !userLocalStorageCleared) {
+        const failure = AuthFailure(
+          'Unable to finish password-reset cleanup',
+          code: 'session_cleanup_failed',
+        );
+        state = AsyncError(failure, StackTrace.current);
+        return Result.failure(failure);
+      }
+      state = const AsyncData(null);
+      return const Result.success(null);
+    });
   }
 
   /// EN: Log out and clear ALL local data (tokens, caches, user-specific storage).
   /// KO: 로그아웃 시 모든 로컬 데이터를 삭제합니다 (토큰, 캐시, 사용자별 저장소).
   Future<void> logout() async {
+    final pendingCleanup = _pendingAuthCleanup;
+    if (pendingCleanup != null) {
+      await pendingCleanup;
+      return;
+    }
+
+    final cleanupCompleter = Completer<void>();
+    _pendingAuthCleanup = cleanupCompleter.future;
+    try {
+      await _performLogout();
+    } finally {
+      if (identical(_pendingAuthCleanup, cleanupCompleter.future)) {
+        _pendingAuthCleanup = null;
+      }
+      if (!cleanupCompleter.isCompleted) {
+        cleanupCompleter.complete();
+      }
+    }
+  }
+
+  Future<int> _beginAuthSessionOperation() async {
+    while (true) {
+      final pendingCleanup = _pendingAuthCleanup;
+      if (pendingCleanup == null) {
+        if (_activeAuthOperations == 0) {
+          _activeAuthOperations += 1;
+          return _authSessionGeneration;
+        }
+        await _awaitAuthOperationsDrained();
+        continue;
+      }
+      await pendingCleanup;
+    }
+  }
+
+  Future<T> _runAuthSessionOperation<T>(
+    Future<T> Function(int sessionGeneration) operation,
+  ) async {
+    final sessionGeneration = await _beginAuthSessionOperation();
+    try {
+      return await operation(sessionGeneration);
+    } finally {
+      _endAuthSessionOperation();
+    }
+  }
+
+  void _endAuthSessionOperation() {
+    if (_activeAuthOperations == 0) {
+      return;
+    }
+    _activeAuthOperations -= 1;
+    if (_activeAuthOperations == 0) {
+      _authOperationsDrained?.complete();
+      _authOperationsDrained = null;
+    }
+  }
+
+  Future<void> _awaitAuthOperationsDrained() {
+    if (_activeAuthOperations == 0) {
+      return Future<void>.value();
+    }
+    final drained = _authOperationsDrained ??= Completer<void>();
+    return drained.future;
+  }
+
+  bool _prepareTokenReplacementSession() {
+    final wasAuthenticated = _ref.read(isAuthenticatedProvider);
+    if (wasAuthenticated) {
+      _authStateNotifier.setUnauthenticated();
+    }
+    _invalidateUserProviders();
+    return wasAuthenticated;
+  }
+
+  Future<Result<T>> _requestTokenReplacement<T>({
+    required int sessionGeneration,
+    required bool wasAuthenticated,
+    required Future<Result<T>> Function() request,
+  }) async {
+    try {
+      return await request();
+    } catch (error) {
+      if (wasAuthenticated && _isCurrentAuthOperation(sessionGeneration)) {
+        _authStateNotifier.setAuthenticated();
+      }
+      rethrow;
+    }
+  }
+
+  Future<void> _performLogout() async {
     state = const AsyncLoading();
-    final result = await _repository.logout();
-    if (result is Err<void>) {
+    // EN: Invalidate the session before any network or storage await so that
+    //     in-flight user mutations cannot be replayed for a new session.
+    // KO: 네트워크/저장소 await 전에 세션을 무효화하여 진행 중인 사용자
+    //     변경 작업이 새 세션에 재생되지 않도록 합니다.
+    _authSessionGeneration += 1;
+    _authStateNotifier.setUnauthenticated();
+    await _awaitAuthOperationsDrained();
+    try {
+      final result = await _repository.logout();
+      if (result is Err<void>) {
+        AppLogger.warning(
+          'Logout API failed; proceeding with local logout cleanup',
+          data: result.failure,
+          tag: 'AuthController',
+        );
+      }
+    } catch (e, stackTrace) {
+      // EN: Local cleanup must continue even when the logout request throws.
+      // KO: 로그아웃 요청이 예외를 던져도 로컬 정리는 계속해야 합니다.
       AppLogger.warning(
-        'Logout API failed; proceeding with local logout cleanup',
-        data: result.failure,
+        'Logout API threw; proceeding with local logout cleanup',
+        data: e,
+        tag: 'AuthController',
+      );
+      AppLogger.error(
+        'Logout API error',
+        error: e,
+        stackTrace: stackTrace,
         tag: 'AuthController',
       );
     }
@@ -549,20 +823,31 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
 
     // EN: 2. Clear ALL secure storage (tokens, userId, verification keys).
     // KO: 2. 모든 보안 저장소 삭제 (토큰, userId, 인증 키).
-    await _clearSecureStorage();
+    final secureStorageCleared = await _clearSecureStorage();
 
     // EN: 3. Clear user-specific local storage data.
     // KO: 3. 사용자별 로컬 저장소 데이터 삭제.
-    await _clearUserLocalStorage();
+    final userLocalStorageCleared = await _clearUserLocalStorage();
 
     // EN: 4. Invalidate Riverpod providers holding user-specific state.
     // KO: 4. 사용자별 상태를 보유한 Riverpod 프로바이더 초기화.
     _invalidateUserProviders();
 
-    // EN: 5. Set auth state to unauthenticated.
-    // KO: 5. 인증 상태를 미인증으로 설정.
-    _authStateNotifier.setUnauthenticated();
     _pendingConflict = null;
+    _pendingInactiveRecovery = null;
+    if (!secureStorageCleared || !userLocalStorageCleared) {
+      const failure = AuthFailure(
+        'Unable to finish local logout cleanup',
+        code: 'logout_cleanup_failed',
+      );
+      state = AsyncError(failure, StackTrace.current);
+      AppLogger.error(
+        'Logout completed with incomplete local cleanup',
+        error: failure,
+        tag: 'AuthController',
+      );
+      return;
+    }
     state = const AsyncData(null);
 
     AppLogger.info(
@@ -582,46 +867,59 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
   ///     EMAIL_ACCOUNT_CONFLICT 플로우를 완료합니다.
   ///     성공 시 pending conflict를 삭제합니다.
   Future<Result<void>> linkExistingOAuth({required String password}) async {
-    final conflict = _pendingConflict;
-    if (conflict == null) {
-      const failure = ValidationFailure(
-        'No pending OAuth conflict',
-        code: 'no_pending_conflict',
+    return _runAuthSessionOperation((sessionGeneration) async {
+      final conflict = _pendingConflict;
+      if (conflict == null) {
+        const failure = ValidationFailure(
+          'No pending OAuth conflict',
+          code: 'no_pending_conflict',
+        );
+        state = AsyncError(failure, StackTrace.current);
+        return Result.failure(failure);
+      }
+
+      final wasAuthenticated = _prepareTokenReplacementSession();
+      state = const AsyncLoading();
+      Result<AuthTokens> result;
+
+      if (conflict.provider == OAuthProvider.google) {
+        result = await _requestTokenReplacement(
+          sessionGeneration: sessionGeneration,
+          wasAuthenticated: wasAuthenticated,
+          request: () => _repository.linkExistingWithGoogle(
+            idToken: conflict.token,
+            email: conflict.conflictEmail,
+            password: password,
+          ),
+        );
+      } else {
+        // EN: Apple — pass cached email/fullName alongside identityToken.
+        // KO: Apple — identityToken과 함께 캐시된 email/fullName을 전달합니다.
+        result = await _requestTokenReplacement(
+          sessionGeneration: sessionGeneration,
+          wasAuthenticated: wasAuthenticated,
+          request: () => _repository.linkExistingWithApple(
+            identityToken: conflict.token,
+            email: conflict.conflictEmail,
+            password: password,
+            appleEmail: conflict.appleEmail,
+            fullName: conflict.fullName,
+          ),
+        );
+      }
+
+      if (result is Success<AuthTokens>) {
+        _pendingConflict = null;
+      }
+
+      return _handleAuthResult(
+        result,
+        operationGeneration: sessionGeneration,
+        restoreAuthOnFailure: wasAuthenticated,
+        analyticsType: _AuthAnalyticsType.login,
+        analyticsMethod: conflict.provider.id,
       );
-      state = AsyncError(failure, StackTrace.current);
-      return Result.failure(failure);
-    }
-
-    state = const AsyncLoading();
-    Result<AuthTokens> result;
-
-    if (conflict.provider == OAuthProvider.google) {
-      result = await _repository.linkExistingWithGoogle(
-        idToken: conflict.token,
-        email: conflict.conflictEmail,
-        password: password,
-      );
-    } else {
-      // EN: Apple — pass cached email/fullName alongside identityToken.
-      // KO: Apple — identityToken과 함께 캐시된 email/fullName을 전달합니다.
-      result = await _repository.linkExistingWithApple(
-        identityToken: conflict.token,
-        email: conflict.conflictEmail,
-        password: password,
-        appleEmail: conflict.appleEmail,
-        fullName: conflict.fullName,
-      );
-    }
-
-    if (result is Success<AuthTokens>) {
-      _pendingConflict = null;
-    }
-
-    return _handleAuthResult(
-      result,
-      analyticsType: _AuthAnalyticsType.login,
-      analyticsMethod: conflict.provider.id,
-    );
+    });
   }
 
   /// EN: Merge the current new OAuth account with an existing local account.
@@ -634,12 +932,21 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
     required String email,
     required String password,
   }) async {
-    state = const AsyncLoading();
-    final result = await _repository.connectExisting(
-      email: email,
-      password: password,
-    );
-    return _handleAuthResult(result);
+    return _runAuthSessionOperation((sessionGeneration) async {
+      final wasAuthenticated = _prepareTokenReplacementSession();
+      state = const AsyncLoading();
+      final result = await _requestTokenReplacement(
+        sessionGeneration: sessionGeneration,
+        wasAuthenticated: wasAuthenticated,
+        request: () =>
+            _repository.connectExisting(email: email, password: password),
+      );
+      return _handleAuthResult(
+        result,
+        operationGeneration: sessionGeneration,
+        restoreAuthOnFailure: wasAuthenticated,
+      );
+    });
   }
 
   /// EN: Merge the current new OAuth account with an existing Google account.
@@ -649,17 +956,32 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
   ///     소유권 증명을 위해 Google SDK를 호출한 뒤 POST /connect/existing/google을 호출합니다.
   ///     성공 시 기존 Google 계정의 토큰이 현재 토큰을 대체합니다.
   Future<Result<void>> connectExistingWithGoogle() async {
-    final tokenResult = await _nativeSocialLoginService.signInWithGoogle();
-    if (tokenResult is Err<String>) {
-      state = AsyncError(tokenResult.failure, StackTrace.current);
-      return Result.failure(tokenResult.failure);
-    }
-    final idToken = (tokenResult as Success<String>).data;
-    state = const AsyncLoading();
-    final result = await _repository.connectExistingWithGoogle(
-      idToken: idToken,
-    );
-    return _handleAuthResult(result);
+    return _runAuthSessionOperation((sessionGeneration) async {
+      final tokenResult = await _nativeSocialLoginService.signInWithGoogle();
+      if (tokenResult is Err<String>) {
+        state = AsyncError(tokenResult.failure, StackTrace.current);
+        return Result.failure(tokenResult.failure);
+      }
+      if (!_isCurrentAuthOperation(sessionGeneration)) {
+        return _authSessionSupersededResult();
+      }
+      final idToken = (tokenResult as Success<String>).data;
+      final wasAuthenticated = _prepareTokenReplacementSession();
+      if (!_isCurrentAuthOperation(sessionGeneration)) {
+        return _authSessionSupersededResult();
+      }
+      state = const AsyncLoading();
+      final result = await _requestTokenReplacement(
+        sessionGeneration: sessionGeneration,
+        wasAuthenticated: wasAuthenticated,
+        request: () => _repository.connectExistingWithGoogle(idToken: idToken),
+      );
+      return _handleAuthResult(
+        result,
+        operationGeneration: sessionGeneration,
+        restoreAuthOnFailure: wasAuthenticated,
+      );
+    });
   }
 
   /// EN: Merge the current new OAuth account with an existing Apple account.
@@ -669,20 +991,38 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
   ///     소유권 증명을 위해 Apple SDK를 호출한 뒤 POST /connect/existing/apple을 호출합니다.
   ///     성공 시 기존 Apple 계정의 토큰이 현재 토큰을 대체합니다.
   Future<Result<void>> connectExistingWithApple() async {
-    final credentialResult = await _nativeSocialLoginService.signInWithApple();
-    if (credentialResult is Err<AppleSignInCredentials>) {
-      state = AsyncError(credentialResult.failure, StackTrace.current);
-      return Result.failure(credentialResult.failure);
-    }
-    final credentials =
-        (credentialResult as Success<AppleSignInCredentials>).data;
-    state = const AsyncLoading();
-    final result = await _repository.connectExistingWithApple(
-      identityToken: credentials.identityToken,
-      email: credentials.email,
-      fullName: credentials.fullName,
-    );
-    return _handleAuthResult(result);
+    return _runAuthSessionOperation((sessionGeneration) async {
+      final credentialResult = await _nativeSocialLoginService
+          .signInWithApple();
+      if (credentialResult is Err<AppleSignInCredentials>) {
+        state = AsyncError(credentialResult.failure, StackTrace.current);
+        return Result.failure(credentialResult.failure);
+      }
+      if (!_isCurrentAuthOperation(sessionGeneration)) {
+        return _authSessionSupersededResult();
+      }
+      final credentials =
+          (credentialResult as Success<AppleSignInCredentials>).data;
+      final wasAuthenticated = _prepareTokenReplacementSession();
+      if (!_isCurrentAuthOperation(sessionGeneration)) {
+        return _authSessionSupersededResult();
+      }
+      state = const AsyncLoading();
+      final result = await _requestTokenReplacement(
+        sessionGeneration: sessionGeneration,
+        wasAuthenticated: wasAuthenticated,
+        request: () => _repository.connectExistingWithApple(
+          identityToken: credentials.identityToken,
+          email: credentials.email,
+          fullName: credentials.fullName,
+        ),
+      );
+      return _handleAuthResult(
+        result,
+        operationGeneration: sessionGeneration,
+        restoreAuthOnFailure: wasAuthenticated,
+      );
+    });
   }
 
   /// EN: Connect Google OAuth to the current account from settings.
@@ -690,20 +1030,28 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
   /// KO: 설정에서 Google OAuth를 현재 계정에 연결합니다.
   ///     Google SDK를 호출한 뒤 Bearer 토큰으로 POST /connect/google을 호출합니다.
   Future<Result<void>> connectGoogle() async {
-    final tokenResult = await _nativeSocialLoginService.signInWithGoogle();
-    if (tokenResult is Err<String>) {
-      state = AsyncError(tokenResult.failure, StackTrace.current);
-      return Result.failure(tokenResult.failure);
-    }
-    final idToken = (tokenResult as Success<String>).data;
-    state = const AsyncLoading();
-    final result = await _repository.connectGoogle(idToken: idToken);
-    if (result is Err<void>) {
-      state = AsyncError(result.failure, StackTrace.current);
-      return Result.failure(result.failure);
-    }
-    state = const AsyncData(null);
-    return const Result.success(null);
+    return _runAuthSessionOperation((sessionGeneration) async {
+      final tokenResult = await _nativeSocialLoginService.signInWithGoogle();
+      if (tokenResult is Err<String>) {
+        state = AsyncError(tokenResult.failure, StackTrace.current);
+        return Result.failure(tokenResult.failure);
+      }
+      if (!_isCurrentAuthOperation(sessionGeneration)) {
+        return _authSessionSupersededResult();
+      }
+      final idToken = (tokenResult as Success<String>).data;
+      state = const AsyncLoading();
+      final result = await _repository.connectGoogle(idToken: idToken);
+      if (!_isCurrentAuthOperation(sessionGeneration)) {
+        return _authSessionSupersededResult();
+      }
+      if (result is Err<void>) {
+        state = AsyncError(result.failure, StackTrace.current);
+        return Result.failure(result.failure);
+      }
+      state = const AsyncData(null);
+      return const Result.success(null);
+    });
   }
 
   /// EN: Connect Apple OAuth to the current account from settings.
@@ -711,24 +1059,33 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
   /// KO: 설정에서 Apple OAuth를 현재 계정에 연결합니다.
   ///     Apple SDK를 호출한 뒤 Bearer 토큰으로 POST /connect/apple을 호출합니다.
   Future<Result<void>> connectApple() async {
-    final credentialResult = await _nativeSocialLoginService.signInWithApple();
-    if (credentialResult is Err<AppleSignInCredentials>) {
-      state = AsyncError(credentialResult.failure, StackTrace.current);
-      return Result.failure(credentialResult.failure);
-    }
-    final credentials =
-        (credentialResult as Success<AppleSignInCredentials>).data;
-    state = const AsyncLoading();
-    final result = await _repository.connectApple(
-      identityToken: credentials.identityToken,
-      email: credentials.email,
-    );
-    if (result is Err<void>) {
-      state = AsyncError(result.failure, StackTrace.current);
-      return Result.failure(result.failure);
-    }
-    state = const AsyncData(null);
-    return const Result.success(null);
+    return _runAuthSessionOperation((sessionGeneration) async {
+      final credentialResult = await _nativeSocialLoginService
+          .signInWithApple();
+      if (credentialResult is Err<AppleSignInCredentials>) {
+        state = AsyncError(credentialResult.failure, StackTrace.current);
+        return Result.failure(credentialResult.failure);
+      }
+      if (!_isCurrentAuthOperation(sessionGeneration)) {
+        return _authSessionSupersededResult();
+      }
+      final credentials =
+          (credentialResult as Success<AppleSignInCredentials>).data;
+      state = const AsyncLoading();
+      final result = await _repository.connectApple(
+        identityToken: credentials.identityToken,
+        email: credentials.email,
+      );
+      if (!_isCurrentAuthOperation(sessionGeneration)) {
+        return _authSessionSupersededResult();
+      }
+      if (result is Err<void>) {
+        state = AsyncError(result.failure, StackTrace.current);
+        return Result.failure(result.failure);
+      }
+      state = const AsyncData(null);
+      return const Result.success(null);
+    });
   }
 
   /// EN: Disconnect OAuth from the current account (DELETE /connect).
@@ -736,23 +1093,36 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
   /// KO: 현재 계정의 OAuth 연결을 해제합니다 (DELETE /connect).
   ///     비밀번호가 없는 계정이면 CANNOT_DISCONNECT_OAUTH(409)를 반환합니다.
   Future<Result<void>> disconnectOAuth() async {
-    state = const AsyncLoading();
-    final result = await _repository.disconnectOAuth();
-    if (result is Err<void>) {
-      state = AsyncError(result.failure, StackTrace.current);
-      return Result.failure(result.failure);
-    }
-    state = const AsyncData(null);
-    return const Result.success(null);
+    return _runAuthSessionOperation((sessionGeneration) async {
+      state = const AsyncLoading();
+      final result = await _repository.disconnectOAuth();
+      if (!_isCurrentAuthOperation(sessionGeneration)) {
+        return _authSessionSupersededResult();
+      }
+      if (result is Err<void>) {
+        state = AsyncError(result.failure, StackTrace.current);
+        return Result.failure(result.failure);
+      }
+      state = const AsyncData(null);
+      return const Result.success(null);
+    });
   }
 
   Future<Result<void>> _handleAuthResult(
     Result<dynamic> result, {
+    int? operationGeneration,
+    bool restoreAuthOnFailure = false,
     _AuthAnalyticsType? analyticsType,
     String? analyticsMethod,
   }) async {
+    if (!_isCurrentAuthOperation(operationGeneration)) {
+      return _authSessionSupersededResult();
+    }
     if (result is Success<dynamic>) {
       final hasTokens = await _secureStorage.hasValidTokens();
+      if (!_isCurrentAuthOperation(operationGeneration)) {
+        return _authSessionSupersededResult();
+      }
       if (!hasTokens) {
         const failure = AuthFailure(
           'Authentication succeeded but tokens were not persisted',
@@ -762,6 +1132,34 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
         return Result.failure(failure);
       }
       await _clearAppCaches();
+      if (!_isCurrentAuthOperation(operationGeneration)) {
+        return _authSessionSupersededResult();
+      }
+      final mutationsCleared = await _clearUserScopedMutations();
+      if (!mutationsCleared) {
+        _authStateNotifier.setUnauthenticated();
+        final secureStorageCleared = await _clearSecureStorage();
+        final failure = secureStorageCleared
+            ? const AuthFailure(
+                'Unable to clear previous session data',
+                code: 'user_data_cleanup_failed',
+              )
+            : const AuthFailure(
+                'Unable to roll back persisted authentication',
+                code: 'auth_rollback_failed',
+              );
+        if (!secureStorageCleared) {
+          AppLogger.error(
+            'Failed to roll back tokens after authentication cleanup failure',
+            tag: 'AuthController',
+          );
+        }
+        state = AsyncError(failure, StackTrace.current);
+        return Result.failure(failure);
+      }
+      if (!_isCurrentAuthOperation(operationGeneration)) {
+        return _authSessionSupersededResult();
+      }
       _authStateNotifier.setAuthenticated();
       state = const AsyncData(null);
       unawaited(_requestNotificationPermissionOnLogin());
@@ -779,17 +1177,38 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
     }
 
     if (result is Err<dynamic>) {
+      if (restoreAuthOnFailure &&
+          _isCurrentAuthOperation(operationGeneration)) {
+        _authStateNotifier.setAuthenticated();
+      }
       final failure = result.failure;
       state = AsyncError(failure, StackTrace.current);
       return Result.failure(failure);
     }
 
+    if (restoreAuthOnFailure && _isCurrentAuthOperation(operationGeneration)) {
+      _authStateNotifier.setAuthenticated();
+    }
     state = AsyncError(
       const UnknownFailure('Unknown auth result', code: 'unknown_auth_result'),
       StackTrace.current,
     );
     return Result.failure(
       const UnknownFailure('Unknown auth result', code: 'unknown_auth_result'),
+    );
+  }
+
+  bool _isCurrentAuthOperation(int? operationGeneration) {
+    return operationGeneration == null ||
+        operationGeneration == _authSessionGeneration;
+  }
+
+  Result<void> _authSessionSupersededResult() {
+    return const Result.failure(
+      AuthFailure(
+        'Authentication session was superseded',
+        code: 'auth_session_superseded',
+      ),
     );
   }
 
@@ -874,9 +1293,10 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
 
   /// EN: Clear ALL data from secure storage (tokens, userId, verification keys).
   /// KO: 보안 저장소의 모든 데이터 삭제 (토큰, userId, 인증 키).
-  Future<void> _clearSecureStorage() async {
+  Future<bool> _clearSecureStorage() async {
     try {
       await _secureStorage.clearAll();
+      return true;
     } catch (e, stackTrace) {
       AppLogger.error(
         'Failed to clear secure storage on logout',
@@ -884,29 +1304,17 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
         stackTrace: stackTrace,
         tag: 'AuthController',
       );
+      return false;
     }
   }
 
   /// EN: Clear user-specific data from local storage while preserving app settings.
   /// KO: 앱 설정은 유지하면서 사용자별 로컬 저장소 데이터를 삭제합니다.
-  Future<void> _clearUserLocalStorage() async {
+  Future<bool> _clearUserLocalStorage() async {
     try {
       final localStorage = await _localStorageFuture;
       await _clearPostComposeDrafts(localStorage);
-      await Future.wait([
-        localStorage.remove(LocalStorageKeys.selectedProjectId),
-        localStorage.remove(LocalStorageKeys.selectedProjectKey),
-        localStorage.remove(LocalStorageKeys.selectedUnitIds),
-        localStorage.remove(LocalStorageKeys.recentSearches),
-        localStorage.remove(LocalStorageKeys.lastSyncTime),
-        localStorage.remove(LocalStorageKeys.cachedHomeData),
-        localStorage.remove(LocalStorageKeys.notificationDeviceId),
-        localStorage.remove(LocalStorageKeys.notificationDeviceIdLegacy),
-        localStorage.remove(LocalStorageKeys.notificationPushToken),
-        localStorage.remove(LocalStorageKeys.userConsents),
-        localStorage.remove(LocalStorageKeys.autoTranslationEnabled),
-        localStorage.remove(LocalStorageKeys.privacyRequestHistory),
-      ]);
+      return await clearUserScopedLocalStorage(localStorage);
     } catch (e, stackTrace) {
       AppLogger.error(
         'Failed to clear user local storage on logout',
@@ -914,6 +1322,26 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
         stackTrace: stackTrace,
         tag: 'AuthController',
       );
+      return false;
+    }
+  }
+
+  /// EN: Clear queued user mutations before accepting a newly authenticated
+  ///     session. Pending rows have no reliable account owner locally.
+  /// KO: 새 인증 세션을 수락하기 전에 사용자 변경 대기열을 삭제합니다.
+  ///     로컬 대기열에는 신뢰할 수 있는 계정 소유자 정보가 없습니다.
+  Future<bool> _clearUserScopedMutations() async {
+    try {
+      final localStorage = await _localStorageFuture;
+      return await clearUserScopedMutations(localStorage);
+    } catch (e, stackTrace) {
+      AppLogger.error(
+        'Failed to clear pending user mutations before login',
+        error: e,
+        stackTrace: stackTrace,
+        tag: 'AuthController',
+      );
+      return false;
     }
   }
 
@@ -948,6 +1376,15 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
       // KO: 사용자 프로필 프로바이더 초기화.
       _ref.invalidate(userProfileControllerProvider);
       _ref.invalidate(notificationSettingsControllerProvider);
+
+      // EN: Dispose user mutation queues and local bookmarks so callbacks
+      //     from the previous session cannot observe the next one.
+      // KO: 이전 세션의 콜백이 다음 세션을 관찰하지 못하도록 사용자 변경
+      //     대기열과 로컬 북마크 프로바이더를 해제합니다.
+      _ref.invalidate(favoritesControllerProvider);
+      _ref.invalidate(postReactionOutboxControllerProvider);
+      _ref.invalidate(liveAttendanceOutboxControllerProvider);
+      _ref.invalidate(localPostBookmarksControllerProvider);
     } catch (e, stackTrace) {
       AppLogger.error(
         'Failed to invalidate providers on logout',
@@ -957,6 +1394,42 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
       );
     }
   }
+}
+
+/// EN: Clear user-scoped local data while preserving global app settings.
+/// KO: 전역 앱 설정을 유지하면서 사용자 범위 로컬 데이터를 삭제합니다.
+Future<bool> clearUserScopedLocalStorage(LocalStorage localStorage) async {
+  final clearedGeneralData = await Future.wait([
+    localStorage.remove(LocalStorageKeys.selectedProjectId),
+    localStorage.remove(LocalStorageKeys.selectedProjectKey),
+    localStorage.remove(LocalStorageKeys.selectedUnitIds),
+    localStorage.remove(LocalStorageKeys.recentSearches),
+    localStorage.remove(LocalStorageKeys.lastSyncTime),
+    localStorage.remove(LocalStorageKeys.cachedHomeData),
+    localStorage.remove(LocalStorageKeys.notificationDeviceId),
+    localStorage.remove(LocalStorageKeys.notificationDeviceIdLegacy),
+    localStorage.remove(LocalStorageKeys.notificationPushToken),
+    localStorage.remove(LocalStorageKeys.userConsents),
+    localStorage.remove(LocalStorageKeys.autoTranslationEnabled),
+    localStorage.remove(LocalStorageKeys.privacyRequestHistory),
+  ]);
+  final clearedMutations = await clearUserScopedMutations(localStorage);
+  if (!clearedGeneralData.every((cleared) => cleared) || !clearedMutations) {
+    return false;
+  }
+  return true;
+}
+
+/// EN: Clear pending mutations and local bookmarks for the active API origin.
+/// KO: 현재 API 오리진의 대기 변경 작업과 로컬 북마크를 삭제합니다.
+Future<bool> clearUserScopedMutations(LocalStorage localStorage) async {
+  final cleared = await Future.wait([
+    localStorage.remove(LocalStorageKeys.pendingFavoriteMutations),
+    localStorage.remove(LocalStorageKeys.pendingPostReactionMutations),
+    localStorage.remove(LocalStorageKeys.pendingLiveAttendanceMutations),
+    localStorage.remove(LocalStorageKeys.localPostBookmarks),
+  ]);
+  return cleared.every((removed) => removed);
 }
 
 /// EN: Temporarily holds OAuth credentials during EMAIL_ACCOUNT_CONFLICT flow.

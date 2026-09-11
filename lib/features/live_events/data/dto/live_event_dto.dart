@@ -8,11 +8,17 @@ class LiveEventSummaryDto {
   const LiveEventSummaryDto({
     required this.id,
     required this.title,
+    this.placeId,
+    this.venue,
+    this.venueTypes = const [],
+    this.address,
+    this.regionCodes = const [],
     required this.showStartTime,
     required this.status,
     required this.projectIds,
     required this.unitIds,
     this.doorsOpenTime,
+    this.endTime,
     this.bannerUrl,
     this.bannerFilename,
     this.bannerSize,
@@ -21,8 +27,14 @@ class LiveEventSummaryDto {
 
   final String id;
   final String title;
+  final String? placeId;
+  final String? venue;
+  final List<String> venueTypes;
+  final String? address;
+  final List<String> regionCodes;
   final DateTime showStartTime;
   final DateTime? doorsOpenTime;
+  final DateTime? endTime;
   final String status;
   final String? bannerUrl;
   final String? bannerFilename;
@@ -35,8 +47,14 @@ class LiveEventSummaryDto {
     return LiveEventSummaryDto(
       id: json['id'] as String? ?? '',
       title: json['title'] as String? ?? '',
+      placeId: json['placeId'] as String?,
+      venue: json['venue'] as String?,
+      venueTypes: _stringList(json['venueTypes']),
+      address: json['address'] as String?,
+      regionCodes: _stringList(json['regionCodes']),
       showStartTime: _dateTime(json['showStartTime']),
       doorsOpenTime: _dateTimeOrNull(json['doorsOpenTime']),
+      endTime: _dateTimeOrNull(json['endTime']),
       status: json['status'] as String? ?? 'UNKNOWN',
       bannerUrl: json['bannerUrl'] as String?,
       bannerFilename: json['bannerFilename'] as String?,
@@ -51,8 +69,14 @@ class LiveEventSummaryDto {
     return {
       'id': id,
       'title': title,
+      'placeId': placeId,
+      'venue': venue,
+      'venueTypes': venueTypes,
+      'address': address,
+      'regionCodes': regionCodes,
       'showStartTime': showStartTime.toIso8601String(),
       'doorsOpenTime': doorsOpenTime?.toIso8601String(),
+      'endTime': endTime?.toIso8601String(),
       'status': status,
       'bannerUrl': bannerUrl,
       'bannerFilename': bannerFilename,
@@ -68,6 +92,11 @@ class LiveEventDetailDto {
   const LiveEventDetailDto({
     required this.id,
     required this.title,
+    this.placeId,
+    this.venue,
+    this.venueTypes = const [],
+    this.address,
+    this.regionCodes = const [],
     required this.showStartTime,
     required this.status,
     required this.projectIds,
@@ -81,6 +110,11 @@ class LiveEventDetailDto {
 
   final String id;
   final String title;
+  final String? placeId;
+  final String? venue;
+  final List<String> venueTypes;
+  final String? address;
+  final List<String> regionCodes;
   final String? description;
   final DateTime showStartTime;
   final DateTime? doorsOpenTime;
@@ -95,6 +129,11 @@ class LiveEventDetailDto {
     return LiveEventDetailDto(
       id: json['id'] as String? ?? '',
       title: json['title'] as String? ?? '',
+      placeId: json['placeId'] as String?,
+      venue: json['venue'] as String?,
+      venueTypes: _stringList(json['venueTypes']),
+      address: json['address'] as String?,
+      regionCodes: _stringList(json['regionCodes']),
       description: json['description'] as String?,
       showStartTime: _dateTime(json['showStartTime']),
       doorsOpenTime: _dateTimeOrNull(json['doorsOpenTime']),
@@ -113,6 +152,11 @@ class LiveEventDetailDto {
     return {
       'id': id,
       'title': title,
+      'placeId': placeId,
+      'venue': venue,
+      'venueTypes': venueTypes,
+      'address': address,
+      'regionCodes': regionCodes,
       'description': description,
       'showStartTime': showStartTime.toIso8601String(),
       'doorsOpenTime': doorsOpenTime?.toIso8601String(),

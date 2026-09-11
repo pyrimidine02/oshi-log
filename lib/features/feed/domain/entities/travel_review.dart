@@ -4,7 +4,6 @@ library;
 
 import 'package:intl/intl.dart';
 
-import '../../data/dto/travel_review_dto.dart';
 import 'feed_entities.dart';
 
 class TravelReviewPlace {
@@ -21,16 +20,6 @@ class TravelReviewPlace {
   final String? address;
   final double latitude;
   final double longitude;
-
-  factory TravelReviewPlace.fromDto(TravelReviewPlaceSummaryDto dto) {
-    return TravelReviewPlace(
-      id: dto.id,
-      name: dto.name,
-      address: dto.address,
-      latitude: dto.latitude,
-      longitude: dto.longitude,
-    );
-  }
 }
 
 class TravelReviewLiveEvent {
@@ -52,17 +41,6 @@ class TravelReviewLiveEvent {
 
   String get dateLabel =>
       DateFormat('yyyy.MM.dd HH:mm').format(startTime.toLocal());
-
-  factory TravelReviewLiveEvent.fromDto(TravelReviewLiveEventSummaryDto dto) {
-    return TravelReviewLiveEvent(
-      id: dto.id,
-      title: dto.title,
-      startTime: dto.startTime,
-      endTime: dto.endTime,
-      placeId: dto.placeId,
-      posterUrl: dto.posterUrl,
-    );
-  }
 }
 
 class TravelReviewStop {
@@ -79,16 +57,6 @@ class TravelReviewStop {
   final bool verified;
   final String? verifiedVisitId;
   final String? note;
-
-  factory TravelReviewStop.fromDto(TravelReviewStopDto dto) {
-    return TravelReviewStop(
-      order: dto.order,
-      place: TravelReviewPlace.fromDto(dto.place),
-      verified: dto.verified,
-      verifiedVisitId: dto.verifiedVisitId,
-      note: dto.note,
-    );
-  }
 }
 
 class TravelReviewEvent {
@@ -105,16 +73,6 @@ class TravelReviewEvent {
   final bool verified;
   final String? verifiedAttendanceId;
   final String? note;
-
-  factory TravelReviewEvent.fromDto(TravelReviewEventDto dto) {
-    return TravelReviewEvent(
-      order: dto.order,
-      event: TravelReviewLiveEvent.fromDto(dto.event),
-      verified: dto.verified,
-      verifiedAttendanceId: dto.verifiedAttendanceId,
-      note: dto.note,
-    );
-  }
 }
 
 class TravelReviewFanSubject {
@@ -131,16 +89,6 @@ class TravelReviewFanSubject {
   final String name;
   final String? imageUrl;
   final bool primary;
-
-  factory TravelReviewFanSubject.fromDto(TravelReviewFanSubjectSummaryDto dto) {
-    return TravelReviewFanSubject(
-      id: dto.id,
-      type: dto.type,
-      name: dto.name,
-      imageUrl: dto.imageUrl,
-      primary: dto.primary,
-    );
-  }
 }
 
 class TravelReviewSummary {
@@ -171,25 +119,6 @@ class TravelReviewSummary {
   final List<TravelReviewFanSubject> fanSubjects;
   final DateTime createdAt;
   final DateTime? updatedAt;
-
-  factory TravelReviewSummary.fromDto(TravelReviewSummaryDto dto) {
-    return TravelReviewSummary(
-      id: dto.id,
-      postId: dto.postId,
-      projectId: dto.projectId,
-      post: PostSummary.fromDto(dto.post),
-      tripStartedOn: dto.tripStartedOn,
-      tripEndedOn: dto.tripEndedOn,
-      routeNote: dto.routeNote,
-      stops: dto.stops.map(TravelReviewStop.fromDto).toList(growable: false),
-      events: dto.events.map(TravelReviewEvent.fromDto).toList(growable: false),
-      fanSubjects: dto.fanSubjects
-          .map(TravelReviewFanSubject.fromDto)
-          .toList(growable: false),
-      createdAt: dto.createdAt,
-      updatedAt: dto.updatedAt,
-    );
-  }
 }
 
 class TravelReviewDetail {
@@ -229,25 +158,6 @@ class TravelReviewDetail {
     final startLabel = DateFormat('yyyy.MM.dd').format(start);
     if (end == null || _isSameDate(start, end)) return startLabel;
     return '$startLabel – ${DateFormat('yyyy.MM.dd').format(end)}';
-  }
-
-  factory TravelReviewDetail.fromDto(TravelReviewDetailDto dto) {
-    return TravelReviewDetail(
-      id: dto.id,
-      postId: dto.postId,
-      projectId: dto.projectId,
-      post: PostDetail.fromDto(dto.post),
-      tripStartedOn: dto.tripStartedOn,
-      tripEndedOn: dto.tripEndedOn,
-      routeNote: dto.routeNote,
-      stops: dto.stops.map(TravelReviewStop.fromDto).toList(growable: false),
-      events: dto.events.map(TravelReviewEvent.fromDto).toList(growable: false),
-      fanSubjects: dto.fanSubjects
-          .map(TravelReviewFanSubject.fromDto)
-          .toList(growable: false),
-      createdAt: dto.createdAt,
-      updatedAt: dto.updatedAt,
-    );
   }
 }
 

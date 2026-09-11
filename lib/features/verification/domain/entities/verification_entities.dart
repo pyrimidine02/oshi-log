@@ -2,8 +2,6 @@
 /// KO: 인증 도메인 엔티티.
 library;
 
-import '../../data/dto/verification_dto.dart';
-
 class VerificationConfig {
   const VerificationConfig({
     required this.jweAlg,
@@ -18,16 +16,6 @@ class VerificationConfig {
   final List<String> publicKeys;
   final int toleranceMeters;
   final int timeSkewSec;
-
-  factory VerificationConfig.fromDto(VerificationConfigDto dto) {
-    return VerificationConfig(
-      jweAlg: dto.jweAlg,
-      jwsAlg: dto.jwsAlg,
-      publicKeys: dto.publicKeys,
-      toleranceMeters: dto.toleranceMeters,
-      timeSkewSec: dto.timeSkewSec,
-    );
-  }
 }
 
 class VerificationChallenge {
@@ -35,10 +23,6 @@ class VerificationChallenge {
 
   final String nonce;
   final DateTime expiresAt;
-
-  factory VerificationChallenge.fromDto(VerificationChallengeDto dto) {
-    return VerificationChallenge(nonce: dto.nonce, expiresAt: dto.expiresAt);
-  }
 }
 
 class VerificationResult {
@@ -51,14 +35,6 @@ class VerificationResult {
   final String result;
   final String? placeId;
   final String? liveEventId;
-
-  factory VerificationResult.fromDto(VerificationResultDto dto) {
-    return VerificationResult(
-      result: dto.result,
-      placeId: dto.placeId,
-      liveEventId: dto.liveEventId,
-    );
-  }
 }
 
 class VerificationDeviceKey {
@@ -79,16 +55,4 @@ class VerificationDeviceKey {
   final DateTime createdAt;
   final DateTime? lastUsedAt;
   final DateTime? revokedAt;
-
-  factory VerificationDeviceKey.fromDto(VerificationDeviceKeyDto dto) {
-    return VerificationDeviceKey(
-      keyId: dto.keyId,
-      deviceId: dto.deviceId,
-      algorithm: dto.algorithm,
-      isActive: dto.isActive,
-      createdAt: dto.createdAt,
-      lastUsedAt: dto.lastUsedAt,
-      revokedAt: dto.revokedAt,
-    );
-  }
 }

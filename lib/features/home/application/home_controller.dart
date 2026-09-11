@@ -49,7 +49,6 @@ class HomeController extends StateNotifier<AsyncValue<HomeSummary>> {
   }
 
   final Ref _ref;
-  String? _lastProjectKey;
   String? _lastRequestKey;
   DateTime? _lastFailureAt;
   bool _isLoading = false;
@@ -78,9 +77,13 @@ class HomeController extends StateNotifier<AsyncValue<HomeSummary>> {
         return;
       }
       final selectedProjectId = _ref.read(selectedProjectIdProvider);
+      final unitIds = List<String>.unmodifiable(
+        _ref.read(selectedUnitIdsProvider),
+      );
       final cached = _findCachedSummary(
         selectedProjectKey: selectedProjectKey,
         selectedProjectId: selectedProjectId,
+        unitIds: unitIds,
       );
       if (cached != null) {
         // EN: Switch instantly with cached per-project summary.
@@ -116,12 +119,12 @@ class HomeController extends StateNotifier<AsyncValue<HomeSummary>> {
       selectedProjectId: selectedProjectId,
     );
 
-    final unitIds = _ref.read(selectedUnitIdsProvider);
+    final unitIds = List<String>.unmodifiable(
+      _ref.read(selectedUnitIdsProvider),
+    );
     final requestKey = '$selectedProjectIdentifier:${unitIds.join(',')}';
     final shouldSkip =
-        !forceRefresh &&
-        _isLoading &&
-        _lastProjectKey == selectedProjectIdentifier;
+        !forceRefresh && _isLoading && _lastRequestKey == requestKey;
     if (shouldSkip) {
       return;
     }
@@ -134,7 +137,6 @@ class HomeController extends StateNotifier<AsyncValue<HomeSummary>> {
       return;
     }
 
-    _lastProjectKey = selectedProjectIdentifier;
     _lastRequestKey = requestKey;
     _isLoading = true;
     final requestSerial = ++_requestSerial;
@@ -146,11 +148,17 @@ class HomeController extends StateNotifier<AsyncValue<HomeSummary>> {
       state = const AsyncLoading();
     }
 
-    final repository = await _ref.read(homeRepositoryProvider.future);
     final projectKey = selectedProjectKey;
     final projectId = selectedProjectId;
 
     try {
+      // EN: Resolve the repository inside the guarded request so a failed
+      // provider initialization cannot leave the spinner stuck forever.
+      // KO: 리포지토리 프로바이더 초기화도 보호된 요청 안에서 수행해
+      // 초기화 실패로 스피너가 영원히 남지 않도록 합니다.
+      final repository = await _ref.read(homeRepositoryProvider.future);
+      if (!mounted || requestSerial != _activeRequestSerial) return;
+
       // EN: Retry only retryable failures (network/temporary server failures).
       // EN: Do not retry persistent 5xx such as 500 to avoid noisy loops.
       // KO: 재시도 가능한 실패(네트워크/일시적 서버 장애)만 재시도합니다.
@@ -175,11 +183,13 @@ class HomeController extends StateNotifier<AsyncValue<HomeSummary>> {
           unitIds: unitIds,
           forceRefresh: forceRefresh || attempt > 0,
         );
+        if (!mounted || requestSerial != _activeRequestSerial) return;
         if (result is Success<HomeSummary>) {
           _lastFailureAt = null;
           _cacheSummaryForProject(
             selectedProjectKey: selectedProjectKey,
             selectedProjectId: selectedProjectId,
+            unitIds: unitIds,
             summary: result.data,
           );
           break;
@@ -219,6 +229,15 @@ class HomeController extends StateNotifier<AsyncValue<HomeSummary>> {
         _handleUnauthorizedFailure(result.failure);
         state = AsyncError(result.failure, StackTrace.current);
       }
+    } catch (error, stackTrace) {
+      if (!mounted || requestSerial != _activeRequestSerial) return;
+      // EN: Surface unexpected provider/repository exceptions as an error
+      // state so callers can retry instead of observing a permanent loading
+      // state.
+      // KO: 예기치 않은 프로바이더/리포지토리 예외를 오류 상태로 노출해
+      // 영구 로딩 대신 호출자가 다시 시도할 수 있도록 합니다.
+      _lastFailureAt = DateTime.now();
+      state = AsyncError(error, stackTrace);
     } finally {
       if (_activeRequestSerial == requestSerial) {
         _isLoading = false;
@@ -242,7 +261,6 @@ class HomeController extends StateNotifier<AsyncValue<HomeSummary>> {
         forceRefresh: forceRefresh,
       );
       if (batchResult is Success<List<HomeSummaryByProjectItem>>) {
-        _cacheBatchSummaries(batchResult.data);
         final summary = _selectSummaryFromBatch(
           items: batchResult.data,
           selectedProjectKey: selectedProjectKey,
@@ -304,42 +322,31 @@ class HomeController extends StateNotifier<AsyncValue<HomeSummary>> {
     return selectedProjectKey;
   }
 
-  void _cacheBatchSummaries(List<HomeSummaryByProjectItem> items) {
-    for (final item in items) {
-      final projectId = item.projectId.trim();
-      final projectCode = item.projectCode.trim();
-      if (projectId.isNotEmpty) {
-        _summaryMemoryCache[_cacheKey(projectId)] = item.summary;
-      }
-      if (projectCode.isNotEmpty) {
-        _summaryMemoryCache[_cacheKey(projectCode)] = item.summary;
-      }
-    }
-  }
-
   void _cacheSummaryForProject({
     required String selectedProjectKey,
     required String? selectedProjectId,
+    required List<String> unitIds,
     required HomeSummary summary,
   }) {
     final projectKey = selectedProjectKey.trim();
     if (projectKey.isNotEmpty) {
-      _summaryMemoryCache[_cacheKey(projectKey)] = summary;
+      _summaryMemoryCache[_cacheKey(projectKey, unitIds)] = summary;
     }
 
     final projectId = selectedProjectId?.trim();
     if (projectId != null && projectId.isNotEmpty) {
-      _summaryMemoryCache[_cacheKey(projectId)] = summary;
+      _summaryMemoryCache[_cacheKey(projectId, unitIds)] = summary;
     }
   }
 
   HomeSummary? _findCachedSummary({
     required String selectedProjectKey,
     required String? selectedProjectId,
+    required List<String> unitIds,
   }) {
     final projectId = selectedProjectId?.trim();
     if (projectId != null && projectId.isNotEmpty) {
-      final byId = _summaryMemoryCache[_cacheKey(projectId)];
+      final byId = _summaryMemoryCache[_cacheKey(projectId, unitIds)];
       if (byId != null) {
         return byId;
       }
@@ -349,10 +356,16 @@ class HomeController extends StateNotifier<AsyncValue<HomeSummary>> {
     if (projectKey.isEmpty) {
       return null;
     }
-    return _summaryMemoryCache[_cacheKey(projectKey)];
+    return _summaryMemoryCache[_cacheKey(projectKey, unitIds)];
   }
 
-  String _cacheKey(String value) => value.toLowerCase();
+  String _cacheKey(String value, List<String> unitIds) {
+    final normalizedUnits = unitIds
+        .map((unitId) => unitId.trim().toLowerCase())
+        .where((unitId) => unitId.isNotEmpty)
+        .join(',');
+    return '${value.toLowerCase()}|units:$normalizedUnits';
+  }
 
   List<String> _projectIdentifiers(List<Project> projects) {
     final seen = <String>{};

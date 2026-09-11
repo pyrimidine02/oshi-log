@@ -6,6 +6,7 @@ import '../../../../core/utils/result.dart';
 import '../../domain/entities/fan_subject.dart';
 import '../../domain/repositories/fan_subjects_repository.dart';
 import '../datasources/fan_subjects_remote_data_source.dart';
+import '../mappers/fan_subject_mappers.dart';
 
 class FanSubjectsRepositoryImpl implements FanSubjectsRepository {
   const FanSubjectsRepositoryImpl(this._remoteDataSource);
@@ -15,14 +16,14 @@ class FanSubjectsRepositoryImpl implements FanSubjectsRepository {
   @override
   Future<Result<FanSubject>> getSubject(String identifier) async {
     final result = await _remoteDataSource.fetchSubject(identifier);
-    return result.map(FanSubject.fromDto);
+    return result.map((value) => value.toDomain());
   }
 
   @override
   Future<Result<List<FanSubject>>> getSubjects(FanSubjectQuery query) async {
     final result = await _remoteDataSource.fetchSubjects(query);
     return result.map(
-      (items) => items.map(FanSubject.fromDto).toList(growable: false),
+      (items) => items.map((value) => value.toDomain()).toList(growable: false),
     );
   }
 
@@ -30,15 +31,14 @@ class FanSubjectsRepositoryImpl implements FanSubjectsRepository {
   Future<Result<List<FanSubjectSubscription>>> getMySubjects() async {
     final result = await _remoteDataSource.fetchMySubjects();
     return result.map(
-      (items) =>
-          items.map(FanSubjectSubscription.fromDto).toList(growable: false),
+      (items) => items.map((value) => value.toDomain()).toList(growable: false),
     );
   }
 
   @override
   Future<Result<FanSubjectSubscription>> subscribe(String subjectId) async {
     final result = await _remoteDataSource.subscribe(subjectId);
-    return result.map(FanSubjectSubscription.fromDto);
+    return result.map((value) => value.toDomain());
   }
 
   @override

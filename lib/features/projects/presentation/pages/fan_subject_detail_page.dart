@@ -15,7 +15,6 @@ import '../../../../core/widgets/feedback/gbt_empty_state.dart';
 import '../../../../core/widgets/feedback/gbt_loading.dart' hide GBTEmptyState;
 import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
 import '../../application/fan_subjects_controller.dart';
-import '../../data/dto/fan_subject_dto.dart';
 import '../../domain/entities/fan_subject.dart';
 
 /// EN: Resolves project, band/unit, voice actor, artist, and anime subjects

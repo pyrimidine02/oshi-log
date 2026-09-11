@@ -9,6 +9,7 @@ import '../../domain/entities/verification_entities.dart';
 import '../../domain/repositories/verification_repository.dart';
 import '../datasources/verification_remote_data_source.dart';
 import '../dto/verification_dto.dart';
+import '../mappers/verification_entities_mappers.dart';
 
 class VerificationRepositoryImpl implements VerificationRepository {
   VerificationRepositoryImpl({
@@ -23,7 +24,7 @@ class VerificationRepositoryImpl implements VerificationRepository {
       final result = await _remoteDataSource.fetchConfig();
 
       if (result is Success<VerificationConfigDto>) {
-        return Result.success(VerificationConfig.fromDto(result.data));
+        return Result.success(result.data.toDomain());
       }
       if (result is Err<VerificationConfigDto>) {
         return Result.failure(result.failure);
@@ -47,7 +48,7 @@ class VerificationRepositoryImpl implements VerificationRepository {
       final result = await _remoteDataSource.fetchChallenge();
 
       if (result is Success<VerificationChallengeDto>) {
-        return Result.success(VerificationChallenge.fromDto(result.data));
+        return Result.success(result.data.toDomain());
       }
       if (result is Err<VerificationChallengeDto>) {
         return Result.failure(result.failure);
@@ -86,7 +87,7 @@ class VerificationRepositoryImpl implements VerificationRepository {
       );
 
       if (result is Success<VerificationResultDto>) {
-        return Result.success(VerificationResult.fromDto(result.data));
+        return Result.success(result.data.toDomain());
       }
       if (result is Err<VerificationResultDto>) {
         return Result.failure(result.failure);
@@ -125,7 +126,7 @@ class VerificationRepositoryImpl implements VerificationRepository {
       );
 
       if (result is Success<VerificationResultDto>) {
-        return Result.success(VerificationResult.fromDto(result.data));
+        return Result.success(result.data.toDomain());
       }
       if (result is Err<VerificationResultDto>) {
         return Result.failure(result.failure);
@@ -162,7 +163,7 @@ class VerificationRepositoryImpl implements VerificationRepository {
       );
 
       if (result is Success<VerificationDeviceKeyDto>) {
-        return Result.success(VerificationDeviceKey.fromDto(result.data));
+        return Result.success(result.data.toDomain());
       }
       if (result is Err<VerificationDeviceKeyDto>) {
         return Result.failure(result.failure);

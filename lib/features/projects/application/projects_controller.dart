@@ -17,8 +17,11 @@ import '../domain/entities/project_entities.dart';
 import '../domain/repositories/projects_repository.dart';
 
 class ProjectsController extends StateNotifier<AsyncValue<List<Project>>> {
-  ProjectsController(this._ref) : super(const AsyncLoading()) {
-    load();
+  ProjectsController(this._ref, {bool loadOnCreate = true})
+    : super(const AsyncLoading()) {
+    if (loadOnCreate) {
+      load();
+    }
   }
 
   final Ref _ref;

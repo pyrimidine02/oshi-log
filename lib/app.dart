@@ -35,6 +35,7 @@ import 'features/titles/application/titles_controller.dart';
 import 'features/live_events/application/live_events_controller.dart';
 import 'features/settings/application/mandatory_consent_controller.dart';
 import 'features/settings/application/settings_controller.dart';
+import 'features/auth/application/oauth_service.dart';
 
 String? _lastTrackedScreenPath;
 
@@ -958,28 +959,25 @@ class _DeeplinkBridgeState extends State<_DeeplinkBridge> {
   }
 
   void _handleDeeplink(Uri uri) {
-    // EN: X (Twitter) PKCE OAuth callback — received as a Universal Link / App Link.
-    //     iOS: Associated Domains (applinks:api.noraneko.cc) intercepts
-    //          https://api.noraneko.cc/oauth/x/callback and delivers it here.
-    //     Android: App Links (android:autoVerify="true") does the same.
-    //     Routes to /auth/callback so OAuthCallbackPage can call completeTwitterLogin().
-    // KO: X (Twitter) PKCE OAuth 콜백 — Universal Link / App Link로 수신됩니다.
-    //     iOS: Associated Domains(applinks:api.noraneko.cc)이
-    //          https://api.noraneko.cc/oauth/x/callback을 가로채 여기로 전달합니다.
-    //     Android: App Links(android:autoVerify="true")가 동일하게 처리합니다.
-    //     OAuthCallbackPage가 completeTwitterLogin()을 호출하도록 /auth/callback으로 라우팅합니다.
-    if (uri.scheme == 'https' &&
-        uri.host == 'api.noraneko.cc' &&
-        uri.path == '/oauth/x/callback') {
-      final code = uri.queryParameters['code'] ?? '';
-      final stateParam = uri.queryParameters['state'];
-      final query = StringBuffer(
-        '?provider=twitter&code=${Uri.encodeComponent(code)}',
-      );
-      if (stateParam != null && stateParam.isNotEmpty) {
-        query.write('&state=${Uri.encodeComponent(stateParam)}');
+    // EN: X (Twitter) PKCE OAuth callback — received as a Universal Link,
+    //     App Link, or the server-forwarded custom scheme.
+    //     Routes to /auth/callback so OAuthCallbackPage can complete login.
+    // KO: X (Twitter) PKCE OAuth 콜백 — Universal Link, App Link 또는 서버가
+    //     전달하는 커스텀 스킴으로 수신합니다.
+    //     OAuthCallbackPage가 로그인을 완료하도록 /auth/callback으로 라우팅합니다.
+    if (isTwitterOAuthCallbackUri(uri)) {
+      final queryParameters = <String, String>{'provider': 'twitter'};
+      for (final key in const ['code', 'state', 'error', 'error_description']) {
+        final value = uri.queryParameters[key];
+        if (value != null && value.isNotEmpty) {
+          queryParameters[key] = value;
+        }
       }
-      widget.router.go('/auth/callback$query');
+      final callbackPath = Uri(
+        path: '/auth/callback',
+        queryParameters: queryParameters,
+      ).toString();
+      widget.router.go(callbackPath);
       return;
     }
 

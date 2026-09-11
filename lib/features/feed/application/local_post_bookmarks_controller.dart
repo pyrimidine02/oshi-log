@@ -48,13 +48,31 @@ class LocalBookmarkedPost {
 class LocalPostBookmarksController
     extends StateNotifier<List<LocalBookmarkedPost>> {
   LocalPostBookmarksController(this._ref) : super(const []) {
+    _ref.listen<bool>(isAuthenticatedProvider, (previous, next) {
+      if (previous != next) {
+        _authSessionGeneration += 1;
+      }
+      if (!next && mounted) {
+        state = const [];
+      } else if (next) {
+        _load();
+      }
+    });
     _load();
   }
 
   final Ref _ref;
+  int _authSessionGeneration = 0;
 
   void _load() {
+    if (!mounted || !_ref.read(isAuthenticatedProvider)) {
+      return;
+    }
+    final sessionGeneration = _authSessionGeneration;
     _ref.read(localStorageProvider.future).then((storage) {
+      if (!_isCurrentAuthSession(sessionGeneration)) {
+        return;
+      }
       final raw = storage.getLocalPostBookmarks();
       state = raw
           .map((json) => LocalBookmarkedPost.fromJson(json))
@@ -66,10 +84,17 @@ class LocalPostBookmarksController
   /// EN: Add a post to the local bookmarks list. No-op if already bookmarked.
   /// KO: 로컬 북마크 목록에 게시글을 추가합니다. 이미 북마크된 경우 무시합니다.
   Future<void> addBookmark(LocalBookmarkedPost entry) async {
+    if (!_isAuthenticated()) {
+      return;
+    }
     if (state.any((e) => e.postId == entry.postId)) return;
+    final sessionGeneration = _authSessionGeneration;
     final updated = [entry, ...state];
     state = updated;
     final storage = await _ref.read(localStorageProvider.future);
+    if (!_isCurrentAuthSession(sessionGeneration)) {
+      return;
+    }
     await storage.setLocalPostBookmarks(
       updated.map((e) => e.toJson()).toList(growable: false),
     );
@@ -78,11 +103,19 @@ class LocalPostBookmarksController
   /// EN: Remove a post from the local bookmarks list by post ID.
   /// KO: 게시글 ID로 로컬 북마크 목록에서 해당 게시글을 제거합니다.
   Future<void> removeBookmark(String postId) async {
-    final updated =
-        state.where((e) => e.postId != postId).toList(growable: false);
+    if (!_isAuthenticated()) {
+      return;
+    }
+    final sessionGeneration = _authSessionGeneration;
+    final updated = state
+        .where((e) => e.postId != postId)
+        .toList(growable: false);
     if (updated.length == state.length) return;
     state = updated;
     final storage = await _ref.read(localStorageProvider.future);
+    if (!_isCurrentAuthSession(sessionGeneration)) {
+      return;
+    }
     await storage.setLocalPostBookmarks(
       updated.map((e) => e.toJson()).toList(growable: false),
     );
@@ -91,11 +124,22 @@ class LocalPostBookmarksController
   /// EN: Check if a post is locally bookmarked.
   /// KO: 게시글이 로컬에 북마크되어 있는지 확인합니다.
   bool isBookmarked(String postId) => state.any((e) => e.postId == postId);
+
+  bool _isAuthenticated() {
+    return mounted && _ref.read(isAuthenticatedProvider);
+  }
+
+  bool _isCurrentAuthSession(int sessionGeneration) {
+    return mounted &&
+        sessionGeneration == _authSessionGeneration &&
+        _ref.read(isAuthenticatedProvider);
+  }
 }
 
 /// EN: Local post bookmarks controller provider.
 /// KO: 로컬 게시글 북마크 컨트롤러 프로바이더.
-final localPostBookmarksControllerProvider = StateNotifierProvider<
-  LocalPostBookmarksController,
-  List<LocalBookmarkedPost>
->((ref) => LocalPostBookmarksController(ref));
+final localPostBookmarksControllerProvider =
+    StateNotifierProvider<
+      LocalPostBookmarksController,
+      List<LocalBookmarkedPost>
+    >((ref) => LocalPostBookmarksController(ref));

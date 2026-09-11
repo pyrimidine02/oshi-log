@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:oshi_log/features/visits/data/dto/visit_dto.dart';
+import 'package:oshi_log/features/visits/data/mappers/visit_entities_mappers.dart';
 import 'package:oshi_log/features/visits/domain/entities/visit_entities.dart';
 
 void main() {
@@ -12,7 +13,7 @@ void main() {
       'distanceM': 2.5,
       'status': 'verified',
     });
-    final visit = VisitEvent.fromDto(dto);
+    final visit = dto.toDomain();
 
     expect(dto.status, 'verified');
     expect(visit.status, VisitVerificationStatus.verified);
@@ -26,7 +27,7 @@ void main() {
       'visitedAt': '2026-07-16T10:00:00Z',
       'distanceM': 1,
     });
-    final visit = VisitEvent.fromDetailDto(dto);
+    final visit = dto.toDomain();
 
     expect(visit.status, VisitVerificationStatus.unknown);
     expect(visit.isVerified, isFalse);

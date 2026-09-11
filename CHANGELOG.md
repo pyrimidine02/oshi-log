@@ -1,5 +1,36 @@
 # Changelog
 
+## 2026-09-12
+
+- Repaired feature-layer boundaries while retaining Riverpod and existing
+  routes. DTO mapping now lives in data mappers; domain repositories expose
+  domain values, including upload preparation and confirmation. Added a source
+  boundary guard against reverse imports.
+- Preserved server live-event venue, place, region, and end-time fields through
+  cache and domain mapping. Ongoing concerts remain in the current agenda, with
+  venue/address context in event lists and details.
+- Fixed home filter request races and cache scope, repository initialization
+  failures that left loading stuck, asynchronous banner/title fallback errors,
+  and calendar projection of events spanning far outside the requested month.
+- Unified Field journey cards, headings, badges, agenda rows, and visit ledgers;
+  removed four unreachable legacy page implementations. Added compact text-scale,
+  touch-target, ongoing-event, venue, and light/dark visual regression checks.
+- Added explicit build-time API environments: development/staging use
+  `dev.oshilog.org`, production uses `api.oshilog.org`. Android distribution
+  workflows and Xcode Cloud preparation select the channel explicitly.
+  API-origin storage namespaces prevent tokens, PKCE state, caches, and queued
+  mutations from crossing environments while retaining theme and locale.
+- Extended account-transition cleanup to personal mutation queues and local
+  bookmarks; guarded pending controller work against stale session completion.
+- Aligned X authorization and token-exchange callback configuration, recognized
+  the server's custom-scheme callback, and rejected the removed generic OAuth
+  exchange route without sending authorization codes to an unsupported endpoint.
+- Kept AdMob disabled by default and moved its initialization out of app/auth
+  bootstrap. Optional network slots use consent readiness, test inventory outside
+  production, validated campaign links, and managed loading/disposal lifecycles.
+- Documented architecture decisions, channel promotion limits, external OAuth
+  and advertising setup, server verification limits, and the existing coverage gap.
+
 ## 2026-07-30
 
 - Capitalized the user-visible brand to `Oshi@log` across Flutter titles,

@@ -1,5 +1,33 @@
 # TODO
 
+- Complete external release-channel and monetization setup (2026-09-12):
+  - Internal Android and default Xcode Cloud builds select staging. Create a
+    separate production artifact with `APP_ENV=production`; promoting a staging
+    binary does not change its API origin.
+  - Register any replacement X callback URL with the provider and server before
+    setting `TWITTER_REDIRECT_URI`. The legacy registered callback remains the
+    compatibility default; CDN hosts and native app identifiers are unrelated.
+  - Enable AdMob only after real app/unit IDs, UMP messages, store disclosures,
+    and device consent/withdrawal QA are configured. Keep it disabled otherwise.
+  - Removal criteria: both distribution channels pass authenticated device QA
+    against their intended API, and optional ads pass consent and privacy tests.
+
+- Verify the deployed API after the source-contract refactor (2026-09-12):
+  - The adjacent server working tree was audited. Public dev projects returned
+    HTTP 200 with an empty list; production probes returned HTTP 502. Public
+    OpenAPI was unavailable, so this is not deployed-contract certification.
+  - Removal criteria: production HTTPS is healthy and a real test account passes
+    login, place discovery, attendance, visit records, and uploads on both APIs.
+
+- Raise project-wide test coverage from the measured baseline (2026-09-12):
+  - Baseline: 594 tests, 15,063 / 44,986 executable lines (33.48%). The existing
+    project does not meet its 80% target. Add behavior coverage by feature;
+    do not exclude untested production files to inflate the percentage.
+  - After this refactor: 659 passing tests, 16,153 / 46,048 executable lines
+    (35.08%). Coverage improved; the 80% target still requires further work.
+  - Removal criteria: full unit/widget/integration coverage reaches 80% without
+    relaxing meaningful assertions or coverage scope.
+
 - Move the location-notice consent record to the server when a per-device
   consent endpoint exists (2026-07-30):
   - `location_notice_consent_log` is device-local, so the agreed and withdrawn
@@ -44,8 +72,9 @@
     widget, and integration tests cover multi-page retrieval.
 
 - Align developer Flutter SDKs with CI Flutter 3.41 (2026-07-16):
-  - CI currently compiles with Flutter 3.41 while this workstation uses 3.32.6,
-    where the reorder callback deprecation direction differs.
+  - CI currently compiles with Flutter 3.41. As of 2026-09-12 this workstation
+    uses 3.47.2, whose rasterizer and automatic iOS deployment-target migration
+    differ from the pinned CI SDK.
   - Keep the compatibility regression test until every supported environment
     uses the same stable Flutter release.
   - Remove the field-project golden's 1.5% rasterizer tolerance after the SDKs
@@ -139,8 +168,10 @@
       end-to-end 저장·재조회가 모두 통과하면 제거.
 
 - Remove unrouted legacy presentation siblings after parity verification (2026-07-15):
-  - 구형 `home_page.dart`, `explore_page.dart`, `calendar_page.dart`, `live_events_page.dart`,
-    `live_event_detail_page.dart`, `board_page.dart`, `feed_page.dart`, `info_page.dart`,
+  - 2026-09-12: 참조가 없는 `explore_page.dart`, `calendar_page.dart`,
+    `live_events_page.dart`, `visit_history_page.dart` 제거 완료.
+  - 남은 구형 `home_page.dart`, `live_event_detail_page.dart`, `board_page.dart`,
+    `feed_page.dart`, `info_page.dart`,
     `user_profile_page.dart`, `my_page.dart`는 현재 실제 GoRoute에서 열리지 않는다.
   - 삭제 전 deep link, 위젯 직접 import, 테스트·스토리 참조를 전수 검색하고
     신규 Field 화면이 동일 기능을 보존하는지 확인한다.

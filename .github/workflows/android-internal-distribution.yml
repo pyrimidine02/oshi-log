@@ -90,6 +90,7 @@ jobs:
       - name: Build Android App Bundle
         run: >
           flutter build appbundle --release
+          --dart-define=APP_ENV=staging
           --build-name="${{ steps.version.outputs.app_version }}"
           --build-number="${{ steps.version.outputs.build_number }}"
 

@@ -3,6 +3,7 @@
 library;
 
 import '../../../../core/constants/api_constants.dart';
+import '../../../../core/error/failure.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/utils/result.dart';
 import '../../domain/entities/oauth_provider.dart';
@@ -166,16 +167,33 @@ class AuthRemoteDataSource {
   }
 
   /// EN: Exchange OAuth authorization code for tokens.
+  ///     The server intentionally hides the old generic callback route;
+  ///     native provider flows must use their provider-specific POST endpoint.
   /// KO: OAuth 인가 코드를 토큰으로 교환합니다.
+  ///     서버가 이전 일반 콜백 라우트를 의도적으로 숨겼으므로 제공자별
+  ///     네이티브 로그인은 전용 POST 엔드포인트를 사용해야 합니다.
   Future<Result<TokenResponse>> exchangeOAuthCode({
     required OAuthProvider provider,
     required String code,
     String? state,
   }) {
-    return _apiClient.get<TokenResponse>(
-      ApiEndpoints.oauthCallback(provider.id),
-      queryParameters: {'code': code, if (state != null) 'state': state},
-      fromJson: (json) => TokenResponse.fromJson(json as Map<String, dynamic>),
+    // EN: Keep the interface for callers that still receive browser callback
+    //     payloads, but fail before making a request to the removed route.
+    // KO: 브라우저 콜백 페이로드를 받는 기존 호출자를 위해 인터페이스는
+    //     유지하되 제거된 라우트로 요청하지 않고 즉시 실패합니다.
+    return Future.value(
+      Result.failure(
+        ValidationFailure(
+          'Generic OAuth callback exchange is not supported for '
+          '${provider.id}; use the native provider login flow.',
+          code: 'oauth_callback_unsupported',
+          details: {
+            'provider': provider.id,
+            if (code.isNotEmpty) 'codeReceived': true,
+            if (state != null) 'stateReceived': true,
+          },
+        ),
+      ),
     );
   }
 

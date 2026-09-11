@@ -4,26 +4,40 @@ library;
 
 import 'package:intl/intl.dart';
 
-import '../../data/dto/live_event_dto.dart';
-
 class LiveEventSummary {
   const LiveEventSummary({
     required this.id,
     required this.title,
+    this.placeId,
+    this.venue,
+    this.venueTypes = const [],
+    this.address,
+    this.regionCodes = const [],
     required this.showStartTime,
     required this.status,
     required this.projectIds,
     required this.unitIds,
     this.bannerUrl,
+    this.doorsOpenTime,
+    this.endTime,
+    this.ticketUrl,
   });
 
   final String id;
   final String title;
+  final String? placeId;
+  final String? venue;
+  final List<String> venueTypes;
+  final String? address;
+  final List<String> regionCodes;
   final DateTime showStartTime;
+  final DateTime? doorsOpenTime;
+  final DateTime? endTime;
   final String status;
   final List<String> projectIds;
   final List<String> unitIds;
   final String? bannerUrl;
+  final String? ticketUrl;
 
   bool get isUpcoming {
     return showStartTime.isAfter(DateTime.now());
@@ -49,24 +63,17 @@ class LiveEventSummary {
     }
     return '프로젝트 ${projectIds.length} · 유닛 ${unitIds.length}';
   }
-
-  factory LiveEventSummary.fromDto(LiveEventSummaryDto dto) {
-    return LiveEventSummary(
-      id: dto.id,
-      title: dto.title,
-      showStartTime: dto.showStartTime,
-      status: dto.status,
-      projectIds: dto.projectIds,
-      unitIds: dto.unitIds,
-      bannerUrl: dto.bannerUrl,
-    );
-  }
 }
 
 class LiveEventDetail {
   const LiveEventDetail({
     required this.id,
     required this.title,
+    this.placeId,
+    this.venue,
+    this.venueTypes = const [],
+    this.address,
+    this.regionCodes = const [],
     this.description,
     required this.showStartTime,
     this.doorsOpenTime,
@@ -80,6 +87,11 @@ class LiveEventDetail {
 
   final String id;
   final String title;
+  final String? placeId;
+  final String? venue;
+  final List<String> venueTypes;
+  final String? address;
+  final List<String> regionCodes;
   final String? description;
   final DateTime showStartTime;
   final DateTime? doorsOpenTime;
@@ -121,22 +133,6 @@ class LiveEventDetail {
       return '미정';
     }
     return DateFormat('HH:mm').format(doorsOpenTime!.toLocal());
-  }
-
-  factory LiveEventDetail.fromDto(LiveEventDetailDto dto) {
-    return LiveEventDetail(
-      id: dto.id,
-      title: dto.title,
-      description: dto.description,
-      showStartTime: dto.showStartTime,
-      doorsOpenTime: dto.doorsOpenTime,
-      endTime: dto.endTime,
-      status: dto.status,
-      projectIds: dto.projectIds,
-      unitIds: dto.unitIds,
-      bannerUrl: dto.banner?.url,
-      ticketUrl: dto.ticketUrl,
-    );
   }
 }
 
@@ -197,22 +193,6 @@ class LiveAttendanceState {
       verificationMethod: verificationMethod ?? this.verificationMethod,
       attendedAt: attendedAt ?? this.attendedAt,
     );
-  }
-
-  factory LiveAttendanceState.fromDto(LiveAttendanceStateDto dto) {
-    return LiveAttendanceState(
-      attendanceId: dto.attendanceId,
-      liveEventId: dto.liveEventId,
-      attended: dto.attended,
-      status: LiveAttendanceStatus.normalize(dto.status),
-      canUndo: dto.canUndo,
-      verificationMethod: dto.verificationMethod,
-      attendedAt: dto.attendedAt,
-    );
-  }
-
-  factory LiveAttendanceState.fromJson(Map<String, dynamic> json) {
-    return LiveAttendanceState.fromDto(LiveAttendanceStateDto.fromJson(json));
   }
 
   factory LiveAttendanceState.none(String liveEventId) {

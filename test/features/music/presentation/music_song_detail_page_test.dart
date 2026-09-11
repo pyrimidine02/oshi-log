@@ -358,6 +358,39 @@ Widget _testApp({
       musicSongCallGuideProvider.overrideWith(
         (ref, key) async => emptyCallGuide,
       ),
+      // EN: Complete the record-tab providers so accessibility checks do not
+      //     leave an indeterminate loading animation running in the fixture.
+      // KO: 접근성 검사 픽스처에서 무한 로딩 애니메이션이 남지 않도록
+      //     기록 탭 프로바이더도 완료된 도메인 값을 사용합니다.
+      musicSongVersionsProvider.overrideWith(
+        (ref, key) async => const <MusicSongVersionInfo>[],
+      ),
+      musicSongDifficultyProvider.overrideWith(
+        (ref, key) async => const MusicDifficulty(
+          difficultyLevel: 'UNKNOWN',
+          callIntensity: 0,
+          cueDensityPerMin: 0,
+          vocalRangeScore: 0,
+          tempoScore: 0,
+        ),
+      ),
+      musicSongMediaLinksProvider.overrideWith(
+        (ref, key) async => const MusicMediaLinks(
+          preview: MusicPreview(),
+          streamingLinks: <MusicStreamingLink>[],
+        ),
+      ),
+      musicSongCreditsProvider.overrideWith(
+        (ref, key) async => const <MusicCreditGroup>[],
+      ),
+      musicSongAvailabilityProvider.overrideWith(
+        (ref, key) async => const MusicAvailability(
+          isAvailableNow: false,
+          allowedCountries: <String>[],
+          blockedCountries: <String>[],
+          rightsPolicy: 'UNKNOWN',
+        ),
+      ),
     ],
     child: MaterialApp(
       theme: GBTTheme.light,

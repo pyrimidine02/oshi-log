@@ -1,5 +1,11 @@
 # 아키텍처 개선 로드맵
 
+> **과거 로드맵:** 2026-09-11부터
+> [현재 리팩토링 ADR](../adr/ADR-20260911-oshilog-architecture-and-release-channels.md)을
+> 기준으로 작업합니다. 아래 예시를 일괄 적용하지 않습니다. 특히
+> `ref.watch → ref.read` 일괄 치환과 domain → data 예외 허용은 현재 결정이
+> 아닙니다. 화면 수명, 반응형 의존성, 실제 API 계약을 회귀 테스트로 검증합니다.
+
 > **기준일**: 2026-03-05
 > **근거 문서**: [ARCHITECTURE_REVIEW.md](./ARCHITECTURE_REVIEW.md)
 > **우선순위 기준**: 보안 위험 > 런타임 안정성 > 성능 > 유지보수성

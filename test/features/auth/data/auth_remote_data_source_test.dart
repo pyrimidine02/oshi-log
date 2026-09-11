@@ -9,6 +9,7 @@ import 'package:oshi_log/features/auth/data/dto/account_recovery_password_reques
 import 'package:oshi_log/features/auth/data/dto/apple_oauth_request.dart';
 import 'package:oshi_log/features/auth/data/dto/google_oauth_request.dart';
 import 'package:oshi_log/features/auth/data/dto/token_response.dart';
+import 'package:oshi_log/features/auth/domain/entities/oauth_provider.dart';
 
 void main() {
   late _MockApiClient apiClient;
@@ -77,6 +78,17 @@ void main() {
         fromJson: any(named: 'fromJson'),
       ),
     ).called(1);
+  });
+
+  test('does not call the removed generic OAuth callback route', () async {
+    final result = await dataSource.exchangeOAuthCode(
+      provider: OAuthProvider.google,
+      code: 'authorization-code',
+      state: 'state',
+    );
+
+    expect(result.failureOrNull?.code, 'oauth_callback_unsupported');
+    verifyNoMoreInteractions(apiClient);
   });
 }
 

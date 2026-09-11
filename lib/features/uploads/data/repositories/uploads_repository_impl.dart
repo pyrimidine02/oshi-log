@@ -11,6 +11,7 @@ import '../../domain/entities/upload_entity.dart';
 import '../../domain/repositories/uploads_repository.dart';
 import '../datasources/uploads_remote_data_source.dart';
 import '../dto/upload_dto.dart';
+import '../mappers/upload_entity_mappers.dart';
 
 class UploadsRepositoryImpl implements UploadsRepository {
   UploadsRepositoryImpl({
@@ -38,7 +39,7 @@ class UploadsRepositoryImpl implements UploadsRepository {
 
     if (result is Success<UploadInfoResponse>) {
       await _cacheManager.remove(_myUploadsCacheKey);
-      return Result.success(UploadInfo.fromDto(result.data));
+      return Result.success(result.data.toDomain());
     }
     if (result is Err<UploadInfoResponse>) {
       return Result.failure(result.failure);
@@ -48,29 +49,44 @@ class UploadsRepositoryImpl implements UploadsRepository {
   }
 
   @override
-  Future<Result<PresignedUrlResponse>> requestPresignedUrl({
+  Future<Result<PresignedUpload>> requestPresignedUrl({
     required String filename,
     required String contentType,
     required int size,
-  }) {
-    return _remoteDataSource.requestPresignedUrl(
+  }) async {
+    final result = await _remoteDataSource.requestPresignedUrl(
       CreateUploadUrlRequest(
         filename: filename,
         contentType: contentType,
         size: size,
       ),
     );
+    if (result is Success<PresignedUrlResponse>) {
+      return Result.success(result.data.toDomain());
+    }
+    if (result is Err<PresignedUrlResponse>) {
+      return Result.failure(result.failure);
+    }
+    return const Result.failure(
+      UnknownFailure('Unknown presigned upload result'),
+    );
   }
 
   @override
-  Future<Result<ConfirmUploadResponse>> confirmUpload(String uploadId) async {
+  Future<Result<UploadConfirmation>> confirmUpload(String uploadId) async {
     final result = await _remoteDataSource.confirmUpload(uploadId);
     // EN: Invalidate my-uploads cache on confirm.
     // KO: 확인 시 내 업로드 캐시를 무효화합니다.
     if (result is Success<ConfirmUploadResponse>) {
       await _cacheManager.remove(_myUploadsCacheKey);
+      return Result.success(result.data.toDomain());
     }
-    return result;
+    if (result is Err<ConfirmUploadResponse>) {
+      return Result.failure(result.failure);
+    }
+    return const Result.failure(
+      UnknownFailure('Unknown upload confirmation result'),
+    );
   }
 
   @override
@@ -100,9 +116,7 @@ class UploadsRepositoryImpl implements UploadsRepository {
         },
       );
 
-      final entities = cacheResult.data
-          .map((dto) => UploadInfo.fromDto(dto))
-          .toList();
+      final entities = cacheResult.data.map((dto) => dto.toDomain()).toList();
       return Result.success(entities);
     } catch (e, stackTrace) {
       return Result.failure(ErrorHandler.mapException(e, stackTrace));

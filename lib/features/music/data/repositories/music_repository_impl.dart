@@ -9,6 +9,7 @@ import '../../domain/entities/music_entities.dart';
 import '../../domain/repositories/music_repository.dart';
 import '../datasources/music_remote_data_source.dart';
 import '../dto/music_dto.dart';
+import '../mappers/music_entities_mappers.dart';
 
 class MusicRepositoryImpl implements MusicRepository {
   MusicRepositoryImpl({required MusicRemoteDataSource remoteDataSource})
@@ -34,7 +35,7 @@ class MusicRepositoryImpl implements MusicRepository {
         return Result.success(
           MusicCursorPage(
             items: data.items
-                .map(MusicAlbumSummary.fromDto)
+                .map((value) => value.toDomain())
                 .toList(growable: false),
             nextCursor: data.nextCursor,
             hasNext: data.hasNext,
@@ -62,7 +63,7 @@ class MusicRepositoryImpl implements MusicRepository {
         projectId: projectId,
         albumId: albumId,
       ),
-      MusicAlbumDetail.fromDto,
+      (dto) => dto.toDomain(),
       fallbackCode: 'album_detail',
     );
   }
@@ -85,7 +86,7 @@ class MusicRepositoryImpl implements MusicRepository {
         return Result.success(
           MusicCursorPage(
             items: data.items
-                .map(MusicSongSummary.fromDto)
+                .map((value) => value.toDomain())
                 .toList(growable: false),
             nextCursor: data.nextCursor,
             hasNext: data.hasNext,
@@ -110,7 +111,7 @@ class MusicRepositoryImpl implements MusicRepository {
   }) async {
     return _mapSingle(
       _remoteDataSource.fetchSongDetail(projectId: projectId, songId: songId),
-      MusicSongDetail.fromDto,
+      (dto) => dto.toDomain(),
       fallbackCode: 'song_detail',
     );
   }
@@ -133,7 +134,7 @@ class MusicRepositoryImpl implements MusicRepository {
         includeRomanized: includeRomanized,
         includeTranslated: includeTranslated,
       ),
-      MusicLyricsPayload.fromDto,
+      (dto) => dto.toDomain(),
       fallbackCode: 'song_lyrics',
     );
   }
@@ -152,7 +153,7 @@ class MusicRepositoryImpl implements MusicRepository {
         lang: lang,
         version: version,
       ),
-      MusicPartsPayload.fromDto,
+      (dto) => dto.toDomain(),
       fallbackCode: 'song_parts',
     );
   }
@@ -171,7 +172,7 @@ class MusicRepositoryImpl implements MusicRepository {
         lang: lang,
         version: version,
       ),
-      MusicCallGuidePayload.fromDto,
+      (dto) => dto.toDomain(),
       fallbackCode: 'song_call_guide',
     );
   }
@@ -188,7 +189,7 @@ class MusicRepositoryImpl implements MusicRepository {
       );
       if (result case Success<List<MusicSongVersionInfoDto>>(:final data)) {
         return Result.success(
-          data.map(MusicSongVersionInfo.fromDto).toList(growable: false),
+          data.map((value) => value.toDomain()).toList(growable: false),
         );
       }
       if (result case Err<List<MusicSongVersionInfoDto>>(:final failure)) {
@@ -212,7 +213,7 @@ class MusicRepositoryImpl implements MusicRepository {
         songId: songId,
         versionCode: versionCode,
       ),
-      MusicSongVersionInfo.fromDto,
+      (dto) => dto.toDomain(),
       fallbackCode: 'song_version_detail',
     );
   }
@@ -229,7 +230,7 @@ class MusicRepositoryImpl implements MusicRepository {
       );
       if (result case Success<List<MusicCreditGroupDto>>(:final data)) {
         return Result.success(
-          data.map(MusicCreditGroup.fromDto).toList(growable: false),
+          data.map((value) => value.toDomain()).toList(growable: false),
         );
       }
       if (result case Err<List<MusicCreditGroupDto>>(:final failure)) {
@@ -251,7 +252,7 @@ class MusicRepositoryImpl implements MusicRepository {
         projectId: projectId,
         songId: songId,
       ),
-      MusicDifficulty.fromDto,
+      (dto) => dto.toDomain(),
       fallbackCode: 'song_difficulty',
     );
   }
@@ -266,7 +267,7 @@ class MusicRepositoryImpl implements MusicRepository {
         projectId: projectId,
         songId: songId,
       ),
-      MusicMediaLinks.fromDto,
+      (dto) => dto.toDomain(),
       fallbackCode: 'song_media_links',
     );
   }
@@ -283,7 +284,7 @@ class MusicRepositoryImpl implements MusicRepository {
         songId: songId,
         country: country,
       ),
-      MusicAvailability.fromDto,
+      (dto) => dto.toDomain(),
       fallbackCode: 'song_availability',
     );
   }
@@ -308,7 +309,7 @@ class MusicRepositoryImpl implements MusicRepository {
         includeRomanized: includeRomanized,
         includeTranslated: includeTranslated,
       ),
-      MusicSongLiveContext.fromDto,
+      (dto) => dto.toDomain(),
       fallbackCode: 'song_live_context',
     );
   }
@@ -323,7 +324,7 @@ class MusicRepositoryImpl implements MusicRepository {
         projectId: projectId,
         liveEventId: liveEventId,
       ),
-      MusicLiveSetlist.fromDto,
+      (dto) => dto.toDomain(),
       fallbackCode: 'live_setlist',
     );
   }

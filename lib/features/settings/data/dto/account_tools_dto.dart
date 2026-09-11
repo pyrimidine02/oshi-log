@@ -26,7 +26,8 @@ class RestoreAccountResultDto {
   factory RestoreAccountResultDto.fromJson(Map<String, dynamic> json) {
     return RestoreAccountResultDto(
       result: json['result'] as String? ?? 'RESTORED',
-      restoredAt: _dateTime(json, const ['restoredAt']) ??
+      restoredAt:
+          _dateTime(json, const ['restoredAt']) ??
           DateTime.fromMillisecondsSinceEpoch(0),
       retentionUntil: _dateTime(json, const ['retentionUntil']),
     );

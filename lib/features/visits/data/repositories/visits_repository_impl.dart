@@ -12,6 +12,7 @@ import '../../domain/repositories/visits_repository.dart';
 import '../datasources/visits_remote_data_source.dart';
 import '../dto/user_ranking_dto.dart';
 import '../dto/visit_dto.dart';
+import '../mappers/visit_entities_mappers.dart';
 
 class VisitsRepositoryImpl implements VisitsRepository {
   VisitsRepositoryImpl({
@@ -43,7 +44,9 @@ class VisitsRepositoryImpl implements VisitsRepository {
         fromJson: _decodeVisitList,
       );
 
-      final entities = cacheResult.data.map(VisitEvent.fromDto).toList();
+      final entities = cacheResult.data
+          .map((value) => value.toDomain())
+          .toList();
       return Result.success(entities);
     } catch (e, stackTrace) {
       return Result.failure(ErrorHandler.mapException(e, stackTrace));
@@ -104,7 +107,7 @@ class VisitsRepositoryImpl implements VisitsRepository {
         toJson: (dto) => dto.toJson(),
         fromJson: VisitSummaryDto.fromJson,
       );
-      return Result.success(VisitSummary.fromDto(cacheResult.data));
+      return Result.success(cacheResult.data.toDomain());
     } catch (e, stackTrace) {
       return Result.failure(ErrorHandler.mapException(e, stackTrace));
     }
@@ -128,7 +131,7 @@ class VisitsRepositoryImpl implements VisitsRepository {
         toJson: (dto) => dto.toJson(),
         fromJson: (json) => VisitEventDetailDto.fromJson(json),
       );
-      return Result.success(VisitEvent.fromDetailDto(cacheResult.data));
+      return Result.success(cacheResult.data.toDomain());
     } catch (e, stackTrace) {
       return Result.failure(ErrorHandler.mapException(e, stackTrace));
     }
@@ -202,7 +205,7 @@ class VisitsRepositoryImpl implements VisitsRepository {
         toJson: (dto) => dto.toJson(),
         fromJson: UserRankingDto.fromJson,
       );
-      return Result.success(UserRanking.fromDto(cacheResult.data));
+      return Result.success(cacheResult.data.toDomain());
     } catch (e, stackTrace) {
       return Result.failure(ErrorHandler.mapException(e, stackTrace));
     }

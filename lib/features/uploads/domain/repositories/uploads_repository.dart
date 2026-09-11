@@ -3,7 +3,6 @@
 library;
 
 import '../../../../core/utils/result.dart';
-import '../../data/dto/upload_dto.dart';
 import '../entities/upload_entity.dart';
 
 /// EN: Abstract repository for upload operations.
@@ -19,7 +18,7 @@ abstract class UploadsRepository {
 
   /// EN: Request a presigned URL for file upload.
   /// KO: 파일 업로드를 위한 presigned URL을 요청합니다.
-  Future<Result<PresignedUrlResponse>> requestPresignedUrl({
+  Future<Result<PresignedUpload>> requestPresignedUrl({
     required String filename,
     required String contentType,
     required int size,
@@ -27,7 +26,7 @@ abstract class UploadsRepository {
 
   /// EN: Confirm that a file was uploaded.
   /// KO: 파일이 업로드되었음을 확인합니다.
-  Future<Result<ConfirmUploadResponse>> confirmUpload(String uploadId);
+  Future<Result<UploadConfirmation>> confirmUpload(String uploadId);
 
   /// EN: Get the current user's uploads.
   /// KO: 현재 사용자의 업로드 목록을 가져옵니다.

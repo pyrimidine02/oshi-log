@@ -43,7 +43,9 @@ class UploadsRemoteDataSource {
     return _apiClient.post<UploadInfoResponse>(
       ApiEndpoints.uploadsDirect,
       data: formData,
-      options: Options(contentType: 'multipart/form-data; boundary=${formData.boundary}'),
+      options: Options(
+        contentType: 'multipart/form-data; boundary=${formData.boundary}',
+      ),
       fromJson: (json) =>
           UploadInfoResponse.fromJson(json as Map<String, dynamic>),
     );

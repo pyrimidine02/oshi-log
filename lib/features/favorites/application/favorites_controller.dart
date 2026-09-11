@@ -19,6 +19,9 @@ import 'pending_favorite_mutation.dart';
 class FavoritesController
     extends StateNotifier<AsyncValue<List<FavoriteItem>>> {
   FavoritesController(this._ref) : super(const AsyncLoading()) {
+    _ref.onDispose(() {
+      _disposed = true;
+    });
     load();
     _ref.listen<AsyncValue<ConnectivityStatus>>(connectivityStatusProvider, (
       _,
@@ -29,6 +32,9 @@ class FavoritesController
       }
     });
     _ref.listen<bool>(isAuthenticatedProvider, (previous, next) {
+      if (previous != next) {
+        _authSessionGeneration += 1;
+      }
       if (next && previous != true) {
         unawaited(syncPendingMutations());
       }
@@ -41,19 +47,33 @@ class FavoritesController
 
   final Ref _ref;
   bool _isSyncingPending = false;
+  bool _disposed = false;
+  int _authSessionGeneration = 0;
   static const int _maxPendingMutations = 200;
 
   Future<void> load({bool forceRefresh = false}) async {
+    if (_disposed) {
+      return;
+    }
     final isAuthenticated = _ref.read(isAuthenticatedProvider);
     if (!isAuthenticated) {
-      state = const AsyncData([]);
+      if (!_disposed) {
+        state = const AsyncData([]);
+      }
       return;
     }
 
+    final sessionGeneration = _authSessionGeneration;
     state = const AsyncLoading();
     final repository = await _ref.read(favoritesRepositoryProvider.future);
+    if (!_isCurrentAuthSession(sessionGeneration)) {
+      return;
+    }
     final result = await repository.getFavorites(forceRefresh: forceRefresh);
 
+    if (!_isCurrentAuthSession(sessionGeneration)) {
+      return;
+    }
     if (result is Success<List<FavoriteItem>>) {
       state = AsyncData(result.data);
     } else if (result is Err<List<FavoriteItem>>) {
@@ -66,6 +86,14 @@ class FavoritesController
     required FavoriteType type,
     bool? isCurrentlyFavorite,
   }) async {
+    if (_disposed) {
+      return const Result.failure(
+        AuthFailure(
+          'Favorites controller disposed',
+          code: 'controller_disposed',
+        ),
+      );
+    }
     final isAuthenticated = _ref.read(isAuthenticatedProvider);
     if (!isAuthenticated) {
       return Result.failure(
@@ -73,7 +101,16 @@ class FavoritesController
       );
     }
 
+    final sessionGeneration = _authSessionGeneration;
     final repository = await _ref.read(favoritesRepositoryProvider.future);
+    if (!_isCurrentAuthSession(sessionGeneration)) {
+      return const Result.failure(
+        AuthFailure(
+          'Authentication session changed',
+          code: 'auth_session_changed',
+        ),
+      );
+    }
     final currentItems = state.maybeWhen(
       data: (items) => items,
       orElse: () {
@@ -94,11 +131,20 @@ class FavoritesController
     );
 
     final isOnline = await _ref.read(connectivityServiceProvider).isOnline;
+    if (!_isCurrentAuthSession(sessionGeneration)) {
+      return const Result.failure(
+        AuthFailure(
+          'Authentication session changed',
+          code: 'auth_session_changed',
+        ),
+      );
+    }
     if (!isOnline) {
       await _enqueuePendingMutation(
         entityId: entityId,
         type: type,
         targetIsFavorite: targetIsFavorite,
+        sessionGeneration: sessionGeneration,
       );
       return const Result.success(null);
     }
@@ -109,8 +155,20 @@ class FavoritesController
       type: type,
       targetIsFavorite: targetIsFavorite,
     );
+    if (!_isCurrentAuthSession(sessionGeneration)) {
+      return const Result.failure(
+        AuthFailure(
+          'Authentication session changed',
+          code: 'auth_session_changed',
+        ),
+      );
+    }
     if (result is Success<void>) {
-      await _dequeuePendingMutation(entityId: entityId, type: type);
+      await _dequeuePendingMutation(
+        entityId: entityId,
+        type: type,
+        sessionGeneration: sessionGeneration,
+      );
       await load(forceRefresh: true);
       return const Result.success(null);
     }
@@ -120,6 +178,7 @@ class FavoritesController
           entityId: entityId,
           type: type,
           targetIsFavorite: targetIsFavorite,
+          sessionGeneration: sessionGeneration,
         );
         return const Result.success(null);
       }
@@ -136,29 +195,39 @@ class FavoritesController
   }
 
   Future<void> syncPendingMutations() async {
+    if (_disposed) {
+      return;
+    }
     if (_isSyncingPending) {
       return;
     }
     if (!_ref.read(isAuthenticatedProvider)) {
       return;
     }
+    final sessionGeneration = _authSessionGeneration;
     final isOnline = await _ref.read(connectivityServiceProvider).isOnline;
-    if (!isOnline) {
+    if (!isOnline || !_isCurrentAuthSession(sessionGeneration)) {
       return;
     }
 
     _isSyncingPending = true;
     try {
       final pending = await _readPendingMutations();
-      if (pending.isEmpty) {
+      if (!_isCurrentAuthSession(sessionGeneration) || pending.isEmpty) {
         return;
       }
 
       final repository = await _ref.read(favoritesRepositoryProvider.future);
+      if (!_isCurrentAuthSession(sessionGeneration)) {
+        return;
+      }
       final remaining = <PendingFavoriteMutation>[];
       var appliedCount = 0;
 
       for (var i = 0; i < pending.length; i += 1) {
+        if (!_isCurrentAuthSession(sessionGeneration)) {
+          return;
+        }
         final mutation = pending[i];
         final result = await _applyRemoteToggle(
           repository: repository,
@@ -166,6 +235,9 @@ class FavoritesController
           type: mutation.type,
           targetIsFavorite: mutation.isFavorite,
         );
+        if (!_isCurrentAuthSession(sessionGeneration)) {
+          return;
+        }
         if (result is Success<void>) {
           appliedCount += 1;
           continue;
@@ -185,13 +257,25 @@ class FavoritesController
         remaining.add(mutation);
       }
 
-      await _writePendingMutations(remaining);
-      if (appliedCount > 0) {
+      if (!_isCurrentAuthSession(sessionGeneration)) {
+        return;
+      }
+      await _writePendingMutations(
+        remaining,
+        sessionGeneration: sessionGeneration,
+      );
+      if (appliedCount > 0 && _isCurrentAuthSession(sessionGeneration)) {
         await load(forceRefresh: true);
       }
     } finally {
       _isSyncingPending = false;
     }
+  }
+
+  bool _isCurrentAuthSession(int generation) {
+    return !_disposed &&
+        generation == _authSessionGeneration &&
+        _ref.read(isAuthenticatedProvider);
   }
 
   Future<Result<void>> _applyRemoteToggle({
@@ -264,8 +348,12 @@ class FavoritesController
     required String entityId,
     required FavoriteType type,
     required bool targetIsFavorite,
+    required int sessionGeneration,
   }) async {
     final pending = await _readPendingMutations();
+    if (!_isCurrentAuthSession(sessionGeneration)) {
+      return;
+    }
     pending.removeWhere(
       (mutation) => mutation.entityId == entityId && mutation.type == type,
     );
@@ -280,20 +368,33 @@ class FavoritesController
     if (pending.length > _maxPendingMutations) {
       pending.removeRange(0, pending.length - _maxPendingMutations);
     }
-    await _writePendingMutations(pending);
+    if (!_isCurrentAuthSession(sessionGeneration)) {
+      return;
+    }
+    await _writePendingMutations(pending, sessionGeneration: sessionGeneration);
   }
 
   Future<void> _dequeuePendingMutation({
     required String entityId,
     required FavoriteType type,
+    required int sessionGeneration,
   }) async {
     final pending = await _readPendingMutations();
+    if (!_isCurrentAuthSession(sessionGeneration)) {
+      return;
+    }
     final before = pending.length;
     pending.removeWhere(
       (mutation) => mutation.entityId == entityId && mutation.type == type,
     );
     if (pending.length != before) {
-      await _writePendingMutations(pending);
+      if (!_isCurrentAuthSession(sessionGeneration)) {
+        return;
+      }
+      await _writePendingMutations(
+        pending,
+        sessionGeneration: sessionGeneration,
+      );
     }
   }
 
@@ -311,9 +412,13 @@ class FavoritesController
   }
 
   Future<void> _writePendingMutations(
-    List<PendingFavoriteMutation> pending,
-  ) async {
+    List<PendingFavoriteMutation> pending, {
+    required int sessionGeneration,
+  }) async {
     final storage = await _ref.read(localStorageProvider.future);
+    if (!_isCurrentAuthSession(sessionGeneration)) {
+      return;
+    }
     await storage.setPendingFavoriteMutations(
       pending.map((mutation) => mutation.toJson()).toList(growable: false),
     );

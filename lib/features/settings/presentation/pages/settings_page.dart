@@ -23,6 +23,7 @@ import '../../../../core/widgets/feedback/gbt_loading.dart';
 import '../../../../core/widgets/navigation/gbt_app_bar_icon_button.dart';
 import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
 import '../../../auth/application/auth_controller.dart';
+import '../../../ads/application/ads_controller.dart';
 import '../../application/settings_controller.dart';
 import '../../domain/entities/user_profile.dart';
 import '../widgets/field_settings_components.dart';
@@ -44,6 +45,8 @@ class SettingsPage extends ConsumerWidget {
         profileState?.valueOrNull?.canAccessAdminOps ?? false;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final appVersionState = ref.watch(appVersionProvider);
+    final showAdsPrivacyOptions =
+        ref.watch(adsPrivacyOptionsRequiredProvider).valueOrNull ?? false;
     // EN: Show the versions the server currently publishes, not bundled ones.
     // KO: 내장 상수가 아니라 서버가 현재 게시한 버전을 표시합니다.
     final legalPolicies = ref.watch(legalPoliciesProvider).valueOrNull;
@@ -398,6 +401,24 @@ class SettingsPage extends ConsumerWidget {
                     ),
                   ),
                 ),
+                if (showAdsPrivacyOptions)
+                  _SettingsRow(
+                    icon: Icons.privacy_tip_outlined,
+                    iconBgColor: isDark
+                        ? GBTSemanticColors.darkAccentBlue
+                        : GBTColors.accentBlue,
+                    title: context.l10n(
+                      ko: '광고 개인정보 옵션',
+                      en: 'Ad privacy options',
+                      ja: '広告プライバシー設定',
+                    ),
+                    subtitle: context.l10n(
+                      ko: '광고 동의 및 개인정보 선택 관리',
+                      en: 'Manage ad consent and privacy choices',
+                      ja: '広告の同意とプライバシー設定を管理',
+                    ),
+                    onTap: () => _handleAdsPrivacyOptionsTap(context, ref),
+                  ),
                 _SettingsRow(
                   icon: Icons.feedback_rounded,
                   iconBgColor: GBTColors.favorite,
@@ -621,6 +642,32 @@ class SettingsPage extends ConsumerWidget {
             ko: '정책 문서를 열 수 없습니다.',
             en: 'Unable to open policy document.',
             ja: 'ポリシー文書を開けません。',
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// EN: Opens the platform consent-management form when ads are available.
+  ///     The unavailable state is explained inline so settings remains useful
+  ///     in development builds and on unsupported platforms.
+  /// KO: 광고가 사용 가능한 경우 플랫폼 동의 관리 양식을 엽니다. 개발 빌드와
+  ///     미지원 플랫폼에서도 설정 화면을 쓸 수 있도록 불가 상태를 안내합니다.
+  Future<void> _handleAdsPrivacyOptionsTap(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final opened = await ref
+        .read(adsRuntimeServiceProvider)
+        .showPrivacyOptions();
+    if (!context.mounted || opened) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          context.l10n(
+            ko: '현재 광고 개인정보 옵션을 열 수 없습니다.',
+            en: 'Ad privacy options are unavailable right now.',
+            ja: '現在、広告プライバシー設定を開けません。',
           ),
         ),
       ),

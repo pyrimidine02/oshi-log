@@ -2,9 +2,6 @@
 /// KO: 장소 도메인 엔티티.
 library;
 
-import '../../data/dto/place_dto.dart';
-import '../../data/dto/place_stats_dto.dart';
-
 class PlaceSummary {
   const PlaceSummary({
     required this.id,
@@ -41,29 +38,6 @@ class PlaceSummary {
   final String? regionName;
   final String? regionPath;
   final PlaceDirections? directions;
-
-  factory PlaceSummary.fromDto(PlaceSummaryDto dto) {
-    return PlaceSummary(
-      id: dto.id,
-      name: dto.name,
-      address: dto.regionSummary?.primaryName ?? '',
-      latitude: dto.latitude,
-      longitude: dto.longitude,
-      types: dto.types,
-      tags: dto.tags,
-      imageUrl: dto.thumbnailUrl,
-      distanceLabel: null,
-      isVerified: false,
-      isFavorite: false,
-      rating: null,
-      regionCode: dto.regionSummary?.code,
-      regionName: dto.regionSummary?.primaryName,
-      regionPath: dto.regionSummary?.path,
-      directions: dto.directions != null
-          ? PlaceDirections.fromDto(dto.directions!)
-          : null,
-    );
-  }
 
   /// EN: Returns an immutable copy with selected presentation enrichments.
   /// KO: 선택한 프레젠테이션 보강값을 반영한 불변 복사본을 반환합니다.
@@ -125,32 +99,6 @@ class PlaceDetail {
   final int? favoriteCount;
   final List<String> tags;
   final PlaceDirections? directions;
-
-  factory PlaceDetail.fromDto(PlaceDetailDto dto, {PlaceStatsDto? stats}) {
-    final imageUrls = dto.images.map((image) => image.url).toList();
-    final heroImageUrl =
-        dto.primaryImage?.url ??
-        (imageUrls.isNotEmpty ? imageUrls.first : null);
-
-    return PlaceDetail(
-      id: dto.id,
-      name: dto.name,
-      address: dto.address ?? '',
-      types: dto.types,
-      description: dto.description,
-      heroImageUrl: heroImageUrl,
-      imageUrls: imageUrls,
-      isVerified: false,
-      isFavorite: false,
-      rating: null,
-      visitCount: stats?.visitCount,
-      favoriteCount: stats?.favoriteCount,
-      tags: dto.tags,
-      directions: dto.directions != null
-          ? PlaceDirections.fromDto(dto.directions!)
-          : null,
-    );
-  }
 }
 
 class PlaceDirectionProvider {
@@ -163,14 +111,6 @@ class PlaceDirectionProvider {
   final String provider;
   final String label;
   final String url;
-
-  factory PlaceDirectionProvider.fromDto(PlaceDirectionProviderDto dto) {
-    return PlaceDirectionProvider(
-      provider: dto.provider,
-      label: dto.label,
-      url: dto.url,
-    );
-  }
 }
 
 class PlaceDirections {
@@ -178,16 +118,6 @@ class PlaceDirections {
 
   final String countryCode;
   final List<PlaceDirectionProvider> providers;
-
-  factory PlaceDirections.fromDto(PlaceDirectionsDto dto) {
-    return PlaceDirections(
-      countryCode: dto.countryCode,
-      providers: dto.providers
-          .map(PlaceDirectionProvider.fromDto)
-          .where((provider) => provider.url.isNotEmpty)
-          .toList(),
-    );
-  }
 
   bool get hasProviders => providers.isNotEmpty;
 }

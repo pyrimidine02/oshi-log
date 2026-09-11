@@ -4,9 +4,6 @@ library;
 
 import 'package:intl/intl.dart';
 
-import '../../data/dto/user_ranking_dto.dart';
-import '../../data/dto/visit_dto.dart';
-
 /// EN: Canonical visit verification states understood by the app.
 /// KO: 앱이 이해하는 표준 방문 인증 상태입니다.
 class VisitVerificationStatus {
@@ -52,27 +49,6 @@ class VisitEvent {
   /// KO: UI 호환 별칭이며, 증빙 여부는 거리 값에 의존하지 않습니다.
   bool get hasGpsVerification => isVerified;
 
-  factory VisitEvent.fromDto(VisitEventDto dto) {
-    return VisitEvent(
-      id: dto.id,
-      placeId: dto.placeId,
-      visitedAt: dto.visitedAt,
-      status: VisitVerificationStatus.normalize(dto.status),
-      distanceM: dto.distanceM,
-    );
-  }
-
-  factory VisitEvent.fromDetailDto(VisitEventDetailDto dto) {
-    return VisitEvent(
-      id: dto.id,
-      placeId: dto.placeId,
-      visitedAt: dto.visitedAt,
-      status: VisitVerificationStatus.normalize(dto.status),
-      distanceM: dto.distanceM,
-      accuracy: dto.accuracy,
-    );
-  }
-
   String get visitedAtLabel {
     if (visitedAt == null) return '';
     return DateFormat('yyyy.MM.dd HH:mm').format(visitedAt!.toLocal());
@@ -91,15 +67,6 @@ class VisitSummary {
   final int visitCount;
   final DateTime? firstVisitedAt;
   final DateTime? lastVisitedAt;
-
-  factory VisitSummary.fromDto(VisitSummaryDto dto) {
-    return VisitSummary(
-      placeId: dto.placeId,
-      visitCount: dto.visitCount,
-      firstVisitedAt: dto.firstVisitedAt,
-      lastVisitedAt: dto.lastVisitedAt,
-    );
-  }
 
   String get firstVisitedLabel {
     if (firstVisitedAt == null) return '';
@@ -137,13 +104,4 @@ class UserRanking {
   /// EN: Total number of ranked users.
   /// KO: 랭킹에 참여한 전체 사용자 수.
   final int totalUsers;
-
-  factory UserRanking.fromDto(UserRankingDto dto) {
-    return UserRanking(
-      rank: dto.rank,
-      totalVisits: dto.totalVisits,
-      uniquePlaces: dto.uniquePlaces,
-      totalUsers: dto.totalUsers,
-    );
-  }
 }

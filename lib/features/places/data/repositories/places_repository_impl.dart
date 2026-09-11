@@ -19,6 +19,10 @@ import '../dto/place_dto.dart';
 import '../dto/place_guide_dto.dart';
 import '../dto/place_region_filter_dto.dart';
 import '../dto/place_stats_dto.dart';
+import '../mappers/place_comment_entities_mappers.dart';
+import '../mappers/place_entities_mappers.dart';
+import '../mappers/place_guide_entities_mappers.dart';
+import '../mappers/place_region_entities_mappers.dart';
 
 class PlacesRepositoryImpl implements PlacesRepository {
   PlacesRepositoryImpl({
@@ -64,9 +68,7 @@ class PlacesRepositoryImpl implements PlacesRepository {
         },
       );
 
-      final entities = cacheResult.data
-          .map((dto) => PlaceSummary.fromDto(dto))
-          .toList();
+      final entities = cacheResult.data.map((dto) => dto.toDomain()).toList();
 
       return Result.success(entities);
     } catch (e, stackTrace) {
@@ -107,9 +109,7 @@ class PlacesRepositoryImpl implements PlacesRepository {
         },
       );
 
-      final entities = cacheResult.data
-          .map((dto) => PlaceSummary.fromDto(dto))
-          .toList();
+      final entities = cacheResult.data.map((dto) => dto.toDomain()).toList();
 
       return Result.success(entities);
     } catch (e, stackTrace) {
@@ -148,7 +148,7 @@ class PlacesRepositoryImpl implements PlacesRepository {
         fromJson: (json) => RegionFilterOptionsDto.fromJson(json),
       );
 
-      return Result.success(RegionFilterOptions.fromDto(cacheResult.data));
+      return Result.success(cacheResult.data.toDomain());
     } catch (e, stackTrace) {
       return Result.failure(ErrorHandler.mapException(e, stackTrace));
     }
@@ -202,9 +202,7 @@ class PlacesRepositoryImpl implements PlacesRepository {
         },
       );
 
-      final entities = cacheResult.data
-          .map((dto) => PlaceSummary.fromDto(dto))
-          .toList();
+      final entities = cacheResult.data.map((dto) => dto.toDomain()).toList();
       return Result.success(entities);
     } catch (e, stackTrace) {
       return Result.failure(ErrorHandler.mapException(e, stackTrace));
@@ -234,7 +232,7 @@ class PlacesRepositoryImpl implements PlacesRepository {
         fromJson: (json) => RegionMapBoundsDto.fromJson(json),
       );
 
-      return Result.success(RegionMapBounds.fromDto(cacheResult.data));
+      return Result.success(cacheResult.data.toDomain());
     } catch (e, stackTrace) {
       return Result.failure(ErrorHandler.mapException(e, stackTrace));
     }
@@ -290,9 +288,7 @@ class PlacesRepositoryImpl implements PlacesRepository {
         stats = null;
       }
 
-      return Result.success(
-        PlaceDetail.fromDto(cacheResult.data, stats: stats),
-      );
+      return Result.success(cacheResult.data.toDomain(stats: stats));
     } catch (e, stackTrace) {
       final failure = ErrorHandler.mapException(e, stackTrace);
       return Result.failure(failure);
@@ -347,9 +343,7 @@ class PlacesRepositoryImpl implements PlacesRepository {
         },
       );
 
-      final entities = cacheResult.data
-          .map((dto) => PlaceSummary.fromDto(dto))
-          .toList();
+      final entities = cacheResult.data.map((dto) => dto.toDomain()).toList();
       return Result.success(entities);
     } catch (e, stackTrace) {
       return Result.failure(ErrorHandler.mapException(e, stackTrace));
@@ -403,9 +397,7 @@ class PlacesRepositoryImpl implements PlacesRepository {
         },
       );
 
-      final entities = cacheResult.data
-          .map((dto) => PlaceSummary.fromDto(dto))
-          .toList();
+      final entities = cacheResult.data.map((dto) => dto.toDomain()).toList();
       return Result.success(entities);
     } catch (e, stackTrace) {
       return Result.failure(ErrorHandler.mapException(e, stackTrace));
@@ -444,9 +436,7 @@ class PlacesRepositoryImpl implements PlacesRepository {
             },
           );
 
-      final entities = cacheResult.data
-          .map((dto) => PlaceGuideSummary.fromDto(dto))
-          .toList();
+      final entities = cacheResult.data.map((dto) => dto.toDomain()).toList();
 
       return Result.success(entities);
     } catch (e, stackTrace) {
@@ -486,9 +476,7 @@ class PlacesRepositoryImpl implements PlacesRepository {
             },
           );
 
-      final entities = cacheResult.data
-          .map((dto) => PlaceComment.fromDto(dto))
-          .toList();
+      final entities = cacheResult.data.map((dto) => dto.toDomain()).toList();
 
       return Result.success(entities);
     } catch (e, stackTrace) {
@@ -516,7 +504,7 @@ class PlacesRepositoryImpl implements PlacesRepository {
         request: request,
       );
       if (result is Success<PlaceCommentDetailDto>) {
-        return Result.success(PlaceComment.fromDto(result.data));
+        return Result.success(result.data.toDomain());
       }
       if (result is Err<PlaceCommentDetailDto>) {
         return Result.failure(result.failure);

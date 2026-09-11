@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -206,6 +208,82 @@ void main() {
       expect(events.map((event) => event.relatedEntityId).toSet(), {
         'mygo-9th',
       });
+    },
+  );
+
+  test('clamps a multi-year event to the requested calendar month', () async {
+    final wideEvent = CalendarEventDto(
+      id: 'wide-event',
+      title: 'Long-running exhibition',
+      date: DateTime(2000, 1, 1),
+      endDate: DateTime(2050, 12, 31),
+      type: 'general',
+    );
+    when(
+      () => remoteDataSource.fetchEvents(
+        year: 2026,
+        month: 7,
+        projectKey: 'bang-dream',
+      ),
+    ).thenAnswer((_) async => Result.success([wideEvent]));
+    when(
+      () => remoteDataSource.fetchLiveEvents(
+        year: 2026,
+        month: 7,
+        projectKey: 'bang-dream',
+      ),
+    ).thenAnswer((_) async => const Result.success([]));
+
+    final result = await repository.fetchEvents(
+      year: 2026,
+      month: 7,
+      projectKey: 'bang-dream',
+    );
+
+    final events = result.dataOrNull!;
+    expect(events, hasLength(31));
+    expect(events.first.date, DateTime(2026, 7, 1));
+    expect(events.last.date, DateTime(2026, 7, 31));
+    expect(events.every((event) => event.date.year == 2026), isTrue);
+  });
+
+  test(
+    'observes concurrent source failures without an unhandled sibling error',
+    () async {
+      final calendarCompleter = Completer<Result<List<CalendarEventDto>>>();
+      final liveCompleter = Completer<Result<List<CalendarEventDto>>>();
+      when(
+        () => remoteDataSource.fetchEvents(
+          year: 2026,
+          month: 9,
+          projectKey: 'bang-dream',
+        ),
+      ).thenAnswer((_) => calendarCompleter.future);
+      when(
+        () => remoteDataSource.fetchLiveEvents(
+          year: 2026,
+          month: 9,
+          projectKey: 'bang-dream',
+        ),
+      ).thenAnswer((_) => liveCompleter.future);
+
+      final resultFuture = repository.fetchEvents(
+        year: 2026,
+        month: 9,
+        projectKey: 'bang-dream',
+      );
+      calendarCompleter.completeError(
+        const NetworkFailure('Calendar source failed'),
+        StackTrace.current,
+      );
+      liveCompleter.completeError(
+        const NetworkFailure('Live source failed'),
+        StackTrace.current,
+      );
+
+      final result = await resultFuture;
+      expect(result, isA<Err<List<CalendarEvent>>>());
+      expect(result.failureOrNull, isA<NetworkFailure>());
     },
   );
 }

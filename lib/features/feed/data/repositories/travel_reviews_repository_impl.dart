@@ -7,6 +7,7 @@ import '../../domain/entities/travel_review.dart';
 import '../../domain/repositories/travel_reviews_repository.dart';
 import '../datasources/travel_reviews_remote_data_source.dart';
 import '../dto/travel_review_dto.dart';
+import '../mappers/travel_review_mappers.dart';
 
 class TravelReviewsRepositoryImpl implements TravelReviewsRepository {
   const TravelReviewsRepositoryImpl(this._remoteDataSource);
@@ -25,7 +26,7 @@ class TravelReviewsRepositoryImpl implements TravelReviewsRepository {
       size: size,
     );
     return result.map(
-      (items) => items.map(TravelReviewSummary.fromDto).toList(growable: false),
+      (items) => items.map((value) => value.toDomain()).toList(growable: false),
     );
   }
 
@@ -38,7 +39,7 @@ class TravelReviewsRepositoryImpl implements TravelReviewsRepository {
       projectCode: projectCode,
       reviewId: reviewId,
     );
-    return result.map(TravelReviewDetail.fromDto);
+    return result.map((value) => value.toDomain());
   }
 
   @override
@@ -61,7 +62,7 @@ class TravelReviewsRepositoryImpl implements TravelReviewsRepository {
         routeNote: draft.routeNote,
       ),
     );
-    return result.map(TravelReviewDetail.fromDto);
+    return result.map((value) => value.toDomain());
   }
 
   @override
@@ -86,7 +87,7 @@ class TravelReviewsRepositoryImpl implements TravelReviewsRepository {
         routeNote: patch.routeNote,
       ),
     );
-    return result.map(TravelReviewDetail.fromDto);
+    return result.map((value) => value.toDomain());
   }
 
   @override

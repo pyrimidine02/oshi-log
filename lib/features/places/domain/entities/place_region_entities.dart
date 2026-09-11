@@ -2,8 +2,6 @@
 /// KO: 장소 지역 필터 엔티티.
 library;
 
-import '../../data/dto/place_region_filter_dto.dart';
-
 class RegionOption {
   const RegionOption({
     required this.code,
@@ -22,18 +20,6 @@ class RegionOption {
   final bool hasChildren;
   final String? parentCode;
   final int displayOrder;
-
-  factory RegionOption.fromDto(RegionOptionDto dto) {
-    return RegionOption(
-      code: dto.code,
-      name: dto.name,
-      level: dto.level,
-      placeCount: dto.placeCount,
-      hasChildren: dto.hasChildren,
-      parentCode: dto.parentCode,
-      displayOrder: dto.displayOrder,
-    );
-  }
 }
 
 class RegionFilterOptions {
@@ -50,16 +36,6 @@ class RegionFilterOptions {
   final int totalRegions;
   final int totalPlaces;
   final String lastUpdated;
-
-  factory RegionFilterOptions.fromDto(RegionFilterOptionsDto dto) {
-    return RegionFilterOptions(
-      countries: dto.countries.map(RegionOption.fromDto).toList(),
-      popularRegions: dto.popularRegions.map(RegionOption.fromDto).toList(),
-      totalRegions: dto.totalRegions,
-      totalPlaces: dto.totalPlaces,
-      lastUpdated: dto.lastUpdated,
-    );
-  }
 }
 
 class Coordinate {
@@ -67,10 +43,6 @@ class Coordinate {
 
   final double latitude;
   final double longitude;
-
-  factory Coordinate.fromDto(CoordinateDto dto) {
-    return Coordinate(latitude: dto.latitude, longitude: dto.longitude);
-  }
 }
 
 class RegionMapBounds {
@@ -85,13 +57,4 @@ class RegionMapBounds {
   final Coordinate southWest;
   final Coordinate center;
   final int zoom;
-
-  factory RegionMapBounds.fromDto(RegionMapBoundsDto dto) {
-    return RegionMapBounds(
-      northEast: Coordinate.fromDto(dto.northEast),
-      southWest: Coordinate.fromDto(dto.southWest),
-      center: Coordinate.fromDto(dto.center),
-      zoom: dto.zoom,
-    );
-  }
 }

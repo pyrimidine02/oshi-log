@@ -2,11 +2,6 @@
 /// KO: 홈 요약 도메인 엔티티.
 library;
 
-import 'package:intl/intl.dart';
-
-import '../../../../core/utils/media_url.dart';
-import '../../data/dto/home_summary_dto.dart';
-
 class HomeSummary {
   const HomeSummary({
     required this.recommendedPlaces,
@@ -34,21 +29,6 @@ class HomeSummary {
   /// KO: 카드가 비어도 원천 데이터가 있으면 소프트 빈 상태를 노출합니다.
   bool get shouldShowFilteredEmptyState =>
       isEmpty && !metadata.sourceCounts.isAllZero;
-
-  factory HomeSummary.fromDto(HomeSummaryDto dto) {
-    return HomeSummary(
-      recommendedPlaces: dto.recommendedPlaces
-          .map((item) => HomePlaceItem.fromDto(item))
-          .toList(),
-      trendingLiveEvents: dto.trendingLiveEvents
-          .map((item) => HomeEventItem.fromDto(item))
-          .toList(),
-      latestNews: dto.latestNews
-          .map((item) => HomeNewsItem.fromDto(item))
-          .toList(),
-      metadata: HomeSummaryMetadata.fromDto(dto.metadata),
-    );
-  }
 }
 
 class HomeSummaryByProjectItem {
@@ -68,14 +48,6 @@ class HomeSummaryByProjectItem {
     }
     return projectIdentifier == projectId || projectIdentifier == projectCode;
   }
-
-  factory HomeSummaryByProjectItem.fromDto(HomeSummaryByProjectItemDto dto) {
-    return HomeSummaryByProjectItem(
-      projectId: dto.projectId,
-      projectCode: dto.projectCode,
-      summary: HomeSummary.fromDto(dto.summary),
-    );
-  }
 }
 
 class HomeSummaryMetadata {
@@ -86,13 +58,6 @@ class HomeSummaryMetadata {
 
   final HomeSourceCounts sourceCounts;
   final HomeFallbackApplied fallbackApplied;
-
-  factory HomeSummaryMetadata.fromDto(HomeSummaryMetadataDto dto) {
-    return HomeSummaryMetadata(
-      sourceCounts: HomeSourceCounts.fromDto(dto.sourceCounts),
-      fallbackApplied: HomeFallbackApplied.fromDto(dto.fallbackApplied),
-    );
-  }
 }
 
 class HomeSourceCounts {
@@ -107,14 +72,6 @@ class HomeSourceCounts {
   final int news;
 
   bool get isAllZero => places == 0 && liveEvents == 0 && news == 0;
-
-  factory HomeSourceCounts.fromDto(HomeSourceCountsDto dto) {
-    return HomeSourceCounts(
-      places: dto.places,
-      liveEvents: dto.liveEvents,
-      news: dto.news,
-    );
-  }
 }
 
 class HomeFallbackApplied {
@@ -125,13 +82,6 @@ class HomeFallbackApplied {
 
   final bool recommendedPlaces;
   final bool trendingLiveEvents;
-
-  factory HomeFallbackApplied.fromDto(HomeFallbackAppliedDto dto) {
-    return HomeFallbackApplied(
-      recommendedPlaces: dto.recommendedPlaces,
-      trendingLiveEvents: dto.trendingLiveEvents,
-    );
-  }
 }
 
 class HomePlaceItem {
@@ -148,16 +98,6 @@ class HomePlaceItem {
   final int visitCount;
   final String? imageUrl;
   final String? location;
-
-  factory HomePlaceItem.fromDto(HomeRecommendedPlaceDto dto) {
-    return HomePlaceItem(
-      id: dto.id,
-      name: dto.name,
-      visitCount: dto.count,
-      imageUrl: dto.imageUrl == null ? null : resolveMediaUrl(dto.imageUrl!),
-      location: dto.location,
-    );
-  }
 }
 
 class HomeEventItem {
@@ -178,18 +118,6 @@ class HomeEventItem {
   final String? posterUrl;
   final String? ticketUrl;
   final bool isLive;
-
-  factory HomeEventItem.fromDto(HomeTrendingLiveEventDto dto) {
-    return HomeEventItem(
-      id: dto.id,
-      title: dto.title,
-      dateLabel: _formatDate(dto.showStartTime),
-      startsAt: dto.showStartTime,
-      posterUrl: dto.bannerUrl == null ? null : resolveMediaUrl(dto.bannerUrl!),
-      ticketUrl: dto.ticketUrl,
-      isLive: false,
-    );
-  }
 }
 
 class HomeNewsItem {
@@ -206,18 +134,4 @@ class HomeNewsItem {
   final String? summary;
   final String? imageUrl;
   final DateTime? publishedAt;
-
-  factory HomeNewsItem.fromDto(HomeLatestNewsDto dto) {
-    return HomeNewsItem(
-      id: dto.id,
-      title: dto.title,
-      summary: dto.summary,
-      imageUrl: dto.imageUrl == null ? null : resolveMediaUrl(dto.imageUrl!),
-      publishedAt: dto.publishedAt,
-    );
-  }
-}
-
-String _formatDate(DateTime dateTime) {
-  return DateFormat('M월 d일').format(dateTime.toLocal());
 }

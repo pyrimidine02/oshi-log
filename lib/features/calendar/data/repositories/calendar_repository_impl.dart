@@ -36,8 +36,17 @@ class CalendarRepositoryImpl implements CalendarRepository {
               month: month,
               projectKey: projectKey,
             );
-      final calendarResult = await calendarFuture;
-      final liveResult = await liveFuture;
+      // EN: Await both sources together so a failure from one source is
+      // observed while the sibling future is also given an error handler.
+      // KO: 한 소스의 실패를 관찰하면서 형제 Future에도 오류 핸들러를
+      // 연결하도록 두 소스를 함께 기다립니다.
+      final sourceFutures = <Future<Result<List<CalendarEventDto>>>>[
+        calendarFuture,
+        if (liveFuture != null) liveFuture,
+      ];
+      final sourceResults = await Future.wait(sourceFutures);
+      final calendarResult = sourceResults.first;
+      final liveResult = sourceResults.length > 1 ? sourceResults[1] : null;
 
       final calendarDtos = calendarResult.dataOrNull;
       final liveDtos = liveResult?.dataOrNull;
@@ -83,29 +92,38 @@ Iterable<CalendarEvent> _projectIntoMonth(
   final localEnd = parsedEnd == null || parsedEnd.isBefore(localStart)
       ? localStart
       : parsedEnd;
-  var day = DateTime(localStart.year, localStart.month, localStart.day);
+  final monthStart = DateTime(year, month);
+  final monthEnd = DateTime(year, month + 1, 0);
+  final startDay = DateTime(localStart.year, localStart.month, localStart.day);
   final endDay = DateTime(localEnd.year, localEnd.month, localEnd.day);
+  // EN: Clamp malformed or very wide source ranges before iterating. A
+  // multi-year event only needs the visible month projected into the grid.
+  // KO: 비정상적으로 넓은 원본 범위를 순회하기 전에 잘라냅니다. 여러 해에
+  // 걸친 이벤트도 현재 달만 그리드에 투영하면 됩니다.
+  var day = startDay.isAfter(monthStart) ? startDay : monthStart;
+  final visibleEnd = endDay.isBefore(monthEnd) ? endDay : monthEnd;
+  if (day.isAfter(visibleEnd)) {
+    return;
+  }
 
-  while (!day.isAfter(endDay)) {
-    if (day.year == year && day.month == month) {
-      final isStartDay =
-          day.year == localStart.year &&
-          day.month == localStart.month &&
-          day.day == localStart.day;
-      yield CalendarEvent(
-        id: isStartDay ? source.id : '${source.id}:${_dateKey(day)}',
-        title: source.title,
-        date: isStartDay ? localStart : day,
-        type: source.type,
-        description: source.description,
-        imageUrl: source.imageUrl,
-        projectId: source.projectId,
-        projectCode: source.projectCode,
-        relatedEntityId: source.relatedEntityId,
-        relatedEntityType: source.relatedEntityType,
-        isRecurringAnnually: source.isRecurringAnnually,
-      );
-    }
+  while (!day.isAfter(visibleEnd)) {
+    final isStartDay =
+        day.year == localStart.year &&
+        day.month == localStart.month &&
+        day.day == localStart.day;
+    yield CalendarEvent(
+      id: isStartDay ? source.id : '${source.id}:${_dateKey(day)}',
+      title: source.title,
+      date: isStartDay ? localStart : day,
+      type: source.type,
+      description: source.description,
+      imageUrl: source.imageUrl,
+      projectId: source.projectId,
+      projectCode: source.projectCode,
+      relatedEntityId: source.relatedEntityId,
+      relatedEntityType: source.relatedEntityType,
+      isRecurringAnnually: source.isRecurringAnnually,
+    );
     day = DateTime(day.year, day.month, day.day + 1);
   }
 }

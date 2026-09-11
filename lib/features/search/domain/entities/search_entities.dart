@@ -4,9 +4,6 @@ library;
 
 import 'package:intl/intl.dart';
 
-import '../../data/dto/search_discovery_dto.dart';
-import '../../data/dto/search_item_dto.dart';
-
 enum SearchItemType {
   place,
   liveEvent,
@@ -67,96 +64,6 @@ class SearchItem {
     final value = key.substring(prefix.length).trim();
     return value.isEmpty ? null : value;
   }
-
-  factory SearchItem.fromDto(SearchItemDto dto, {String? projectId}) {
-    final item = dto.item;
-    final id = _string(item, ['id', 'itemId', 'targetId']) ?? '';
-    final navigation = _stringMap(item['navigation']);
-    final sourceId =
-        _string(item, ['sourceId']) ?? _string(navigation, ['targetId']) ?? id;
-    final title = _string(item, ['title', 'name', 'headline']) ?? '검색 결과';
-    final subtitle = _string(item, ['subtitle', 'summary', 'description']);
-    final imageUrl = _string(item, [
-      'imageUrl',
-      'thumbnailUrl',
-      'bannerUrl',
-      'image',
-    ]);
-    final category = _string(item, ['category', 'tag', 'group']) ?? dto.type;
-    final publishedAt = _dateTime(item, ['publishedAt', 'createdAt', 'date']);
-
-    return SearchItem(
-      id: id,
-      title: title,
-      type: _mapType(dto.type, item),
-      sourceId: sourceId,
-      subtitle: subtitle,
-      imageUrl: imageUrl,
-      category: category,
-      publishedAt: publishedAt,
-      projectId: _string(item, ['projectId']) ?? projectId,
-      canonicalKey: _string(item, ['canonicalKey']),
-      navigationTargetType: _string(navigation, ['targetType']),
-      navigationRoute: _string(navigation, ['route']),
-    );
-  }
-}
-
-SearchItemType _mapType(String? raw, Map<String, dynamic> item) {
-  final value = raw?.toLowerCase() ?? '';
-  if (value == 'fan_subject' || value == 'fan-subject') {
-    return switch (_string(item, ['subjectType'])?.toUpperCase()) {
-      'PROJECT' => SearchItemType.project,
-      'UNIT' => SearchItemType.unit,
-      'VOICE_ACTOR' => SearchItemType.voiceActor,
-      'ARTIST' => SearchItemType.artist,
-      'ANIME' => SearchItemType.anime,
-      _ => SearchItemType.unknown,
-    };
-  }
-  if (value == 'user' || value == 'users') {
-    return SearchItemType.user;
-  }
-  if (value == 'places' ||
-      value.contains('place') ||
-      value.contains('location')) {
-    return SearchItemType.place;
-  }
-  if (value.contains('live') || value.contains('event')) {
-    return SearchItemType.liveEvent;
-  }
-  if (value.contains('news') || value.contains('article')) {
-    return SearchItemType.news;
-  }
-  if (value.contains('post') || value.contains('community')) {
-    return SearchItemType.post;
-  }
-  if (value.contains('unit') || value.contains('band')) {
-    return SearchItemType.unit;
-  }
-  if (value.contains('voice_actor') || value.contains('voice-actor')) {
-    return SearchItemType.voiceActor;
-  }
-  if (value.contains('artist') || value.contains('musician')) {
-    return SearchItemType.artist;
-  }
-  if (value.contains('anime') || value.contains('animation')) {
-    return SearchItemType.anime;
-  }
-  if (value.contains('project')) {
-    return SearchItemType.project;
-  }
-  return SearchItemType.unknown;
-}
-
-Map<String, dynamic> _stringMap(Object? value) {
-  if (value is Map<String, dynamic>) {
-    return value;
-  }
-  if (value is Map) {
-    return value.map((key, value) => MapEntry(key.toString(), value));
-  }
-  return const <String, dynamic>{};
 }
 
 class SearchPopularKeyword {
@@ -164,10 +71,6 @@ class SearchPopularKeyword {
 
   final String keyword;
   final num score;
-
-  factory SearchPopularKeyword.fromDto(SearchPopularKeywordDto dto) {
-    return SearchPopularKeyword(keyword: dto.keyword, score: dto.score);
-  }
 }
 
 class SearchPopularDiscovery {
@@ -178,15 +81,6 @@ class SearchPopularDiscovery {
 
   final DateTime? updatedAt;
   final List<SearchPopularKeyword> popularKeywords;
-
-  factory SearchPopularDiscovery.fromDto(SearchPopularDiscoveryDto dto) {
-    return SearchPopularDiscovery(
-      updatedAt: dto.updatedAt,
-      popularKeywords: dto.popularKeywords
-          .map(SearchPopularKeyword.fromDto)
-          .toList(),
-    );
-  }
 }
 
 class SearchDiscoveryCategory {
@@ -199,14 +93,6 @@ class SearchDiscoveryCategory {
   final String code;
   final String label;
   final int contentCount;
-
-  factory SearchDiscoveryCategory.fromDto(SearchDiscoveryCategoryDto dto) {
-    return SearchDiscoveryCategory(
-      code: dto.code,
-      label: dto.label,
-      contentCount: dto.contentCount,
-    );
-  }
 }
 
 class SearchCategoryDiscovery {
@@ -217,30 +103,4 @@ class SearchCategoryDiscovery {
 
   final DateTime? updatedAt;
   final List<SearchDiscoveryCategory> categories;
-
-  factory SearchCategoryDiscovery.fromDto(SearchCategoryDiscoveryDto dto) {
-    return SearchCategoryDiscovery(
-      updatedAt: dto.updatedAt,
-      categories: dto.categories.map(SearchDiscoveryCategory.fromDto).toList(),
-    );
-  }
-}
-
-String? _string(Map<String, dynamic> json, List<String> keys) {
-  for (final key in keys) {
-    final value = json[key];
-    if (value is String && value.isNotEmpty) return value;
-  }
-  return null;
-}
-
-DateTime? _dateTime(Map<String, dynamic> json, List<String> keys) {
-  for (final key in keys) {
-    final value = json[key];
-    if (value is String) {
-      final parsed = DateTime.tryParse(value);
-      if (parsed != null) return parsed;
-    }
-  }
-  return null;
 }

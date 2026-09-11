@@ -13,13 +13,13 @@ import '../../../core/providers/core_providers.dart';
 import '../../../core/security/secure_storage.dart';
 import '../../../core/storage/local_storage.dart';
 import '../../../core/utils/result.dart';
-import '../data/dto/notification_settings_dto.dart';
 import '../data/datasources/settings_remote_data_source.dart';
 import '../data/repositories/settings_repository_impl.dart';
 import '../domain/entities/account_tools.dart';
 import '../domain/entities/notification_settings.dart';
 import '../domain/entities/user_profile.dart';
 import '../domain/repositories/settings_repository.dart';
+import '../data/mappers/notification_settings_mappers.dart';
 
 bool _isUnauthorizedFailure(Failure failure) {
   if (failure is! AuthFailure) {
@@ -359,8 +359,7 @@ class NotificationSettingsController
       (key, value) => MapEntry(key.toString(), value),
     );
     try {
-      final dto = NotificationSettingsDto.fromJson(currentMap);
-      return NotificationSettings.fromDto(dto);
+      return notificationSettingsFromJson(currentMap);
     } catch (error, stackTrace) {
       AppLogger.warning(
         'Failed to parse conflict current notification settings snapshot',

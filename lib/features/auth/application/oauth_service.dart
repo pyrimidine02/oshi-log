@@ -44,7 +44,12 @@ const String _twitterClientId = String.fromEnvironment(
   'TWITTER_CLIENT_ID',
   defaultValue: 'LWI2cmZCYUM0WHBKeFB0Nnl6Szc6MTpjaQ',
 );
-const String _twitterRedirectUri = 'https://api.noraneko.cc/oauth/x/callback';
+const String _twitterRedirectUriOverride = String.fromEnvironment(
+  'TWITTER_REDIRECT_URI',
+  defaultValue: '',
+);
+const String kLegacyTwitterRedirectUri =
+    'https://api.noraneko.cc/oauth/x/callback';
 const String _twitterAuthBaseUrl = 'https://x.com/i/oauth2/authorize';
 const String _twitterScope = 'tweet.read users.read offline.access';
 
@@ -55,14 +60,32 @@ class AuthOAuthService {
     AppConfig? config,
     UrlLauncher? launcher,
     SecureStorage? secureStorage,
-  })
-    : _config = config ?? AppConfig.instance,
-      _launcher = launcher ?? DefaultUrlLauncher(),
-      _secureStorage = secureStorage ?? SecureStorage();
+    String? twitterRedirectUri,
+  }) : _config = config ?? AppConfig.instance,
+       _launcher = launcher ?? DefaultUrlLauncher(),
+       _secureStorage =
+           secureStorage ??
+           SecureStorage(
+             namespace: (config ?? AppConfig.instance).storageNamespace,
+           ),
+       _twitterRedirectUri = _tryResolveTwitterRedirectUri(
+         twitterRedirectUri ?? _twitterRedirectUriOverride,
+       );
 
   final AppConfig _config;
   final UrlLauncher _launcher;
   final SecureStorage _secureStorage;
+  final String? _twitterRedirectUri;
+
+  /// EN: Redirect URI shared by X authorization and token exchange.
+  ///     Configure `TWITTER_REDIRECT_URI` per build, or inject it in tests.
+  ///     The legacy HTTPS callback remains the safe default until the X
+  ///     Developer Portal and backend are configured for another URI.
+  /// KO: X 인가와 토큰 교환이 공유하는 리다이렉트 URI입니다.
+  ///     빌드별로 `TWITTER_REDIRECT_URI`를 설정하거나 테스트에서 주입합니다.
+  ///     X 개발자 포털과 백엔드에 새 URI를 설정하기 전까지 legacy HTTPS
+  ///     콜백을 안전한 기본값으로 유지합니다.
+  String? get twitterRedirectUri => _twitterRedirectUri;
 
   /// EN: Check if provider is configured.
   /// KO: 제공자가 설정되어 있는지 확인.
@@ -115,11 +138,11 @@ class AuthOAuthService {
   /// EN: Launch X (Twitter) OAuth 2.0 + PKCE authorization flow.
   ///     Generates code_verifier/code_challenge, persists the verifier in
   ///     SecureStorage, then opens the X authorization page in the browser.
-  ///     The app receives the callback via girlsbandtabi://oauth/callback.
+  ///     The callback URI is the configured [twitterRedirectUri].
   /// KO: X (Twitter) OAuth 2.0 + PKCE 인가 플로우를 실행합니다.
   ///     code_verifier/code_challenge를 생성하고, verifier를 SecureStorage에
   ///     저장한 뒤 브라우저에서 X 인가 페이지를 엽니다.
-  ///     앱은 girlsbandtabi://oauth/callback으로 콜백을 수신합니다.
+  ///     앱은 설정된 [twitterRedirectUri]로 콜백을 수신합니다.
   Future<Result<void>> launchTwitterPkce() async {
     if (_twitterClientId.isEmpty) {
       return Result.failure(
@@ -127,6 +150,16 @@ class AuthOAuthService {
           'Twitter client ID not configured. '
           'Set TWITTER_CLIENT_ID via --dart-define.',
           code: 'twitter_client_id_missing',
+        ),
+      );
+    }
+    final redirectUri = twitterRedirectUri;
+    if (redirectUri == null) {
+      return Result.failure(
+        const ValidationFailure(
+          'Twitter redirect URI is invalid. Configure an HTTPS '
+          '/oauth/x/callback endpoint without query or fragment.',
+          code: 'twitter_redirect_uri_invalid',
         ),
       );
     }
@@ -150,7 +183,7 @@ class AuthOAuthService {
       queryParameters: {
         'response_type': 'code',
         'client_id': _twitterClientId,
-        'redirect_uri': _twitterRedirectUri,
+        'redirect_uri': redirectUri,
         'scope': _twitterScope,
         'state': state,
         'code_challenge': challenge,
@@ -257,4 +290,77 @@ class AuthOAuthService {
     final digest = sha256.convert(utf8.encode(verifier));
     return base64UrlEncode(digest.bytes).replaceAll('=', '');
   }
+}
+
+String? _tryResolveTwitterRedirectUri(String? injected) {
+  final candidate = (injected ?? _twitterRedirectUriOverride).trim();
+  if (candidate.isEmpty) {
+    return kLegacyTwitterRedirectUri;
+  }
+  final uri = Uri.tryParse(candidate);
+  if (!_isValidTwitterRedirectUri(uri)) {
+    return null;
+  }
+  return candidate;
+}
+
+/// EN: Resolve the build-configured callback for deep-link validation.
+/// KO: 딥링크 검증에 사용할 빌드 설정 콜백을 해석합니다.
+String? twitterRedirectUriForBuild() {
+  return _tryResolveTwitterRedirectUri(_twitterRedirectUriOverride);
+}
+
+/// EN: Validate a URI received by the app as an X OAuth callback.
+///     The configured build redirect and the legacy HTTPS callback are
+///     accepted, plus the exact custom scheme forwarded by the API server.
+/// KO: 앱이 수신한 URI가 X OAuth 콜백인지 검증합니다.
+///     빌드 설정 redirect와 legacy HTTPS 콜백, API 서버가 전달하는 정확한
+///     커스텀 스킴을 허용합니다.
+bool isTwitterOAuthCallbackUri(Uri uri) {
+  final configured = Uri.tryParse(twitterRedirectUriForBuild() ?? '');
+  if (_sameCallbackEndpoint(uri, configured)) {
+    return true;
+  }
+
+  final legacy = Uri.tryParse(kLegacyTwitterRedirectUri);
+  if (_sameCallbackEndpoint(uri, legacy)) {
+    return true;
+  }
+
+  return uri.scheme == 'girlsbandtabi' &&
+      uri.host == 'oauth' &&
+      uri.path == '/x/callback' &&
+      uri.userInfo.isEmpty &&
+      uri.fragment.isEmpty &&
+      uri.port == 0;
+}
+
+bool _sameCallbackEndpoint(Uri actual, Uri? expected) {
+  if (expected == null ||
+      expected.scheme.isEmpty ||
+      expected.host.isEmpty ||
+      expected.path.isEmpty ||
+      actual.userInfo.isNotEmpty ||
+      actual.fragment.isNotEmpty ||
+      expected.userInfo.isNotEmpty ||
+      expected.fragment.isNotEmpty) {
+    return false;
+  }
+  return actual.scheme == expected.scheme &&
+      actual.host == expected.host &&
+      actual.port == expected.port &&
+      actual.path == expected.path;
+}
+
+bool _isValidTwitterRedirectUri(Uri? uri) {
+  if (uri == null ||
+      uri.scheme != 'https' ||
+      uri.host.isEmpty ||
+      uri.path != '/oauth/x/callback' ||
+      uri.userInfo.isNotEmpty ||
+      uri.fragment.isNotEmpty ||
+      uri.query.isNotEmpty) {
+    return false;
+  }
+  return uri.port == 0 || uri.port == 443;
 }

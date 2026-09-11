@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:oshi_log/features/home/data/dto/home_summary_dto.dart';
-import 'package:oshi_log/features/home/domain/entities/home_summary.dart';
+import 'package:oshi_log/features/home/data/mappers/home_summary_mappers.dart';
 
 void main() {
   group('HomeSummary empty-state policy', () {
@@ -15,7 +15,7 @@ void main() {
         ),
       );
 
-      final summary = HomeSummary.fromDto(dto);
+      final summary = dto.toDomain();
 
       expect(summary.isEmpty, true);
       expect(summary.shouldShowNoContentEmptyState, true);
@@ -32,7 +32,7 @@ void main() {
         ),
       );
 
-      final summary = HomeSummary.fromDto(dto);
+      final summary = dto.toDomain();
 
       expect(summary.isEmpty, true);
       expect(summary.shouldShowNoContentEmptyState, false);
@@ -41,17 +41,15 @@ void main() {
   });
 
   test('HomeSummaryByProjectItem matches code and id', () {
-    final item = HomeSummaryByProjectItem.fromDto(
-      const HomeSummaryByProjectItemDto(
-        projectId: '550e8400-e29b-41d4-a716-446655440001',
-        projectCode: 'girls-band-cry',
-        summary: HomeSummaryDto(
-          recommendedPlaces: [],
-          trendingLiveEvents: [],
-          latestNews: [],
-        ),
+    final item = const HomeSummaryByProjectItemDto(
+      projectId: '550e8400-e29b-41d4-a716-446655440001',
+      projectCode: 'girls-band-cry',
+      summary: HomeSummaryDto(
+        recommendedPlaces: [],
+        trendingLiveEvents: [],
+        latestNews: [],
       ),
-    );
+    ).toDomain();
 
     expect(item.matchesProject('550e8400-e29b-41d4-a716-446655440001'), true);
     expect(item.matchesProject('girls-band-cry'), true);

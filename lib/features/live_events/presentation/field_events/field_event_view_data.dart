@@ -37,6 +37,25 @@ class FieldEventFilter {
   }
 }
 
+/// EN: Returns the event end used to decide which desk it belongs to.
+/// KO: 이벤트가 어느 데스크에 속할지 결정할 때 사용하는 종료 시각입니다.
+///
+/// EN: An end before the start is malformed and falls back to the start.
+/// KO: 시작보다 이른 종료 시각은 잘못된 값이므로 시작 시각으로 대체합니다.
+DateTime effectiveFieldEventEnd(LiveEventSummary event) {
+  final end = event.endTime;
+  if (end != null && !end.isBefore(event.showStartTime)) {
+    return end;
+  }
+  return event.showStartTime;
+}
+
+/// EN: Keeps an event upcoming while its effective show window is open.
+/// KO: 유효한 공연 시간이 끝나기 전까지 이벤트를 예정 목록에 유지합니다.
+bool isFieldEventUpcoming(LiveEventSummary event, {required DateTime now}) {
+  return effectiveFieldEventEnd(event).isAfter(now);
+}
+
 /// EN: Filters and sorts without mutating repository-owned collections.
 /// KO: 리포지토리 소유 컬렉션을 변경하지 않고 필터링하고 정렬합니다.
 List<LiveEventSummary> selectFieldEvents(
@@ -47,7 +66,7 @@ List<LiveEventSummary> selectFieldEvents(
   final reference = now ?? DateTime.now();
   final selected = events
       .where((event) {
-        final isUpcoming = !event.showStartTime.isBefore(reference);
+        final isUpcoming = isFieldEventUpcoming(event, now: reference);
         if (filter.mode == FieldEventMode.upcoming && !isUpcoming) return false;
         if (filter.mode == FieldEventMode.archive && isUpcoming) return false;
         if (filter.year != null &&
@@ -78,7 +97,7 @@ List<int> completedFieldEventYears(
   final reference = now ?? DateTime.now();
   final years =
       events
-          .where((event) => event.showStartTime.isBefore(reference))
+          .where((event) => !isFieldEventUpcoming(event, now: reference))
           .map((event) => event.showStartTime.toLocal().year)
           .toSet()
           .toList()

@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/localization/locale_text.dart';
 import '../../../../core/theme/theme.dart';
+import '../../../../core/widgets/layout/gbt_field_primitives.dart';
 import '../../../live_events/application/live_events_controller.dart';
 import '../../../live_events/domain/entities/live_event_entities.dart';
 import 'field_visit_ledger_common.dart';
@@ -240,6 +241,7 @@ class FieldEventLedgerRow extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
+          excludeFromSemantics: true,
           child: Container(
             key: const Key('field-ledger-event-row'),
             constraints: const BoxConstraints(minHeight: 92),
@@ -287,30 +289,30 @@ class FieldEventLedgerRow extends StatelessWidget {
                         ),
                         const SizedBox(height: GBTSpacing.xs),
                         Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            Icon(
-                              status == LiveAttendanceStatus.verified
+                            GBTFieldBadge(
+                              label: statusLabel,
+                              icon: status == LiveAttendanceStatus.verified
                                   ? Icons.verified_outlined
                                   : Icons.event_available_outlined,
-                              size: 15,
                               color: statusColor,
                             ),
-                            const SizedBox(width: GBTSpacing.xs),
-                            Expanded(
-                              child: Text(
-                                record.verificationMethod?.trim().isNotEmpty ==
-                                        true
-                                    ? '$statusLabel · ${record.verificationMethod}'
-                                    : statusLabel,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.labelSmall
-                                    ?.copyWith(
-                                      color: statusColor,
-                                      fontWeight: FontWeight.w700,
-                                    ),
+                            if (record.verificationMethod?.trim().isNotEmpty ==
+                                true) ...[
+                              const SizedBox(width: GBTSpacing.xs),
+                              Expanded(
+                                child: Text(
+                                  record.verificationMethod!,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context).textTheme.labelSmall
+                                      ?.copyWith(
+                                        color: colors.onSurfaceVariant,
+                                      ),
+                                ),
                               ),
-                            ),
+                            ],
                           ],
                         ),
                       ],

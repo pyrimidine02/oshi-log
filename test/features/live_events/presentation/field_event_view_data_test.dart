@@ -40,12 +40,43 @@ void main() {
     );
     expect(completedFieldEventYears(events, now: now), [2025]);
   });
+
+  test('event windows keep an ongoing show upcoming through its end', () {
+    final ongoing = _event(
+      'ongoing',
+      DateTime(2026, 7, 15, 10),
+      endTime: DateTime(2026, 7, 15, 18),
+    );
+    final endedAtBoundary = _event(
+      'ended-at-boundary',
+      DateTime(2026, 7, 15, 10),
+      endTime: now,
+    );
+    final malformed = _event(
+      'malformed-end',
+      DateTime(2026, 7, 15, 11),
+      endTime: DateTime(2026, 7, 15, 9),
+    );
+
+    expect(isFieldEventUpcoming(ongoing, now: now), isTrue);
+    expect(isFieldEventUpcoming(endedAtBoundary, now: now), isFalse);
+    expect(effectiveFieldEventEnd(malformed), malformed.showStartTime);
+    expect(
+      selectFieldEvents(
+        [ongoing, endedAtBoundary, malformed],
+        filter: FieldEventFilter(mode: FieldEventMode.upcoming),
+        now: now,
+      ).map((event) => event.id),
+      ['ongoing'],
+    );
+  });
 }
 
 LiveEventSummary _event(
   String id,
   DateTime startsAt, {
   List<String> unitIds = const [],
+  DateTime? endTime,
 }) {
   return LiveEventSummary(
     id: id,
@@ -54,5 +85,6 @@ LiveEventSummary _event(
     status: 'SCHEDULED',
     projectIds: const ['p1'],
     unitIds: unitIds,
+    endTime: endTime,
   );
 }

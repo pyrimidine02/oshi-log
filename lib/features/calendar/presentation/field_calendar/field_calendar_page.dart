@@ -14,6 +14,7 @@ import '../../../../core/theme/theme.dart';
 import '../../../../core/widgets/common/gbt_image.dart';
 import '../../../../core/widgets/feedback/gbt_empty_state.dart';
 import '../../../../core/widgets/feedback/gbt_loading.dart' hide GBTEmptyState;
+import '../../../../core/widgets/layout/gbt_field_primitives.dart';
 import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
 import '../../../projects/presentation/widgets/field_project_lens.dart';
 import '../../application/calendar_controller.dart';
@@ -349,24 +350,22 @@ class _AgendaDateHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final locale = Localizations.localeOf(context).toLanguageTag();
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Expanded(
-          child: Text(
-            DateFormat.MMMEd(locale).format(date),
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+          child: GBTFieldSectionHeader(
+            eyebrow: context.l10n(ko: '아젠다', en: 'AGENDA', ja: 'AGENDA'),
+            title: DateFormat.MMMEd(locale).format(date),
           ),
         ),
-        Text(
-          context.l10n(
+        GBTFieldBadge(
+          label: context.l10n(
             ko: '$eventCount개 일정',
             en: '$eventCount events',
             ja: '$eventCount件の予定',
           ),
-          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
+          icon: Icons.event_note_outlined,
+          color: Theme.of(context).colorScheme.secondary,
         ),
       ],
     );
@@ -505,12 +504,14 @@ class _FieldEventTicket extends StatelessWidget {
     return Semantics(
       button: onTap != null,
       label: '${event.title}, ${_eventTypeLabel(context, event.type)}',
+      excludeSemantics: true,
       child: onTap == null
           ? ticket
           : Material(
               color: Colors.transparent,
               child: InkWell(
                 onTap: onTap,
+                excludeFromSemantics: true,
                 borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
                 child: ticket,
               ),

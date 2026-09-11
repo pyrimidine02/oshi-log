@@ -122,15 +122,16 @@ class FieldHomePage extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  context.l10n(
+                FieldSectionHeader(
+                  eyebrow: context.l10n(
+                    ko: 'JOURNEY BRIEF',
+                    en: 'JOURNEY BRIEF',
+                    ja: 'JOURNEY BRIEF',
+                  ),
+                  title: context.l10n(
                     ko: '오늘의 원정 브리핑',
                     en: 'Today’s journey brief',
                     ja: '今日の遠征ブリーフィング',
-                  ),
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.6,
                   ),
                 ),
                 const SizedBox(height: GBTSpacing.md),

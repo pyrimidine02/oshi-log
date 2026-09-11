@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/localization/locale_text.dart';
 import '../../../../core/theme/theme.dart';
 import '../../../../core/widgets/common/gbt_image.dart';
+import '../../../../core/widgets/layout/gbt_field_primitives.dart';
 import '../../domain/entities/live_event_entities.dart';
 
 /// EN: One event rendered as a dated railway-agenda row, not a card carousel.
@@ -29,17 +30,38 @@ class FieldEventAgendaRow extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     final local = event.showStartTime.toLocal();
     final locale = Localizations.localeOf(context).toLanguageTag();
+    final locationLabel = fieldEventSummaryLocationLabel(event);
+    final attendanceLabel = attended
+        ? context.l10n(ko: '방문 완료', en: 'Visited', ja: '訪問済み')
+        : null;
     return Semantics(
       button: true,
       label: context.l10n(
-        ko: '${event.title}, ${DateFormat.yMMMMd(locale).format(local)}',
-        en: '${event.title}, ${DateFormat.yMMMMd(locale).format(local)}',
-        ja: '${event.title}, ${DateFormat.yMMMMd(locale).format(local)}',
+        ko: [
+          event.title,
+          DateFormat.yMMMMd(locale).format(local),
+          event.status,
+          attendanceLabel,
+        ].whereType<String>().join(', '),
+        en: [
+          event.title,
+          DateFormat.yMMMMd(locale).format(local),
+          event.status,
+          attendanceLabel,
+        ].whereType<String>().join(', '),
+        ja: [
+          event.title,
+          DateFormat.yMMMMd(locale).format(local),
+          event.status,
+          attendanceLabel,
+        ].whereType<String>().join(', '),
       ),
+      excludeSemantics: true,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
+          excludeFromSemantics: true,
           borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
           child: Container(
             constraints: const BoxConstraints(minHeight: 104),
@@ -91,29 +113,20 @@ class FieldEventAgendaRow extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
+                        Wrap(
+                          spacing: GBTSpacing.xs,
+                          runSpacing: GBTSpacing.xs,
                           children: [
-                            Flexible(
-                              child: Text(
-                                event.status.toUpperCase(),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.labelSmall
-                                    ?.copyWith(
-                                      color: colors.onSurfaceVariant,
-                                      fontWeight: FontWeight.w700,
-                                      letterSpacing: 0.65,
-                                    ),
-                              ),
+                            GBTFieldBadge(
+                              label: event.status.toUpperCase(),
+                              color: colors.primary,
                             ),
-                            if (attended) ...[
-                              const SizedBox(width: GBTSpacing.sm),
-                              Icon(
-                                Icons.verified_rounded,
-                                size: 16,
+                            if (attended)
+                              GBTFieldBadge(
+                                label: attendanceLabel!,
+                                icon: Icons.verified_rounded,
                                 color: colors.secondary,
                               ),
-                            ],
                           ],
                         ),
                         const SizedBox(height: GBTSpacing.xs),
@@ -126,8 +139,8 @@ class FieldEventAgendaRow extends StatelessWidget {
                         ),
                         const SizedBox(height: GBTSpacing.xs),
                         Text(
-                          '${DateFormat.Hm(locale).format(local)}  ·  ${event.metaLabel}',
-                          maxLines: 1,
+                          '${DateFormat.Hm(locale).format(local)}  ·  $locationLabel',
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(color: colors.onSurfaceVariant),
@@ -148,6 +161,22 @@ class FieldEventAgendaRow extends StatelessWidget {
       ),
     );
   }
+}
+
+/// EN: Uses server supplied venue identity before falling back to scope data.
+/// KO: 서버가 제공한 공연장 정보를 우선 사용하고 없으면 연결 범위를 표시합니다.
+String fieldEventSummaryLocationLabel(LiveEventSummary event) {
+  final venue = event.venue?.trim();
+  final address = event.address?.trim();
+  if (venue != null &&
+      venue.isNotEmpty &&
+      address != null &&
+      address.isNotEmpty) {
+    return '$venue · $address';
+  }
+  if (venue != null && venue.isNotEmpty) return venue;
+  if (address != null && address.isNotEmpty) return address;
+  return event.metaLabel;
 }
 
 /// EN: The single poster-led next event at the top of the agenda.
@@ -174,6 +203,7 @@ class FieldEventPosterFeature extends StatelessWidget {
         en: 'Next event ${event.title}',
         ja: '次のイベント ${event.title}',
       ),
+      excludeSemantics: true,
       child: Material(
         color: colors.surface,
         shape: RoundedRectangleBorder(
@@ -183,6 +213,7 @@ class FieldEventPosterFeature extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
+          excludeFromSemantics: true,
           child: LayoutBuilder(
             builder: (context, constraints) {
               final useVertical =
@@ -271,19 +302,34 @@ class _FieldEventFeatureDocument extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final locationLabel = fieldEventSummaryLocationLabel(event);
     return Padding(
       padding: const EdgeInsets.all(GBTSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(
-            context.l10n(ko: 'NEXT LIVE', en: 'NEXT LIVE', ja: 'NEXT LIVE'),
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: colors.primary,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 1.2,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  context.l10n(
+                    ko: 'NEXT LIVE',
+                    en: 'NEXT LIVE',
+                    ja: 'NEXT LIVE',
+                  ),
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: colors.primary,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ),
+              GBTFieldBadge(
+                label: event.status.toUpperCase(),
+                color: colors.primary,
+              ),
+            ],
           ),
           const SizedBox(height: GBTSpacing.sm),
           Text(
@@ -302,6 +348,25 @@ class _FieldEventFeatureDocument extends StatelessWidget {
             style: Theme.of(
               context,
             ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: GBTSpacing.xs),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.place_outlined, size: 16, color: colors.secondary),
+              const SizedBox(width: GBTSpacing.xs),
+              Expanded(
+                child: Text(
+                  locationLabel,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: GBTSpacing.xs),
           Row(

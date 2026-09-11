@@ -12,7 +12,6 @@ import '../../../core/logging/app_logger.dart';
 import '../../../core/providers/core_providers.dart';
 import '../../../core/utils/result.dart';
 import '../data/datasources/uploads_remote_data_source.dart';
-import '../data/dto/upload_dto.dart';
 import '../data/repositories/uploads_repository_impl.dart';
 import '../domain/entities/upload_entity.dart';
 import '../domain/repositories/uploads_repository.dart';
@@ -43,7 +42,7 @@ class UploadsController extends StateNotifier<AsyncValue<List<UploadInfo>>> {
 
   /// EN: Request a presigned URL and return it.
   /// KO: presigned URL을 요청하고 반환합니다.
-  Future<Result<PresignedUrlResponse>> requestPresignedUrl({
+  Future<Result<PresignedUpload>> requestPresignedUrl({
     required String filename,
     required String contentType,
     required int size,
@@ -145,10 +144,10 @@ class UploadsController extends StateNotifier<AsyncValue<List<UploadInfo>>> {
 
   /// EN: Confirm an upload after file has been sent to S3/R2.
   /// KO: 파일이 S3/R2에 전송된 후 업로드를 확인합니다.
-  Future<Result<ConfirmUploadResponse>> confirmUpload(String uploadId) async {
+  Future<Result<UploadConfirmation>> confirmUpload(String uploadId) async {
     final repository = await _ref.read(uploadsRepositoryProvider.future);
     final result = await repository.confirmUpload(uploadId);
-    if (result is Success<ConfirmUploadResponse>) {
+    if (result is Success<UploadConfirmation>) {
       // EN: Refresh the list after confirming.
       // KO: 확인 후 목록을 새로고침합니다.
       await load(forceRefresh: true);
@@ -208,7 +207,7 @@ class UploadsController extends StateNotifier<AsyncValue<List<UploadInfo>>> {
       contentType: contentType,
       size: bytes.length,
     );
-    if (presignedResult is Err<PresignedUrlResponse>) {
+    if (presignedResult is Err<PresignedUpload>) {
       return Result.failure(presignedResult.failure);
     }
 
@@ -229,7 +228,7 @@ class UploadsController extends StateNotifier<AsyncValue<List<UploadInfo>>> {
     }
 
     final confirmResult = await repository.confirmUpload(presigned.uploadId);
-    if (confirmResult is Err<ConfirmUploadResponse>) {
+    if (confirmResult is Err<UploadConfirmation>) {
       return Result.failure(confirmResult.failure);
     }
 

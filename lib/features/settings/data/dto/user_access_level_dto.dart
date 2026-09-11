@@ -94,10 +94,12 @@ class UserAccessLevelDto {
           _string(json, const ['baselineAccessLevel']) ?? 'USER_BASE',
       effectiveAccessLevel:
           _string(json, const ['effectiveAccessLevel']) ?? 'USER_BASE',
-      activeGrantCount:
-          _intOrFallback(json['activeGrantCount'], grants.where((grant) {
-            return grant.isActive;
-          }).length),
+      activeGrantCount: _intOrFallback(
+        json['activeGrantCount'],
+        grants.where((grant) {
+          return grant.isActive;
+        }).length,
+      ),
       grants: grants,
     );
   }

@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/localization/locale_text.dart';
 import '../../../../core/theme/theme.dart';
+import '../../../../core/widgets/layout/gbt_field_primitives.dart';
 import '../../domain/entities/visit_entities.dart';
 import 'field_visit_ledger_common.dart';
 import 'field_visit_ledger_view_data.dart';
@@ -191,6 +192,9 @@ class FieldPlaceLedgerRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final compact =
+        MediaQuery.sizeOf(context).width < 380 ||
+        MediaQuery.textScalerOf(context).scale(1) > 1.3;
     final place = entry.place;
     final title =
         place?.name ??
@@ -209,6 +213,46 @@ class FieldPlaceLedgerRow extends StatelessWidget {
             en: 'Standard visit record',
             ja: '通常の訪問記録',
           );
+    final verificationBadge = GBTFieldBadge(
+      label: verificationLabel,
+      icon: entry.isGpsVerified
+          ? Icons.gps_fixed_rounded
+          : Icons.edit_note_rounded,
+      color: entry.isGpsVerified ? colors.secondary : colors.onSurfaceVariant,
+    );
+    final address = !entry.isGpsVerified
+        ? Text(
+            place?.address.isNotEmpty == true
+                ? place!.address
+                : entry.visit.placeId,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(
+              context,
+            ).textTheme.labelSmall?.copyWith(color: colors.onSurfaceVariant),
+          )
+        : null;
+    final verification = compact
+        ? Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              verificationBadge,
+              if (address != null) ...[
+                const SizedBox(height: GBTSpacing.xs),
+                address,
+              ],
+            ],
+          )
+        : Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              verificationBadge,
+              if (address != null) ...[
+                const SizedBox(width: GBTSpacing.xs),
+                Expanded(child: address),
+              ],
+            ],
+          );
 
     return Semantics(
       button: true,
@@ -225,6 +269,7 @@ class FieldPlaceLedgerRow extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
+          excludeFromSemantics: true,
           child: Container(
             key: const Key('field-ledger-place-row'),
             constraints: const BoxConstraints(minHeight: 92),
@@ -271,35 +316,7 @@ class FieldPlaceLedgerRow extends StatelessWidget {
                               ),
                         ),
                         const SizedBox(height: GBTSpacing.xs),
-                        Row(
-                          children: [
-                            Icon(
-                              entry.isGpsVerified
-                                  ? Icons.gps_fixed_rounded
-                                  : Icons.edit_note_rounded,
-                              size: 15,
-                              color: colors.onSurfaceVariant,
-                            ),
-                            const SizedBox(width: GBTSpacing.xs),
-                            Expanded(
-                              child: Text(
-                                entry.isGpsVerified
-                                    ? context.l10n(
-                                        ko: 'GPS 현장 인증',
-                                        en: 'GPS FIELD VERIFIED',
-                                        ja: 'GPS 現地認証',
-                                      )
-                                    : (place?.address.isNotEmpty == true
-                                          ? place!.address
-                                          : entry.visit.placeId),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.labelSmall
-                                    ?.copyWith(color: colors.onSurfaceVariant),
-                              ),
-                            ),
-                          ],
-                        ),
+                        verification,
                       ],
                     ),
                   ),

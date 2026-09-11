@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/localization/locale_text.dart';
 import '../../../../core/theme/theme.dart';
+import '../../../../core/widgets/layout/gbt_field_primitives.dart';
 
 enum FieldVisitLedgerKind { places, events }
 
@@ -31,31 +32,9 @@ class FieldLedgerKindSwitch extends StatelessWidget {
     final title = isPlaces
         ? context.l10n(ko: '장소 기록', en: 'Place records', ja: '場所記録')
         : context.l10n(ko: '이벤트 출석', en: 'Event attendance', ja: 'イベント参加');
-    final titleBlock = Semantics(
-      header: true,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'TRAVEL LOGBOOK',
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: colors.primary,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1.1,
-            ),
-          ),
-          const SizedBox(height: GBTSpacing.xxs),
-          Text(
-            title,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.3,
-            ),
-          ),
-        ],
-      ),
+    final titleBlock = GBTFieldSectionHeader(
+      eyebrow: 'TRAVEL LOGBOOK',
+      title: title,
     );
     final statsAction = TextButton.icon(
       key: const Key('field-ledger-stats-action'),
@@ -145,10 +124,28 @@ class FieldLedgerKindSwitch extends StatelessWidget {
                 ],
                 selected: {selected},
                 onSelectionChanged: (selection) => onSelected(selection.first),
-                style: const ButtonStyle(
-                  minimumSize: WidgetStatePropertyAll(
+                style: ButtonStyle(
+                  minimumSize: const WidgetStatePropertyAll(
                     Size(0, GBTSpacing.touchTarget),
                   ),
+                  backgroundColor: WidgetStateProperty.resolveWith((states) {
+                    return states.contains(WidgetState.selected)
+                        ? colors.primaryContainer
+                        : colors.surfaceContainerLow;
+                  }),
+                  foregroundColor: WidgetStateProperty.resolveWith((states) {
+                    return states.contains(WidgetState.selected)
+                        ? colors.onPrimaryContainer
+                        : colors.onSurfaceVariant;
+                  }),
+                  side: WidgetStateProperty.resolveWith((states) {
+                    return BorderSide(
+                      color: states.contains(WidgetState.selected)
+                          ? colors.primary
+                          : colors.outlineVariant,
+                      width: states.contains(WidgetState.selected) ? 1.5 : 1,
+                    );
+                  }),
                 ),
               ),
             ),

@@ -4,9 +4,6 @@ library;
 
 import 'package:intl/intl.dart';
 
-import '../../data/dto/notification_dto.dart';
-import 'notification_navigation.dart';
-
 class NotificationItem {
   const NotificationItem({
     required this.id,
@@ -34,20 +31,5 @@ class NotificationItem {
 
   String get dateLabel {
     return DateFormat('yyyy.MM.dd').format(createdAt.toLocal());
-  }
-
-  factory NotificationItem.fromDto(NotificationItemDto dto) {
-    return NotificationItem(
-      id: dto.id,
-      title: dto.title,
-      body: dto.body,
-      createdAt: dto.createdAt,
-      isRead: dto.isRead,
-      type: normalizeNotificationType(dto.type),
-      actionUrl: dto.actionUrl,
-      deeplink: dto.deeplink,
-      entityId: dto.entityId,
-      projectCode: dto.projectCode,
-    );
   }
 }

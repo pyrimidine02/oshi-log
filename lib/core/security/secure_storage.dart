@@ -40,7 +40,13 @@ class SecureStorageKeys {
 /// EN: Wrapper for FlutterSecureStorage with typed methods
 /// KO: 타입화된 메서드를 제공하는 FlutterSecureStorage 래퍼
 class SecureStorage {
-  SecureStorage({FlutterSecureStorage? storage})
+  /// EN: Create a secure-storage wrapper scoped to an API origin.
+  ///     The app provider passes [AppConfig.storageNamespace]. A null
+  ///     namespace is retained for isolated tests and migration utilities.
+  /// KO: API 오리전에 맞춘 보안 저장소 래퍼를 생성합니다.
+  ///     앱 프로바이더는 [AppConfig.storageNamespace]를 전달합니다. null
+  ///     네임스페이스는 격리된 테스트와 마이그레이션 도구를 위해 유지합니다.
+  SecureStorage({FlutterSecureStorage? storage, String? namespace})
     : _storage =
           storage ??
           const FlutterSecureStorage(
@@ -48,9 +54,23 @@ class SecureStorage {
             iOptions: IOSOptions(
               accessibility: KeychainAccessibility.first_unlock_this_device,
             ),
-          );
+          ),
+      _namespace = namespace?.trim().isEmpty == true ? null : namespace?.trim();
 
   final FlutterSecureStorage _storage;
+  final String? _namespace;
+
+  /// EN: Namespace used by this wrapper, if it is scoped.
+  /// KO: 이 래퍼가 사용하는 네임스페이스입니다.
+  String? get namespace => _namespace;
+
+  String _storageKey(String key) {
+    final namespace = _namespace;
+    if (namespace == null || key.startsWith('gbt:$namespace:')) {
+      return key;
+    }
+    return 'gbt:$namespace:$key';
+  }
 
   // ========================================
   // EN: Token Management
@@ -60,37 +80,43 @@ class SecureStorage {
   /// EN: Save access token
   /// KO: 액세스 토큰 저장
   Future<void> saveAccessToken(String token) async {
-    await _storage.write(key: SecureStorageKeys.accessToken, value: token);
+    await _storage.write(
+      key: _storageKey(SecureStorageKeys.accessToken),
+      value: token,
+    );
   }
 
   /// EN: Get access token
   /// KO: 액세스 토큰 조회
   Future<String?> getAccessToken() async {
-    return _storage.read(key: SecureStorageKeys.accessToken);
+    return _storage.read(key: _storageKey(SecureStorageKeys.accessToken));
   }
 
   /// EN: Delete access token
   /// KO: 액세스 토큰 삭제
   Future<void> deleteAccessToken() async {
-    await _storage.delete(key: SecureStorageKeys.accessToken);
+    await _storage.delete(key: _storageKey(SecureStorageKeys.accessToken));
   }
 
   /// EN: Save refresh token
   /// KO: 리프레시 토큰 저장
   Future<void> saveRefreshToken(String token) async {
-    await _storage.write(key: SecureStorageKeys.refreshToken, value: token);
+    await _storage.write(
+      key: _storageKey(SecureStorageKeys.refreshToken),
+      value: token,
+    );
   }
 
   /// EN: Get refresh token
   /// KO: 리프레시 토큰 조회
   Future<String?> getRefreshToken() async {
-    return _storage.read(key: SecureStorageKeys.refreshToken);
+    return _storage.read(key: _storageKey(SecureStorageKeys.refreshToken));
   }
 
   /// EN: Delete refresh token
   /// KO: 리프레시 토큰 삭제
   Future<void> deleteRefreshToken() async {
-    await _storage.delete(key: SecureStorageKeys.refreshToken);
+    await _storage.delete(key: _storageKey(SecureStorageKeys.refreshToken));
   }
 
   /// EN: Save both tokens at once, optionally with an expiry timestamp.
@@ -116,7 +142,7 @@ class SecureStorage {
     await Future.wait([
       deleteAccessToken(),
       deleteRefreshToken(),
-      _storage.delete(key: SecureStorageKeys.tokenExpiry),
+      _storage.delete(key: _storageKey(SecureStorageKeys.tokenExpiry)),
     ]);
   }
 
@@ -140,7 +166,7 @@ class SecureStorage {
   /// KO: 토큰 만료 타임스탬프 저장
   Future<void> saveTokenExpiry(DateTime expiry) async {
     await _storage.write(
-      key: SecureStorageKeys.tokenExpiry,
+      key: _storageKey(SecureStorageKeys.tokenExpiry),
       value: expiry.toIso8601String(),
     );
   }
@@ -148,7 +174,9 @@ class SecureStorage {
   /// EN: Get token expiry timestamp
   /// KO: 토큰 만료 타임스탬프 조회
   Future<DateTime?> getTokenExpiry() async {
-    final value = await _storage.read(key: SecureStorageKeys.tokenExpiry);
+    final value = await _storage.read(
+      key: _storageKey(SecureStorageKeys.tokenExpiry),
+    );
     if (value == null) return null;
     return DateTime.tryParse(value);
   }
@@ -171,19 +199,22 @@ class SecureStorage {
   /// EN: Save user ID
   /// KO: 사용자 ID 저장
   Future<void> saveUserId(String userId) async {
-    await _storage.write(key: SecureStorageKeys.userId, value: userId);
+    await _storage.write(
+      key: _storageKey(SecureStorageKeys.userId),
+      value: userId,
+    );
   }
 
   /// EN: Get user ID
   /// KO: 사용자 ID 조회
   Future<String?> getUserId() async {
-    return _storage.read(key: SecureStorageKeys.userId);
+    return _storage.read(key: _storageKey(SecureStorageKeys.userId));
   }
 
   /// EN: Delete user ID
   /// KO: 사용자 ID 삭제
   Future<void> deleteUserId() async {
-    await _storage.delete(key: SecureStorageKeys.userId);
+    await _storage.delete(key: _storageKey(SecureStorageKeys.userId));
   }
 
   // ========================================
@@ -195,7 +226,7 @@ class SecureStorage {
   /// KO: 알림 디바이스 ID 저장.
   Future<void> saveNotificationDeviceId(String deviceId) async {
     await _storage.write(
-      key: SecureStorageKeys.notificationDeviceId,
+      key: _storageKey(SecureStorageKeys.notificationDeviceId),
       value: deviceId,
     );
   }
@@ -203,20 +234,24 @@ class SecureStorage {
   /// EN: Get notification device ID.
   /// KO: 알림 디바이스 ID 조회.
   Future<String?> getNotificationDeviceId() async {
-    return _storage.read(key: SecureStorageKeys.notificationDeviceId);
+    return _storage.read(
+      key: _storageKey(SecureStorageKeys.notificationDeviceId),
+    );
   }
 
   /// EN: Delete notification device ID.
   /// KO: 알림 디바이스 ID 삭제.
   Future<void> deleteNotificationDeviceId() async {
-    await _storage.delete(key: SecureStorageKeys.notificationDeviceId);
+    await _storage.delete(
+      key: _storageKey(SecureStorageKeys.notificationDeviceId),
+    );
   }
 
   /// EN: Save notification push token.
   /// KO: 알림 푸시 토큰 저장.
   Future<void> saveNotificationPushToken(String pushToken) async {
     await _storage.write(
-      key: SecureStorageKeys.notificationPushToken,
+      key: _storageKey(SecureStorageKeys.notificationPushToken),
       value: pushToken,
     );
   }
@@ -224,13 +259,17 @@ class SecureStorage {
   /// EN: Get notification push token.
   /// KO: 알림 푸시 토큰 조회.
   Future<String?> getNotificationPushToken() async {
-    return _storage.read(key: SecureStorageKeys.notificationPushToken);
+    return _storage.read(
+      key: _storageKey(SecureStorageKeys.notificationPushToken),
+    );
   }
 
   /// EN: Delete notification push token.
   /// KO: 알림 푸시 토큰 삭제.
   Future<void> deleteNotificationPushToken() async {
-    await _storage.delete(key: SecureStorageKeys.notificationPushToken);
+    await _storage.delete(
+      key: _storageKey(SecureStorageKeys.notificationPushToken),
+    );
   }
 
   /// EN: Clear notification registration material.
@@ -251,7 +290,7 @@ class SecureStorage {
   /// KO: 인증 키 ID 저장.
   Future<void> saveVerificationKeyId(String keyId) async {
     await _storage.write(
-      key: SecureStorageKeys.verificationKeyId,
+      key: _storageKey(SecureStorageKeys.verificationKeyId),
       value: keyId,
     );
   }
@@ -259,14 +298,14 @@ class SecureStorage {
   /// EN: Get verification key ID.
   /// KO: 인증 키 ID 조회.
   Future<String?> getVerificationKeyId() async {
-    return _storage.read(key: SecureStorageKeys.verificationKeyId);
+    return _storage.read(key: _storageKey(SecureStorageKeys.verificationKeyId));
   }
 
   /// EN: Save device ID for verification.
   /// KO: 인증용 디바이스 ID 저장.
   Future<void> saveVerificationDeviceId(String deviceId) async {
     await _storage.write(
-      key: SecureStorageKeys.verificationDeviceId,
+      key: _storageKey(SecureStorageKeys.verificationDeviceId),
       value: deviceId,
     );
   }
@@ -274,14 +313,16 @@ class SecureStorage {
   /// EN: Get device ID for verification.
   /// KO: 인증용 디바이스 ID 조회.
   Future<String?> getVerificationDeviceId() async {
-    return _storage.read(key: SecureStorageKeys.verificationDeviceId);
+    return _storage.read(
+      key: _storageKey(SecureStorageKeys.verificationDeviceId),
+    );
   }
 
   /// EN: Save verification private JWK (JSON string).
   /// KO: 인증용 개인키 JWK(JSON 문자열) 저장.
   Future<void> saveVerificationPrivateJwk(String jwkJson) async {
     await _storage.write(
-      key: SecureStorageKeys.verificationPrivateJwk,
+      key: _storageKey(SecureStorageKeys.verificationPrivateJwk),
       value: jwkJson,
     );
   }
@@ -289,14 +330,16 @@ class SecureStorage {
   /// EN: Get verification private JWK (JSON string).
   /// KO: 인증용 개인키 JWK(JSON 문자열) 조회.
   Future<String?> getVerificationPrivateJwk() async {
-    return _storage.read(key: SecureStorageKeys.verificationPrivateJwk);
+    return _storage.read(
+      key: _storageKey(SecureStorageKeys.verificationPrivateJwk),
+    );
   }
 
   /// EN: Save verification key registration timestamp.
   /// KO: 인증 키 등록 시간 저장.
   Future<void> saveVerificationKeyRegisteredAt(DateTime registeredAt) async {
     await _storage.write(
-      key: SecureStorageKeys.verificationKeyRegisteredAt,
+      key: _storageKey(SecureStorageKeys.verificationKeyRegisteredAt),
       value: registeredAt.toIso8601String(),
     );
   }
@@ -305,7 +348,7 @@ class SecureStorage {
   /// KO: 인증 키 등록 시간 조회.
   Future<DateTime?> getVerificationKeyRegisteredAt() async {
     final value = await _storage.read(
-      key: SecureStorageKeys.verificationKeyRegisteredAt,
+      key: _storageKey(SecureStorageKeys.verificationKeyRegisteredAt),
     );
     if (value == null) return null;
     return DateTime.tryParse(value);
@@ -315,10 +358,14 @@ class SecureStorage {
   /// KO: 인증 키 자료 삭제.
   Future<void> clearVerificationKeys() async {
     await Future.wait([
-      _storage.delete(key: SecureStorageKeys.verificationKeyId),
-      _storage.delete(key: SecureStorageKeys.verificationDeviceId),
-      _storage.delete(key: SecureStorageKeys.verificationPrivateJwk),
-      _storage.delete(key: SecureStorageKeys.verificationKeyRegisteredAt),
+      _storage.delete(key: _storageKey(SecureStorageKeys.verificationKeyId)),
+      _storage.delete(key: _storageKey(SecureStorageKeys.verificationDeviceId)),
+      _storage.delete(
+        key: _storageKey(SecureStorageKeys.verificationPrivateJwk),
+      ),
+      _storage.delete(
+        key: _storageKey(SecureStorageKeys.verificationKeyRegisteredAt),
+      ),
     ]);
   }
 
@@ -334,9 +381,12 @@ class SecureStorage {
     required String providerId,
   }) async {
     await Future.wait([
-      _storage.write(key: SecureStorageKeys.oauthPendingState, value: state),
       _storage.write(
-        key: SecureStorageKeys.oauthPendingProvider,
+        key: _storageKey(SecureStorageKeys.oauthPendingState),
+        value: state,
+      ),
+      _storage.write(
+        key: _storageKey(SecureStorageKeys.oauthPendingProvider),
         value: providerId,
       ),
     ]);
@@ -345,21 +395,23 @@ class SecureStorage {
   /// EN: Get pending OAuth state nonce.
   /// KO: 대기 중인 OAuth state nonce를 조회합니다.
   Future<String?> getOAuthPendingState() async {
-    return _storage.read(key: SecureStorageKeys.oauthPendingState);
+    return _storage.read(key: _storageKey(SecureStorageKeys.oauthPendingState));
   }
 
   /// EN: Get pending OAuth provider id.
   /// KO: 대기 중인 OAuth provider id를 조회합니다.
   Future<String?> getOAuthPendingProvider() async {
-    return _storage.read(key: SecureStorageKeys.oauthPendingProvider);
+    return _storage.read(
+      key: _storageKey(SecureStorageKeys.oauthPendingProvider),
+    );
   }
 
   /// EN: Clear pending OAuth state nonce/provider.
   /// KO: 대기 중인 OAuth state/provider를 삭제합니다.
   Future<void> clearOAuthPendingState() async {
     await Future.wait([
-      _storage.delete(key: SecureStorageKeys.oauthPendingState),
-      _storage.delete(key: SecureStorageKeys.oauthPendingProvider),
+      _storage.delete(key: _storageKey(SecureStorageKeys.oauthPendingState)),
+      _storage.delete(key: _storageKey(SecureStorageKeys.oauthPendingProvider)),
     ]);
   }
 
@@ -376,12 +428,18 @@ class SecureStorage {
     final futures = <Future<void>>[];
     if (email != null) {
       futures.add(
-        _storage.write(key: SecureStorageKeys.appleEmail, value: email),
+        _storage.write(
+          key: _storageKey(SecureStorageKeys.appleEmail),
+          value: email,
+        ),
       );
     }
     if (fullName != null) {
       futures.add(
-        _storage.write(key: SecureStorageKeys.appleFullName, value: fullName),
+        _storage.write(
+          key: _storageKey(SecureStorageKeys.appleFullName),
+          value: fullName,
+        ),
       );
     }
     if (futures.isNotEmpty) await Future.wait(futures);
@@ -390,13 +448,13 @@ class SecureStorage {
   /// EN: Get cached Apple email.
   /// KO: 캐시된 Apple 이메일을 조회합니다.
   Future<String?> getAppleEmail() async {
-    return _storage.read(key: SecureStorageKeys.appleEmail);
+    return _storage.read(key: _storageKey(SecureStorageKeys.appleEmail));
   }
 
   /// EN: Get cached Apple fullName.
   /// KO: 캐시된 Apple 이름을 조회합니다.
   Future<String?> getAppleFullName() async {
-    return _storage.read(key: SecureStorageKeys.appleFullName);
+    return _storage.read(key: _storageKey(SecureStorageKeys.appleFullName));
   }
 
   // ========================================
@@ -408,7 +466,7 @@ class SecureStorage {
   /// KO: Twitter 인증 브라우저 실행 전 PKCE code_verifier를 저장합니다.
   Future<void> saveTwitterCodeVerifier(String verifier) async {
     await _storage.write(
-      key: SecureStorageKeys.twitterCodeVerifier,
+      key: _storageKey(SecureStorageKeys.twitterCodeVerifier),
       value: verifier,
     );
   }
@@ -419,9 +477,11 @@ class SecureStorage {
   ///     저장된 값이 없으면 null을 반환합니다 (예: 재시작 후 오래된 콜백).
   Future<String?> getAndClearTwitterCodeVerifier() async {
     final value = await _storage.read(
-      key: SecureStorageKeys.twitterCodeVerifier,
+      key: _storageKey(SecureStorageKeys.twitterCodeVerifier),
     );
-    await _storage.delete(key: SecureStorageKeys.twitterCodeVerifier);
+    await _storage.delete(
+      key: _storageKey(SecureStorageKeys.twitterCodeVerifier),
+    );
     return value;
   }
 
@@ -433,30 +493,40 @@ class SecureStorage {
   /// EN: Write value to secure storage
   /// KO: 보안 저장소에 값 쓰기
   Future<void> write(String key, String value) async {
-    await _storage.write(key: key, value: value);
+    await _storage.write(key: _storageKey(key), value: value);
   }
 
   /// EN: Read value from secure storage
   /// KO: 보안 저장소에서 값 읽기
   Future<String?> read(String key) async {
-    return _storage.read(key: key);
+    return _storage.read(key: _storageKey(key));
   }
 
   /// EN: Delete value from secure storage
   /// KO: 보안 저장소에서 값 삭제
   Future<void> delete(String key) async {
-    await _storage.delete(key: key);
+    await _storage.delete(key: _storageKey(key));
   }
 
   /// EN: Clear all data from secure storage
   /// KO: 보안 저장소의 모든 데이터 삭제
   Future<void> clearAll() async {
-    await _storage.deleteAll();
+    final namespace = _namespace;
+    if (namespace == null) {
+      await _storage.deleteAll();
+      return;
+    }
+    final values = await _storage.readAll();
+    final prefix = 'gbt:$namespace:';
+    final scopedKeys = values.keys
+        .where((key) => key.startsWith(prefix))
+        .toList(growable: false);
+    await Future.wait(scopedKeys.map((key) => _storage.delete(key: key)));
   }
 
   /// EN: Check if key exists in secure storage
   /// KO: 보안 저장소에 키가 존재하는지 확인
   Future<bool> containsKey(String key) async {
-    return await _storage.containsKey(key: key);
+    return await _storage.containsKey(key: _storageKey(key));
   }
 }

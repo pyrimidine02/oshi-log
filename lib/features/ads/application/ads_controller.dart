@@ -10,6 +10,21 @@ import '../data/datasources/ads_remote_data_source.dart';
 import '../data/repositories/ads_repository_impl.dart';
 import '../domain/entities/ad_slot_entities.dart';
 import '../domain/repositories/ads_repository.dart';
+import 'ads_runtime_service.dart';
+
+/// EN: Consent-gated lifecycle for optional network ads.
+/// KO: 선택적 네트워크 광고를 위한 동의 기반 생명주기입니다.
+final adsRuntimeServiceProvider = Provider<AdsRuntimeService>((ref) {
+  final service = AdsRuntimeService();
+  ref.onDispose(service.dispose);
+  return service;
+});
+
+/// EN: Whether the consent SDK requires a visible privacy-options entry point.
+/// KO: 동의 SDK가 개인정보 옵션 진입점 표시를 요구하는지 반환합니다.
+final adsPrivacyOptionsRequiredProvider = FutureProvider<bool>((ref) {
+  return ref.watch(adsRuntimeServiceProvider).isPrivacyOptionsRequired();
+});
 
 /// EN: Ads repository provider.
 /// KO: 광고 리포지토리 프로바이더입니다.

@@ -60,9 +60,7 @@ class BannerRepositoryImpl implements BannerRepository {
   // ---------------------------------------------------------------------------
 
   Map<String, dynamic> _catalogToJson(List<BannerItemDto> items) {
-    return {
-      'items': items.map((dto) => dto.toJson()).toList(growable: false),
-    };
+    return {'items': items.map((dto) => dto.toJson()).toList(growable: false)};
   }
 
   List<BannerItemDto> _catalogFromJson(Map<String, dynamic> json) {
@@ -110,7 +108,7 @@ class BannerRepositoryImpl implements BannerRepository {
     try {
       final result = await _remoteDataSource.setActiveBanner(bannerId);
       return switch (result) {
-        Success(:final data) => _cacheActiveBannerAndReturn(data),
+        Success(:final data) => await _cacheActiveBannerAndReturn(data),
         Err(:final failure) => Result.failure(failure),
       };
     } catch (e, stackTrace) {

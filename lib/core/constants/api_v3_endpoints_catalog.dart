@@ -77,7 +77,6 @@ class ApiV3EndpointCatalog {
     '/api/v1/auth/account-recovery/password': ['POST'],
     '/api/v1/auth/login': ['POST'],
     '/api/v1/auth/logout': ['POST'],
-    '/api/v1/auth/oauth2/callback/{provider}': ['GET'],
     '/api/v1/auth/oauth2/connect/existing/apple': ['POST'],
     '/api/v1/auth/oauth2/connect/existing/google': ['POST'],
     '/api/v1/auth/refresh': ['POST'],

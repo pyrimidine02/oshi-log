@@ -14,6 +14,7 @@ import '../dto/community_translation_dto.dart';
 import '../dto/news_dto.dart';
 import '../dto/post_comment_dto.dart';
 import '../dto/post_dto.dart';
+import '../mappers/feed_entities_mappers.dart';
 
 class FeedRepositoryImpl implements FeedRepository {
   FeedRepositoryImpl({
@@ -56,9 +57,7 @@ class FeedRepositoryImpl implements FeedRepository {
         },
       );
 
-      final entities = cacheResult.data
-          .map((dto) => NewsSummary.fromDto(dto))
-          .toList();
+      final entities = cacheResult.data.map((dto) => dto.toDomain()).toList();
       return Result.success(entities);
     } catch (e, stackTrace) {
       final failure = ErrorHandler.mapException(e, stackTrace);
@@ -87,7 +86,7 @@ class FeedRepositoryImpl implements FeedRepository {
         fromJson: (json) => NewsDetailDto.fromJson(json),
       );
 
-      return Result.success(NewsDetail.fromDto(cacheResult.data));
+      return Result.success(cacheResult.data.toDomain());
     } catch (e, stackTrace) {
       final failure = ErrorHandler.mapException(e, stackTrace);
       return Result.failure(failure);
@@ -127,9 +126,7 @@ class FeedRepositoryImpl implements FeedRepository {
         },
       );
 
-      final entities = cacheResult.data
-          .map((dto) => PostSummary.fromDto(dto))
-          .toList();
+      final entities = cacheResult.data.map((dto) => dto.toDomain()).toList();
       return Result.success(entities);
     } catch (e, stackTrace) {
       final failure = ErrorHandler.mapException(e, stackTrace);
@@ -151,7 +148,7 @@ class FeedRepositoryImpl implements FeedRepository {
       );
 
       if (result is Success<PostCursorPageDto>) {
-        return Result.success(PostCursorPage.fromDto(result.data));
+        return Result.success(result.data.toDomain());
       }
       if (result is Err<PostCursorPageDto>) {
         return Result.failure(result.failure);
@@ -179,7 +176,7 @@ class FeedRepositoryImpl implements FeedRepository {
           .fetchCommunityRecommendedFeedByCursor(cursor: cursor, size: size);
 
       if (result is Success<PostCursorPageDto>) {
-        return Result.success(PostCursorPage.fromDto(result.data));
+        return Result.success(result.data.toDomain());
       }
       if (result is Err<PostCursorPageDto>) {
         return Result.failure(result.failure);
@@ -211,7 +208,7 @@ class FeedRepositoryImpl implements FeedRepository {
       );
 
       if (result is Success<List<PostSummaryDto>>) {
-        final entities = result.data.map(PostSummary.fromDto).toList();
+        final entities = result.data.map((value) => value.toDomain()).toList();
         return Result.success(entities);
       }
       if (result is Err<List<PostSummaryDto>>) {
@@ -240,7 +237,7 @@ class FeedRepositoryImpl implements FeedRepository {
           .fetchCommunityFollowingFeedByCursor(cursor: cursor, size: size);
 
       if (result is Success<PostCursorPageDto>) {
-        return Result.success(PostCursorPage.fromDto(result.data));
+        return Result.success(result.data.toDomain());
       }
       if (result is Err<PostCursorPageDto>) {
         return Result.failure(result.failure);
@@ -274,7 +271,7 @@ class FeedRepositoryImpl implements FeedRepository {
       );
 
       if (result is Success<List<PostSummaryDto>>) {
-        final entities = result.data.map(PostSummary.fromDto).toList();
+        final entities = result.data.map((value) => value.toDomain()).toList();
         return Result.success(entities);
       }
       if (result is Err<List<PostSummaryDto>>) {
@@ -330,7 +327,9 @@ class FeedRepositoryImpl implements FeedRepository {
         },
       );
 
-      final entities = cacheResult.data.map(PostSummary.fromDto).toList();
+      final entities = cacheResult.data
+          .map((value) => value.toDomain())
+          .toList();
       return Result.success(entities);
     } catch (e, stackTrace) {
       final failure = ErrorHandler.mapException(e, stackTrace);
@@ -381,7 +380,7 @@ class FeedRepositoryImpl implements FeedRepository {
           );
 
       final entities = cacheResult.data
-          .map(ProjectSubscriptionSummary.fromDto)
+          .map((value) => value.toDomain())
           .toList();
       return Result.success(entities);
     } catch (e, stackTrace) {
@@ -413,7 +412,7 @@ class FeedRepositoryImpl implements FeedRepository {
         fromJson: (json) => PostDetailDto.fromJson(json),
       );
 
-      return Result.success(PostDetail.fromDto(cacheResult.data));
+      return Result.success(cacheResult.data.toDomain());
     } catch (e, stackTrace) {
       final failure = ErrorHandler.mapException(e, stackTrace);
       return Result.failure(failure);
@@ -444,7 +443,7 @@ class FeedRepositoryImpl implements FeedRepository {
 
       if (result is Success<PostDetailDto>) {
         await _invalidateAfterPostMutation(projectCode);
-        return Result.success(PostDetail.fromDto(result.data));
+        return Result.success(result.data.toDomain());
       }
       if (result is Err<PostDetailDto>) {
         return Result.failure(result.failure);
@@ -523,7 +522,7 @@ class FeedRepositoryImpl implements FeedRepository {
       );
 
       if (result is Success<CommunityTranslationDto>) {
-        return Result.success(CommunityTranslation.fromDto(result.data));
+        return Result.success(result.data.toDomain());
       }
       if (result is Err<CommunityTranslationDto>) {
         return Result.failure(result.failure);
@@ -559,7 +558,7 @@ class FeedRepositoryImpl implements FeedRepository {
         fromJson: (json) => PostComposeOptionsDto.fromJson(json),
       );
 
-      return Result.success(PostComposeOptions.fromDto(cacheResult.data));
+      return Result.success(cacheResult.data.toDomain());
     } catch (e, stackTrace) {
       final failure = ErrorHandler.mapException(e, stackTrace);
       return Result.failure(failure);
@@ -591,7 +590,7 @@ class FeedRepositoryImpl implements FeedRepository {
 
       if (result is Success<PostDetailDto>) {
         await _invalidateAfterPostMutation(projectCode, postId: postId);
-        return Result.success(PostDetail.fromDto(result.data));
+        return Result.success(result.data.toDomain());
       }
       if (result is Err<PostDetailDto>) {
         return Result.failure(result.failure);
@@ -674,9 +673,7 @@ class FeedRepositoryImpl implements FeedRepository {
         },
       );
 
-      final entities = cacheResult.data
-          .map((dto) => PostComment.fromDto(dto))
-          .toList();
+      final entities = cacheResult.data.map((dto) => dto.toDomain()).toList();
       return Result.success(entities);
     } catch (e, stackTrace) {
       final failure = ErrorHandler.mapException(e, stackTrace);
@@ -704,7 +701,7 @@ class FeedRepositoryImpl implements FeedRepository {
 
       if (result is Success<PostCommentDto>) {
         await _invalidateAfterCommentMutation(projectCode, postId: postId);
-        return Result.success(PostComment.fromDto(result.data));
+        return Result.success(result.data.toDomain());
       }
       if (result is Err<PostCommentDto>) {
         return Result.failure(result.failure);
@@ -739,7 +736,7 @@ class FeedRepositoryImpl implements FeedRepository {
 
       if (result is Success<PostCommentDto>) {
         await _invalidateAfterCommentMutation(projectCode, postId: postId);
-        return Result.success(PostComment.fromDto(result.data));
+        return Result.success(result.data.toDomain());
       }
       if (result is Err<PostCommentDto>) {
         return Result.failure(result.failure);
@@ -824,9 +821,7 @@ class FeedRepositoryImpl implements FeedRepository {
         },
       );
 
-      final entities = cacheResult.data
-          .map((dto) => PostSummary.fromDto(dto))
-          .toList();
+      final entities = cacheResult.data.map((dto) => dto.toDomain()).toList();
       return Result.success(entities);
     } catch (e, stackTrace) {
       final failure = ErrorHandler.mapException(e, stackTrace);
@@ -868,9 +863,7 @@ class FeedRepositoryImpl implements FeedRepository {
         },
       );
 
-      final entities = cacheResult.data
-          .map((dto) => PostComment.fromDto(dto))
-          .toList();
+      final entities = cacheResult.data.map((dto) => dto.toDomain()).toList();
       return Result.success(entities);
     } catch (e, stackTrace) {
       final failure = ErrorHandler.mapException(e, stackTrace);
@@ -895,7 +888,7 @@ class FeedRepositoryImpl implements FeedRepository {
         toJson: (dto) => dto.toJson(),
         fromJson: PostLikeStatusDto.fromJson,
       );
-      return Result.success(PostLikeStatus.fromDto(cacheResult.data));
+      return Result.success(cacheResult.data.toDomain());
     } catch (e, stackTrace) {
       final failure = ErrorHandler.mapException(e, stackTrace);
       return Result.failure(failure);
@@ -915,7 +908,7 @@ class FeedRepositoryImpl implements FeedRepository {
 
       if (result is Success<PostLikeStatusDto>) {
         await _cacheLikeStatus(projectCode, result.data);
-        return Result.success(PostLikeStatus.fromDto(result.data));
+        return Result.success(result.data.toDomain());
       }
       if (result is Err<PostLikeStatusDto>) {
         return Result.failure(result.failure);
@@ -946,7 +939,7 @@ class FeedRepositoryImpl implements FeedRepository {
 
       if (result is Success<PostLikeStatusDto>) {
         await _cacheLikeStatus(projectCode, result.data);
-        return Result.success(PostLikeStatus.fromDto(result.data));
+        return Result.success(result.data.toDomain());
       }
       if (result is Err<PostLikeStatusDto>) {
         return Result.failure(result.failure);
@@ -982,7 +975,7 @@ class FeedRepositoryImpl implements FeedRepository {
         toJson: (dto) => dto.toJson(),
         fromJson: PostBookmarkStatusDto.fromJson,
       );
-      return Result.success(PostBookmarkStatus.fromDto(cacheResult.data));
+      return Result.success(cacheResult.data.toDomain());
     } catch (e, stackTrace) {
       final failure = ErrorHandler.mapException(e, stackTrace);
       return Result.failure(failure);
@@ -1002,7 +995,7 @@ class FeedRepositoryImpl implements FeedRepository {
 
       if (result is Success<PostBookmarkStatusDto>) {
         await _cacheBookmarkStatus(projectCode, result.data);
-        return Result.success(PostBookmarkStatus.fromDto(result.data));
+        return Result.success(result.data.toDomain());
       }
       if (result is Err<PostBookmarkStatusDto>) {
         return Result.failure(result.failure);
@@ -1033,7 +1026,7 @@ class FeedRepositoryImpl implements FeedRepository {
 
       if (result is Success<PostBookmarkStatusDto>) {
         await _cacheBookmarkStatus(projectCode, result.data);
-        return Result.success(PostBookmarkStatus.fromDto(result.data));
+        return Result.success(result.data.toDomain());
       }
       if (result is Err<PostBookmarkStatusDto>) {
         return Result.failure(result.failure);
@@ -1069,7 +1062,7 @@ class FeedRepositoryImpl implements FeedRepository {
       );
 
       if (result is Success<List<CommentThreadNodeDto>>) {
-        final entities = result.data.map(CommentThreadNode.fromDto).toList();
+        final entities = result.data.map((value) => value.toDomain()).toList();
         return Result.success(entities);
       }
       if (result is Err<List<CommentThreadNodeDto>>) {

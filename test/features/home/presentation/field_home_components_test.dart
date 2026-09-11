@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oshi_log/features/home/presentation/field_home/widgets/field_home_components.dart';
 
 void main() {
-  testWidgets('FieldSectionHeader keeps one clear localized heading', (
+  testWidgets('FieldSectionHeader exposes its travel section hierarchy', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -16,7 +16,7 @@ void main() {
     );
 
     expect(find.text('프로젝트 성지'), findsOneWidget);
-    expect(find.text('PILGRIMAGE'), findsNothing);
+    expect(find.text('PILGRIMAGE'), findsOneWidget);
   });
 
   testWidgets('JourneyBriefCard keeps the next action clear at 320dp', (

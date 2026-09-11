@@ -2,7 +2,34 @@
 /// KO: 인물과 미디어를 포괄하는 선택 가능 팬 대상 도메인 모델입니다.
 library;
 
-import '../../data/dto/fan_subject_dto.dart';
+enum FanSubjectKind {
+  project,
+  unit,
+  voiceActor,
+  artist,
+  anime,
+  unknown;
+
+  static FanSubjectKind fromWire(String? value) {
+    return switch (value?.trim().toUpperCase()) {
+      'PROJECT' => FanSubjectKind.project,
+      'UNIT' => FanSubjectKind.unit,
+      'VOICE_ACTOR' => FanSubjectKind.voiceActor,
+      'ARTIST' => FanSubjectKind.artist,
+      'ANIME' => FanSubjectKind.anime,
+      _ => FanSubjectKind.unknown,
+    };
+  }
+
+  String get wireName => switch (this) {
+    FanSubjectKind.project => 'PROJECT',
+    FanSubjectKind.unit => 'UNIT',
+    FanSubjectKind.voiceActor => 'VOICE_ACTOR',
+    FanSubjectKind.artist => 'ARTIST',
+    FanSubjectKind.anime => 'ANIME',
+    FanSubjectKind.unknown => 'UNKNOWN',
+  };
+}
 
 class FanSubject {
   const FanSubject({
@@ -22,18 +49,6 @@ class FanSubject {
   final String name;
   final String? description;
   final String? imageUrl;
-
-  factory FanSubject.fromDto(FanSubjectDto dto) {
-    return FanSubject(
-      id: dto.id,
-      kind: dto.type,
-      entityId: dto.entityId,
-      key: dto.key,
-      name: dto.name,
-      description: dto.description,
-      imageUrl: dto.imageUrl,
-    );
-  }
 }
 
 class FanSubjectSubscription {
@@ -46,14 +61,6 @@ class FanSubjectSubscription {
   final FanSubject subject;
   final bool subscribed;
   final DateTime? subscribedAt;
-
-  factory FanSubjectSubscription.fromDto(FanSubjectSubscriptionDto dto) {
-    return FanSubjectSubscription(
-      subject: FanSubject.fromDto(dto.subject),
-      subscribed: dto.subscribed,
-      subscribedAt: dto.subscribedAt,
-    );
-  }
 }
 
 class FanSubjectQuery {

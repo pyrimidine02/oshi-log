@@ -2,8 +2,6 @@
 /// KO: 인증 토큰 도메인 모델.
 library;
 
-import '../../data/dto/token_response.dart';
-
 /// EN: Domain model for access/refresh tokens.
 /// KO: 액세스/리프레시 토큰 도메인 모델.
 class AuthTokens {
@@ -21,14 +19,6 @@ class AuthTokens {
 
   /// EN: Create domain tokens from API response.
   /// KO: API 응답으로부터 도메인 토큰 생성.
-  factory AuthTokens.fromResponse(TokenResponse response) {
-    return AuthTokens(
-      accessToken: response.accessToken,
-      refreshToken: response.refreshToken,
-      expiresAt: response.expiresAt,
-      tokenType: response.tokenType,
-    );
-  }
 
   /// EN: Whether the access token is expired.
   /// KO: 액세스 토큰이 만료되었는지 여부.

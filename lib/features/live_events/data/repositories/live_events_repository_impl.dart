@@ -11,6 +11,7 @@ import '../../domain/entities/live_event_entities.dart';
 import '../../domain/repositories/live_events_repository.dart';
 import '../datasources/live_events_remote_data_source.dart';
 import '../dto/live_event_dto.dart';
+import '../mappers/live_event_entities_mappers.dart';
 
 class LiveEventsRepositoryImpl implements LiveEventsRepository {
   LiveEventsRepositoryImpl({
@@ -58,9 +59,7 @@ class LiveEventsRepositoryImpl implements LiveEventsRepository {
             },
           );
 
-      final entities = cacheResult.data
-          .map((dto) => LiveEventSummary.fromDto(dto))
-          .toList();
+      final entities = cacheResult.data.map((dto) => dto.toDomain()).toList();
 
       return Result.success(entities);
     } catch (e, stackTrace) {
@@ -92,7 +91,7 @@ class LiveEventsRepositoryImpl implements LiveEventsRepository {
         fromJson: (json) => LiveEventDetailDto.fromJson(json),
       );
 
-      return Result.success(LiveEventDetail.fromDto(cacheResult.data));
+      return Result.success(cacheResult.data.toDomain());
     } catch (e, stackTrace) {
       final failure = ErrorHandler.mapException(e, stackTrace);
       return Result.failure(failure);
@@ -112,7 +111,7 @@ class LiveEventsRepositoryImpl implements LiveEventsRepository {
       );
 
       if (result case Success<LiveAttendanceStateDto>(:final data)) {
-        return Result.success(LiveAttendanceState.fromDto(data));
+        return Result.success(data.toDomain());
       }
       if (result case Err<LiveAttendanceStateDto>(:final failure)) {
         return Result.failure(failure);
@@ -149,7 +148,7 @@ class LiveEventsRepositoryImpl implements LiveEventsRepository {
             .map(
               (dto) => LiveAttendanceHistoryRecord.fromState(
                 projectKey: projectId,
-                state: LiveAttendanceState.fromDto(dto),
+                state: dto.toDomain(),
               ),
             )
             .where((record) => record.attended && !record.isNone)
@@ -240,7 +239,7 @@ class LiveEventsRepositoryImpl implements LiveEventsRepository {
       );
 
       if (result case Success<LiveAttendanceStateDto>(:final data)) {
-        return Result.success(LiveAttendanceState.fromDto(data));
+        return Result.success(data.toDomain());
       }
       if (result case Err<LiveAttendanceStateDto>(:final failure)) {
         return Result.failure(failure);

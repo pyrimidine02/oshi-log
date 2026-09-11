@@ -2,34 +2,7 @@
 /// KO: 인물과 미디어를 포괄하는 일반화된 팬 대상 계약 DTO입니다.
 library;
 
-enum FanSubjectKind {
-  project,
-  unit,
-  voiceActor,
-  artist,
-  anime,
-  unknown;
-
-  static FanSubjectKind fromWire(String? value) {
-    return switch (value?.trim().toUpperCase()) {
-      'PROJECT' => FanSubjectKind.project,
-      'UNIT' => FanSubjectKind.unit,
-      'VOICE_ACTOR' => FanSubjectKind.voiceActor,
-      'ARTIST' => FanSubjectKind.artist,
-      'ANIME' => FanSubjectKind.anime,
-      _ => FanSubjectKind.unknown,
-    };
-  }
-
-  String get wireName => switch (this) {
-    FanSubjectKind.project => 'PROJECT',
-    FanSubjectKind.unit => 'UNIT',
-    FanSubjectKind.voiceActor => 'VOICE_ACTOR',
-    FanSubjectKind.artist => 'ARTIST',
-    FanSubjectKind.anime => 'ANIME',
-    FanSubjectKind.unknown => 'UNKNOWN',
-  };
-}
+import '../../domain/entities/fan_subject.dart';
 
 class FanSubjectDto {
   const FanSubjectDto({

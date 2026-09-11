@@ -34,9 +34,6 @@ class ApiEndpoints {
       '$apiVersion/auth/password-reset-requests';
   static const String passwordResetRequestsConfirm =
       '$apiVersion/auth/password-reset-requests/confirm';
-  static String oauthCallback(String provider) =>
-      '$apiVersion/auth/oauth2/callback/$provider';
-
   // EN: Public legal policy documents — no auth required, used at registration.
   // KO: 공개 법률 정책 문서 — 인증 불필요, 회원가입 시 사용.
   static const String legalPolicies = '$apiVersion/auth/legal/policies';

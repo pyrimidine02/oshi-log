@@ -2,8 +2,6 @@
 /// KO: 악곡 정보 및 라이브 세트리스트 기능의 도메인 엔티티입니다.
 library;
 
-import '../../data/dto/music_dto.dart';
-
 class MusicCursorPage<T> {
   const MusicCursorPage({
     required this.items,
@@ -38,20 +36,6 @@ class MusicAlbumSummary {
   final int trackCount;
   final String? label;
   final String? catalogNo;
-
-  factory MusicAlbumSummary.fromDto(MusicAlbumSummaryDto dto) {
-    return MusicAlbumSummary(
-      id: dto.id,
-      projectId: dto.projectId,
-      title: dto.title,
-      type: dto.type,
-      coverUrl: dto.coverUrl,
-      releaseDate: dto.releaseDate,
-      trackCount: dto.trackCount,
-      label: dto.label,
-      catalogNo: dto.catalogNo,
-    );
-  }
 }
 
 class MusicAlbumTrack {
@@ -68,16 +52,6 @@ class MusicAlbumTrack {
   final String title;
   final String? versionCode;
   final int? durationMs;
-
-  factory MusicAlbumTrack.fromDto(MusicAlbumTrackDto dto) {
-    return MusicAlbumTrack(
-      songId: dto.songId,
-      trackNo: dto.trackNo,
-      title: dto.title,
-      versionCode: dto.versionCode,
-      durationMs: dto.durationMs,
-    );
-  }
 }
 
 class MusicAlbumDetail extends MusicAlbumSummary {
@@ -95,21 +69,6 @@ class MusicAlbumDetail extends MusicAlbumSummary {
   });
 
   final List<MusicAlbumTrack> tracks;
-
-  factory MusicAlbumDetail.fromDto(MusicAlbumDetailDto dto) {
-    return MusicAlbumDetail(
-      id: dto.id,
-      projectId: dto.projectId,
-      title: dto.title,
-      type: dto.type,
-      coverUrl: dto.coverUrl,
-      releaseDate: dto.releaseDate,
-      trackCount: dto.trackCount,
-      label: dto.label,
-      catalogNo: dto.catalogNo,
-      tracks: dto.tracks.map(MusicAlbumTrack.fromDto).toList(growable: false),
-    );
-  }
 }
 
 class MusicSongSummary {
@@ -142,24 +101,6 @@ class MusicSongSummary {
   final int? trackNo;
   final bool? isTitleTrack;
   final String? defaultVersionCode;
-
-  factory MusicSongSummary.fromDto(MusicSongSummaryDto dto) {
-    return MusicSongSummary(
-      id: dto.id,
-      projectId: dto.projectId,
-      title: dto.title,
-      titleJa: dto.titleJa,
-      titleEn: dto.titleEn,
-      durationMs: dto.durationMs,
-      bpm: dto.bpm,
-      primaryUnitId: dto.primaryUnitId,
-      primaryUnitName: dto.primaryUnitName,
-      albumId: dto.albumId,
-      trackNo: dto.trackNo,
-      isTitleTrack: dto.isTitleTrack,
-      defaultVersionCode: dto.defaultVersionCode,
-    );
-  }
 }
 
 class MusicSongVersionInfo {
@@ -180,18 +121,6 @@ class MusicSongVersionInfo {
   final String? timeSignature;
   final bool isDefault;
   final String? arrangementNote;
-
-  factory MusicSongVersionInfo.fromDto(MusicSongVersionInfoDto dto) {
-    return MusicSongVersionInfo(
-      versionCode: dto.versionCode,
-      durationMs: dto.durationMs,
-      bpm: dto.bpm,
-      key: dto.key,
-      timeSignature: dto.timeSignature,
-      isDefault: dto.isDefault,
-      arrangementNote: dto.arrangementNote,
-    );
-  }
 }
 
 class MusicSongDetail extends MusicSongSummary {
@@ -215,28 +144,6 @@ class MusicSongDetail extends MusicSongSummary {
 
   final List<MusicSongVersionInfo> versions;
   final String? previewUrl;
-
-  factory MusicSongDetail.fromDto(MusicSongDetailDto dto) {
-    return MusicSongDetail(
-      id: dto.id,
-      projectId: dto.projectId,
-      title: dto.title,
-      titleJa: dto.titleJa,
-      titleEn: dto.titleEn,
-      durationMs: dto.durationMs,
-      bpm: dto.bpm,
-      primaryUnitId: dto.primaryUnitId,
-      primaryUnitName: dto.primaryUnitName,
-      albumId: dto.albumId,
-      trackNo: dto.trackNo,
-      isTitleTrack: dto.isTitleTrack,
-      defaultVersionCode: dto.defaultVersionCode,
-      versions: dto.versions
-          .map(MusicSongVersionInfo.fromDto)
-          .toList(growable: false),
-      previewUrl: dto.previewUrl,
-    );
-  }
 }
 
 class MusicLyricLine {
@@ -259,19 +166,6 @@ class MusicLyricLine {
   final String textOriginal;
   final String? textRomanized;
   final String? textTranslated;
-
-  factory MusicLyricLine.fromDto(MusicLyricLineDto dto) {
-    return MusicLyricLine(
-      lineId: dto.lineId,
-      order: dto.order,
-      startMs: dto.startMs,
-      endMs: dto.endMs,
-      section: dto.section,
-      textOriginal: dto.textOriginal,
-      textRomanized: dto.textRomanized,
-      textTranslated: dto.textTranslated,
-    );
-  }
 }
 
 class MusicLyricsPayload {
@@ -284,14 +178,6 @@ class MusicLyricsPayload {
   final String songId;
   final String version;
   final List<MusicLyricLine> lines;
-
-  factory MusicLyricsPayload.fromDto(MusicLyricsPayloadDto dto) {
-    return MusicLyricsPayload(
-      songId: dto.songId,
-      version: dto.version,
-      lines: dto.lines.map(MusicLyricLine.fromDto).toList(growable: false),
-    );
-  }
 }
 
 class MusicPartSegment {
@@ -316,20 +202,6 @@ class MusicPartSegment {
   final String? unitName;
   final String? partType;
   final String? lyricLineId;
-
-  factory MusicPartSegment.fromDto(MusicPartSegmentDto dto) {
-    return MusicPartSegment(
-      segmentId: dto.segmentId,
-      startMs: dto.startMs,
-      endMs: dto.endMs,
-      memberId: dto.memberId,
-      memberName: dto.memberName,
-      unitId: dto.unitId,
-      unitName: dto.unitName,
-      partType: dto.partType,
-      lyricLineId: dto.lyricLineId,
-    );
-  }
 }
 
 class MusicPartsPayload {
@@ -342,16 +214,6 @@ class MusicPartsPayload {
   final String songId;
   final String version;
   final List<MusicPartSegment> segments;
-
-  factory MusicPartsPayload.fromDto(MusicPartsPayloadDto dto) {
-    return MusicPartsPayload(
-      songId: dto.songId,
-      version: dto.version,
-      segments: dto.segments
-          .map(MusicPartSegment.fromDto)
-          .toList(growable: false),
-    );
-  }
 }
 
 class MusicCallCue {
@@ -374,19 +236,6 @@ class MusicCallCue {
   final int? intensity;
   final String? target;
   final String? note;
-
-  factory MusicCallCue.fromDto(MusicCallCueDto dto) {
-    return MusicCallCue(
-      cueId: dto.cueId,
-      startMs: dto.startMs,
-      endMs: dto.endMs,
-      cueType: dto.cueType,
-      cueText: dto.cueText,
-      intensity: dto.intensity,
-      target: dto.target,
-      note: dto.note,
-    );
-  }
 }
 
 class MusicCallGuidePayload {
@@ -399,14 +248,6 @@ class MusicCallGuidePayload {
   final String songId;
   final String version;
   final List<MusicCallCue> cues;
-
-  factory MusicCallGuidePayload.fromDto(MusicCallGuidePayloadDto dto) {
-    return MusicCallGuidePayload(
-      songId: dto.songId,
-      version: dto.version,
-      cues: dto.cues.map(MusicCallCue.fromDto).toList(growable: false),
-    );
-  }
 }
 
 class MusicCreditContributor {
@@ -415,10 +256,6 @@ class MusicCreditContributor {
   final String? id;
   final String name;
   final String? type;
-
-  factory MusicCreditContributor.fromDto(MusicCreditContributorDto dto) {
-    return MusicCreditContributor(id: dto.id, name: dto.name, type: dto.type);
-  }
 }
 
 class MusicCreditGroup {
@@ -426,15 +263,6 @@ class MusicCreditGroup {
 
   final String role;
   final List<MusicCreditContributor> contributors;
-
-  factory MusicCreditGroup.fromDto(MusicCreditGroupDto dto) {
-    return MusicCreditGroup(
-      role: dto.role,
-      contributors: dto.contributors
-          .map(MusicCreditContributor.fromDto)
-          .toList(growable: false),
-    );
-  }
 }
 
 class MusicDifficulty {
@@ -451,16 +279,6 @@ class MusicDifficulty {
   final int cueDensityPerMin;
   final int vocalRangeScore;
   final int tempoScore;
-
-  factory MusicDifficulty.fromDto(MusicDifficultyDto dto) {
-    return MusicDifficulty(
-      difficultyLevel: dto.difficultyLevel,
-      callIntensity: dto.callIntensity,
-      cueDensityPerMin: dto.cueDensityPerMin,
-      vocalRangeScore: dto.vocalRangeScore,
-      tempoScore: dto.tempoScore,
-    );
-  }
 }
 
 class MusicPreview {
@@ -469,14 +287,6 @@ class MusicPreview {
   final String? url;
   final int? durationSec;
   final String? waveformUrl;
-
-  factory MusicPreview.fromDto(MusicPreviewDto dto) {
-    return MusicPreview(
-      url: dto.url,
-      durationSec: dto.durationSec,
-      waveformUrl: dto.waveformUrl,
-    );
-  }
 }
 
 class MusicStreamingLink {
@@ -489,14 +299,6 @@ class MusicStreamingLink {
   final String provider;
   final String url;
   final String? regionAvailability;
-
-  factory MusicStreamingLink.fromDto(MusicStreamingLinkDto dto) {
-    return MusicStreamingLink(
-      provider: dto.provider,
-      url: dto.url,
-      regionAvailability: dto.regionAvailability,
-    );
-  }
 }
 
 class MusicMediaLinks {
@@ -504,15 +306,6 @@ class MusicMediaLinks {
 
   final MusicPreview preview;
   final List<MusicStreamingLink> streamingLinks;
-
-  factory MusicMediaLinks.fromDto(MusicMediaLinksDto dto) {
-    return MusicMediaLinks(
-      preview: MusicPreview.fromDto(dto.preview),
-      streamingLinks: dto.streamingLinks
-          .map(MusicStreamingLink.fromDto)
-          .toList(growable: false),
-    );
-  }
 }
 
 class MusicAvailability {
@@ -531,17 +324,6 @@ class MusicAvailability {
   final List<String> allowedCountries;
   final List<String> blockedCountries;
   final String rightsPolicy;
-
-  factory MusicAvailability.fromDto(MusicAvailabilityDto dto) {
-    return MusicAvailability(
-      isAvailableNow: dto.isAvailableNow,
-      availableFrom: dto.availableFrom,
-      availableUntil: dto.availableUntil,
-      allowedCountries: dto.allowedCountries,
-      blockedCountries: dto.blockedCountries,
-      rightsPolicy: dto.rightsPolicy,
-    );
-  }
 }
 
 class MusicSetlistItem {
@@ -574,23 +356,6 @@ class MusicSetlistItem {
   final String? source;
 
   bool get hasSongLink => (songId ?? '').trim().isNotEmpty;
-
-  factory MusicSetlistItem.fromDto(MusicSetlistItemDto dto) {
-    return MusicSetlistItem(
-      order: dto.order,
-      eventId: dto.eventId,
-      unitId: dto.unitId,
-      unitName: dto.unitName,
-      songId: dto.songId,
-      songTitle: dto.songTitle,
-      versionCode: dto.versionCode,
-      segmentType: dto.segmentType,
-      startAt: dto.startAt,
-      endAt: dto.endAt,
-      isEncore: dto.isEncore,
-      source: dto.source,
-    );
-  }
 }
 
 class MusicUnitSetlist {
@@ -607,16 +372,6 @@ class MusicUnitSetlist {
   final int? performanceOrder;
   final String? rawSetlist;
   final List<String> parsedSongs;
-
-  factory MusicUnitSetlist.fromDto(MusicUnitSetlistDto dto) {
-    return MusicUnitSetlist(
-      unitId: dto.unitId,
-      unitName: dto.unitName,
-      performanceOrder: dto.performanceOrder,
-      rawSetlist: dto.rawSetlist,
-      parsedSongs: dto.parsedSongs,
-    );
-  }
 }
 
 class MusicLiveSetlist {
@@ -633,17 +388,6 @@ class MusicLiveSetlist {
   final List<MusicUnitSetlist> unitSetlists;
 
   bool get isCompleted => eventStatus.toUpperCase() == 'COMPLETED';
-
-  factory MusicLiveSetlist.fromDto(MusicLiveSetlistDto dto) {
-    return MusicLiveSetlist(
-      liveEventId: dto.liveEventId,
-      eventStatus: dto.eventStatus,
-      items: dto.items.map(MusicSetlistItem.fromDto).toList(growable: false),
-      unitSetlists: dto.unitSetlists
-          .map(MusicUnitSetlist.fromDto)
-          .toList(growable: false),
-    );
-  }
 }
 
 class MusicSongLiveContext {
@@ -660,20 +404,4 @@ class MusicSongLiveContext {
   final MusicPartsPayload? parts;
   final MusicCallGuidePayload? callGuide;
   final MusicLiveSetlist? setlistContext;
-
-  factory MusicSongLiveContext.fromDto(MusicSongLiveContextDto dto) {
-    return MusicSongLiveContext(
-      song: dto.song == null ? null : MusicSongDetail.fromDto(dto.song!),
-      lyrics: dto.lyrics == null
-          ? null
-          : MusicLyricsPayload.fromDto(dto.lyrics!),
-      parts: dto.parts == null ? null : MusicPartsPayload.fromDto(dto.parts!),
-      callGuide: dto.callGuide == null
-          ? null
-          : MusicCallGuidePayload.fromDto(dto.callGuide!),
-      setlistContext: dto.setlistContext == null
-          ? null
-          : MusicLiveSetlist.fromDto(dto.setlistContext!),
-    );
-  }
 }

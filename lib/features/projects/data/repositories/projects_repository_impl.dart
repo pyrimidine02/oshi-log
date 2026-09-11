@@ -14,6 +14,7 @@ import '../dto/member_dto.dart';
 import '../dto/project_dto.dart';
 import '../dto/unit_dto.dart';
 import '../dto/voice_actor_dto.dart';
+import '../mappers/project_entities_mappers.dart';
 
 class ProjectsRepositoryImpl implements ProjectsRepository {
   ProjectsRepositoryImpl({
@@ -72,7 +73,7 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
       );
 
       final entities = cacheResult.data
-          .map((dto) => Project.fromDto(dto))
+          .map((dto) => dto.toDomain())
           .toList(growable: false);
       return Result.success(entities);
     } catch (e, stackTrace) {
@@ -110,7 +111,7 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
       );
 
       final entities = cacheResult.data
-          .map((dto) => Unit.fromDto(dto))
+          .map((dto) => dto.toDomain())
           .toList(growable: false);
       return Result.success(entities);
     } catch (e, stackTrace) {
@@ -138,7 +139,7 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
         toJson: (dto) => dto.toJson(),
         fromJson: UnitDto.fromJson,
       );
-      return Result.success(Unit.fromDto(cacheResult.data));
+      return Result.success(cacheResult.data.toDomain());
     } catch (e, stackTrace) {
       final failure = ErrorHandler.mapException(e, stackTrace);
       return Result.failure(failure);
@@ -175,7 +176,7 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
       );
 
       final entities = cacheResult.data
-          .map((dto) => UnitMember.fromDto(dto))
+          .map((dto) => dto.toDomain())
           .toList(growable: false);
       return Result.success(entities);
     } catch (e, stackTrace) {
@@ -205,7 +206,7 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
         toJson: (dto) => dto.toJson(),
         fromJson: MemberDto.fromJson,
       );
-      return Result.success(UnitMember.fromDto(cacheResult.data));
+      return Result.success(cacheResult.data.toDomain());
     } catch (e, stackTrace) {
       final failure = ErrorHandler.mapException(e, stackTrace);
       return Result.failure(failure);
@@ -250,7 +251,7 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
 
       return Result.success(
         cacheResult.data
-            .map(VoiceActorListItem.fromDto)
+            .map((value) => value.toDomain())
             .toList(growable: false),
       );
     } catch (e, stackTrace) {
@@ -278,7 +279,7 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
         toJson: _voiceActorDetailDtoToJson,
         fromJson: VoiceActorDetailDto.fromJson,
       );
-      return Result.success(VoiceActorDetail.fromDto(cacheResult.data));
+      return Result.success(cacheResult.data.toDomain());
     } catch (e, stackTrace) {
       final failure = ErrorHandler.mapException(e, stackTrace);
       return Result.failure(failure);
@@ -319,7 +320,7 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
 
       return Result.success(
         cacheResult.data
-            .map(VoiceActorMemberSummary.fromDto)
+            .map((value) => value.toDomain())
             .toList(growable: false),
       );
     } catch (e, stackTrace) {
@@ -362,7 +363,7 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
 
       return Result.success(
         cacheResult.data
-            .map(VoiceActorCreditSummary.fromDto)
+            .map((value) => value.toDomain())
             .toList(growable: false),
       );
     } catch (e, stackTrace) {

@@ -2,11 +2,6 @@
 /// KO: 프로젝트 도메인 엔티티.
 library;
 
-import '../../data/dto/member_dto.dart';
-import '../../data/dto/project_dto.dart';
-import '../../data/dto/unit_dto.dart';
-import '../../data/dto/voice_actor_dto.dart';
-
 class Project {
   const Project({
     required this.id,
@@ -21,16 +16,6 @@ class Project {
   final String name;
   final String status;
   final String defaultTimezone;
-
-  factory Project.fromDto(ProjectDto dto) {
-    return Project(
-      id: dto.id,
-      code: dto.code,
-      name: dto.name,
-      status: dto.status,
-      defaultTimezone: dto.defaultTimezone,
-    );
-  }
 }
 
 class Unit {
@@ -55,20 +40,6 @@ class Unit {
   final String? colorHex;
   final String? debutDate;
   final List<UnitMemberSummary> memberSummaries;
-
-  factory Unit.fromDto(UnitDto dto) {
-    return Unit(
-      id: dto.id,
-      code: dto.slug,
-      displayName: dto.name,
-      description: dto.description,
-      status: dto.status,
-      logoUrl: dto.logoUrl,
-      colorHex: dto.colorHex,
-      debutDate: dto.debutDate,
-      memberSummaries: dto.members.map(UnitMemberSummary.fromDto).toList(),
-    );
-  }
 }
 
 class UnitMemberSummary {
@@ -87,17 +58,6 @@ class UnitMemberSummary {
   final bool? isLeader;
   final String? characterImageUrl;
   final int? displayOrder;
-
-  factory UnitMemberSummary.fromDto(UnitMemberSummaryDto dto) {
-    return UnitMemberSummary(
-      id: dto.id,
-      characterName: dto.characterName,
-      position: dto.position,
-      isLeader: dto.isLeader,
-      characterImageUrl: dto.characterImageUrl,
-      displayOrder: dto.displayOrder,
-    );
-  }
 }
 
 class VoiceActorRole {
@@ -112,15 +72,6 @@ class VoiceActorRole {
   final String displayName;
   final String? roleType;
   final String? profileImageUrl;
-
-  factory VoiceActorRole.fromDto(MemberVoiceActorDto dto) {
-    return VoiceActorRole(
-      id: dto.id,
-      displayName: dto.displayName,
-      roleType: dto.roleType,
-      profileImageUrl: dto.profileImageUrl,
-    );
-  }
 }
 
 /// EN: Domain entity for a unit member (band character + voice actor).
@@ -162,27 +113,6 @@ class UnitMember {
   final bool? isLeader;
   final bool? isActive;
   final List<VoiceActorRole> voiceActors;
-
-  factory UnitMember.fromDto(MemberDto dto) {
-    final roles = dto.voiceActors.map(VoiceActorRole.fromDto).toList();
-    return UnitMember(
-      id: dto.id,
-      name: dto.name,
-      unitId: dto.unitId.isEmpty ? null : dto.unitId,
-      characterNameKana: dto.characterNameKana,
-      role: dto.role,
-      voiceActorName: dto.voiceActorName,
-      imageUrl: dto.imageUrl,
-      order: dto.order,
-      birthdate: dto.birthdate,
-      hometown: dto.hometown,
-      description: dto.description,
-      instrument: dto.instrument,
-      isLeader: dto.isLeader,
-      isActive: dto.isActive,
-      voiceActors: roles,
-    );
-  }
 }
 
 class VoiceActorListItem {
@@ -201,17 +131,6 @@ class VoiceActorListItem {
   final String? stageName;
   final String? agency;
   final String? profileImageUrl;
-
-  factory VoiceActorListItem.fromDto(VoiceActorListItemDto dto) {
-    return VoiceActorListItem(
-      id: dto.id,
-      displayName: dto.displayName,
-      realName: dto.realName,
-      stageName: dto.stageName,
-      agency: dto.agency,
-      profileImageUrl: dto.profileImageUrl,
-    );
-  }
 }
 
 class VoiceActorDetail {
@@ -246,25 +165,6 @@ class VoiceActorDetail {
   final String? instagramHandle;
   final String? createdAt;
   final String? updatedAt;
-
-  factory VoiceActorDetail.fromDto(VoiceActorDetailDto dto) {
-    return VoiceActorDetail(
-      id: dto.id,
-      displayName: dto.displayName,
-      realName: dto.realName,
-      stageName: dto.stageName,
-      birthDate: dto.birthDate,
-      agency: dto.agency,
-      debutDate: dto.debutDate,
-      bio: dto.bio,
-      profileImageUrl: dto.profileImageUrl,
-      officialWebsite: dto.officialWebsite,
-      twitterHandle: dto.twitterHandle,
-      instagramHandle: dto.instagramHandle,
-      createdAt: dto.createdAt,
-      updatedAt: dto.updatedAt,
-    );
-  }
 }
 
 class VoiceActorMemberSummary {
@@ -295,23 +195,6 @@ class VoiceActorMemberSummary {
   final int? rolePriority;
   final String? startDate;
   final String? endDate;
-
-  factory VoiceActorMemberSummary.fromDto(VoiceActorMemberSummaryDto dto) {
-    return VoiceActorMemberSummary(
-      memberId: dto.memberId,
-      unitId: dto.unitId,
-      unitSlug: dto.unitSlug,
-      unitName: dto.unitName,
-      characterName: dto.characterName,
-      characterImageUrl: dto.characterImageUrl,
-      position: dto.position,
-      isLeader: dto.isLeader,
-      roleType: dto.roleType,
-      rolePriority: dto.rolePriority,
-      startDate: dto.startDate,
-      endDate: dto.endDate,
-    );
-  }
 }
 
 class VoiceActorCreditSummary {
@@ -350,27 +233,6 @@ class VoiceActorCreditSummary {
   final String? startDate;
   final String? endDate;
   final String? notes;
-
-  factory VoiceActorCreditSummary.fromDto(VoiceActorCreditSummaryDto dto) {
-    return VoiceActorCreditSummary(
-      projectId: dto.projectId,
-      projectSlug: dto.projectSlug,
-      projectName: dto.projectName,
-      unitId: dto.unitId,
-      unitSlug: dto.unitSlug,
-      unitName: dto.unitName,
-      memberId: dto.memberId,
-      characterName: dto.characterName,
-      characterImageUrl: dto.characterImageUrl,
-      position: dto.position,
-      isLeader: dto.isLeader,
-      roleType: dto.roleType,
-      rolePriority: dto.rolePriority,
-      startDate: dto.startDate,
-      endDate: dto.endDate,
-      notes: dto.notes,
-    );
-  }
 }
 
 class ProjectSelectionState {

@@ -2,8 +2,6 @@
 /// KO: 사용자 프로필 도메인 엔티티.
 library;
 
-import '../../data/dto/user_profile_dto.dart';
-import '../../data/dto/user_access_level_dto.dart';
 import '../../../../core/security/user_access_level.dart' as access;
 
 class UserProfile {
@@ -111,34 +109,6 @@ class UserProfile {
       projectRolesByProject: projectRolesByProject,
     );
   }
-
-  factory UserProfile.fromDto(UserProfileDto dto) {
-    return UserProfile(
-      id: dto.id,
-      email: dto.email,
-      displayName: dto.displayName,
-      avatarUrl: dto.avatarUrl,
-      role: dto.role,
-      accountRole: dto.accountRole,
-      baselineAccessLevel: dto.baselineAccessLevel,
-      effectiveAccessLevel: dto.effectiveAccessLevel,
-      grants: dto.grants
-          .map(UserAccessGrantSnapshot.fromDto)
-          .toList(growable: false),
-      projectRolesByProject: dto.projectRolesByProject,
-      createdAt: dto.createdAt,
-      bio: dto.bio,
-      coverImageUrl: dto.coverImageUrl,
-      totalXp: dto.totalXp,
-      fanLevel: dto.fanLevel,
-      fanGrade: dto.fanGrade,
-      uniquePlacesVisited: dto.uniquePlacesVisited,
-      totalVisits: dto.totalVisits,
-      liveAttendanceCount: dto.liveAttendanceCount,
-      postCount: dto.postCount,
-      commentCount: dto.commentCount,
-    );
-  }
 }
 
 class UserAccessGrantSnapshot {
@@ -167,20 +137,4 @@ class UserAccessGrantSnapshot {
   final DateTime? revokedAt;
   final String? revokedByUserId;
   final String? revokedReason;
-
-  factory UserAccessGrantSnapshot.fromDto(UserAccessLevelGrantDto dto) {
-    return UserAccessGrantSnapshot(
-      grantId: dto.grantId,
-      userId: dto.userId,
-      accessLevel: dto.accessLevel,
-      isActive: dto.isActive,
-      grantedByUserId: dto.grantedByUserId,
-      grantReason: dto.grantReason,
-      grantedAt: dto.grantedAt,
-      expiresAt: dto.expiresAt,
-      revokedAt: dto.revokedAt,
-      revokedByUserId: dto.revokedByUserId,
-      revokedReason: dto.revokedReason,
-    );
-  }
 }

@@ -12,6 +12,7 @@ import '../../domain/repositories/search_repository.dart';
 import '../datasources/search_remote_data_source.dart';
 import '../dto/search_discovery_dto.dart';
 import '../dto/search_item_dto.dart';
+import '../mappers/search_entities_mappers.dart';
 
 class SearchRepositoryImpl implements SearchRepository {
   SearchRepositoryImpl({
@@ -74,7 +75,7 @@ class SearchRepositoryImpl implements SearchRepository {
       );
 
       final entities = cacheResult.data
-          .map((dto) => SearchItem.fromDto(dto, projectId: projectId))
+          .map((dto) => dto.toDomain(projectId: projectId))
           .toList();
       return Result.success(entities);
     } catch (e, stackTrace) {
@@ -149,7 +150,7 @@ class SearchRepositoryImpl implements SearchRepository {
             },
             fromJson: SearchPopularDiscoveryDto.fromJson,
           );
-      return Result.success(SearchPopularDiscovery.fromDto(cacheResult.data));
+      return Result.success(cacheResult.data.toDomain());
     } catch (e, stackTrace) {
       return Result.failure(ErrorHandler.mapException(e, stackTrace));
     }
@@ -200,7 +201,7 @@ class SearchRepositoryImpl implements SearchRepository {
             },
             fromJson: SearchCategoryDiscoveryDto.fromJson,
           );
-      return Result.success(SearchCategoryDiscovery.fromDto(cacheResult.data));
+      return Result.success(cacheResult.data.toDomain());
     } catch (e, stackTrace) {
       return Result.failure(ErrorHandler.mapException(e, stackTrace));
     }

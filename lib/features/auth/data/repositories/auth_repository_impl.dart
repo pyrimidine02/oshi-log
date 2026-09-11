@@ -38,6 +38,7 @@ import '../dto/register_response.dart';
 import '../dto/refresh_token_request.dart';
 import '../dto/token_response.dart';
 import '../dto/twitter_oauth_request.dart';
+import '../mappers/auth_tokens_mappers.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl({
@@ -497,7 +498,7 @@ class AuthRepositoryImpl implements AuthRepository {
         );
       }
 
-      return Result.success(AuthTokens.fromResponse(tokenResponse));
+      return Result.success(tokenResponse.toDomain());
     }
 
     if (result is Err<TokenResponse>) {

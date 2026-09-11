@@ -85,9 +85,7 @@ class TitlesRepositoryImpl implements TitlesRepository {
   /// EN: Serializes a list of [TitleCatalogItemDto] to a JSON map.
   /// KO: [TitleCatalogItemDto] 목록을 JSON 맵으로 직렬화합니다.
   Map<String, dynamic> _catalogToJson(List<TitleCatalogItemDto> items) {
-    return {
-      'items': items.map((dto) => dto.toJson()).toList(growable: false),
-    };
+    return {'items': items.map((dto) => dto.toJson()).toList(growable: false)};
   }
 
   /// EN: Deserializes a list of [TitleCatalogItemDto] from a cached JSON map.
@@ -111,22 +109,23 @@ class TitlesRepositoryImpl implements TitlesRepository {
     String? projectKey,
   }) async {
     try {
-      final cacheResult = await _cacheManager.resolve<List<TitleCatalogItemDto>>(
-        key: _cacheKeyCatalog,
-        policy: CachePolicy.staleWhileRevalidate,
-        ttl: _catalogTtl,
-        fetcher: () async {
-          final result = await _remoteDataSource.fetchTitleCatalog(
-            projectKey: projectKey,
+      final cacheResult = await _cacheManager
+          .resolve<List<TitleCatalogItemDto>>(
+            key: _cacheKeyCatalog,
+            policy: CachePolicy.staleWhileRevalidate,
+            ttl: _catalogTtl,
+            fetcher: () async {
+              final result = await _remoteDataSource.fetchTitleCatalog(
+                projectKey: projectKey,
+              );
+              return switch (result) {
+                Success(:final data) => data,
+                Err(:final failure) => throw failure,
+              };
+            },
+            toJson: _catalogToJson,
+            fromJson: _catalogFromJson,
           );
-          return switch (result) {
-            Success(:final data) => data,
-            Err(:final failure) => throw failure,
-          };
-        },
-        toJson: _catalogToJson,
-        fromJson: _catalogFromJson,
-      );
       final domain = cacheResult.data
           .map((dto) => dto.toDomain())
           .toList(growable: false);
@@ -143,8 +142,7 @@ class TitlesRepositoryImpl implements TitlesRepository {
     String? projectKey,
   }) async {
     try {
-      final cacheResult =
-          await _cacheManager.resolve<ActiveTitleItemDto?>(
+      final cacheResult = await _cacheManager.resolve<ActiveTitleItemDto?>(
         key: _cacheKeyMyActiveTitle,
         policy: CachePolicy.staleWhileRevalidate,
         ttl: _activeTitleTtl,
@@ -180,7 +178,7 @@ class TitlesRepositoryImpl implements TitlesRepository {
         projectKey: projectKey,
       );
       return switch (result) {
-        Success(:final data) => _cacheActiveTitleAndReturn(data),
+        Success(:final data) => await _cacheActiveTitleAndReturn(data),
         Err(:final failure) => Result.failure(failure),
       };
     } catch (e, stackTrace) {

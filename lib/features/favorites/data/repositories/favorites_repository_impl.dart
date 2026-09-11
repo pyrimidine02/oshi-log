@@ -11,6 +11,7 @@ import '../../domain/entities/favorite_entities.dart';
 import '../../domain/repositories/favorites_repository.dart';
 import '../datasources/favorites_remote_data_source.dart';
 import '../dto/favorite_dto.dart';
+import '../mappers/favorite_entities_mappers.dart';
 
 class FavoritesRepositoryImpl implements FavoritesRepository {
   FavoritesRepositoryImpl({
@@ -52,9 +53,7 @@ class FavoritesRepositoryImpl implements FavoritesRepository {
         },
       );
 
-      final entities = cacheResult.data
-          .map((dto) => FavoriteItem.fromDto(dto))
-          .toList();
+      final entities = cacheResult.data.map((dto) => dto.toDomain()).toList();
       return Result.success(entities);
     } catch (e, stackTrace) {
       final failure = ErrorHandler.mapException(e, stackTrace);
@@ -75,7 +74,7 @@ class FavoritesRepositoryImpl implements FavoritesRepository {
 
       if (result is Success<FavoriteItemDto>) {
         await _cacheManager.remove(_favoritesCacheKeyPaged(0, 20));
-        return Result.success(FavoriteItem.fromDto(result.data));
+        return Result.success(result.data.toDomain());
       }
       if (result is Err<FavoriteItemDto>) {
         return Result.failure(result.failure);

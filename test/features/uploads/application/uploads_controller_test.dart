@@ -6,7 +6,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oshi_log/core/error/failure.dart';
 import 'package:oshi_log/core/utils/result.dart';
 import 'package:oshi_log/features/uploads/application/uploads_controller.dart';
-import 'package:oshi_log/features/uploads/data/dto/upload_dto.dart';
 import 'package:oshi_log/features/uploads/domain/entities/upload_entity.dart';
 import 'package:oshi_log/features/uploads/domain/repositories/uploads_repository.dart';
 
@@ -32,7 +31,7 @@ class _FakeUploadsRepository implements UploadsRepository {
   }
 
   @override
-  Future<Result<PresignedUrlResponse>> requestPresignedUrl({
+  Future<Result<PresignedUpload>> requestPresignedUrl({
     required String filename,
     required String contentType,
     required int size,
@@ -44,9 +43,9 @@ class _FakeUploadsRepository implements UploadsRepository {
   }
 
   @override
-  Future<Result<ConfirmUploadResponse>> confirmUpload(String uploadId) async {
+  Future<Result<UploadConfirmation>> confirmUpload(String uploadId) async {
     return Result.success(
-      ConfirmUploadResponse(uploadId: uploadId, status: 'CONFIRMED'),
+      UploadConfirmation(uploadId: uploadId, status: 'CONFIRMED'),
     );
   }
 

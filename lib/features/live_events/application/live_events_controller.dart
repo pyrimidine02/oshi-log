@@ -308,6 +308,9 @@ class LiveEventDetailController
 /// KO: 라이브 출석 토글 오프라인 대기열(아웃박스) 컨트롤러입니다.
 class LiveAttendanceOutboxController {
   LiveAttendanceOutboxController(this._ref) {
+    _ref.onDispose(() {
+      _disposed = true;
+    });
     _ref.listen<AsyncValue<ConnectivityStatus>>(connectivityStatusProvider, (
       _,
       next,
@@ -317,6 +320,9 @@ class LiveAttendanceOutboxController {
       }
     });
     _ref.listen<bool>(isAuthenticatedProvider, (previous, next) {
+      if (previous != next) {
+        _authSessionGeneration += 1;
+      }
       if (next && previous != true) {
         unawaited(syncPendingMutations());
       }
@@ -326,6 +332,8 @@ class LiveAttendanceOutboxController {
 
   final Ref _ref;
   bool _isSyncing = false;
+  bool _disposed = false;
+  int _authSessionGeneration = 0;
   static const int _maxPendingMutations = 200;
 
   Future<void> enqueue({
@@ -333,7 +341,17 @@ class LiveAttendanceOutboxController {
     required String eventId,
     required bool attended,
   }) async {
+    if (_disposed) {
+      return;
+    }
+    if (!_ref.read(isAuthenticatedProvider)) {
+      return;
+    }
+    final sessionGeneration = _authSessionGeneration;
     final pending = await _readPendingMutations();
+    if (!_isCurrentAuthSession(sessionGeneration)) {
+      return;
+    }
     pending.removeWhere(
       (mutation) =>
           mutation.projectKey == projectKey && mutation.eventId == eventId,
@@ -349,21 +367,40 @@ class LiveAttendanceOutboxController {
     if (pending.length > _maxPendingMutations) {
       pending.removeRange(0, pending.length - _maxPendingMutations);
     }
-    await _writePendingMutations(pending);
+    if (!_isCurrentAuthSession(sessionGeneration)) {
+      return;
+    }
+    await _writePendingMutations(pending, sessionGeneration: sessionGeneration);
   }
 
   Future<void> removePending({
     required String projectKey,
     required String eventId,
   }) async {
+    if (_disposed) {
+      return;
+    }
+    if (!_ref.read(isAuthenticatedProvider)) {
+      return;
+    }
+    final sessionGeneration = _authSessionGeneration;
     final pending = await _readPendingMutations();
+    if (!_isCurrentAuthSession(sessionGeneration)) {
+      return;
+    }
     final before = pending.length;
     pending.removeWhere(
       (mutation) =>
           mutation.projectKey == projectKey && mutation.eventId == eventId,
     );
     if (pending.length != before) {
-      await _writePendingMutations(pending);
+      if (!_isCurrentAuthSession(sessionGeneration)) {
+        return;
+      }
+      await _writePendingMutations(
+        pending,
+        sessionGeneration: sessionGeneration,
+      );
     }
   }
 
@@ -371,7 +408,17 @@ class LiveAttendanceOutboxController {
     required String projectKey,
     required String eventId,
   }) async {
+    if (_disposed) {
+      return null;
+    }
+    if (!_ref.read(isAuthenticatedProvider)) {
+      return null;
+    }
+    final sessionGeneration = _authSessionGeneration;
     final pending = await _readPendingMutations();
+    if (!_isCurrentAuthSession(sessionGeneration)) {
+      return null;
+    }
     for (var i = pending.length - 1; i >= 0; i -= 1) {
       final mutation = pending[i];
       if (mutation.projectKey == projectKey && mutation.eventId == eventId) {
@@ -382,36 +429,49 @@ class LiveAttendanceOutboxController {
   }
 
   Future<void> syncPendingMutations() async {
+    if (_disposed) {
+      return;
+    }
     if (_isSyncing) {
       return;
     }
     if (!_ref.read(isAuthenticatedProvider)) {
       return;
     }
+    final sessionGeneration = _authSessionGeneration;
 
     final isOnline = await _ref.read(connectivityServiceProvider).isOnline;
-    if (!isOnline) {
+    if (!isOnline || !_isCurrentAuthSession(sessionGeneration)) {
       return;
     }
 
     _isSyncing = true;
     try {
       final pending = await _readPendingMutations();
-      if (pending.isEmpty) {
+      if (!_isCurrentAuthSession(sessionGeneration) || pending.isEmpty) {
         return;
       }
 
       final repository = await _ref.read(liveEventsRepositoryProvider.future);
+      if (!_isCurrentAuthSession(sessionGeneration)) {
+        return;
+      }
       final remaining = <PendingLiveAttendanceMutation>[];
       var appliedCount = 0;
 
       for (var i = 0; i < pending.length; i += 1) {
+        if (!_isCurrentAuthSession(sessionGeneration)) {
+          return;
+        }
         final mutation = pending[i];
         final result = await repository.toggleLiveAttendance(
           projectId: mutation.projectKey,
           eventId: mutation.eventId,
           attended: mutation.attended,
         );
+        if (!_isCurrentAuthSession(sessionGeneration)) {
+          return;
+        }
         if (result is Success<LiveAttendanceState>) {
           appliedCount += 1;
           continue;
@@ -428,13 +488,25 @@ class LiveAttendanceOutboxController {
         }
       }
 
-      await _writePendingMutations(remaining);
-      if (appliedCount > 0) {
+      if (!_isCurrentAuthSession(sessionGeneration)) {
+        return;
+      }
+      await _writePendingMutations(
+        remaining,
+        sessionGeneration: sessionGeneration,
+      );
+      if (appliedCount > 0 && _isCurrentAuthSession(sessionGeneration)) {
         _ref.invalidate(liveAttendanceHistoryControllerProvider);
       }
     } finally {
       _isSyncing = false;
     }
+  }
+
+  bool _isCurrentAuthSession(int generation) {
+    return !_disposed &&
+        generation == _authSessionGeneration &&
+        _ref.read(isAuthenticatedProvider);
   }
 
   Future<List<PendingLiveAttendanceMutation>> _readPendingMutations() async {
@@ -450,9 +522,13 @@ class LiveAttendanceOutboxController {
   }
 
   Future<void> _writePendingMutations(
-    List<PendingLiveAttendanceMutation> pending,
-  ) async {
+    List<PendingLiveAttendanceMutation> pending, {
+    required int sessionGeneration,
+  }) async {
     final storage = await _ref.read(localStorageProvider.future);
+    if (!_isCurrentAuthSession(sessionGeneration)) {
+      return;
+    }
     await storage.setPendingLiveAttendanceMutations(
       pending.map((mutation) => mutation.toJson()).toList(growable: false),
     );

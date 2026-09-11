@@ -10,7 +10,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
 import 'app.dart';
@@ -26,6 +25,13 @@ Future<void> main() async {
   // KO: Flutter 바인딩 초기화 확인
   WidgetsFlutterBinding.ensureInitialized();
   registerGBTFontLicenses();
+
+  // EN: Resolve APP_ENV before any provider or telemetry can access storage or
+  //     the API. Unknown values fail closed instead of silently selecting prod.
+  // KO: 프로바이더나 텔레메트리가 저장소/API에 접근하기 전에 APP_ENV를
+  //     해석합니다. 알 수 없는 값은 운영 환경으로 묵인하지 않고 중단합니다.
+  final environment = AppConfig.environmentFromBuild();
+  AppConfig.instance.init(environment: environment);
 
   // EN: Initialize Firebase (required before Crashlytics / Messaging).
   // KO: Crashlytics / Messaging 사용 전에 Firebase를 초기화합니다.
@@ -48,7 +54,7 @@ Future<void> main() async {
       // EN: Disable Crashlytics collection in debug/dev builds.
       // KO: 디버그/개발 빌드에서 Crashlytics 수집을 비활성화합니다.
       await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(
-        kReleaseMode,
+        AppConfig.instance.environment != Environment.development,
       );
       FlutterError.onError =
           FirebaseCrashlytics.instance.recordFlutterFatalError;
@@ -61,13 +67,6 @@ Future<void> main() async {
       // KO: Crashlytics 사용 불가(Firebase 설정 없음 등) — 무시합니다.
     }
   }
-
-  // EN: Initialize app configuration
-  // KO: 앱 구성 초기화
-  final environment = kReleaseMode
-      ? Environment.production
-      : Environment.development;
-  AppConfig.instance.init(environment: environment);
 
   AppLogger.info('App starting', tag: 'Main');
   AppLogger.info('Environment: ${AppConfig.instance.environment.name}');
@@ -113,10 +112,7 @@ Future<void> main() async {
   await SentryFlutter.init(
     (options) {
       options.dsn = const String.fromEnvironment('SENTRY_DSN');
-      options.environment = const String.fromEnvironment(
-        'ENV',
-        defaultValue: kReleaseMode ? 'prod' : 'dev',
-      );
+      options.environment = AppConfig.instance.environment.name;
       // EN: Sample 20% of transactions for performance tracing.
       // KO: 성능 트레이싱을 위해 트랜잭션의 20%를 샘플링합니다.
       options.tracesSampleRate = 0.2;
@@ -142,12 +138,6 @@ Future<void> main() async {
 /// KO: 스토리지 + 인증 확인을 위한 논블로킹 부트스트랩.
 Future<void> _bootstrap(ProviderContainer container) async {
   try {
-    // EN: Initialize mobile ads SDK early for native slot rendering.
-    // KO: 네이티브 슬롯 렌더링을 위해 모바일 광고 SDK를 미리 초기화합니다.
-    if (!kIsWeb) {
-      await MobileAds.instance.initialize();
-    }
-
     // EN: Pre-initialize local storage.
     // KO: 로컬 저장소 사전 초기화.
     await container.read(localStorageProvider.future);

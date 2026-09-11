@@ -4,8 +4,6 @@ library;
 
 import 'package:intl/intl.dart';
 
-import '../../data/dto/place_guide_dto.dart';
-
 class PlaceGuideSummary {
   const PlaceGuideSummary({
     required this.id,
@@ -22,17 +20,6 @@ class PlaceGuideSummary {
   final DateTime? updatedAt;
   final bool hasImages;
   final int imageCount;
-
-  factory PlaceGuideSummary.fromDto(PlaceGuideSummaryDto dto) {
-    return PlaceGuideSummary(
-      id: dto.id,
-      title: dto.title,
-      preview: dto.contentPreview,
-      updatedAt: dto.updatedAt ?? dto.createdAt,
-      hasImages: dto.hasImages,
-      imageCount: dto.imageCount,
-    );
-  }
 
   String get updatedAtLabel {
     if (updatedAt == null) return '';

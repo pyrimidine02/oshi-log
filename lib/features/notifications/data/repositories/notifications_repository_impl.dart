@@ -11,6 +11,7 @@ import '../../domain/entities/notification_entities.dart';
 import '../../domain/repositories/notifications_repository.dart';
 import '../datasources/notifications_remote_data_source.dart';
 import '../dto/notification_dto.dart';
+import '../mappers/notification_entities_mappers.dart';
 
 class NotificationsRepositoryImpl implements NotificationsRepository {
   NotificationsRepositoryImpl({
@@ -55,9 +56,7 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
             },
           );
 
-      final entities = cacheResult.data
-          .map((dto) => NotificationItem.fromDto(dto))
-          .toList();
+      final entities = cacheResult.data.map((dto) => dto.toDomain()).toList();
       return Result.success(entities);
     } catch (e, stackTrace) {
       final failure = ErrorHandler.mapException(e, stackTrace);
@@ -123,7 +122,10 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
         return Result.failure(result.failure);
       }
       return Result.failure(
-        const UnknownFailure('Unknown delete-all result', code: 'unknown_delete_all'),
+        const UnknownFailure(
+          'Unknown delete-all result',
+          code: 'unknown_delete_all',
+        ),
       );
     } catch (e, stackTrace) {
       return Result.failure(ErrorHandler.mapException(e, stackTrace));

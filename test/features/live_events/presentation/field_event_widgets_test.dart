@@ -247,6 +247,37 @@ void main() {
     expect(tapped, isTrue);
   });
 
+  testWidgets('agenda preserves the server venue identity', (tester) async {
+    final event = LiveEventSummary(
+      id: 'venue-event',
+      title: 'TOKYO FIELD SHOW',
+      showStartTime: DateTime(2026, 7, 20, 18),
+      status: 'SCHEDULED',
+      projectIds: const ['p1'],
+      unitIds: const ['u1'],
+      venue: 'Zepp DiverCity',
+      address: 'Tokyo, Japan',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('en'),
+        theme: GBTTheme.light,
+        home: Scaffold(
+          body: FieldEventAgendaRow(
+            event: event,
+            attended: false,
+            onTap: () {},
+          ),
+        ),
+      ),
+    );
+
+    expect(find.textContaining('Zepp DiverCity'), findsOneWidget);
+    expect(find.textContaining('Tokyo, Japan'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('attendance stamp exposes an accessible toggle in dark mode', (
     tester,
   ) async {
@@ -364,6 +395,49 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.text('Not provided in event data'), findsOneWidget);
     expect(find.text('No ticket information'), findsOneWidget);
+  });
+
+  testWidgets('event document exposes a real venue place route', (
+    tester,
+  ) async {
+    var opened = false;
+    final event = LiveEventDetail(
+      id: 'venue-event',
+      title: 'TOKYO FIELD SHOW',
+      showStartTime: DateTime(2026, 7, 20, 18),
+      status: 'SCHEDULED',
+      projectIds: const ['p1'],
+      unitIds: const ['u1'],
+      placeId: 'place-zepp-divercity',
+      venue: 'Zepp DiverCity',
+      address: 'Tokyo, Japan',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('en'),
+        theme: GBTTheme.light,
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: FieldEventTicketDocument(
+              event: event,
+              attendance: LiveAttendanceViewState(
+                attendance: LiveAttendanceState.none('venue-event'),
+              ),
+              onAttendanceToggle: null,
+              onTicketTap: null,
+              onVenueTap: () => opened = true,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.textContaining('Zepp DiverCity'), findsOneWidget);
+    expect(find.text('View venue place'), findsOneWidget);
+    await tester.tap(find.text('View venue place'));
+    expect(opened, isTrue);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('setlist rail keeps real song navigation affordance', (

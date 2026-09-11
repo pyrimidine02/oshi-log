@@ -14,7 +14,6 @@ import '../../../../core/utils/result.dart';
 import '../../../../core/widgets/common/gbt_image.dart';
 import '../../../../core/widgets/inputs/gbt_search_bar.dart';
 import '../../application/fan_subjects_controller.dart';
-import '../../data/dto/fan_subject_dto.dart';
 import '../../domain/entities/fan_subject.dart';
 
 const _mobileFanSubjectKinds = <FanSubjectKind>{

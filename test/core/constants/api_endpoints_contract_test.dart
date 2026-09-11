@@ -18,7 +18,6 @@ void main() {
         (path: ApiEndpoints.accountRecoveryApple, method: 'POST'),
         (path: ApiEndpoints.oauthConnectExistingGoogle, method: 'POST'),
         (path: ApiEndpoints.oauthConnectExistingApple, method: 'POST'),
-        (path: ApiEndpoints.oauthCallback('{provider}'), method: 'GET'),
         (path: ApiEndpoints.projects, method: 'GET'),
         (path: ApiEndpoints.projectUnits('{projectId}'), method: 'GET'),
         (path: ApiEndpoints.projectUnits('{projectId}'), method: 'POST'),

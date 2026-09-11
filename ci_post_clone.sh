@@ -4,6 +4,21 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
 IOS_PLIST_PATH="$ROOT_DIR/ios/Runner/GoogleService-Info.plist"
 
+# EN: Xcode Cloud defaults to staging; production builds must opt in with an
+#     explicit APP_ENV value in the workflow configuration.
+# KO: Xcode Cloud는 staging을 기본으로 사용하며, 운영 빌드는 워크플로우에서
+#     APP_ENV를 명시적으로 지정해야 합니다.
+APP_ENV="${APP_ENV:-staging}"
+case "$APP_ENV" in
+  development|staging|production)
+    ;;
+  *)
+    echo "Unsupported APP_ENV: $APP_ENV" >&2
+    exit 1
+    ;;
+esac
+export APP_ENV
+
 log() {
   printf '[ci_post_clone] %s\n' "$1"
 }
@@ -139,6 +154,9 @@ EOF
 main() {
   create_ios_google_service_info_plist
   run_with_retry "flutter pub get" flutter pub get
+  run_with_retry \
+    "flutter build ios --release --config-only ($APP_ENV)" \
+    flutter build ios --release --config-only --dart-define="APP_ENV=$APP_ENV"
   (
     cd "$ROOT_DIR/ios"
     run_with_retry "pod install --repo-update" pod install --repo-update

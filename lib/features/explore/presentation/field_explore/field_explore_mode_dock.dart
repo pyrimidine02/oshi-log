@@ -22,6 +22,7 @@ class FieldExploreModeDock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return SizedBox(
       key: const ValueKey('field-explore-mode-segments'),
       width: double.infinity,
@@ -51,6 +52,24 @@ class FieldExploreModeDock extends StatelessWidget {
           textStyle: WidgetStatePropertyAll(
             Theme.of(context).textTheme.labelMedium,
           ),
+          backgroundColor: WidgetStateProperty.resolveWith((states) {
+            return states.contains(WidgetState.selected)
+                ? colors.primaryContainer
+                : colors.surfaceContainerLow;
+          }),
+          foregroundColor: WidgetStateProperty.resolveWith((states) {
+            return states.contains(WidgetState.selected)
+                ? colors.onPrimaryContainer
+                : colors.onSurfaceVariant;
+          }),
+          side: WidgetStateProperty.resolveWith((states) {
+            return BorderSide(
+              color: states.contains(WidgetState.selected)
+                  ? colors.primary
+                  : colors.outlineVariant,
+              width: states.contains(WidgetState.selected) ? 1.5 : 1,
+            );
+          }),
         ),
       ),
     );

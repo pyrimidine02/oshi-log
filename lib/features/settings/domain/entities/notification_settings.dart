@@ -2,8 +2,6 @@
 /// KO: 알림 설정 도메인 엔티티.
 library;
 
-import '../../data/dto/notification_settings_dto.dart';
-
 class NotificationSettings {
   const NotificationSettings({
     required this.pushEnabled,
@@ -66,16 +64,6 @@ class NotificationSettings {
       categories: updatedCategories,
       version: version ?? this.version,
       updatedAt: updatedAt ?? this.updatedAt,
-    );
-  }
-
-  factory NotificationSettings.fromDto(NotificationSettingsDto dto) {
-    return NotificationSettings(
-      pushEnabled: dto.pushEnabled,
-      emailEnabled: dto.emailEnabled,
-      categories: dto.categories,
-      version: dto.version,
-      updatedAt: dto.updatedAt,
     );
   }
 

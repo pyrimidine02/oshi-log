@@ -2,8 +2,6 @@
 /// KO: 계정 도구 기능 도메인 엔티티.
 library;
 
-import '../../data/dto/account_tools_dto.dart';
-
 /// EN: Result of the account restoration request.
 /// KO: 계정 복구 요청 결과.
 class RestoreAccountResult {
@@ -16,14 +14,6 @@ class RestoreAccountResult {
   final String result;
   final DateTime restoredAt;
   final DateTime? retentionUntil;
-
-  factory RestoreAccountResult.fromDto(RestoreAccountResultDto dto) {
-    return RestoreAccountResult(
-      result: dto.result,
-      restoredAt: dto.restoredAt,
-      retentionUntil: dto.retentionUntil,
-    );
-  }
 }
 
 class BlockedUser {
@@ -36,14 +26,6 @@ class BlockedUser {
   final String id;
   final String displayName;
   final String? avatarUrl;
-
-  factory BlockedUser.fromDto(BlockedUserDto dto) {
-    return BlockedUser(
-      id: dto.id,
-      displayName: dto.displayName,
-      avatarUrl: dto.avatarUrl,
-    );
-  }
 }
 
 class UserBlock {
@@ -58,15 +40,6 @@ class UserBlock {
   final BlockedUser blockedUser;
   final String? reason;
   final DateTime createdAt;
-
-  factory UserBlock.fromDto(UserBlockDto dto) {
-    return UserBlock(
-      id: dto.id,
-      blockedUser: BlockedUser.fromDto(dto.blockedUser),
-      reason: dto.reason,
-      createdAt: dto.createdAt,
-    );
-  }
 }
 
 class VerificationAppeal {
@@ -95,22 +68,6 @@ class VerificationAppeal {
   final String? reviewerMemo;
   final DateTime createdAt;
   final DateTime? resolvedAt;
-
-  factory VerificationAppeal.fromDto(VerificationAppealDto dto) {
-    return VerificationAppeal(
-      id: dto.id,
-      targetType: dto.targetType,
-      targetId: dto.targetId,
-      placeId: dto.placeId,
-      reason: dto.reason,
-      description: dto.description,
-      evidenceUrls: dto.evidenceUrls,
-      status: dto.status,
-      reviewerMemo: dto.reviewerMemo,
-      createdAt: dto.createdAt,
-      resolvedAt: dto.resolvedAt,
-    );
-  }
 }
 
 class ProjectRoleRequest {
@@ -181,22 +138,5 @@ class ProjectRoleRequest {
       default:
         return requestedRole;
     }
-  }
-
-  factory ProjectRoleRequest.fromDto(ProjectRoleRequestDto dto) {
-    return ProjectRoleRequest(
-      id: dto.id,
-      projectId: dto.projectId,
-      projectCode: dto.projectCode,
-      projectName: dto.projectName,
-      requestedRole: dto.requestedRole,
-      status: dto.status,
-      justification: dto.justification,
-      createdAt: dto.createdAt,
-      adminMemo: dto.adminMemo,
-      reviewedAt: dto.reviewedAt,
-      reviewerId: dto.reviewerId,
-      reviewerName: dto.reviewerName,
-    );
   }
 }

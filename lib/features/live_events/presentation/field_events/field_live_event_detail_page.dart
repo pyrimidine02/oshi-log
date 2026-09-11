@@ -158,6 +158,7 @@ class _FieldEventDetailContent extends ConsumerWidget {
               )
               .whenData<MusicLiveSetlist?>((value) => value);
     final ticketUrl = event.ticketUrl?.trim();
+    final placeId = event.placeId?.trim();
     return RefreshIndicator(
       onRefresh: () async {
         final attendanceRefresh = attendanceContext == null
@@ -213,6 +214,9 @@ class _FieldEventDetailContent extends ConsumerWidget {
                   onTicketTap: ticketUrl == null || ticketUrl.isEmpty
                       ? null
                       : () => _openTicket(context, ticketUrl),
+                  onVenueTap: placeId == null || placeId.isEmpty
+                      ? null
+                      : () => context.goToPlaceDetail(placeId),
                 ),
                 const SizedBox(height: GBTSpacing.xl),
                 FieldEventSectionHeading(
@@ -374,12 +378,14 @@ class FieldEventTicketDocument extends StatelessWidget {
     required this.attendance,
     required this.onAttendanceToggle,
     required this.onTicketTap,
+    this.onVenueTap,
   });
 
   final LiveEventDetail event;
   final LiveAttendanceViewState attendance;
   final VoidCallback? onAttendanceToggle;
   final VoidCallback? onTicketTap;
+  final VoidCallback? onVenueTap;
 
   @override
   Widget build(BuildContext context) {
@@ -486,11 +492,7 @@ class FieldEventTicketDocument extends StatelessWidget {
                               en: 'Venue',
                               ja: '会場',
                             ),
-                            value: context.l10n(
-                              ko: '이벤트 데이터에 미제공',
-                              en: 'Not provided in event data',
-                              ja: 'イベントデータに未登録',
-                            ),
+                            value: _eventVenueLabel(context, event),
                             icon: Icons.place_outlined,
                           ),
                         ),
@@ -510,6 +512,23 @@ class FieldEventTicketDocument extends StatelessWidget {
                     );
                   },
                 ),
+                if (onVenueTap != null) ...[
+                  const SizedBox(height: GBTSpacing.md),
+                  Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: TextButton.icon(
+                      onPressed: onVenueTap,
+                      icon: const Icon(Icons.map_outlined),
+                      label: Text(
+                        context.l10n(
+                          ko: '장소 상세 보기',
+                          en: 'View venue place',
+                          ja: '会場の場所を見る',
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -594,6 +613,24 @@ class FieldEventTicketDocument extends StatelessWidget {
       ),
     };
   }
+}
+
+String _eventVenueLabel(BuildContext context, LiveEventDetail event) {
+  final venue = event.venue?.trim();
+  final address = event.address?.trim();
+  if (venue != null &&
+      venue.isNotEmpty &&
+      address != null &&
+      address.isNotEmpty) {
+    return '$venue · $address';
+  }
+  if (venue != null && venue.isNotEmpty) return venue;
+  if (address != null && address.isNotEmpty) return address;
+  return context.l10n(
+    ko: '이벤트 데이터에 미제공',
+    en: 'Not provided in event data',
+    ja: 'イベントデータに未登録',
+  );
 }
 
 class _Perforation extends StatelessWidget {

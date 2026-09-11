@@ -17,6 +17,7 @@ import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/widgets/cards/gbt_sponsored_slot_card.dart';
 import '../../../../core/providers/core_providers.dart';
 import '../../application/ads_controller.dart';
+import '../../application/ads_runtime_service.dart';
 import '../../domain/entities/ad_slot_entities.dart';
 
 /// EN: Fallback content used when backend/network ads are unavailable.
@@ -67,6 +68,34 @@ enum DeliveryNoneStrategy {
   fallback,
 }
 
+/// EN: Accept only an app-relative route supplied by a house campaign.
+///     URI schemes and authorities are rejected so backend content cannot
+///     turn an in-app navigation action into an external redirect.
+/// KO: 하우스 캠페인이 제공한 앱 상대 경로만 허용합니다. 백엔드 콘텐츠가
+///     인앱 이동을 외부 리디렉션으로 바꾸지 못하도록 URI 스킴과 authority를
+///     거부합니다.
+String? safeHouseTargetPath(String? raw) {
+  final value = raw?.trim();
+  if (value == null || value.isEmpty || value.contains(r'\')) return null;
+
+  final uri = Uri.tryParse(value);
+  if (uri == null || uri.hasScheme || uri.hasAuthority) return null;
+  if (uri.path.isEmpty || !uri.path.startsWith('/')) return null;
+  return value;
+}
+
+/// EN: Accept only an HTTPS external URL without embedded credentials.
+/// KO: 자격 증명을 포함하지 않은 HTTPS 외부 URL만 허용합니다.
+Uri? safeHouseTargetUri(String? raw) {
+  final value = raw?.trim();
+  if (value == null || value.isEmpty) return null;
+
+  final uri = Uri.tryParse(value);
+  if (uri == null || uri.scheme.toLowerCase() != 'https') return null;
+  if (uri.host.isEmpty || uri.userInfo.isNotEmpty) return null;
+  return uri;
+}
+
 /// EN: Hybrid slot that can render:
 /// EN: 1) backend house campaign,
 /// EN: 2) backend-selected network ad,
@@ -97,7 +126,7 @@ class HybridSponsoredSlot extends ConsumerStatefulWidget {
 }
 
 class _HybridSponsoredSlotState extends ConsumerState<HybridSponsoredSlot> {
-  bool _houseImpressionTracked = false;
+  String? _houseImpressionIdentity;
 
   @override
   Widget build(BuildContext context) {
@@ -113,6 +142,7 @@ class _HybridSponsoredSlotState extends ConsumerState<HybridSponsoredSlot> {
 
     final decisionAsync = ref.watch(adSlotDecisionProvider(effectiveRequest));
     final decision = decisionAsync.valueOrNull;
+    final adsRuntime = ref.watch(adsRuntimeServiceProvider);
 
     if (decision?.deliveryType == AdDeliveryType.none) {
       if (widget.deliveryNoneStrategy == DeliveryNoneStrategy.hide) {
@@ -136,7 +166,14 @@ class _HybridSponsoredSlotState extends ConsumerState<HybridSponsoredSlot> {
     if (shouldPreferNetwork && networkAdUnitId != null) {
       final decisionId = decision?.decisionId?.trim();
       return _AdMobNativeSlotCard(
+        key: ValueKey(
+          'admob-${effectiveRequest.placement.apiKey}-'
+          '${effectiveRequest.ordinal}-${effectiveRequest.projectKey}-'
+          '${decision?.decisionId}-${decision?.campaignId}-$networkAdUnitId',
+        ),
         adUnitId: networkAdUnitId,
+        identity: _networkIdentity(effectiveRequest, decision, networkAdUnitId),
+        runtimeService: adsRuntime,
         fallbackBuilder: () => _buildHouseCard(
           context: context,
           decision: decision,
@@ -197,12 +234,13 @@ class _HybridSponsoredSlotState extends ConsumerState<HybridSponsoredSlot> {
         : widget.fallback.ctaLabel;
 
     final decisionId = decision?.decisionId?.trim();
-    if (!_houseImpressionTracked &&
+    final impressionIdentity = _houseIdentity(request, decision);
+    if (_houseImpressionIdentity != impressionIdentity &&
         decisionId != null &&
         decisionId.isNotEmpty) {
-      _houseImpressionTracked = true;
+      _houseImpressionIdentity = impressionIdentity;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
+        if (!mounted || _houseImpressionIdentity != impressionIdentity) return;
         _trackEvent(
           AdEventType.impression,
           request: request,
@@ -235,25 +273,39 @@ class _HybridSponsoredSlotState extends ConsumerState<HybridSponsoredSlot> {
             campaignId: decision?.campaignId,
           );
         }
-        _handleHouseTap(context, house);
+        unawaited(_handleHouseTap(context, house));
       },
     );
   }
 
-  void _handleHouseTap(BuildContext context, HouseAdContent? house) {
+  Future<void> _handleHouseTap(
+    BuildContext context,
+    HouseAdContent? house,
+  ) async {
     final targetPath = house?.targetPath?.trim();
     final targetUrl = house?.targetUrl?.trim();
 
-    if (targetPath != null && targetPath.isNotEmpty) {
-      context.go(targetPath);
+    final safePath = safeHouseTargetPath(targetPath);
+    if (safePath != null) {
+      try {
+        context.go(safePath);
+      } catch (_) {
+        widget.fallback.onTap();
+      }
       return;
     }
 
-    if (targetUrl != null && targetUrl.isNotEmpty) {
-      final uri = Uri.tryParse(targetUrl);
-      if (uri != null) {
-        unawaited(launchUrl(uri, mode: LaunchMode.externalApplication));
-        return;
+    final safeUri = safeHouseTargetUri(targetUrl);
+    if (safeUri != null) {
+      try {
+        final launched = await launchUrl(
+          safeUri,
+          mode: LaunchMode.externalApplication,
+        );
+        if (launched) return;
+      } catch (_) {
+        // EN: Fall through to the local action when an external launch fails.
+        // KO: 외부 실행이 실패하면 로컬 액션으로 폴백합니다.
       }
     }
     widget.fallback.onTap();
@@ -261,10 +313,26 @@ class _HybridSponsoredSlotState extends ConsumerState<HybridSponsoredSlot> {
 
   String? _resolveNetworkAdUnitId(AdSlotDecision? decision) {
     final fromDecision = decision?.network?.adUnitId?.trim();
-    if (fromDecision != null && fromDecision.isNotEmpty) {
-      return fromDecision;
-    }
-    return AdConfig.resolveNativeUnitId(widget.request.placement.apiKey);
+    return AdConfig.resolveNativeUnitId(
+      widget.request.placement.apiKey,
+      serverUnitId: fromDecision,
+      serverNetworkIsAdMob:
+          decision == null ||
+          decision.network?.networkType == AdNetworkType.admob,
+    );
+  }
+
+  String _houseIdentity(AdSlotRequest request, AdSlotDecision? decision) {
+    return '${request.placement.apiKey}:${request.ordinal}:'
+        '${request.projectKey}:${decision?.decisionId}:${decision?.campaignId}';
+  }
+
+  String _networkIdentity(
+    AdSlotRequest request,
+    AdSlotDecision? decision,
+    String adUnitId,
+  ) {
+    return '${_houseIdentity(request, decision)}:$adUnitId';
   }
 
   void _trackEvent(
@@ -288,13 +356,18 @@ class _HybridSponsoredSlotState extends ConsumerState<HybridSponsoredSlot> {
 
 class _AdMobNativeSlotCard extends StatefulWidget {
   const _AdMobNativeSlotCard({
+    super.key,
     required this.adUnitId,
+    required this.identity,
+    required this.runtimeService,
     required this.fallbackBuilder,
     required this.onImpression,
     required this.onClick,
   });
 
   final String adUnitId;
+  final String identity;
+  final AdsRuntimeService runtimeService;
   final Widget Function() fallbackBuilder;
   final VoidCallback onImpression;
   final VoidCallback onClick;
@@ -305,19 +378,28 @@ class _AdMobNativeSlotCard extends StatefulWidget {
 
 class _AdMobNativeSlotCardState extends State<_AdMobNativeSlotCard> {
   NativeAd? _nativeAd;
+  NativeAd? _loadingAd;
   bool _isLoaded = false;
   bool _impressionTracked = false;
+  int _loadGeneration = 0;
+  StreamSubscription<AdsReadiness>? _readinessSubscription;
 
   @override
   void initState() {
     super.initState();
+    _subscribeToReadiness();
     _loadAd();
   }
 
   @override
   void didUpdateWidget(covariant _AdMobNativeSlotCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.adUnitId != widget.adUnitId) {
+    final serviceChanged = oldWidget.runtimeService != widget.runtimeService;
+    if (serviceChanged) {
+      _readinessSubscription?.cancel();
+      _subscribeToReadiness();
+    }
+    if (serviceChanged || oldWidget.identity != widget.identity) {
       _disposeAd();
       _loadAd();
     }
@@ -325,16 +407,40 @@ class _AdMobNativeSlotCardState extends State<_AdMobNativeSlotCard> {
 
   @override
   void dispose() {
+    _readinessSubscription?.cancel();
     _disposeAd();
     super.dispose();
   }
 
-  void _loadAd() {
+  void _subscribeToReadiness() {
+    _readinessSubscription = widget.runtimeService.readinessChanges.listen((
+      readiness,
+    ) {
+      if (!mounted) return;
+      if (readiness != AdsReadiness.ready) {
+        final hadAd = _nativeAd != null || _loadingAd != null || _isLoaded;
+        _disposeAd();
+        if (hadAd) setState(() {});
+        return;
+      }
+      if (_nativeAd == null && _loadingAd == null) {
+        _loadAd();
+      }
+    });
+  }
+
+  Future<void> _loadAd() async {
     if (kIsWeb) {
       return;
     }
 
-    MobileAds.instance.initialize();
+    final generation = ++_loadGeneration;
+    final readiness = await widget.runtimeService.ensureReady();
+    if (!mounted ||
+        generation != _loadGeneration ||
+        readiness != AdsReadiness.ready) {
+      return;
+    }
 
     final nativeAd = NativeAd(
       adUnitId: widget.adUnitId,
@@ -346,23 +452,34 @@ class _AdMobNativeSlotCardState extends State<_AdMobNativeSlotCard> {
       ),
       listener: NativeAdListener(
         onAdLoaded: (ad) {
-          if (!mounted) return;
+          if (!mounted || generation != _loadGeneration) {
+            ad.dispose();
+            return;
+          }
+          _loadingAd = null;
+          if (ad is! NativeAd) {
+            ad.dispose();
+            return;
+          }
           setState(() {
-            _nativeAd = ad as NativeAd;
+            _nativeAd = ad;
             _isLoaded = true;
           });
         },
         onAdImpression: (ad) {
+          if (!mounted || generation != _loadGeneration) return;
           if (_impressionTracked) return;
           _impressionTracked = true;
           widget.onImpression();
         },
         onAdClicked: (ad) {
+          if (!mounted || generation != _loadGeneration) return;
           widget.onClick();
         },
         onAdFailedToLoad: (ad, error) {
+          if (identical(_loadingAd, ad)) _loadingAd = null;
           ad.dispose();
-          if (!mounted) return;
+          if (!mounted || generation != _loadGeneration) return;
           setState(() {
             _nativeAd = null;
             _isLoaded = false;
@@ -370,10 +487,25 @@ class _AdMobNativeSlotCardState extends State<_AdMobNativeSlotCard> {
         },
       ),
     );
-    nativeAd.load();
+    _loadingAd = nativeAd;
+    try {
+      await nativeAd.load();
+    } catch (_) {
+      if (!identical(_loadingAd, nativeAd)) return;
+      _loadingAd = null;
+      nativeAd.dispose();
+      if (!mounted || generation != _loadGeneration) return;
+      setState(() {
+        _nativeAd = null;
+        _isLoaded = false;
+      });
+    }
   }
 
   void _disposeAd() {
+    _loadGeneration++;
+    _loadingAd?.dispose();
+    _loadingAd = null;
     _nativeAd?.dispose();
     _nativeAd = null;
     _isLoaded = false;

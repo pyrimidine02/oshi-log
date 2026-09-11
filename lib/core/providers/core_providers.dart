@@ -13,6 +13,7 @@ import '../logging/app_logger.dart';
 import '../connectivity/connectivity_service.dart';
 import '../cache/cache_manager.dart';
 import '../constants/legal_policy_constants.dart';
+import '../config/app_config.dart';
 import '../error/failure.dart';
 import '../network/api_client.dart';
 import '../analytics/analytics_service.dart';
@@ -35,13 +36,13 @@ import '../storage/local_storage.dart';
 /// EN: Secure storage provider for sensitive data
 /// KO: 민감한 데이터를 위한 보안 저장소 프로바이더
 final secureStorageProvider = Provider<SecureStorage>((ref) {
-  return SecureStorage();
+  return SecureStorage(namespace: AppConfig.instance.storageNamespace);
 });
 
 /// EN: Local storage provider (async initialization required)
 /// KO: 로컬 저장소 프로바이더 (비동기 초기화 필요)
 final localStorageProvider = FutureProvider<LocalStorage>((ref) async {
-  return LocalStorage.create();
+  return LocalStorage.create(namespace: AppConfig.instance.storageNamespace);
 });
 
 /// EN: Cache manager provider (async initialization required).

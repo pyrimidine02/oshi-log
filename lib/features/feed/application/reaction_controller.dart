@@ -126,6 +126,9 @@ class PostReactionTarget {
 /// KO: 게시글 반응 오프라인 대기열(아웃박스) 컨트롤러입니다.
 class PostReactionOutboxController {
   PostReactionOutboxController(this._ref) {
+    _ref.onDispose(() {
+      _disposed = true;
+    });
     _ref.listen<AsyncValue<ConnectivityStatus>>(connectivityStatusProvider, (
       _,
       next,
@@ -135,6 +138,9 @@ class PostReactionOutboxController {
       }
     });
     _ref.listen<bool>(isAuthenticatedProvider, (previous, next) {
+      if (previous != next) {
+        _authSessionGeneration += 1;
+      }
       if (next && previous != true) {
         unawaited(syncPendingMutations());
       }
@@ -144,6 +150,8 @@ class PostReactionOutboxController {
 
   final Ref _ref;
   bool _isSyncing = false;
+  bool _disposed = false;
+  int _authSessionGeneration = 0;
   static const int _maxPendingMutations = 400;
 
   Future<void> enqueueLike({
@@ -151,6 +159,13 @@ class PostReactionOutboxController {
     required String postId,
     required bool targetIsLiked,
   }) async {
+    if (_disposed) {
+      return;
+    }
+    if (!_ref.read(isAuthenticatedProvider)) {
+      return;
+    }
+    final sessionGeneration = _authSessionGeneration;
     await _enqueueMutation(
       PendingPostReactionMutation(
         projectCode: projectCode,
@@ -159,6 +174,7 @@ class PostReactionOutboxController {
         enabled: targetIsLiked,
         queuedAt: DateTime.now(),
       ),
+      sessionGeneration: sessionGeneration,
     );
   }
 
@@ -167,6 +183,13 @@ class PostReactionOutboxController {
     required String postId,
     required bool targetIsBookmarked,
   }) async {
+    if (_disposed) {
+      return;
+    }
+    if (!_ref.read(isAuthenticatedProvider)) {
+      return;
+    }
+    final sessionGeneration = _authSessionGeneration;
     await _enqueueMutation(
       PendingPostReactionMutation(
         projectCode: projectCode,
@@ -175,6 +198,7 @@ class PostReactionOutboxController {
         enabled: targetIsBookmarked,
         queuedAt: DateTime.now(),
       ),
+      sessionGeneration: sessionGeneration,
     );
   }
 
@@ -183,7 +207,17 @@ class PostReactionOutboxController {
     required String postId,
     required PostReactionMutationType type,
   }) async {
+    if (_disposed) {
+      return;
+    }
+    if (!_ref.read(isAuthenticatedProvider)) {
+      return;
+    }
+    final sessionGeneration = _authSessionGeneration;
     final pending = await _readPendingMutations();
+    if (!_isCurrentAuthSession(sessionGeneration)) {
+      return;
+    }
     final before = pending.length;
     pending.removeWhere(
       (mutation) =>
@@ -192,39 +226,59 @@ class PostReactionOutboxController {
           mutation.type == type,
     );
     if (pending.length != before) {
-      await _writePendingMutations(pending);
+      if (!_isCurrentAuthSession(sessionGeneration)) {
+        return;
+      }
+      await _writePendingMutations(
+        pending,
+        sessionGeneration: sessionGeneration,
+      );
     }
   }
 
   Future<void> syncPendingMutations() async {
+    if (_disposed) {
+      return;
+    }
     if (_isSyncing) {
       return;
     }
     if (!_ref.read(isAuthenticatedProvider)) {
       return;
     }
+    final sessionGeneration = _authSessionGeneration;
 
     final isOnline = await _ref.read(connectivityServiceProvider).isOnline;
-    if (!isOnline) {
+    if (!isOnline || !_isCurrentAuthSession(sessionGeneration)) {
       return;
     }
 
     _isSyncing = true;
     try {
       final pending = await _readPendingMutations();
-      if (pending.isEmpty) {
+      if (!_isCurrentAuthSession(sessionGeneration) || pending.isEmpty) {
         return;
       }
 
       final repository = await _ref.read(feedRepositoryProvider.future);
+      if (!_isCurrentAuthSession(sessionGeneration)) {
+        return;
+      }
       final remaining = <PendingPostReactionMutation>[];
 
       for (var i = 0; i < pending.length; i += 1) {
+        if (!_isCurrentAuthSession(sessionGeneration)) {
+          return;
+        }
         final mutation = pending[i];
         final result = await _applyMutation(
           repository: repository,
           mutation: mutation,
+          sessionGeneration: sessionGeneration,
         );
+        if (!_isCurrentAuthSession(sessionGeneration)) {
+          return;
+        }
 
         if (result is Success<void>) {
           continue;
@@ -242,7 +296,13 @@ class PostReactionOutboxController {
         }
       }
 
-      await _writePendingMutations(remaining);
+      if (!_isCurrentAuthSession(sessionGeneration)) {
+        return;
+      }
+      await _writePendingMutations(
+        remaining,
+        sessionGeneration: sessionGeneration,
+      );
     } finally {
       _isSyncing = false;
     }
@@ -251,6 +311,7 @@ class PostReactionOutboxController {
   Future<Result<void>> _applyMutation({
     required FeedRepository repository,
     required PendingPostReactionMutation mutation,
+    required int sessionGeneration,
   }) async {
     switch (mutation.type) {
       case PostReactionMutationType.like:
@@ -265,6 +326,14 @@ class PostReactionOutboxController {
               );
 
         if (!mutation.enabled && result is Err<PostLikeStatus>) {
+          if (!_isCurrentAuthSession(sessionGeneration)) {
+            return const Result.failure(
+              AuthFailure(
+                'Authentication session changed',
+                code: 'auth_session_changed',
+              ),
+            );
+          }
           final selectedProjectId = _ref.read(selectedProjectIdProvider);
           final shouldRetryWithProjectId =
               selectedProjectId != null &&
@@ -320,8 +389,14 @@ class PostReactionOutboxController {
     }
   }
 
-  Future<void> _enqueueMutation(PendingPostReactionMutation mutation) async {
+  Future<void> _enqueueMutation(
+    PendingPostReactionMutation mutation, {
+    required int sessionGeneration,
+  }) async {
     final pending = await _readPendingMutations();
+    if (!_isCurrentAuthSession(sessionGeneration)) {
+      return;
+    }
     pending.removeWhere(
       (item) =>
           item.projectCode == mutation.projectCode &&
@@ -332,7 +407,16 @@ class PostReactionOutboxController {
     if (pending.length > _maxPendingMutations) {
       pending.removeRange(0, pending.length - _maxPendingMutations);
     }
-    await _writePendingMutations(pending);
+    if (!_isCurrentAuthSession(sessionGeneration)) {
+      return;
+    }
+    await _writePendingMutations(pending, sessionGeneration: sessionGeneration);
+  }
+
+  bool _isCurrentAuthSession(int generation) {
+    return !_disposed &&
+        generation == _authSessionGeneration &&
+        _ref.read(isAuthenticatedProvider);
   }
 
   Future<List<PendingPostReactionMutation>> _readPendingMutations() async {
@@ -350,9 +434,13 @@ class PostReactionOutboxController {
   }
 
   Future<void> _writePendingMutations(
-    List<PendingPostReactionMutation> pending,
-  ) async {
+    List<PendingPostReactionMutation> pending, {
+    required int sessionGeneration,
+  }) async {
     final storage = await _ref.read(localStorageProvider.future);
+    if (!_isCurrentAuthSession(sessionGeneration)) {
+      return;
+    }
     await storage.setPendingPostReactionMutations(
       pending.map((mutation) => mutation.toJson()).toList(growable: false),
     );

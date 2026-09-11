@@ -22,6 +22,11 @@ import '../dto/notification_settings_dto.dart';
 import '../dto/privacy_rights_dto.dart';
 import '../dto/user_access_level_dto.dart';
 import '../dto/user_profile_dto.dart';
+import '../mappers/account_tools_mappers.dart';
+import '../mappers/consent_history_mappers.dart';
+import '../mappers/notification_settings_mappers.dart';
+import '../mappers/privacy_rights_mappers.dart';
+import '../mappers/user_profile_mappers.dart';
 
 class SettingsRepositoryImpl implements SettingsRepository {
   SettingsRepositoryImpl({
@@ -50,7 +55,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
         toJson: (dto) => dto.toJson(),
         fromJson: (json) => UserProfileDto.fromJson(json),
       );
-      return Result.success(UserProfile.fromDto(cacheResult.data));
+      return Result.success(cacheResult.data.toDomain());
     } catch (e, stackTrace) {
       final failure = ErrorHandler.mapException(e, stackTrace);
       return Result.failure(failure);
@@ -75,7 +80,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
         toJson: (dto) => dto.toJson(),
         fromJson: (json) => UserProfileDto.fromJson(json),
       );
-      return Result.success(UserProfile.fromDto(cacheResult.data));
+      return Result.success(cacheResult.data.toDomain());
     } catch (e, stackTrace) {
       final failure = ErrorHandler.mapException(e, stackTrace);
       return Result.failure(failure);
@@ -103,7 +108,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
           result.data.toJson(),
           ttl: CacheProfiles.settingsUserProfile.ttl,
         );
-        return Result.success(UserProfile.fromDto(result.data));
+        return Result.success(result.data.toDomain());
       }
       if (result is Err<UserProfileDto>) {
         return Result.failure(result.failure);
@@ -138,7 +143,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
         toJson: (dto) => dto.toJson(),
         fromJson: (json) => NotificationSettingsDto.fromJson(json),
       );
-      return Result.success(NotificationSettings.fromDto(cacheResult.data));
+      return Result.success(cacheResult.data.toDomain());
     } catch (e, stackTrace) {
       final failure = ErrorHandler.mapException(e, stackTrace);
       return Result.failure(failure);
@@ -166,7 +171,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
           result.data.toJson(),
           ttl: CacheProfiles.settingsNotificationSettings.ttl,
         );
-        return Result.success(NotificationSettings.fromDto(result.data));
+        return Result.success(result.data.toDomain());
       }
       if (result is Err<NotificationSettingsDto>) {
         return Result.failure(result.failure);
@@ -234,7 +239,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
         },
         fromJson: PrivacySettingsDto.fromJson,
       );
-      return Result.success(PrivacySettings.fromDto(cacheResult.data));
+      return Result.success(cacheResult.data.toDomain());
     } catch (e, stackTrace) {
       return Result.failure(ErrorHandler.mapException(e, stackTrace));
     }
@@ -257,7 +262,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
           if (result.data.updatedAt != null)
             'updatedAt': result.data.updatedAt!.toIso8601String(),
         }, ttl: CacheProfiles.settingsPrivacySettings.ttl);
-        return Result.success(PrivacySettings.fromDto(result.data));
+        return Result.success(result.data.toDomain());
       }
       if (result is Err<PrivacySettingsDto>) {
         return Result.failure(result.failure);
@@ -306,7 +311,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
           );
       return Result.success(
         cacheResult.data
-            .map(PrivacyRequestRecord.fromDto)
+            .map((value) => value.toDomain())
             .toList(growable: false),
       );
     } catch (e, stackTrace) {
@@ -326,7 +331,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
       );
       if (result is Success<PrivacyRequestRecordDto>) {
         await _cacheManager.removeByPrefix('privacy_requests:');
-        return Result.success(PrivacyRequestRecord.fromDto(result.data));
+        return Result.success(result.data.toDomain());
       }
       if (result is Err<PrivacyRequestRecordDto>) {
         return Result.failure(result.failure);
@@ -374,7 +379,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
             },
           );
       final mapped = cacheResult.data
-          .map(ConsentHistoryItem.fromDto)
+          .map((value) => value.toDomain())
           .toList(growable: false);
       mapped.sort((a, b) {
         final bTime = b.agreedAt;
@@ -463,7 +468,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
     try {
       final result = await _remoteDataSource.restoreAccount();
       if (result is Success<RestoreAccountResultDto>) {
-        return Result.success(RestoreAccountResult.fromDto(result.data));
+        return Result.success(result.data.toDomain());
       }
       if (result is Err<RestoreAccountResultDto>) {
         return Result.failure(result.failure);
@@ -505,7 +510,9 @@ class SettingsRepositoryImpl implements SettingsRepository {
         },
       );
       return Result.success(
-        cacheResult.data.map(UserBlock.fromDto).toList(growable: false),
+        cacheResult.data
+            .map((value) => value.toDomain())
+            .toList(growable: false),
       );
     } catch (e, stackTrace) {
       return Result.failure(ErrorHandler.mapException(e, stackTrace));
@@ -559,7 +566,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
           );
       return Result.success(
         cacheResult.data
-            .map(ProjectRoleRequest.fromDto)
+            .map((value) => value.toDomain())
             .toList(growable: false),
       );
     } catch (e, stackTrace) {
@@ -594,7 +601,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
       );
       if (result is Success<ProjectRoleRequestDto>) {
         await _cacheManager.removeByPrefix('project_role_requests:');
-        return Result.success(ProjectRoleRequest.fromDto(result.data));
+        return Result.success(result.data.toDomain());
       }
       if (result is Err<ProjectRoleRequestDto>) {
         return Result.failure(result.failure);
@@ -659,7 +666,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
           );
       return Result.success(
         cacheResult.data
-            .map(VerificationAppeal.fromDto)
+            .map((value) => value.toDomain())
             .toList(growable: false),
       );
     } catch (e, stackTrace) {
@@ -689,7 +696,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
       );
       if (result is Success<VerificationAppealDto>) {
         await _cacheManager.remove(_verificationAppealsCacheKey(projectId));
-        return Result.success(VerificationAppeal.fromDto(result.data));
+        return Result.success(result.data.toDomain());
       }
       if (result is Err<VerificationAppealDto>) {
         return Result.failure(result.failure);

@@ -11,6 +11,7 @@ import '../../domain/entities/home_summary.dart';
 import '../../domain/repositories/home_repository.dart';
 import '../datasources/home_remote_data_source.dart';
 import '../dto/home_summary_dto.dart';
+import '../mappers/home_summary_mappers.dart';
 
 class HomeRepositoryImpl implements HomeRepository {
   HomeRepositoryImpl({
@@ -64,7 +65,7 @@ class HomeRepositoryImpl implements HomeRepository {
           );
 
       final entities = cacheResult.data
-          .map(HomeSummaryByProjectItem.fromDto)
+          .map((value) => value.toDomain())
           .toList(growable: false);
       return Result.success(entities);
     } catch (e, stackTrace) {
@@ -95,7 +96,7 @@ class HomeRepositoryImpl implements HomeRepository {
         fromJson: (json) => HomeSummaryDto.fromJson(json),
       );
 
-      return Result.success(HomeSummary.fromDto(cacheResult.data));
+      return Result.success(cacheResult.data.toDomain());
     } catch (e, stackTrace) {
       final failure = ErrorHandler.mapException(e, stackTrace);
       return Result.failure(failure);
