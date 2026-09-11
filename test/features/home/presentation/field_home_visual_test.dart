@@ -17,7 +17,7 @@ void main() {
     await _pumpShowcase(tester, theme: GBTTheme.light, width: 390);
     await expectLater(
       find.byKey(const ValueKey('field-home-visual-light')),
-      matchesGoldenFile('goldens/field_home_light.png'),
+      matchesGoldenFile(_homeGoldenPath('field_home_light.png')),
     );
   });
 
@@ -27,7 +27,7 @@ void main() {
     await _pumpShowcase(tester, theme: GBTTheme.dark, width: 390);
     await expectLater(
       find.byKey(const ValueKey('field-home-visual-dark')),
-      matchesGoldenFile('goldens/field_home_dark.png'),
+      matchesGoldenFile(_homeGoldenPath('field_home_dark.png')),
     );
   });
 
@@ -45,9 +45,15 @@ void main() {
     expect(tester.takeException(), isNull);
     await expectLater(
       find.byKey(const ValueKey('field-home-visual-compact')),
-      matchesGoldenFile('goldens/field_home_compact.png'),
+      matchesGoldenFile(_homeGoldenPath('field_home_compact.png')),
     );
   });
+}
+
+/// EN: Selects a baseline for the host renderer used by Flutter golden tests.
+/// KO: Flutter 골든 테스트에서 실행 호스트 렌더러에 맞는 기준 이미지를 선택합니다.
+String _homeGoldenPath(String fileName) {
+  return Platform.isLinux ? 'goldens/linux/$fileName' : 'goldens/$fileName';
 }
 
 Future<void> _pumpShowcase(

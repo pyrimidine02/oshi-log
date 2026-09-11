@@ -15,8 +15,8 @@
 - Unified Field journey cards, headings, badges, agenda rows, and visit ledgers;
   removed four unreachable legacy page implementations. Added compact text-scale,
   touch-target, ongoing-event, venue, and light/dark visual regression checks.
-- Regenerated home visual baselines with CI's Flutter 3.41.0 after detecting
-  renderer differences from local 3.47.2; retained the existing pixel tolerance.
+- Reproduced CI golden differences on Linux and added macOS/Linux baselines
+  with Flutter 3.41.0; retained the pixel tolerance and CI failure images.
 - Added explicit build-time API environments: development/staging use
   `dev.oshilog.org`, production uses `api.oshilog.org`. Android distribution
   workflows and Xcode Cloud preparation select the channel explicitly.
