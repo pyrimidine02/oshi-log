@@ -77,6 +77,9 @@
     differ from the pinned CI SDK.
   - Keep the compatibility regression test until every supported environment
     uses the same stable Flutter release.
+  - Generate and compare home goldens with CI's Flutter 3.41.0. A newer local
+    renderer is not a compatible golden baseline; keep comparison tolerance
+    unchanged when changing SDKs.
   - Remove the field-project golden's 1.5% rasterizer tolerance after the SDKs
     are aligned and regenerate the baseline once on that pinned version.
   - Removal criteria: local, CI, Android, and Xcode Cloud builds use one pinned
