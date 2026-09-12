@@ -2,6 +2,9 @@
 
 ## 2026-09-12
 
+- Preserved the full aspect ratio of official band logos in feed unit cards and
+  Field Guide artist cards with contain fitting; news, character, and other
+  photographic surfaces keep their existing crop behavior.
 - Repaired feature-layer boundaries while retaining Riverpod and existing
   routes. DTO mapping now lives in data mappers; domain repositories expose
   domain values, including upload preparation and confirmation. Added a source

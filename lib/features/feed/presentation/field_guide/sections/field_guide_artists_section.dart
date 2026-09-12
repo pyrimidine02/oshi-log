@@ -214,7 +214,7 @@ class _ArtistCard extends StatelessWidget {
                 child: imageUrl != null && imageUrl.isNotEmpty
                     ? GBTImage(
                         imageUrl: imageUrl,
-                        fit: BoxFit.cover,
+                        fit: BoxFit.contain,
                         semanticLabel: artist.displayName,
                       )
                     : _ArtistMonogram(

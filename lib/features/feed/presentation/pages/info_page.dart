@@ -1018,7 +1018,7 @@ class _UnitAccordionCardState extends ConsumerState<_UnitAccordionCard>
                                     borderRadius: BorderRadius.circular(
                                       GBTSpacing.radiusMd,
                                     ),
-                                    fit: BoxFit.cover,
+                                    fit: BoxFit.contain,
                                     semanticLabel: widget.unit.displayName,
                                   )
                                 : Container(

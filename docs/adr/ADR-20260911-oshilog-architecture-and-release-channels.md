@@ -151,6 +151,16 @@ map renderer, or eager record-list loading is part of this change.
   provider-proof writes. Cleanup failures keep the session unauthenticated;
   regression tests exercise delayed login, logout, and account-owned writes.
 
+### Official logo aspect-ratio decision
+
+Official unit logos are variable-aspect-ratio marks, so feed unit cards and
+Field Guide artist cards use `BoxFit.contain` to keep the complete mark visible.
+Character, news, and other photographic surfaces retain their existing
+`BoxFit.cover` treatment. The reviewed DEV examples are served from the
+official [GBC First Riff Togenashi Togeari logo](https://gbc-firstriff.com/wp-content/themes/gbc-firstriff_v0/assets/images/band/togenashitogeari/img_logo-icon-band-togenashitogeari.webp)
+and [Girls Band Cry Diamond Dust logo](https://girls-band-cry.com/wp-content/themes/gbc_v1-1/assets/webp/common/character/logo_dd.webp)
+hosts; the client does not assume a fixed logo ratio.
+
 ## Visual scope
 
 The existing Field pages remain the routed experience. Shared paper surfaces,

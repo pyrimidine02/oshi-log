@@ -1,5 +1,11 @@
 # TODO
 
+- Verify the official logo fit in a newly installed build (2026-09-12):
+  - Feed unit cards and Field Guide artist cards now use contain fitting so
+    long logos remain legible without changing photographic surfaces.
+  - Removal criteria: a device build visibly shows the full reviewed logo in
+    both placements at compact and regular widths.
+
 - Complete external release-channel and monetization setup (2026-09-12):
   - Internal Android and default Xcode Cloud builds select staging. Create a
     separate production artifact with `APP_ENV=production`; promoting a staging
