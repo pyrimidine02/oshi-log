@@ -55,6 +55,214 @@ String? _albumTrackCountLabel(BuildContext context, int? trackCount) {
   );
 }
 
+enum MusicCatalogSortOrder { titleAsc, releaseNewest, releaseOldest }
+
+String musicCatalogAlbumUnitKey(MusicAlbumSummary album) {
+  final id = album.unitId?.trim();
+  if (id != null && id.isNotEmpty) return 'id:$id';
+  final name = album.unitName?.trim();
+  if (name != null && name.isNotEmpty) return 'name:$name';
+  return '';
+}
+
+String musicCatalogSongUnitKey(MusicSongSummary song) {
+  final id = song.primaryUnitId?.trim();
+  if (id != null && id.isNotEmpty) return 'id:$id';
+  final name = song.primaryUnitName?.trim();
+  if (name != null && name.isNotEmpty) return 'name:$name';
+  return '';
+}
+
+List<String> musicCatalogAlbumTypes(List<MusicAlbumSummary> albums) {
+  final seen = <String>{};
+  final types = <String>[];
+  for (final album in albums) {
+    final type = album.type.trim();
+    if (type.isEmpty) continue;
+    if (seen.add(type.toLowerCase())) {
+      types.add(type);
+    }
+  }
+  types.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+  return types;
+}
+
+List<MusicAlbumSummary> filterAndSortMusicAlbums(
+  List<MusicAlbumSummary> albums, {
+  required Iterable<MusicSongSummary> songs,
+  String? unitKey,
+  String? albumType,
+  String query = '',
+  MusicCatalogSortOrder sortOrder = MusicCatalogSortOrder.releaseNewest,
+}) {
+  final normalizedUnit = unitKey?.trim();
+  final normalizedType = albumType?.trim().toLowerCase();
+  final normalizedQuery = query.trim().toLowerCase();
+  final albumIdsForUnit = <String>{
+    for (final song in songs)
+      if (normalizedUnit != null &&
+          normalizedUnit.isNotEmpty &&
+          musicCatalogSongUnitKey(song) == normalizedUnit &&
+          (song.albumId ?? '').trim().isNotEmpty)
+        song.albumId!.trim(),
+  };
+  final filtered = albums
+      .where((album) {
+        if (normalizedUnit != null && normalizedUnit.isNotEmpty) {
+          final albumUnit = musicCatalogAlbumUnitKey(album);
+          if (albumUnit != normalizedUnit &&
+              !albumIdsForUnit.contains(album.id)) {
+            return false;
+          }
+        }
+        if (normalizedType != null &&
+            normalizedType.isNotEmpty &&
+            album.type.trim().toLowerCase() != normalizedType) {
+          return false;
+        }
+        if (normalizedQuery.isNotEmpty) {
+          final haystack = [
+            album.title,
+            album.type,
+            album.label,
+            album.catalogNo,
+            album.unitName,
+            album.releaseDate,
+            album.releaseDateText,
+          ].whereType<String>().join(' ').toLowerCase();
+          if (!haystack.contains(normalizedQuery)) return false;
+        }
+        return true;
+      })
+      .toList(growable: false);
+  return _sortAlbums(filtered, sortOrder);
+}
+
+List<MusicSongSummary> filterAndSortMusicSongs(
+  List<MusicSongSummary> songs, {
+  required Map<String, MusicAlbumSummary> albumsById,
+  String? unitKey,
+  String query = '',
+  MusicCatalogSortOrder sortOrder = MusicCatalogSortOrder.releaseNewest,
+}) {
+  final normalizedUnit = unitKey?.trim();
+  final normalizedQuery = query.trim().toLowerCase();
+  final filtered = songs
+      .where((song) {
+        if (normalizedUnit != null &&
+            normalizedUnit.isNotEmpty &&
+            musicCatalogSongUnitKey(song) != normalizedUnit) {
+          return false;
+        }
+        if (normalizedQuery.isNotEmpty) {
+          final album = albumsById[(song.albumId ?? '').trim()];
+          final haystack = [
+            song.title,
+            song.titleJa,
+            song.titleEn,
+            song.primaryUnitName,
+            song.defaultVersionCode,
+            album?.title,
+          ].whereType<String>().join(' ').toLowerCase();
+          if (!haystack.contains(normalizedQuery)) return false;
+        }
+        return true;
+      })
+      .toList(growable: false);
+  return _sortSongs(filtered, albumsById, sortOrder);
+}
+
+List<MusicAlbumSummary> _sortAlbums(
+  List<MusicAlbumSummary> albums,
+  MusicCatalogSortOrder sortOrder,
+) {
+  final sorted = [...albums];
+  sorted.sort((a, b) {
+    return switch (sortOrder) {
+      MusicCatalogSortOrder.titleAsc => _compareText(a.title, b.title),
+      MusicCatalogSortOrder.releaseNewest => _compareAlbumRelease(
+        a,
+        b,
+        newestFirst: true,
+      ).nonZeroOr(_compareText(a.title, b.title)),
+      MusicCatalogSortOrder.releaseOldest => _compareAlbumRelease(
+        a,
+        b,
+      ).nonZeroOr(_compareText(a.title, b.title)),
+    };
+  });
+  return sorted;
+}
+
+List<MusicSongSummary> _sortSongs(
+  List<MusicSongSummary> songs,
+  Map<String, MusicAlbumSummary> albumsById,
+  MusicCatalogSortOrder sortOrder,
+) {
+  final sorted = [...songs];
+  sorted.sort((a, b) {
+    return switch (sortOrder) {
+      MusicCatalogSortOrder.titleAsc => _compareText(a.title, b.title),
+      MusicCatalogSortOrder.releaseNewest => _compareSongAlbumRelease(
+        a,
+        b,
+        albumsById,
+        newestFirst: true,
+      ).nonZeroOr(_compareText(a.title, b.title)),
+      MusicCatalogSortOrder.releaseOldest => _compareSongAlbumRelease(
+        a,
+        b,
+        albumsById,
+      ).nonZeroOr(_compareText(a.title, b.title)),
+    };
+  });
+  return sorted;
+}
+
+int _compareSongAlbumRelease(
+  MusicSongSummary a,
+  MusicSongSummary b,
+  Map<String, MusicAlbumSummary> albumsById, {
+  bool newestFirst = false,
+}) {
+  final aAlbum = albumsById[(a.albumId ?? '').trim()];
+  final bAlbum = albumsById[(b.albumId ?? '').trim()];
+  if (aAlbum == null || bAlbum == null) {
+    if (aAlbum == null && bAlbum == null) return 0;
+    return aAlbum == null ? 1 : -1;
+  }
+  return _compareAlbumRelease(aAlbum, bAlbum, newestFirst: newestFirst);
+}
+
+int _compareAlbumRelease(
+  MusicAlbumSummary a,
+  MusicAlbumSummary b, {
+  bool newestFirst = false,
+}) {
+  final aKey = _releaseSortKey(a);
+  final bKey = _releaseSortKey(b);
+  if (aKey == null || bKey == null) {
+    if (aKey == null && bKey == null) return 0;
+    return aKey == null ? 1 : -1;
+  }
+  return newestFirst ? bKey.compareTo(aKey) : aKey.compareTo(bKey);
+}
+
+String? _releaseSortKey(MusicAlbumSummary album) {
+  final date = album.releaseDate?.trim();
+  if (date != null && date.isNotEmpty) return date;
+  final text = album.releaseDateText?.trim();
+  return text == null || text.isEmpty ? null : text;
+}
+
+int _compareText(String a, String b) {
+  return a.toLowerCase().compareTo(b.toLowerCase());
+}
+
+extension _NonZeroInt on int {
+  int nonZeroOr(int fallback) => this == 0 ? fallback : this;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // MAIN WIDGET
 // ─────────────────────────────────────────────────────────────────────────────
@@ -75,44 +283,38 @@ class _MusicCatalogTabState extends ConsumerState<MusicCatalogTab> {
   // KO: 0 = 앨범, 1 = 곡
   int _viewIndex = 0;
   String? _selectedUnitKey;
+  String? _selectedAlbumType;
+  String _query = '';
+  MusicCatalogSortOrder _sortOrder = MusicCatalogSortOrder.releaseNewest;
+  late final TextEditingController _searchController;
   late final ScrollController _albumScroll;
   late final ScrollController _songScroll;
 
   @override
   void initState() {
     super.initState();
-    _albumScroll = ScrollController()..addListener(_onAlbumScroll);
+    _searchController = TextEditingController();
+    _albumScroll = ScrollController();
     _songScroll = ScrollController();
   }
 
   @override
   void dispose() {
-    _albumScroll
-      ..removeListener(_onAlbumScroll)
-      ..dispose();
+    _searchController.dispose();
+    _albumScroll.dispose();
     _songScroll.dispose();
     super.dispose();
   }
 
-  void _onAlbumScroll() {
-    if (!_albumScroll.hasClients) return;
-    if (_albumScroll.position.extentAfter > 240) return;
-    final pk = ref.read(projectSelectionControllerProvider).projectKey;
-    if (pk == null || pk.isEmpty) return;
-    final s = ref.read(musicAlbumsControllerProvider(pk));
-    if (s.isLoading || s.isLoadingMore || !s.hasNext) return;
-    ref.read(musicAlbumsControllerProvider(pk).notifier).loadMore();
-  }
-
   String? _unitKey(MusicSongSummary s) {
-    final id = s.primaryUnitId?.trim();
-    if (id != null && id.isNotEmpty) return 'id:$id';
-    final name = s.primaryUnitName?.trim();
-    if (name != null && name.isNotEmpty) return 'name:$name';
-    return null;
+    final key = musicCatalogSongUnitKey(s);
+    return key.isEmpty ? null : key;
   }
 
-  List<_UnitOption> _buildUnitOptions(List<MusicSongSummary> songs) {
+  List<_UnitOption> _buildUnitOptions(
+    List<MusicSongSummary> songs,
+    List<MusicAlbumSummary> albums,
+  ) {
     final order = <String>[];
     final labels = <String, String>{};
     final counts = <String, int>{};
@@ -123,6 +325,17 @@ class _MusicCatalogTabState extends ConsumerState<MusicCatalogTab> {
         labels[k] = (song.primaryUnitName ?? '').trim().isNotEmpty
             ? song.primaryUnitName!.trim()
             : song.primaryUnitId ?? '';
+        order.add(k);
+      }
+      counts[k] = (counts[k] ?? 0) + 1;
+    }
+    for (final album in albums) {
+      final k = musicCatalogAlbumUnitKey(album);
+      if (k.isEmpty) continue;
+      if (!labels.containsKey(k)) {
+        labels[k] = (album.unitName ?? '').trim().isNotEmpty
+            ? album.unitName!.trim()
+            : album.unitId ?? '';
         order.add(k);
       }
       counts[k] = (counts[k] ?? 0) + 1;
@@ -254,7 +467,6 @@ class _MusicCatalogTabState extends ConsumerState<MusicCatalogTab> {
         children: [
           if (widget.showPageHeader)
             GBTPageHeader(
-              eyebrow: 'TRAVEL AUDIO INDEX',
               title: context.l10n(
                 ko: '여행의 사운드트랙',
                 en: 'Soundtrack of the journey',
@@ -270,7 +482,8 @@ class _MusicCatalogTabState extends ConsumerState<MusicCatalogTab> {
 
     final albumsState = ref.watch(musicAlbumsControllerProvider(projectKey));
     final songsState = ref.watch(musicSongsControllerProvider(projectKey));
-    final unitOptions = _buildUnitOptions(songsState.items);
+    final unitOptions = _buildUnitOptions(songsState.items, albumsState.items);
+    final albumTypeOptions = musicCatalogAlbumTypes(albumsState.items);
 
     // EN: Reset filter key if no longer valid
     // KO: 유효하지 않은 필터 키는 초기화
@@ -282,110 +495,158 @@ class _MusicCatalogTabState extends ConsumerState<MusicCatalogTab> {
         if (mounted) setState(() => _selectedUnitKey = null);
       });
     }
+    final validAlbumType =
+        albumTypeOptions.any(
+          (type) =>
+              type.toLowerCase() == _selectedAlbumType?.trim().toLowerCase(),
+        )
+        ? _selectedAlbumType
+        : null;
+    if (validAlbumType != _selectedAlbumType && _selectedAlbumType != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() => _selectedAlbumType = null);
+      });
+    }
 
-    final filteredSongs = validKey == null
-        ? songsState.items
-        : songsState.items.where((s) => _unitKey(s) == validKey).toList();
-    final filteredAlbumIds = <String>{
-      for (final s in filteredSongs)
-        if ((s.albumId ?? '').trim().isNotEmpty) s.albumId!.trim(),
-    };
-    final filteredAlbums = validKey == null
-        ? albumsState.items
-        : albumsState.items
-              .where((a) => filteredAlbumIds.contains(a.id))
-              .toList(growable: false);
+    final albumsById = {for (final album in albumsState.items) album.id: album};
+    final filteredSongs = filterAndSortMusicSongs(
+      songsState.items,
+      albumsById: albumsById,
+      unitKey: validKey,
+      query: _query,
+      sortOrder: _sortOrder,
+    );
+    final filteredAlbums = filterAndSortMusicAlbums(
+      albumsState.items,
+      songs: songsState.items,
+      unitKey: validKey,
+      albumType: validAlbumType,
+      query: _query,
+      sortOrder: _sortOrder,
+    );
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (widget.showPageHeader)
-          GBTPageHeader(
-            eyebrow: 'TRAVEL AUDIO INDEX',
-            title: context.l10n(
-              ko: '여행의 사운드트랙',
-              en: 'Soundtrack of the journey',
-              ja: '旅のサウンドトラック',
-            ),
-            description:
-                '${filteredAlbums.length.toString().padLeft(2, '0')}'
-                '${albumsState.hasNext ? '+' : ''} ALBUMS · '
-                '${filteredSongs.length.toString().padLeft(2, '0')}'
-                '${songsState.isLoading && filteredSongs.isNotEmpty ? '+' : ''} TRACKS',
-          )
-        else
-          _MusicDocumentHeader(
-            albumCount: filteredAlbums.length,
-            songCount: filteredSongs.length,
-            hasMoreAlbums: albumsState.hasNext,
-            isLoadingSongs: songsState.isLoading && filteredSongs.isNotEmpty,
+    final chrome = <Widget>[
+      if (widget.showPageHeader)
+        GBTPageHeader(
+          title: context.l10n(
+            ko: '여행의 사운드트랙',
+            en: 'Soundtrack of the journey',
+            ja: '旅のサウンドトラック',
           ),
-        // ── Segmented view switcher ───────────────────────────────
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            GBTSpacing.pageHorizontal,
-            GBTSpacing.md,
-            GBTSpacing.pageHorizontal,
-            GBTSpacing.xs,
+          description: context.l10n(
+            ko:
+                '앨범 ${filteredAlbums.length}${albumsState.isLoading && filteredAlbums.isNotEmpty ? '+' : ''} · '
+                '곡 ${filteredSongs.length}${songsState.isLoading && filteredSongs.isNotEmpty ? '+' : ''}',
+            en:
+                'Albums ${filteredAlbums.length}${albumsState.isLoading && filteredAlbums.isNotEmpty ? '+' : ''} · '
+                'Songs ${filteredSongs.length}${songsState.isLoading && filteredSongs.isNotEmpty ? '+' : ''}',
+            ja:
+                'アルバム ${filteredAlbums.length}${albumsState.isLoading && filteredAlbums.isNotEmpty ? '+' : ''} · '
+                '楽曲 ${filteredSongs.length}${songsState.isLoading && filteredSongs.isNotEmpty ? '+' : ''}',
           ),
-          child: _ViewSwitcher(
-            currentIndex: _viewIndex,
+        )
+      else
+        _MusicDocumentHeader(
+          albumCount: filteredAlbums.length,
+          songCount: filteredSongs.length,
+          isLoadingAlbums: albumsState.isLoading && filteredAlbums.isNotEmpty,
+          isLoadingSongs: songsState.isLoading && filteredSongs.isNotEmpty,
+        ),
+      Padding(
+        padding: const EdgeInsets.fromLTRB(
+          GBTSpacing.pageHorizontal,
+          GBTSpacing.md,
+          GBTSpacing.pageHorizontal,
+          GBTSpacing.xs,
+        ),
+        child: _ViewSwitcher(
+          currentIndex: _viewIndex,
+          isDark: isDark,
+          accent: ac,
+          onChanged: (i) => setState(() => _viewIndex = i),
+        ),
+      ),
+      Padding(
+        padding: const EdgeInsets.only(
+          left: GBTSpacing.pageHorizontal,
+          right: GBTSpacing.pageHorizontal,
+          top: GBTSpacing.xs2,
+          bottom: GBTSpacing.xs,
+        ),
+        child: _CatalogControls(
+          searchController: _searchController,
+          query: _query,
+          sortOrder: _sortOrder,
+          unitOptions: unitOptions,
+          selectedUnitKey: validKey,
+          albumTypes: albumTypeOptions,
+          selectedAlbumType: validAlbumType,
+          showAlbumType: _viewIndex == 0,
+          isDark: isDark,
+          accent: ac,
+          onQueryChanged: (value) => setState(() => _query = value),
+          onClearQuery: () {
+            _searchController.clear();
+            setState(() => _query = '');
+          },
+          onSortChanged: (value) => setState(() => _sortOrder = value),
+          onUnitSelected: (value) => setState(() => _selectedUnitKey = value),
+          onAlbumTypeSelected: (value) =>
+              setState(() => _selectedAlbumType = value),
+        ),
+      ),
+    ];
+
+    final content = _viewIndex == 0
+        ? _AlbumsGrid(
+            albums: filteredAlbums,
+            isLoading: albumsState.isLoading && albumsState.items.isEmpty,
+            isLoadingMore:
+                albumsState.isLoading && albumsState.items.isNotEmpty,
+            failure: albumsState.failure,
+            scrollController: _albumScroll,
             isDark: isDark,
             accent: ac,
-            onChanged: (i) => setState(() => _viewIndex = i),
-          ),
-        ),
+            onRetry: () => ref
+                .read(musicAlbumsControllerProvider(projectKey).notifier)
+                .load(forceRefresh: true),
+            onTap: (a) => _openAlbumSheet(context, projectKey, a),
+          )
+        : _SongsList(
+            songs: filteredSongs,
+            isLoading: songsState.isLoading && songsState.items.isEmpty,
+            isLoadingMore: songsState.isLoading && songsState.items.isNotEmpty,
+            failure: songsState.failure,
+            scrollController: _songScroll,
+            isDark: isDark,
+            accent: ac,
+            onRetry: () => ref
+                .read(musicSongsControllerProvider(projectKey).notifier)
+                .load(forceRefresh: true),
+            onTap: (s) => context.goToSongDetail(s.id, projectId: projectKey),
+          );
 
-        // ── Unit filter chips ─────────────────────────────────────
-        if (unitOptions.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(
-              left: GBTSpacing.pageHorizontal,
-              right: GBTSpacing.pageHorizontal,
-              top: GBTSpacing.xs2,
-              bottom: GBTSpacing.xs,
-            ),
-            child: _UnitFilterBar(
-              options: unitOptions,
-              selectedKey: validKey,
-              isDark: isDark,
-              accent: ac,
-              onSelected: (k) => setState(() => _selectedUnitKey = k),
-            ),
-          ),
-
-        // ── Content area ─────────────────────────────────────────
-        Expanded(
-          child: _viewIndex == 0
-              ? _AlbumsGrid(
-                  albums: filteredAlbums,
-                  isLoading: albumsState.isLoading && albumsState.items.isEmpty,
-                  isLoadingMore: albumsState.isLoadingMore,
-                  failure: albumsState.failure,
-                  scrollController: _albumScroll,
-                  isDark: isDark,
-                  accent: ac,
-                  onRetry: () => ref
-                      .read(musicAlbumsControllerProvider(projectKey).notifier)
-                      .load(forceRefresh: true),
-                  onTap: (a) => _openAlbumSheet(context, projectKey, a),
-                )
-              : _SongsList(
-                  songs: filteredSongs,
-                  isLoading: songsState.isLoading && songsState.items.isEmpty,
-                  isLoadingMore: songsState.isLoadingMore,
-                  failure: songsState.failure,
-                  scrollController: _songScroll,
-                  isDark: isDark,
-                  accent: ac,
-                  onRetry: () => ref
-                      .read(musicSongsControllerProvider(projectKey).notifier)
-                      .load(forceRefresh: true),
-                  onTap: (s) =>
-                      context.goToSongDetail(s.id, projectId: projectKey),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final chromeMaxHeight = constraints.maxHeight * 0.65;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: chromeMaxHeight),
+              child: SingleChildScrollView(
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: chrome,
                 ),
-        ),
-      ],
+              ),
+            ),
+            Expanded(child: content),
+          ],
+        );
+      },
     );
   }
 }
@@ -400,24 +661,35 @@ class _MusicDocumentHeader extends StatelessWidget {
   const _MusicDocumentHeader({
     required this.albumCount,
     required this.songCount,
-    required this.hasMoreAlbums,
+    required this.isLoadingAlbums,
     required this.isLoadingSongs,
   });
 
   final int albumCount;
   final int songCount;
-  final bool hasMoreAlbums;
+  final bool isLoadingAlbums;
   final bool isLoadingSongs;
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final countLabel = context.l10n(
+      ko:
+          '앨범 $albumCount${isLoadingAlbums ? '+' : ''} · '
+          '곡 $songCount${isLoadingSongs ? '+' : ''}',
+      en:
+          'Albums $albumCount${isLoadingAlbums ? '+' : ''} · '
+          'Songs $songCount${isLoadingSongs ? '+' : ''}',
+      ja:
+          'アルバム $albumCount${isLoadingAlbums ? '+' : ''} · '
+          '楽曲 $songCount${isLoadingSongs ? '+' : ''}',
+    );
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         GBTSpacing.pageHorizontal,
-        GBTSpacing.lg,
-        GBTSpacing.pageHorizontal,
         GBTSpacing.sm,
+        GBTSpacing.pageHorizontal,
+        GBTSpacing.xs,
       ),
       child: Semantics(
         header: true,
@@ -425,27 +697,24 @@ class _MusicDocumentHeader extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'TRAVEL AUDIO INDEX / '
-              '${albumCount.toString().padLeft(2, '0')}${hasMoreAlbums ? '+' : ''} ALBUMS · '
-              '${songCount.toString().padLeft(2, '0')}${isLoadingSongs ? '+' : ''} TRACKS',
-              style: GBTTypography.labelSmall.copyWith(
-                color: isDark ? GBTColors.darkPrimary : GBTColors.primary,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0.8,
-              ),
-            ),
-            const SizedBox(height: GBTSpacing.xs),
-            Text(
               context.l10n(
                 ko: '여행의 사운드트랙',
                 en: 'Soundtrack of the journey',
                 ja: '旅のサウンドトラック',
               ),
-              style: GBTTypography.titleLarge.copyWith(
+              style: GBTTypography.titleMedium.copyWith(
                 color: isDark
                     ? GBTColors.darkTextPrimary
                     : GBTColors.textPrimary,
                 fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: GBTSpacing.xs2),
+            Text(
+              countLabel,
+              style: GBTTypography.labelSmall.copyWith(
+                color: isDark ? GBTColors.darkPrimary : GBTColors.primary,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ],
@@ -580,73 +849,270 @@ class _UnitOption {
   final int count;
 }
 
-class _UnitFilterBar extends StatelessWidget {
-  const _UnitFilterBar({
-    required this.options,
-    required this.selectedKey,
+class _CatalogControls extends StatelessWidget {
+  const _CatalogControls({
+    required this.searchController,
+    required this.query,
+    required this.sortOrder,
+    required this.unitOptions,
+    required this.selectedUnitKey,
+    required this.albumTypes,
+    required this.selectedAlbumType,
+    required this.showAlbumType,
     required this.isDark,
     required this.accent,
-    required this.onSelected,
+    required this.onQueryChanged,
+    required this.onClearQuery,
+    required this.onSortChanged,
+    required this.onUnitSelected,
+    required this.onAlbumTypeSelected,
   });
 
-  final List<_UnitOption> options;
-  final String? selectedKey;
+  final TextEditingController searchController;
+  final String query;
+  final MusicCatalogSortOrder sortOrder;
+  final List<_UnitOption> unitOptions;
+  final String? selectedUnitKey;
+  final List<String> albumTypes;
+  final String? selectedAlbumType;
+  final bool showAlbumType;
   final bool isDark;
   final Color accent;
-  final ValueChanged<String?> onSelected;
+  final ValueChanged<String> onQueryChanged;
+  final VoidCallback onClearQuery;
+  final ValueChanged<MusicCatalogSortOrder> onSortChanged;
+  final ValueChanged<String?> onUnitSelected;
+  final ValueChanged<String?> onAlbumTypeSelected;
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     final textSecondary = isDark
         ? GBTColors.darkTextSecondary
         : GBTColors.textSecondary;
-    _UnitOption? selected;
-    for (final option in options) {
-      if (option.key == selectedKey) selected = option;
+    _UnitOption? selectedUnit;
+    for (final option in unitOptions) {
+      if (option.key == selectedUnitKey) selectedUnit = option;
     }
 
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: PopupMenuButton<String>(
-        tooltip: context.l10n(ko: '유닛 필터', en: 'Unit filter', ja: 'ユニットフィルター'),
-        onSelected: (value) => onSelected(value == '__all__' ? null : value),
-        itemBuilder: (context) => [
-          CheckedPopupMenuItem<String>(
-            value: '__all__',
-            checked: selectedKey == null,
-            child: Text(context.l10n(ko: '전체', en: 'All', ja: '全体')),
-          ),
-          ...options.map(
-            (option) => CheckedPopupMenuItem<String>(
-              value: option.key,
-              checked: option.key == selectedKey,
-              child: Text('${option.label} · ${option.count}'),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TextField(
+          key: const ValueKey('music-catalog-search'),
+          controller: searchController,
+          onChanged: onQueryChanged,
+          textInputAction: TextInputAction.search,
+          decoration: InputDecoration(
+            isDense: true,
+            hintText: context.l10n(
+              ko: '곡·앨범 검색',
+              en: 'Search songs and albums',
+              ja: '曲・アルバムを検索',
+            ),
+            prefixIcon: const Icon(Icons.search_rounded, size: 20),
+            suffixIcon: query.trim().isEmpty
+                ? null
+                : IconButton(
+                    onPressed: onClearQuery,
+                    icon: const Icon(Icons.close_rounded, size: 18),
+                    tooltip: context.l10n(
+                      ko: '검색 지우기',
+                      en: 'Clear search',
+                      ja: '検索を消去',
+                    ),
+                  ),
+            border: const OutlineInputBorder(),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: GBTSpacing.sm,
+              vertical: GBTSpacing.sm,
             ),
           ),
-        ],
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 48),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: GBTSpacing.xs),
+        ),
+        const SizedBox(height: GBTSpacing.xs),
+        Wrap(
+          spacing: GBTSpacing.xs,
+          runSpacing: GBTSpacing.xs,
+          children: [
+            _CatalogPopupFilter<MusicCatalogSortOrder>(
+              tooltip: context.l10n(ko: '정렬', en: 'Sort', ja: '並び替え'),
+              icon: Icons.sort_rounded,
+              label: context.l10n(ko: '정렬', en: 'Sort', ja: '並び替え'),
+              valueLabel: _sortOrderLabel(context, sortOrder),
+              accent: accent,
+              textSecondary: textSecondary,
+              onSelected: onSortChanged,
+              items: [
+                for (final value in MusicCatalogSortOrder.values)
+                  CheckedPopupMenuItem<MusicCatalogSortOrder>(
+                    value: value,
+                    checked: value == sortOrder,
+                    child: Text(
+                      _sortOrderLabel(context, value),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+              ],
+            ),
+            if (unitOptions.isNotEmpty)
+              _CatalogPopupFilter<String>(
+                tooltip: context.l10n(
+                  ko: '유닛 필터',
+                  en: 'Unit filter',
+                  ja: 'ユニットフィルター',
+                ),
+                icon: Icons.tune_rounded,
+                label: context.l10n(ko: '유닛', en: 'Unit', ja: 'ユニット'),
+                valueLabel:
+                    selectedUnit?.label ??
+                    context.l10n(ko: '전체', en: 'All', ja: '全体'),
+                accent: accent,
+                textSecondary: textSecondary,
+                onSelected: (value) =>
+                    onUnitSelected(value == '__all__' ? null : value),
+                items: [
+                  CheckedPopupMenuItem<String>(
+                    value: '__all__',
+                    checked: selectedUnitKey == null,
+                    child: Text(
+                      context.l10n(ko: '전체', en: 'All', ja: '全体'),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  for (final option in unitOptions)
+                    CheckedPopupMenuItem<String>(
+                      value: option.key,
+                      checked: option.key == selectedUnitKey,
+                      child: Text(
+                        option.label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                ],
+              ),
+            if (showAlbumType && albumTypes.isNotEmpty)
+              _CatalogPopupFilter<String>(
+                tooltip: context.l10n(
+                  ko: '앨범 유형',
+                  en: 'Album type',
+                  ja: 'アルバム種別',
+                ),
+                icon: Icons.album_outlined,
+                label: context.l10n(ko: '유형', en: 'Type', ja: '種別'),
+                valueLabel:
+                    selectedAlbumType ??
+                    context.l10n(ko: '전체', en: 'All', ja: '全体'),
+                accent: accent,
+                textSecondary: textSecondary,
+                onSelected: (value) =>
+                    onAlbumTypeSelected(value == '__all__' ? null : value),
+                items: [
+                  CheckedPopupMenuItem<String>(
+                    value: '__all__',
+                    checked: selectedAlbumType == null,
+                    child: Text(
+                      context.l10n(ko: '전체', en: 'All', ja: '全体'),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  for (final type in albumTypes)
+                    CheckedPopupMenuItem<String>(
+                      value: type,
+                      checked:
+                          type.toLowerCase() ==
+                          selectedAlbumType?.trim().toLowerCase(),
+                      child: Text(
+                        type,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                ],
+              ),
+          ],
+        ),
+        if (query.trim().isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: GBTSpacing.xs2),
+            child: Text(
+              context.l10n(
+                ko: '"${query.trim()}" 검색 결과',
+                en: 'Results for "${query.trim()}"',
+                ja: '"${query.trim()}" の検索結果',
+              ),
+              style: GBTTypography.labelSmall.copyWith(
+                color: colors.onSurfaceVariant,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _CatalogPopupFilter<T> extends StatelessWidget {
+  const _CatalogPopupFilter({
+    required this.tooltip,
+    required this.icon,
+    required this.label,
+    required this.valueLabel,
+    required this.accent,
+    required this.textSecondary,
+    required this.onSelected,
+    required this.items,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final String label;
+  final String valueLabel;
+  final Color accent;
+  final Color textSecondary;
+  final ValueChanged<T> onSelected;
+  final List<PopupMenuEntry<T>> items;
+
+  @override
+  Widget build(BuildContext context) {
+    final maxWidth =
+        MediaQuery.sizeOf(context).width - (GBTSpacing.pageHorizontal * 2);
+    return PopupMenuButton<T>(
+      tooltip: tooltip,
+      onSelected: onSelected,
+      itemBuilder: (context) => items,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 48),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: GBTSpacing.xs),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: maxWidth.clamp(180, 320).toDouble(),
+            ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.tune_rounded, size: 18, color: accent),
+                Icon(icon, size: 18, color: accent),
                 const SizedBox(width: GBTSpacing.xs),
                 Text(
-                  context.l10n(ko: '유닛', en: 'Unit', ja: 'ユニット'),
+                  label,
                   style: GBTTypography.labelSmall.copyWith(
                     color: textSecondary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(width: 4),
-                Text(
-                  selected?.label ??
-                      context.l10n(ko: '전체', en: 'All', ja: '全体'),
-                  style: GBTTypography.labelMedium.copyWith(
-                    color: selected == null ? textSecondary : accent,
-                    fontWeight: FontWeight.w700,
+                Flexible(
+                  child: Text(
+                    valueLabel,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GBTTypography.labelMedium.copyWith(
+                      color: accent,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 2),
@@ -658,6 +1124,26 @@ class _UnitFilterBar extends StatelessWidget {
       ),
     );
   }
+}
+
+String _sortOrderLabel(BuildContext context, MusicCatalogSortOrder value) {
+  return switch (value) {
+    MusicCatalogSortOrder.titleAsc => context.l10n(
+      ko: '제목순',
+      en: 'Title',
+      ja: 'タイトル順',
+    ),
+    MusicCatalogSortOrder.releaseNewest => context.l10n(
+      ko: '최신 발매',
+      en: 'Newest release',
+      ja: '発売日が新しい順',
+    ),
+    MusicCatalogSortOrder.releaseOldest => context.l10n(
+      ko: '오래된 발매',
+      en: 'Oldest release',
+      ja: '発売日が古い順',
+    ),
+  };
 }
 
 /// EN: Accessible unit filter used by the music catalog index.
@@ -806,7 +1292,7 @@ class _AlbumsGrid extends StatelessWidget {
     final useSingleColumn =
         media.size.width < 360 || media.textScaler.scale(1) >= 1.5;
 
-    return GridView.builder(
+    final grid = GridView.builder(
       controller: scrollController,
       padding: const EdgeInsets.fromLTRB(
         GBTSpacing.pageHorizontal,
@@ -834,6 +1320,38 @@ class _AlbumsGrid extends StatelessWidget {
           onTap: () => onTap(albums[i]),
         );
       },
+    );
+    if (failure == null) return grid;
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            GBTSpacing.pageHorizontal,
+            0,
+            GBTSpacing.pageHorizontal,
+            GBTSpacing.xs,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  context.l10n(
+                    ko: '일부 앨범만 불러왔습니다.',
+                    en: 'Only part of the album catalog loaded.',
+                    ja: '一部のアルバムのみ読み込みました。',
+                  ),
+                  style: GBTTypography.bodySmall.copyWith(color: textSecondary),
+                ),
+              ),
+              TextButton(
+                onPressed: onRetry,
+                child: Text(context.l10n(ko: '다시 시도', en: 'Retry', ja: '再試行')),
+              ),
+            ],
+          ),
+        ),
+        Expanded(child: grid),
+      ],
     );
   }
 }

@@ -28,6 +28,7 @@ class Unit {
     this.logoUrl,
     this.colorHex,
     this.debutDate,
+    this.memberCount,
     this.memberSummaries = const [],
   });
 
@@ -39,6 +40,7 @@ class Unit {
   final String? logoUrl;
   final String? colorHex;
   final String? debutDate;
+  final int? memberCount;
   final List<UnitMemberSummary> memberSummaries;
 }
 

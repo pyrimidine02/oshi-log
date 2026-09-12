@@ -2,6 +2,14 @@
 
 ## 2026-09-12
 
+- Fixed song metadata hidden beneath tabs on notched phones: the header now
+  sizes to its content, and lyrics controls scroll with the lyrics at large text
+  sizes. Preserved catalog/setlist routes and native Material tab behavior.
+- Load all album cursor pages progressively, matching songs; added catalog
+  search, title/release sorting, unit filters, and album-type filtering.
+- Stop displaying unknown artist membership as zero. Unit list responses omit
+  member counts; preserve that distinction through DTO, cache, and domain mapping.
+
 - Added regression checks for shared HTTPS and `www.` link spans, including
   trailing punctuation, as used by the new voice actor activity tab.
 

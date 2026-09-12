@@ -44,7 +44,13 @@ void main() {
           final repository = _MusicRepository();
           final songResponse = Completer<Result<MusicSongDetail>>();
           final lyricsResponse = Completer<Result<MusicLyricsPayload>>();
-          when(() => repository.getAlbums(projectId: 'bandori')).thenAnswer(
+          when(
+            () => repository.getAlbums(
+              projectId: 'bandori',
+              cursor: any(named: 'cursor'),
+              size: 100,
+            ),
+          ).thenAnswer(
             (_) async => const Success(
               MusicCursorPage<MusicAlbumSummary>(
                 items: [

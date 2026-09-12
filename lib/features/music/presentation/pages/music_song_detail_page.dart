@@ -13,6 +13,7 @@ import '../../../../core/theme/gbt_colors.dart';
 import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';
 import '../../../../core/widgets/common/gbt_image.dart';
+import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
 import '../../application/music_controller.dart';
 import '../../domain/entities/music_entities.dart';
 
@@ -171,120 +172,91 @@ class _MusicSongDetailPageState extends ConsumerState<MusicSongDetailPage>
               ?.coverUrl
         : null;
 
+    final tabs = TabBar(
+      controller: _tabController,
+      isScrollable: textScale >= 1.8,
+      tabAlignment: textScale >= 1.8 ? TabAlignment.start : TabAlignment.fill,
+      indicatorColor: accent,
+      indicatorWeight: 2,
+      labelColor: accent,
+      unselectedLabelColor: isDark
+          ? GBTColors.darkTextSecondary
+          : GBTColors.textSecondary,
+      labelStyle: GBTTypography.labelSmall.copyWith(
+        fontWeight: FontWeight.w700,
+      ),
+      unselectedLabelStyle: GBTTypography.labelSmall.copyWith(
+        fontWeight: FontWeight.w500,
+      ),
+      tabs: [
+        Tab(
+          height: textScale >= 1.8 ? 56 : 48,
+          text: context.l10n(ko: '가사', en: 'Lyrics', ja: '歌詞'),
+        ),
+        Tab(
+          height: textScale >= 1.8 ? 56 : 48,
+          text: context.l10n(ko: '라이브 가이드', en: 'Live guide', ja: 'ライブガイド'),
+        ),
+        Tab(
+          height: textScale >= 1.8 ? 56 : 48,
+          text: context.l10n(ko: '곡 기록', en: 'Song record', ja: '楽曲記録'),
+        ),
+      ],
+    );
     return Scaffold(
       backgroundColor: bgColor,
+      appBar: gbtStandardAppBar(
+        context,
+        title: song?.title ?? context.l10n(ko: '곡 정보', en: 'Song', ja: '楽曲情報'),
+        leading: IconButton(
+          tooltip: context.l10n(ko: '뒤로', en: 'Back', ja: '戻る'),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
+      ),
       body: NestedScrollView(
-        headerSliverBuilder: (context, innerBoxIsScrolled) {
-          return [
-            SliverAppBar(
-              expandedHeight: textScale >= 2 ? 320 : 220,
-              pinned: true,
-              backgroundColor: bgColor,
-              surfaceTintColor: Colors.transparent,
-              elevation: 0,
-              leading: IconButton(
-                tooltip: context.l10n(ko: '뒤로', en: 'Back', ja: '戻る'),
-                icon: Icon(
-                  Icons.arrow_back_ios_new_rounded,
-                  color: isDark
-                      ? GBTColors.darkTextPrimary
-                      : GBTColors.textPrimary,
-                  size: 20,
-                ),
-                onPressed: () => Navigator.of(context).maybePop(),
-              ),
-              // EN: Collapsed title — shown when scrolled up.
-              // KO: 축소 타이틀 — 스크롤 시 표시됩니다.
-              title: song == null
-                  ? null
-                  : Text(
-                      song.title,
-                      style: GBTTypography.titleSmall.copyWith(
-                        color: isDark
-                            ? GBTColors.darkTextPrimary
-                            : GBTColors.textPrimary,
-                        fontWeight: FontWeight.w700,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-              flexibleSpace: FlexibleSpaceBar(
-                collapseMode: CollapseMode.pin,
-                background: _SongHeroBg(
-                  songState: songState,
-                  albumCoverUrl: albumCoverUrl,
-                  isDark: isDark,
-                  accent: accent,
-                  bgColor: bgColor,
-                  onRetry: () => _refreshAll(context),
-                ),
-              ),
-              bottom: PreferredSize(
-                preferredSize: Size.fromHeight(textScale >= 1.5 ? 64 : 48),
-                child: Material(
-                  color: bgColor,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      border: Border(
-                        top: BorderSide(
-                          color: isDark
-                              ? GBTColors.darkBorder
-                              : GBTColors.border,
-                        ),
-                        bottom: BorderSide(
-                          color: isDark
-                              ? GBTColors.darkBorder
-                              : GBTColors.border,
-                        ),
-                      ),
-                    ),
-                    child: TabBar(
-                      controller: _tabController,
-                      isScrollable: textScale >= 1.8,
-                      tabAlignment: textScale >= 1.8
-                          ? TabAlignment.start
-                          : TabAlignment.fill,
-                      indicatorColor: accent,
-                      indicatorWeight: 2,
-                      labelColor: accent,
-                      unselectedLabelColor: isDark
-                          ? GBTColors.darkTextSecondary
-                          : GBTColors.textSecondary,
-                      labelStyle: GBTTypography.labelSmall.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                      unselectedLabelStyle: GBTTypography.labelSmall.copyWith(
-                        fontWeight: FontWeight.w500,
-                      ),
-                      tabs: [
-                        Tab(
-                          height: textScale >= 1.8 ? 56 : 48,
-                          text: context.l10n(ko: '가사', en: 'Lyrics', ja: '歌詞'),
-                        ),
-                        Tab(
-                          height: textScale >= 1.8 ? 56 : 48,
-                          text: context.l10n(
-                            ko: '라이브 가이드',
-                            en: 'Live guide',
-                            ja: 'ライブガイド',
-                          ),
-                        ),
-                        Tab(
-                          height: textScale >= 1.8 ? 56 : 48,
-                          text: context.l10n(
-                            ko: '곡 기록',
-                            en: 'Song record',
-                            ja: '楽曲記録',
-                          ),
-                        ),
-                      ],
+        headerSliverBuilder: (context, innerBoxIsScrolled) => [
+          // EN: Let the song content determine its height; tabs are a separate
+          // pinned sliver so the safe area and long titles cannot overlap them.
+          // KO: 곡 내용만큼 높이를 확보하고 탭을 별도 고정 슬리버로 배치해
+          // 안전 영역과 긴 제목이 탭에 가려지지 않도록 합니다.
+          SliverToBoxAdapter(
+            child: _SongHeroBg(
+              songState: songState,
+              albumCoverUrl: albumCoverUrl,
+              isDark: isDark,
+              accent: accent,
+              bgColor: bgColor,
+              onRetry: () => _refreshAll(context),
+            ),
+          ),
+          SliverAppBar(
+            primary: false,
+            toolbarHeight: 0,
+            automaticallyImplyLeading: false,
+            pinned: true,
+            backgroundColor: bgColor,
+            surfaceTintColor: Colors.transparent,
+            elevation: 0,
+            scrolledUnderElevation: 0,
+            bottom: PreferredSize(
+              preferredSize: Size.fromHeight(tabs.preferredSize.height + 2),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  border: Border.symmetric(
+                    horizontal: BorderSide(
+                      color: Theme.of(context).colorScheme.outlineVariant,
                     ),
                   ),
                 ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 1),
+                  child: tabs,
+                ),
               ),
             ),
-          ];
-        },
+          ),
+        ],
         body: TabBarView(
           controller: _tabController,
           children: [
@@ -332,11 +304,11 @@ class _MusicSongDetailPageState extends ConsumerState<MusicSongDetailPage>
 }
 
 // ══════════════════════════════════════════════════════════════
-// HERO BACKGROUND (SliverAppBar flexibleSpace)
+// SCROLLING SONG HEADER
 // ══════════════════════════════════════════════════════════════
 
-/// EN: Hero background widget for the SliverAppBar expandable area.
-/// KO: SliverAppBar 확장 영역의 히어로 배경 위젯입니다.
+/// EN: Content-sized song header above the pinned tabs.
+/// KO: 고정 탭 위에서 내용만큼 높이를 갖는 곡 헤더입니다.
 class _SongHeroBg extends StatelessWidget {
   const _SongHeroBg({
     required this.songState,
@@ -417,6 +389,8 @@ class _HeroBgShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      constraints: const BoxConstraints(minHeight: 104),
+      padding: const EdgeInsets.all(GBTSpacing.md),
       decoration: BoxDecoration(
         color: bgColor,
         border: Border(
@@ -468,130 +442,73 @@ class _HeroBgData extends StatelessWidget {
       if (song.bpm != null) 'BPM ${song.bpm}',
       if (song.durationMs != null) _formatMs(song.durationMs!),
     ];
-    final textScale = MediaQuery.textScalerOf(context).scale(1);
-    // EN: Use the compact metadata layout before enlarged text exceeds the
-    // fixed hero height, including the intermediate 150–199% scale range.
-    // KO: 중간 확대 구간인 150–199%에서도 고정 헤더 높이를 넘지 않도록
-    // 메타정보를 간결한 레이아웃으로 전환합니다.
-    final usesLargeTextLayout = textScale >= 1.5;
-
-    final textualDossier = Column(
-      mainAxisAlignment: MainAxisAlignment.center,
+    final titleTrackLabel = context.l10n(
+      ko: '타이틀곡',
+      en: 'Title track',
+      ja: '表題曲',
+    );
+    final details = Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (!usesLargeTextLayout) ...[
-          ExcludeSemantics(
-            child: Text(
-              'TRAVEL AUDIO DOSSIER',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GBTTypography.labelSmall.copyWith(
-                color: accent,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0.8,
-              ),
+        Semantics(
+          header: true,
+          child: Text(
+            song.title,
+            style: GBTTypography.titleLarge.copyWith(
+              color: textPrimary,
+              fontWeight: FontWeight.w700,
+              height: 1.25,
             ),
-          ),
-          const SizedBox(height: 4),
-        ],
-        Text(
-          song.title,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: GBTTypography.titleLarge.copyWith(
-            color: textPrimary,
-            fontWeight: FontWeight.w800,
-            height: 1.15,
           ),
         ),
-        if (usesLargeTextLayout) ...[
+        if ((song.primaryUnitName ?? '').trim().isNotEmpty ||
+            altTitle != null) ...[
           const SizedBox(height: GBTSpacing.xs),
           Text(
-            [
-              if ((song.primaryUnitName ?? '').trim().isNotEmpty)
-                song.primaryUnitName!.trim(),
-              if (isTitleTrack) 'TITLE TRACK',
-              ...metadata,
-            ].join('  ·  '),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: GBTTypography.labelSmall.copyWith(
-              color: accent,
-              fontWeight: FontWeight.w700,
-            ),
+            (song.primaryUnitName ?? '').trim().isNotEmpty
+                ? song.primaryUnitName!
+                : altTitle!,
+            style: GBTTypography.bodySmall.copyWith(color: textSecondary),
           ),
-        ] else ...[
-          if ((song.primaryUnitName ?? '').trim().isNotEmpty) ...[
-            const SizedBox(height: 3),
-            Text(
-              song.primaryUnitName!,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GBTTypography.bodySmall.copyWith(
-                color: textSecondary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ] else if (altTitle != null) ...[
-            const SizedBox(height: 3),
-            Text(
-              altTitle,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GBTTypography.bodySmall.copyWith(color: textSecondary),
-            ),
-          ],
-          if (metadata.isNotEmpty || isTitleTrack) ...[
-            const SizedBox(height: GBTSpacing.xs),
-            Text(
-              [if (isTitleTrack) 'TITLE TRACK', ...metadata].join('  ·  '),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GBTTypography.labelSmall.copyWith(
-                color: accent,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
+        ],
+        if (metadata.isNotEmpty || isTitleTrack) ...[
+          const SizedBox(height: GBTSpacing.xs),
+          Text(
+            [if (isTitleTrack) titleTrackLabel, ...metadata].join('  ·  '),
+            style: GBTTypography.labelSmall.copyWith(color: accent),
+          ),
         ],
       ],
     );
-
-    return Container(
+    return Padding(
       key: const Key('music-song-dossier'),
-      decoration: BoxDecoration(
-        color: bgColor,
-        border: Border(
-          left: BorderSide(color: accent, width: 3),
-          bottom: BorderSide(
-            color: isDark ? GBTColors.darkBorder : GBTColors.border,
-          ),
-        ),
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(
-            GBTSpacing.pageHorizontal,
-            usesLargeTextLayout ? 56 : 58,
-            GBTSpacing.pageHorizontal,
-            GBTSpacing.sm,
-          ),
-          child: usesLargeTextLayout
-              ? textualDossier
-              : Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    _SongDossierCover(
-                      imageUrl: hasCover ? albumCoverUrl : null,
-                      title: song.title,
-                      accent: accent,
-                    ),
-                    const SizedBox(width: GBTSpacing.md),
-                    Expanded(child: textualDossier),
-                  ],
-                ),
-        ),
+      padding: const EdgeInsets.all(GBTSpacing.pageHorizontal),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final cover = _SongDossierCover(
+            imageUrl: hasCover ? albumCoverUrl : null,
+            title: song.title,
+            accent: accent,
+          );
+          if (MediaQuery.textScalerOf(context).scale(1) >= 1.5) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (hasCover) ...[cover, const SizedBox(height: GBTSpacing.md)],
+                details,
+              ],
+            );
+          }
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              cover,
+              const SizedBox(width: GBTSpacing.md),
+              Expanded(child: details),
+            ],
+          );
+        },
       ),
     );
   }
@@ -697,40 +614,28 @@ class _LyricsTab extends ConsumerWidget {
     return RefreshIndicator(
       color: accent,
       onRefresh: onRefresh,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          GBTSpacing.pageHorizontal,
-          GBTSpacing.md,
-          GBTSpacing.pageHorizontal,
-          0,
+      child: _IntegratedLyricsPanel(
+        controls: Padding(
+          padding: const EdgeInsets.only(bottom: GBTSpacing.md),
+          child: _LyricsFilterRow(
+            includeRomanized: includeRomanized,
+            includeTranslated: includeTranslated,
+            isDark: isDark,
+            accent: accent,
+            onToggleRomanized: onToggleRomanized,
+            onToggleTranslated: onToggleTranslated,
+          ),
         ),
-        child: Column(
-          children: [
-            _LyricsFilterRow(
-              includeRomanized: includeRomanized,
-              includeTranslated: includeTranslated,
-              isDark: isDark,
-              accent: accent,
-              onToggleRomanized: onToggleRomanized,
-              onToggleTranslated: onToggleTranslated,
-            ),
-            const SizedBox(height: GBTSpacing.md),
-            Expanded(
-              child: _IntegratedLyricsPanel(
-                liveContextState: liveContextState,
-                lyricsState: lyricsState,
-                partsState: null,
-                callGuideState: null,
-                includeRomanized: includeRomanized,
-                includeTranslated: includeTranslated,
-                showMemberParts: false,
-                showCallGuide: false,
-                isDark: isDark,
-                accent: accent,
-              ),
-            ),
-          ],
-        ),
+        liveContextState: liveContextState,
+        lyricsState: lyricsState,
+        partsState: null,
+        callGuideState: null,
+        includeRomanized: includeRomanized,
+        includeTranslated: includeTranslated,
+        showMemberParts: false,
+        showCallGuide: false,
+        isDark: isDark,
+        accent: accent,
       ),
     );
   }
@@ -1651,6 +1556,7 @@ class _PartMemberOption {
 
 class _IntegratedLyricsPanel extends StatefulWidget {
   const _IntegratedLyricsPanel({
+    required this.controls,
     required this.lyricsState,
     required this.partsState,
     required this.callGuideState,
@@ -1663,6 +1569,7 @@ class _IntegratedLyricsPanel extends StatefulWidget {
     this.liveContextState,
   });
 
+  final Widget controls;
   final AsyncValue<MusicSongLiveContext?>? liveContextState;
   final AsyncValue<MusicLyricsPayload>? lyricsState;
   final AsyncValue<MusicPartsPayload>? partsState;
@@ -1707,7 +1614,7 @@ class _IntegratedLyricsPanelState extends State<_IntegratedLyricsPanel> {
       return ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: GBTSpacing.paddingMd,
-        children: const [_InlineLoading()],
+        children: [widget.controls, const _InlineLoading()],
       );
     }
 
@@ -1723,7 +1630,10 @@ class _IntegratedLyricsPanelState extends State<_IntegratedLyricsPanel> {
       return ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: GBTSpacing.paddingMd,
-        children: [_InlineError(message: _errorText(context, effectiveError))],
+        children: [
+          widget.controls,
+          _InlineError(message: _errorText(context, effectiveError)),
+        ],
       );
     }
 
@@ -1732,6 +1642,7 @@ class _IntegratedLyricsPanelState extends State<_IntegratedLyricsPanel> {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: GBTSpacing.paddingMd,
         children: [
+          widget.controls,
           _EmptyHint(
             text: context.l10n(
               ko: '가사/파트/콜가이드 정보가 없습니다.',
@@ -1978,8 +1889,9 @@ class _IntegratedLyricsPanelState extends State<_IntegratedLyricsPanel> {
         GBTSpacing.md,
         GBTSpacing.xxl,
       ),
-      itemCount: itemBuilders.length,
-      itemBuilder: (context, index) => itemBuilders[index](),
+      itemCount: itemBuilders.length + 1,
+      itemBuilder: (context, index) =>
+          index == 0 ? widget.controls : itemBuilders[index - 1](),
     );
   }
 

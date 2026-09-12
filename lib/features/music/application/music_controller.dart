@@ -62,8 +62,10 @@ class MusicAlbumsController
 
   final Ref _ref;
   final String _projectId;
+  int _loadGeneration = 0;
 
   Future<void> load({bool forceRefresh = false}) async {
+    final generation = ++_loadGeneration;
     final projectId = _projectId.trim();
     if (projectId.isEmpty || !mounted) {
       state = const MusicCursorState(
@@ -82,53 +84,78 @@ class MusicAlbumsController
       clearFailure: true,
     );
     final repository = await _ref.read(musicRepositoryProvider.future);
-    final result = await repository.getAlbums(projectId: projectId);
-    if (!mounted) return;
-    if (result case Success<MusicCursorPage<MusicAlbumSummary>>(:final data)) {
-      state = state.copyWith(
-        items: data.items,
-        hasNext: data.hasNext,
-        nextCursor: data.nextCursor,
-        isLoading: false,
-        clearFailure: true,
+    if (!mounted || generation != _loadGeneration) return;
+    final albumsById = <String, MusicAlbumSummary>{};
+    final seenCursors = <String>{};
+    String? cursor;
+    Failure? failure;
+    var completed = false;
+
+    for (var page = 0; page < 100; page++) {
+      if (!mounted || generation != _loadGeneration) return;
+      final result = await repository.getAlbums(
+        projectId: projectId,
+        cursor: cursor,
+        size: 100,
       );
-      return;
+      if (!mounted || generation != _loadGeneration) return;
+      if (result case Success<MusicCursorPage<MusicAlbumSummary>>(
+        :final data,
+      )) {
+        for (final album in data.items) {
+          albumsById.putIfAbsent(album.id, () => album);
+        }
+        state = state.copyWith(
+          items: albumsById.values.toList(growable: false),
+          isLoading: true,
+          clearFailure: true,
+        );
+        final nextCursor = data.nextCursor?.trim();
+        if (!data.hasNext) {
+          completed = true;
+          break;
+        }
+        if (nextCursor == null || nextCursor.isEmpty) {
+          failure = const UnknownFailure(
+            'Album catalog hasNext without a next cursor',
+            code: 'music_album_cursor_missing',
+          );
+          break;
+        }
+        if (!seenCursors.add(nextCursor)) {
+          failure = const UnknownFailure(
+            'Album catalog repeated a cursor',
+            code: 'music_album_cursor_repeated',
+          );
+          break;
+        }
+        cursor = nextCursor;
+        continue;
+      }
+      failure = result.failureOrNull;
+      break;
     }
+    if (!completed && failure == null) {
+      failure = const UnknownFailure(
+        'Album catalog exceeded the page safety limit',
+        code: 'music_album_page_limit',
+      );
+    }
+
+    if (!mounted || generation != _loadGeneration) return;
     state = state.copyWith(
+      items: albumsById.values.toList(growable: false),
+      hasNext: false,
+      nextCursor: null,
       isLoading: false,
-      failure: result.failureOrNull,
-      clearFailure: true,
+      failure: failure,
+      clearFailure: failure == null,
     );
   }
 
   Future<void> loadMore() async {
-    if (state.isLoading || state.isLoadingMore || !state.hasNext) return;
-    final projectId = _projectId.trim();
-    final cursor = state.nextCursor;
-    if (projectId.isEmpty || cursor == null || cursor.isEmpty) return;
-
-    state = state.copyWith(isLoadingMore: true, clearFailure: true);
-    final repository = await _ref.read(musicRepositoryProvider.future);
-    final result = await repository.getAlbums(
-      projectId: projectId,
-      cursor: cursor,
-    );
-    if (!mounted) return;
-    if (result case Success<MusicCursorPage<MusicAlbumSummary>>(:final data)) {
-      state = state.copyWith(
-        items: [...state.items, ...data.items],
-        hasNext: data.hasNext,
-        nextCursor: data.nextCursor,
-        isLoadingMore: false,
-        clearFailure: true,
-      );
-      return;
-    }
-    state = state.copyWith(
-      isLoadingMore: false,
-      failure: result.failureOrNull,
-      clearFailure: true,
-    );
+    if (state.isLoading) return;
+    await load(forceRefresh: true);
   }
 }
 

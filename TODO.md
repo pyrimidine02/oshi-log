@@ -1,5 +1,13 @@
 # TODO
 
+- Verify catalog/header follow-up on an installed phone (2026-09-12):
+  - Check the reported Japanese song title with the notch, all three tabs,
+    300% text, and catalog search with keyboard, unit/type filters and sort.
+  - Confirm the complete production catalog and offline/retry behavior. Transport
+    uses sequential pages of 100; interrupted loads remain explicitly partial.
+  - Unit list API omits membership; counts stay hidden until provided. No per-card
+    detail requests are added. Remove this item after installed-device QA.
+
 - Verify community deep pages in an installed build (2026-09-12):
   - Post detail -> reply -> edit/report menu; create/edit -> topic/tag picker;
     travel review -> edit/place/date picker; profile -> follow/message/settings.

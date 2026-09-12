@@ -98,6 +98,51 @@ void main() {
     );
   }
 
+  testWidgets('notched phone header stays above tabs on every tab', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      _testApp(
+        detail: const MusicSongDetail(
+          id: songId,
+          projectId: projectId,
+          title: 'ジャイアント・キラー・チューン',
+          primaryUnitName: '一家Dumb Rock!',
+          bpm: 192,
+          durationMs: 368000,
+        ),
+        lyrics: const MusicLyricsPayload(
+          songId: songId,
+          version: 'FULL',
+          lines: [],
+        ),
+        emptyParts: emptyParts,
+        emptyCallGuide: emptyCallGuide,
+        textScaler: TextScaler.noScaling,
+        topInset: 62,
+      ),
+    );
+    await tester.pumpAndSettle();
+    for (final index in [0, 1, 2]) {
+      await tester.tap(find.byType(Tab).at(index));
+      await tester.pumpAndSettle();
+      final header = find.byKey(const Key('music-song-dossier'));
+      final metadata = find.descendant(
+        of: header,
+        matching: find.textContaining('BPM 192'),
+      );
+      expect(
+        tester.getBottomLeft(metadata).dy,
+        lessThanOrEqualTo(tester.getTopLeft(find.byType(TabBar)).dy),
+      );
+      expect(tester.takeException(), isNull);
+    }
+  });
+
   for (final scale in [1.5, 1.8]) {
     testWidgets('populated song header fits at ${scale}x text', (tester) async {
       tester.view.physicalSize = const Size(320, 640);
@@ -204,6 +249,17 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Primary release'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('Compilation release'),
+        180,
+        scrollable: find
+            .descendant(
+              of: find.byType(TabBarView),
+              matching: find.byType(Scrollable),
+            )
+            .last,
+      );
+      await tester.pumpAndSettle();
       expect(find.text('Compilation release'), findsOneWidget);
       expect(find.textContaining('2027년 봄'), findsOneWidget);
       expect(find.text('0곡'), findsNothing);
@@ -242,10 +298,19 @@ void main() {
     await tester.pump();
 
     expect(tester.takeException(), isNull);
-    expect(
-      tester.getSize(find.byKey(const Key('music-song-dossier'))).height,
-      lessThanOrEqualTo(320),
+    await tester.scrollUntilVisible(
+      find.textContaining('BPM 192'),
+      240,
+      scrollable: find.byType(Scrollable).first,
     );
+    await tester.pumpAndSettle();
+    expect(find.textContaining('BPM 192').hitTestable(), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.byType(TabBar),
+      120,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
     expect(find.byType(Tab), findsNWidgets(3));
     for (final tab in tester.widgetList<Tab>(find.byType(Tab))) {
       expect(tab, isNotNull);
@@ -497,6 +562,7 @@ Widget _testApp({
   required MusicPartsPayload emptyParts,
   required MusicCallGuidePayload emptyCallGuide,
   TextScaler? textScaler,
+  double topInset = 0,
 }) {
   final page = router == null
       ? const MusicSongDetailPage(projectId: 'project', songId: 'song')
@@ -567,6 +633,8 @@ Widget _testApp({
               data: MediaQueryData(
                 size: const Size(320, 640),
                 textScaler: textScaler,
+                padding: EdgeInsets.only(top: topInset),
+                viewPadding: EdgeInsets.only(top: topInset),
               ),
               child: page,
             ),

@@ -28,6 +28,7 @@ void main() {
       displayName: 'MyGO!!!!!',
       description: 'A band finding its way through the city.',
       colorHex: '#2B7773',
+      memberCount: 5,
       memberSummaries: [
         UnitMemberSummary(id: '1', characterName: 'Tomori'),
         UnitMemberSummary(id: '2', characterName: 'Anon'),
@@ -35,6 +36,11 @@ void main() {
         UnitMemberSummary(id: '4', characterName: 'Soyo'),
         UnitMemberSummary(id: '5', characterName: 'Taki'),
       ],
+    ),
+    const Unit(
+      id: 'unit-unknown',
+      code: 'unknown',
+      displayName: 'Unknown Count Band',
     ),
   ];
 
@@ -98,6 +104,9 @@ void main() {
 
     expect(find.text('MyGO!!!!!'), findsOneWidget);
     expect(find.text('5 members'), findsOneWidget);
+    expect(find.text('Unknown Count Band'), findsOneWidget);
+    expect(find.text('0 members'), findsNothing);
+    expect(find.text('0명'), findsNothing);
 
     await tester.tap(find.byKey(const Key('field-guide-section-kit')));
     await tester.pumpAndSettle();

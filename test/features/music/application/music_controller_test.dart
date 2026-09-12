@@ -14,6 +14,296 @@ class _MockMusicRepository extends Mock implements MusicRepository {}
 
 void main() {
   test(
+    'album controller collects every cursor page and removes duplicates',
+    () async {
+      final repository = _MockMusicRepository();
+      when(
+        () => repository.getAlbums(
+          projectId: 'project',
+          cursor: null,
+          size: any(named: 'size'),
+        ),
+      ).thenAnswer(
+        (_) async => Result.success(
+          const MusicCursorPage(
+            items: [
+              MusicAlbumSummary(
+                id: 'album-1',
+                projectId: 'project',
+                title: 'First',
+                type: 'album',
+              ),
+              MusicAlbumSummary(
+                id: 'album-2',
+                projectId: 'project',
+                title: 'Second',
+                type: 'single',
+              ),
+            ],
+            hasNext: true,
+            nextCursor: 'next-1',
+          ),
+        ),
+      );
+      when(
+        () => repository.getAlbums(
+          projectId: 'project',
+          cursor: 'next-1',
+          size: any(named: 'size'),
+        ),
+      ).thenAnswer(
+        (_) async => Result.success(
+          const MusicCursorPage(
+            items: [
+              MusicAlbumSummary(
+                id: 'album-2',
+                projectId: 'project',
+                title: 'Second',
+                type: 'single',
+              ),
+              MusicAlbumSummary(
+                id: 'album-3',
+                projectId: 'project',
+                title: 'Third',
+                type: 'album',
+              ),
+            ],
+            hasNext: false,
+          ),
+        ),
+      );
+
+      final container = ProviderContainer(
+        overrides: [
+          musicRepositoryProvider.overrideWith((ref) async => repository),
+        ],
+      );
+      addTearDown(container.dispose);
+      final provider = musicAlbumsControllerProvider('project');
+      final subscription = container.listen(
+        provider,
+        (_, _) {},
+        fireImmediately: true,
+      );
+      addTearDown(subscription.close);
+
+      await _pumpUntilLoaded(container, provider);
+
+      final state = container.read(provider);
+      expect(state.items.map((album) => album.id), [
+        'album-1',
+        'album-2',
+        'album-3',
+      ]);
+      expect(state.hasNext, isFalse);
+      expect(state.nextCursor, isNull);
+      verify(
+        () => repository.getAlbums(
+          projectId: 'project',
+          cursor: any(named: 'cursor'),
+          size: any(named: 'size'),
+        ),
+      ).called(2);
+    },
+  );
+
+  test('album controller stops when the API omits a required cursor', () async {
+    final repository = _MockMusicRepository();
+    when(
+      () => repository.getAlbums(
+        projectId: 'project',
+        cursor: null,
+        size: any(named: 'size'),
+      ),
+    ).thenAnswer(
+      (_) async => Result.success(
+        const MusicCursorPage(
+          items: [
+            MusicAlbumSummary(
+              id: 'album-1',
+              projectId: 'project',
+              title: 'First',
+              type: 'album',
+            ),
+          ],
+          hasNext: true,
+        ),
+      ),
+    );
+
+    final container = ProviderContainer(
+      overrides: [
+        musicRepositoryProvider.overrideWith((ref) async => repository),
+      ],
+    );
+    addTearDown(container.dispose);
+    final provider = musicAlbumsControllerProvider('project');
+    final subscription = container.listen(
+      provider,
+      (_, _) {},
+      fireImmediately: true,
+    );
+    addTearDown(subscription.close);
+
+    await _pumpUntilLoaded(container, provider);
+
+    final state = container.read(provider);
+    expect(state.items.map((album) => album.id), ['album-1']);
+    expect(state.hasNext, isFalse);
+    expect(state.failure?.code, 'music_album_cursor_missing');
+  });
+
+  test('album controller stops when the API repeats a cursor', () async {
+    final repository = _MockMusicRepository();
+    when(
+      () => repository.getAlbums(
+        projectId: 'project',
+        cursor: null,
+        size: any(named: 'size'),
+      ),
+    ).thenAnswer(
+      (_) async => Result.success(
+        const MusicCursorPage(
+          items: [
+            MusicAlbumSummary(
+              id: 'album-1',
+              projectId: 'project',
+              title: 'First',
+              type: 'album',
+            ),
+          ],
+          hasNext: true,
+          nextCursor: 'same',
+        ),
+      ),
+    );
+    when(
+      () => repository.getAlbums(
+        projectId: 'project',
+        cursor: 'same',
+        size: any(named: 'size'),
+      ),
+    ).thenAnswer(
+      (_) async => Result.success(
+        const MusicCursorPage(
+          items: [
+            MusicAlbumSummary(
+              id: 'album-2',
+              projectId: 'project',
+              title: 'Second',
+              type: 'single',
+            ),
+          ],
+          hasNext: true,
+          nextCursor: 'same',
+        ),
+      ),
+    );
+
+    final container = ProviderContainer(
+      overrides: [
+        musicRepositoryProvider.overrideWith((ref) async => repository),
+      ],
+    );
+    addTearDown(container.dispose);
+    final provider = musicAlbumsControllerProvider('project');
+    final subscription = container.listen(
+      provider,
+      (_, _) {},
+      fireImmediately: true,
+    );
+    addTearDown(subscription.close);
+
+    await _pumpUntilLoaded(container, provider);
+
+    final state = container.read(provider);
+    expect(state.items.map((album) => album.id), ['album-1', 'album-2']);
+    expect(state.hasNext, isFalse);
+    expect(state.failure?.code, 'music_album_cursor_repeated');
+  });
+
+  test('album controller retries after a cursor-chain failure', () async {
+    final repository = _MockMusicRepository();
+    var failSecondPage = true;
+    when(
+      () => repository.getAlbums(
+        projectId: 'project',
+        cursor: null,
+        size: any(named: 'size'),
+      ),
+    ).thenAnswer(
+      (_) async => Result.success(
+        const MusicCursorPage(
+          items: [
+            MusicAlbumSummary(
+              id: 'album-1',
+              projectId: 'project',
+              title: 'First',
+              type: 'album',
+            ),
+          ],
+          hasNext: true,
+          nextCursor: 'next',
+        ),
+      ),
+    );
+    when(
+      () => repository.getAlbums(
+        projectId: 'project',
+        cursor: 'next',
+        size: any(named: 'size'),
+      ),
+    ).thenAnswer((_) async {
+      if (failSecondPage) {
+        return const Result<MusicCursorPage<MusicAlbumSummary>>.failure(
+          NetworkFailure('offline'),
+        );
+      }
+      return Result.success(
+        const MusicCursorPage(
+          items: [
+            MusicAlbumSummary(
+              id: 'album-2',
+              projectId: 'project',
+              title: 'Second',
+              type: 'single',
+            ),
+          ],
+          hasNext: false,
+        ),
+      );
+    });
+
+    final container = ProviderContainer(
+      overrides: [
+        musicRepositoryProvider.overrideWith((ref) async => repository),
+      ],
+    );
+    addTearDown(container.dispose);
+    final provider = musicAlbumsControllerProvider('project');
+    final subscription = container.listen(
+      provider,
+      (_, _) {},
+      fireImmediately: true,
+    );
+    addTearDown(subscription.close);
+
+    await _pumpUntilLoaded(container, provider);
+    expect(container.read(provider).items.map((album) => album.id), [
+      'album-1',
+    ]);
+    expect(container.read(provider).failure, isA<NetworkFailure>());
+
+    failSecondPage = false;
+    await container.read(provider.notifier).load(forceRefresh: true);
+    await _pumpUntilLoaded(container, provider);
+
+    final recovered = container.read(provider);
+    expect(recovered.items.map((album) => album.id), ['album-1', 'album-2']);
+    expect(recovered.failure, isNull);
+  });
+
+  test(
     'song controller collects every cursor page and removes duplicates',
     () async {
       final repository = _MockMusicRepository();
@@ -328,4 +618,14 @@ void main() {
       ),
     );
   });
+}
+
+Future<void> _pumpUntilLoaded<T>(
+  ProviderContainer container,
+  ProviderListenable<MusicCursorState<T>> provider,
+) async {
+  for (var attempt = 0; attempt < 10; attempt++) {
+    await container.pump();
+    if (!container.read(provider).isLoading) break;
+  }
 }

@@ -189,15 +189,20 @@ class _ArtistCard extends StatelessWidget {
         : GBTColors.textSecondary;
     final artistColor = _artistColor(artist.colorHex, isDark: isDark);
     final imageUrl = artist.logoUrl?.trim();
-    final memberLabel = context.l10n(
-      ko: '${artist.memberSummaries.length}명',
-      en: '${artist.memberSummaries.length} members',
-      ja: '${artist.memberSummaries.length}人',
-    );
+    final memberCount = artist.memberCount;
+    final memberLabel = memberCount == null
+        ? null
+        : context.l10n(
+            ko: '$memberCount명',
+            en: '$memberCount members',
+            ja: '$memberCount人',
+          );
 
     return Semantics(
       button: true,
-      label: '${artist.displayName}, $memberLabel',
+      label: memberLabel == null
+          ? artist.displayName
+          : '${artist.displayName}, $memberLabel',
       child: Material(
         color: surface,
         shape: RoundedRectangleBorder(
@@ -240,16 +245,19 @@ class _ArtistCard extends StatelessWidget {
                     const SizedBox(height: GBTSpacing.xs),
                     Row(
                       children: [
-                        Expanded(
-                          child: Text(
-                            memberLabel,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: GBTTypography.labelSmall.copyWith(
-                              color: muted,
+                        if (memberLabel != null)
+                          Expanded(
+                            child: Text(
+                              memberLabel,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GBTTypography.labelSmall.copyWith(
+                                color: muted,
+                              ),
                             ),
-                          ),
-                        ),
+                          )
+                        else
+                          const Spacer(),
                         Icon(
                           Icons.arrow_outward_rounded,
                           size: 16,

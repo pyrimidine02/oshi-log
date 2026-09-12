@@ -36,6 +36,7 @@ extension UnitDtoDomainMapper on UnitDto {
       logoUrl: dto.logoUrl,
       colorHex: dto.colorHex,
       debutDate: dto.debutDate,
+      memberCount: dto.memberCount,
       memberSummaries: List.unmodifiable(
         dto.members.map((value) => value.toDomain()).toList(growable: false),
       ),

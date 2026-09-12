@@ -57,6 +57,7 @@ class UnitDto {
     this.logoUrl,
     this.debutDate,
     this.status,
+    this.memberCount,
     this.members = const [],
   });
 
@@ -68,6 +69,7 @@ class UnitDto {
   final String? logoUrl;
   final String? debutDate;
   final String? status;
+  final int? memberCount;
   final List<UnitMemberSummaryDto> members;
 
   // EN: Backward-compatible aliases for existing UI code.
@@ -76,6 +78,8 @@ class UnitDto {
   String get displayName => name;
 
   factory UnitDto.fromJson(Map<String, dynamic> json) {
+    final rawMembers = json['members'];
+    final members = _membersFromAny(rawMembers);
     return UnitDto(
       id: _string(json, ['id', 'unitId']) ?? '',
       slug: _string(json, ['slug', 'code', 'bandCode']) ?? '',
@@ -85,7 +89,10 @@ class UnitDto {
       logoUrl: _string(json, ['logoUrl', 'logoImageUrl']),
       debutDate: _string(json, ['debutDate']),
       status: _string(json, ['status']),
-      members: _membersFromAny(json['members']),
+      memberCount:
+          _int(json, ['memberCount', 'membersCount', 'member_count']) ??
+          (rawMembers is List ? members.length : null),
+      members: members,
     );
   }
 
@@ -99,6 +106,7 @@ class UnitDto {
       if (logoUrl != null) 'logoUrl': logoUrl,
       if (debutDate != null) 'debutDate': debutDate,
       if (status != null) 'status': status,
+      if (memberCount != null) 'memberCount': memberCount,
       if (members.isNotEmpty)
         'members': members.map((item) => item.toJson()).toList(),
     };
