@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/localization/locale_text.dart';
 import '../../../../core/theme/gbt_colors.dart';
 import '../../../../core/theme/gbt_spacing.dart';
+import '../../../../core/widgets/layout/gbt_page_header.dart';
 import 'passport_document.dart';
 import 'passport_sections.dart';
 import 'travel_passport_view_data.dart';
@@ -67,7 +68,37 @@ class TravelPassportView extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          _PassportPageHeader(onOpenSettings: onOpenSettings),
+                          GBTPageHeader(
+                            title: context.l10n(
+                              ko: '나의 여행',
+                              en: 'My travels',
+                              ja: '旅の記録',
+                            ),
+                            padding: EdgeInsets.zero,
+                            showDivider: false,
+                            trailing: Semantics(
+                              button: true,
+                              label: context.l10n(
+                                ko: '설정',
+                                en: 'Settings',
+                                ja: '設定',
+                              ),
+                              child: IconButton(
+                                key: const Key('travel-passport-settings'),
+                                onPressed: onOpenSettings,
+                                icon: const Icon(Icons.tune_rounded),
+                                constraints: const BoxConstraints.tightFor(
+                                  width: GBTSpacing.touchTarget,
+                                  height: GBTSpacing.touchTarget,
+                                ),
+                                tooltip: context.l10n(
+                                  ko: '설정',
+                                  en: 'Settings',
+                                  ja: '設定',
+                                ),
+                              ),
+                            ),
+                          ),
                           const SizedBox(height: GBTSpacing.md),
                           PassportDocument(
                             data: data,
@@ -160,46 +191,6 @@ class _PassportLoadNotice extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _PassportPageHeader extends StatelessWidget {
-  const _PassportPageHeader({required this.onOpenSettings});
-
-  final VoidCallback onOpenSettings;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final ink = isDark ? GBTColors.darkTextPrimary : GBTColors.fieldInk;
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            context.l10n(ko: '나의 여행 여권', en: 'Travel passport', ja: '私の旅パスポート'),
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              color: ink,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-        Semantics(
-          button: true,
-          label: context.l10n(ko: '설정', en: 'Settings', ja: '設定'),
-          child: IconButton(
-            key: const Key('travel-passport-settings'),
-            onPressed: onOpenSettings,
-            icon: const Icon(Icons.tune_rounded),
-            color: ink,
-            constraints: const BoxConstraints.tightFor(
-              width: GBTSpacing.touchTarget,
-              height: GBTSpacing.touchTarget,
-            ),
-            tooltip: context.l10n(ko: '설정', en: 'Settings', ja: '設定'),
-          ),
-        ),
-      ],
     );
   }
 }

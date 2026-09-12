@@ -42,6 +42,10 @@ class PostComposeDocumentEditor extends StatelessWidget {
     this.header,
     this.enabled = true,
     this.autofocusTitle = true,
+    this.titleHintText = '제목을 입력해주세요',
+    this.contentHintText = '어디서 무엇을 보았는지, 왜 기억하고 싶은지 남겨보세요.',
+    this.maxTitleLines = 1,
+    this.minContentLines = 8,
     this.maxTitleLength = 60,
     this.maxContentLength = 3000,
   });
@@ -53,6 +57,10 @@ class PostComposeDocumentEditor extends StatelessWidget {
   final Widget? header;
   final bool enabled;
   final bool autofocusTitle;
+  final String titleHintText;
+  final String contentHintText;
+  final int maxTitleLines;
+  final int minContentLines;
   final int maxTitleLength;
   final int maxContentLength;
 
@@ -87,14 +95,16 @@ class PostComposeDocumentEditor extends StatelessWidget {
               enabled: enabled,
               autofocus: autofocusTitle,
               maxLength: maxTitleLength,
-              maxLines: 1,
-              textInputAction: TextInputAction.next,
+              maxLines: maxTitleLines,
+              textInputAction: maxTitleLines == 1
+                  ? TextInputAction.next
+                  : TextInputAction.newline,
               style: GBTTypography.headlineMedium.copyWith(
                 fontWeight: FontWeight.w700,
                 color: colors.onSurface,
               ),
               decoration: InputDecoration(
-                hintText: '제목을 입력해주세요',
+                hintText: titleHintText,
                 counterText: '',
                 filled: false,
                 border: fieldBorder,
@@ -119,7 +129,7 @@ class PostComposeDocumentEditor extends StatelessWidget {
               enabled: enabled,
               maxLength: maxContentLength,
               maxLines: null,
-              minLines: 8,
+              minLines: minContentLines,
               textInputAction: TextInputAction.newline,
               style: GBTTypography.bodyLarge.copyWith(
                 fontWeight: FontWeight.w400,
@@ -127,7 +137,7 @@ class PostComposeDocumentEditor extends StatelessWidget {
                 color: colors.onSurface,
               ),
               decoration: InputDecoration(
-                hintText: '어디서 무엇을 보았는지, 왜 기억하고 싶은지 남겨보세요.',
+                hintText: contentHintText,
                 counterText: '',
                 filled: false,
                 border: fieldBorder,
@@ -274,49 +284,72 @@ Future<String?> showPostTopicPickerSheet(
 }) {
   return showModalBottomSheet<String>(
     context: context,
+    isScrollControlled: true,
     showDragHandle: true,
     builder: (sheetContext) {
       final colorScheme = Theme.of(sheetContext).colorScheme;
       final currentValue = selectedTopic?.trim() ?? '';
-      return SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              title: Text(
-                '토픽 선택',
-                style: GBTTypography.titleMedium.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: colorScheme.onSurface,
-                ),
-              ),
-              subtitle: Text(
-                '게시글 주제를 하나 선택하세요',
-                style: GBTTypography.bodySmall.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-            Flexible(
-              child: ListView(
-                shrinkWrap: true,
-                children: [
-                  _PostTopicOptionTile(
-                    label: '선택 안 함',
-                    isSelected: currentValue.isEmpty,
-                    onTap: () => Navigator.of(sheetContext).pop(''),
+      final bottomInset = MediaQuery.viewInsetsOf(sheetContext).bottom;
+      final maxSheetHeight = _availableBottomSheetHeight(sheetContext) * 0.72;
+      return Padding(
+        padding: EdgeInsets.only(bottom: bottomInset),
+        child: SafeArea(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: maxSheetHeight),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    GBTSpacing.md,
+                    0,
+                    GBTSpacing.md,
+                    GBTSpacing.xs,
                   ),
-                  ...options.map(
-                    (topic) => _PostTopicOptionTile(
-                      label: topic,
-                      isSelected: currentValue == topic,
-                      onTap: () => Navigator.of(sheetContext).pop(topic),
-                    ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '토픽 선택',
+                          style: GBTTypography.titleLarge.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.of(sheetContext).pop(),
+                        style: TextButton.styleFrom(
+                          minimumSize: const Size(48, GBTSpacing.touchTarget),
+                        ),
+                        child: const Text('닫기'),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+                const Divider(height: 1),
+                Flexible(
+                  child: ListView(
+                    shrinkWrap: true,
+                    children: [
+                      _PostTopicOptionTile(
+                        label: '선택 안 함',
+                        isSelected: currentValue.isEmpty,
+                        onTap: () => Navigator.of(sheetContext).pop(''),
+                      ),
+                      ...options.map(
+                        (topic) => _PostTopicOptionTile(
+                          label: topic,
+                          isSelected: currentValue == topic,
+                          onTap: () => Navigator.of(sheetContext).pop(topic),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       );
     },
@@ -343,70 +376,80 @@ Future<String?> showPostTagPickerSheet(
 
   final result = await showModalBottomSheet<String>(
     context: context,
+    isScrollControlled: true,
     showDragHandle: true,
     builder: (sheetContext) {
       final colorScheme = Theme.of(sheetContext).colorScheme;
-      return SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            GBTSpacing.md,
-            GBTSpacing.xs,
-            GBTSpacing.md,
-            GBTSpacing.md,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '태그 선택',
-                style: GBTTypography.titleMedium.copyWith(
-                  color: colorScheme.onSurface,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: GBTSpacing.xs),
-              Text(
-                '태그는 목록에서만 선택할 수 있어요',
-                style: GBTTypography.bodySmall.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: GBTSpacing.sm),
-              if (orderedSuggestions.isEmpty)
-                Text(
-                  '선택 가능한 태그가 없습니다.',
-                  style: GBTTypography.bodySmall.copyWith(
-                    color: colorScheme.onSurfaceVariant,
+      final bottomInset = MediaQuery.viewInsetsOf(sheetContext).bottom;
+      final maxSheetHeight = _availableBottomSheetHeight(sheetContext) * 0.72;
+      return Padding(
+        padding: EdgeInsets.only(bottom: bottomInset),
+        child: SafeArea(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: maxSheetHeight),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    GBTSpacing.md,
+                    0,
+                    GBTSpacing.md,
+                    GBTSpacing.xs,
                   ),
-                )
-              else
-                Wrap(
-                  spacing: GBTSpacing.xs,
-                  runSpacing: GBTSpacing.xs,
-                  children: orderedSuggestions
-                      .map((tag) {
-                        final disabled = isAlreadySelected(tag);
-                        return ActionChip(
-                          onPressed: disabled
-                              ? null
-                              : () => Navigator.of(sheetContext).pop(tag),
-                          label: Text('#$tag'),
-                        );
-                      })
-                      .toList(growable: false),
-                ),
-              const SizedBox(height: GBTSpacing.md),
-              Row(
-                children: [
-                  const Spacer(),
-                  TextButton(
-                    onPressed: () => Navigator.of(sheetContext).pop(),
-                    child: const Text('닫기'),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '태그 선택',
+                          style: GBTTypography.titleLarge.copyWith(
+                            color: colorScheme.onSurface,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.of(sheetContext).pop(),
+                        style: TextButton.styleFrom(
+                          minimumSize: const Size(48, GBTSpacing.touchTarget),
+                        ),
+                        child: const Text('닫기'),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ],
+                ),
+                const Divider(height: 1),
+                Flexible(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(GBTSpacing.md),
+                    child: orderedSuggestions.isEmpty
+                        ? Text(
+                            '선택 가능한 태그가 없습니다.',
+                            style: GBTTypography.bodySmall.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          )
+                        : Wrap(
+                            spacing: GBTSpacing.xs,
+                            runSpacing: GBTSpacing.xs,
+                            children: orderedSuggestions
+                                .map((tag) {
+                                  final disabled = isAlreadySelected(tag);
+                                  return ActionChip(
+                                    onPressed: disabled
+                                        ? null
+                                        : () => Navigator.of(
+                                            sheetContext,
+                                          ).pop(tag),
+                                    label: Text('#$tag'),
+                                  );
+                                })
+                                .toList(growable: false),
+                          ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       );
@@ -414,6 +457,18 @@ Future<String?> showPostTagPickerSheet(
   );
 
   return result;
+}
+
+double _availableBottomSheetHeight(BuildContext context) {
+  final mediaQuery = MediaQuery.of(context);
+  final blockedHeight =
+      mediaQuery.viewInsets.bottom +
+      mediaQuery.padding.top +
+      mediaQuery.padding.bottom;
+  return (mediaQuery.size.height - blockedHeight).clamp(
+    GBTSpacing.touchTarget,
+    mediaQuery.size.height,
+  );
 }
 
 class _PostTopicOptionTile extends StatelessWidget {

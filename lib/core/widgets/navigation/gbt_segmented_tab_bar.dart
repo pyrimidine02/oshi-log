@@ -4,7 +4,6 @@ library;
 
 import 'package:flutter/material.dart';
 
-import '../../theme/gbt_colors.dart';
 import '../../theme/gbt_spacing.dart';
 import '../../theme/gbt_typography.dart';
 
@@ -43,8 +42,10 @@ class GBTSegmentedTabBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final activeColor = isDark ? GBTColors.darkPrimary : GBTColors.primary;
+    final colors = theme.colorScheme;
+    final activeColor = colors.primary;
+    final scrollable =
+        isScrollable || MediaQuery.textScalerOf(context).scale(14) > 18.2;
     final resolvedLabelStyle = (labelStyle ?? GBTTypography.labelLarge)
         .copyWith(fontWeight: FontWeight.w700);
     final resolvedUnselectedLabelStyle =
@@ -60,29 +61,17 @@ class GBTSegmentedTabBar extends StatelessWidget {
         // KO: 차분한 페이퍼 트랙으로 로컬 모드를 전역 하단 내비게이션과
         // 구분하되 글래스나 떠 있는 깊이감은 추가하지 않습니다.
         decoration: BoxDecoration(
-          color: isDark
-              ? GBTColors.darkSurfaceVariant
-              : GBTColors.surfaceVariant.withValues(alpha: 0.72),
+          color: colors.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(borderRadius),
-          border: Border.all(
-            color: isDark ? GBTColors.darkBorderSubtle : GBTColors.divider,
-            width: 0.8,
-          ),
+          border: Border.all(color: colors.outlineVariant, width: 0.8),
         ),
         child: TabBar(
           controller: controller,
-          isScrollable: isScrollable,
+          isScrollable: scrollable,
+          tabAlignment: scrollable ? TabAlignment.start : TabAlignment.fill,
           indicator: BoxDecoration(
-            color: isDark
-                ? activeColor.withValues(alpha: 0.18)
-                : GBTColors.primaryLight,
+            color: colors.primaryContainer,
             borderRadius: BorderRadius.circular(indicatorBorderRadius),
-            border: isDark
-                ? Border.all(
-                    color: activeColor.withValues(alpha: 0.36),
-                    width: 0.8,
-                  )
-                : null,
             boxShadow: indicatorShadow
                 ? [
                     BoxShadow(
@@ -106,9 +95,7 @@ class GBTSegmentedTabBar extends StatelessWidget {
           indicatorAnimation: TabIndicatorAnimation.elastic,
           dividerColor: Colors.transparent,
           labelColor: activeColor,
-          unselectedLabelColor: isDark
-              ? GBTColors.darkTextTertiary
-              : GBTColors.textTertiary,
+          unselectedLabelColor: colors.onSurfaceVariant,
           labelStyle: resolvedLabelStyle,
           unselectedLabelStyle: resolvedUnselectedLabelStyle,
           labelPadding: labelPadding,

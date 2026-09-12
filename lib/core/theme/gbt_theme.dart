@@ -126,7 +126,15 @@ class GBTTheme {
     onError: GBTColors.textInverse,
     surface: GBTColors.surface,
     onSurface: GBTColors.textPrimary,
-    surfaceContainerHighest: GBTColors.surfaceVariant,
+    surfaceContainerLowest: GBTColors.surface,
+    surfaceContainerLow: GBTColors.background,
+    surfaceContainer: Color.lerp(
+      GBTColors.background,
+      GBTColors.surfaceVariant,
+      0.5,
+    ),
+    surfaceContainerHigh: GBTColors.surfaceVariant,
+    surfaceContainerHighest: GBTColors.surfaceAlternate,
     onSurfaceVariant: GBTColors.textSecondary,
     outline: GBTColors.border,
     outlineVariant: GBTColors.divider,
@@ -152,7 +160,15 @@ class GBTTheme {
     onError: GBTColors.darkTextPrimary,
     surface: GBTColors.darkSurface,
     onSurface: GBTColors.darkTextPrimary,
-    surfaceContainerHighest: GBTColors.darkSurfaceVariant,
+    surfaceContainerLowest: GBTColors.darkBackground,
+    surfaceContainerLow: GBTColors.darkSurface,
+    surfaceContainer: GBTColors.darkSurfaceVariant,
+    surfaceContainerHigh: Color.lerp(
+      GBTColors.darkSurfaceVariant,
+      GBTColors.darkSurfaceElevated,
+      0.5,
+    ),
+    surfaceContainerHighest: GBTColors.darkSurfaceElevated,
     onSurfaceVariant: GBTColors.darkTextSecondary,
     outline: GBTColors.darkBorder,
     outlineVariant: GBTColors.darkBorderSubtle,
@@ -440,7 +456,7 @@ class GBTTheme {
         horizontal: GBTSpacing.md,
         vertical: GBTSpacing.sm,
       ),
-      minimumSize: const Size(64, GBTSpacing.minTouchTarget),
+      minimumSize: const Size(64, GBTSpacing.touchTarget),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
       ),
@@ -455,7 +471,7 @@ class GBTTheme {
         horizontal: GBTSpacing.md,
         vertical: GBTSpacing.sm,
       ),
-      minimumSize: const Size(64, GBTSpacing.minTouchTarget),
+      minimumSize: const Size(64, GBTSpacing.touchTarget),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
       ),
@@ -465,10 +481,7 @@ class GBTTheme {
 
   static IconButtonThemeData get _iconButtonTheme => IconButtonThemeData(
     style: IconButton.styleFrom(
-      minimumSize: const Size(
-        GBTSpacing.minTouchTarget,
-        GBTSpacing.minTouchTarget,
-      ),
+      minimumSize: const Size(GBTSpacing.touchTarget, GBTSpacing.touchTarget),
       padding: const EdgeInsets.all(GBTSpacing.sm),
       foregroundColor: GBTColors.textPrimary,
       shape: RoundedRectangleBorder(
@@ -479,10 +492,7 @@ class GBTTheme {
 
   static IconButtonThemeData get _darkIconButtonTheme => IconButtonThemeData(
     style: IconButton.styleFrom(
-      minimumSize: const Size(
-        GBTSpacing.minTouchTarget,
-        GBTSpacing.minTouchTarget,
-      ),
+      minimumSize: const Size(GBTSpacing.touchTarget, GBTSpacing.touchTarget),
       padding: const EdgeInsets.all(GBTSpacing.sm),
       foregroundColor: GBTColors.darkTextPrimary,
       shape: RoundedRectangleBorder(
@@ -974,12 +984,28 @@ class GBTTheme {
   static SegmentedButtonThemeData get _segmentedButtonTheme =>
       SegmentedButtonThemeData(
         style: ButtonStyle(
-          textStyle: WidgetStatePropertyAll(GBTTypography.labelMedium),
+          minimumSize: const WidgetStatePropertyAll(
+            Size(GBTSpacing.touchTarget, GBTSpacing.touchTarget),
+          ),
+          foregroundColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.disabled)) {
+              return GBTColors.textDisabled;
+            }
+            return states.contains(WidgetState.selected)
+                ? GBTColors.primary
+                : GBTColors.textSecondary;
+          }),
+          backgroundColor: WidgetStateProperty.resolveWith((states) {
+            return states.contains(WidgetState.selected)
+                ? GBTColors.primaryLight
+                : GBTColors.surfaceVariant;
+          }),
+          side: const WidgetStatePropertyAll(
+            BorderSide(color: GBTColors.border),
+          ),
+          textStyle: WidgetStatePropertyAll(GBTTypography.labelLarge),
           padding: const WidgetStatePropertyAll(
-            EdgeInsets.symmetric(
-              horizontal: GBTSpacing.md,
-              vertical: GBTSpacing.sm,
-            ),
+            EdgeInsets.symmetric(horizontal: GBTSpacing.sm),
           ),
           shape: WidgetStatePropertyAll(
             RoundedRectangleBorder(
@@ -992,12 +1018,28 @@ class GBTTheme {
   static SegmentedButtonThemeData get _darkSegmentedButtonTheme =>
       SegmentedButtonThemeData(
         style: ButtonStyle(
-          textStyle: WidgetStatePropertyAll(GBTTypography.labelMedium),
+          minimumSize: const WidgetStatePropertyAll(
+            Size(GBTSpacing.touchTarget, GBTSpacing.touchTarget),
+          ),
+          foregroundColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.disabled)) {
+              return GBTColors.darkTextTertiary;
+            }
+            return states.contains(WidgetState.selected)
+                ? GBTColors.darkPrimary
+                : GBTColors.darkTextSecondary;
+          }),
+          backgroundColor: WidgetStateProperty.resolveWith((states) {
+            return states.contains(WidgetState.selected)
+                ? GBTColors.darkPrimaryContainer
+                : GBTColors.darkSurfaceVariant;
+          }),
+          side: const WidgetStatePropertyAll(
+            BorderSide(color: GBTColors.darkBorder),
+          ),
+          textStyle: WidgetStatePropertyAll(GBTTypography.labelLarge),
           padding: const WidgetStatePropertyAll(
-            EdgeInsets.symmetric(
-              horizontal: GBTSpacing.md,
-              vertical: GBTSpacing.sm,
-            ),
+            EdgeInsets.symmetric(horizontal: GBTSpacing.sm),
           ),
           shape: WidgetStatePropertyAll(
             RoundedRectangleBorder(

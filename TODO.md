@@ -1,5 +1,27 @@
 # TODO
 
+- Verify community deep pages in an installed build (2026-09-12):
+  - Post detail -> reply -> edit/report menu; create/edit -> topic/tag picker;
+    travel review -> edit/place/date picker; profile -> follow/message/settings.
+  - Use real accounts, long localized labels, 200% text, keyboard, light/dark
+    modes and VoiceOver/TalkBack. Confirm close/cancel, disabled/loading actions,
+    autosave and back navigation. Widget tests cover controlled repository data;
+    installed-device rendering and native frame timings remain unverified.
+  - Removal criteria: each flow remains readable/tappable without clipping or
+    hidden actions; submitted payloads and permission handling remain correct.
+
+- Verify travel UI and song detail on an installed phone (2026-09-12):
+  - Open song information from both the catalog and concert setlist; retain
+    event context and back navigation at default and enlarged text sizes.
+  - Check home, guide/community controls, map, passport, and visit stamps in
+    light/dark modes with VoiceOver/TalkBack and real account data.
+  - Layout overflow and the actual title-tap navigation freeze were reproduced
+    and fixed. The latter was an infinite `GoRouterState.of` ancestor traversal
+    from the Navigator-pushed music archive. Check an updated installed build;
+    capture device logs if OS-level termination persists.
+  - Removal criteria: both real-device song flows pass, navigation and reading
+    remain accessible, and scroll/frame timings show no new regression.
+
 - Verify the voice actor activity and profile tab in a newly installed build
   (2026-09-12):
   - Confirm long biographies remain readable at compact widths and enlarged
@@ -37,6 +59,11 @@
     do not exclude untested production files to inflate the percentage.
   - After this refactor: 659 passing tests, 16,153 / 46,048 executable lines
     (35.08%). Coverage improved; the 80% target still requires further work.
+  - Travel UI follow-up: 687 passing tests, 16,237 / 46,045 executable lines
+    (35.26%), up from this session's 16,157 / 46,051 (35.09%) baseline.
+  - Song navigation follow-up: 695 passing tests, 16,739 / 46,044 executable
+    lines (36.35%). Actual catalog, album, and setlist entry flows now run
+    through the app router; the existing 80% target remains unmet.
   - Removal criteria: full unit/widget/integration coverage reaches 80% without
     relaxing meaningful assertions or coverage scope.
 

@@ -24,6 +24,7 @@ import '../../../visits/application/visits_controller.dart';
 import '../../../visits/domain/entities/visit_entities.dart';
 import '../../application/travel_reviews_controller.dart';
 import '../../domain/entities/travel_review.dart';
+import '../widgets/post_compose_components.dart';
 import '../widgets/travel_review_compose_sections.dart';
 import '../widgets/travel_review_place_picker_sheet.dart';
 
@@ -277,7 +278,6 @@ class _TravelReviewCreatePageState
             slivers: [
               const SliverToBoxAdapter(
                 child: GBTPageHeader(
-                  eyebrow: 'FIELD REPORT',
                   title: '오늘의 순례를 기록하세요',
                   description: '방문한 순서와 현장의 감정을 함께 남기면 다음 여행의 지도가 됩니다.',
                 ),
@@ -291,42 +291,16 @@ class _TravelReviewCreatePageState
                 ),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
-                    Text(
-                      'TRAVEL NOTE',
-                      style: GBTTypography.labelSmall.copyWith(
-                        color: colorScheme.primary,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1.1,
-                      ),
-                    ),
-                    const SizedBox(height: GBTSpacing.sm),
-                    TextField(
-                      controller: _titleController,
-                      maxLines: 2,
-                      maxLength: 255,
-                      style: GBTTypography.headlineSmall.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
-                      decoration: const InputDecoration(
-                        labelText: '제목',
-                        hintText: '이번 여행은 어떠셨나요?',
-                        filled: false,
-                        border: UnderlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: GBTSpacing.md),
-                    TextField(
-                      controller: _contentController,
-                      maxLines: 8,
-                      minLines: 5,
-                      maxLength: 20000,
-                      decoration: const InputDecoration(
-                        labelText: '내용',
-                        hintText: '자세한 후기를 남겨주세요.',
-                        alignLabelWithHint: true,
-                        filled: false,
-                        border: UnderlineInputBorder(),
-                      ),
+                    PostComposeDocumentEditor(
+                      titleController: _titleController,
+                      contentController: _contentController,
+                      enabled: !_isSubmitting,
+                      titleHintText: '이번 여행은 어떠셨나요?',
+                      contentHintText: '자세한 후기를 남겨주세요.',
+                      maxTitleLines: 2,
+                      minContentLines: 5,
+                      maxTitleLength: 255,
+                      maxContentLength: 20000,
                     ),
                     const SizedBox(height: GBTSpacing.xl2),
                     TravelReviewComposeMetadata(
@@ -355,15 +329,6 @@ class _TravelReviewCreatePageState
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'ROUTE',
-                          style: GBTTypography.labelSmall.copyWith(
-                            color: colorScheme.primary,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1.1,
-                          ),
-                        ),
-                        const SizedBox(height: GBTSpacing.xs),
                         Text(
                           '방문 순서',
                           style: GBTTypography.titleLarge.copyWith(

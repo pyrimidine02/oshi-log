@@ -68,20 +68,24 @@ class _TravelReviewPlacePickerSheetState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'ADD TO ROUTE',
-                  style: GBTTypography.labelSmall.copyWith(
-                    color: primaryColor,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1.1,
-                  ),
-                ),
-                const SizedBox(height: GBTSpacing.xs),
-                Text(
-                  '어디를 다녀왔나요?',
-                  style: GBTTypography.titleLarge.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '어디를 다녀왔나요?',
+                        style: GBTTypography.titleLarge.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: TextButton.styleFrom(
+                        minimumSize: const Size(48, GBTSpacing.touchTarget),
+                      ),
+                      child: const Text('닫기'),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: GBTSpacing.sm),
                 TextField(
@@ -267,7 +271,7 @@ class _PlacePickerItem extends StatelessWidget {
                 height: 48,
                 child: Icon(
                   isAdded ? Icons.check_rounded : Icons.add_rounded,
-                  color: primaryColor,
+                  color: isAdded ? tertiaryColor : primaryColor,
                   semanticLabel: isAdded ? '추가됨' : '추가',
                 ),
               ),

@@ -60,7 +60,11 @@ class PassportDocument extends StatelessWidget {
                 children: [
                   ExcludeSemantics(
                     child: Text(
-                      'OSHI@LOG · TRAVEL PASSPORT',
+                      context.l10n(
+                        ko: '여행 여권',
+                        en: 'Travel passport',
+                        ja: '旅のパスポート',
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -176,11 +180,7 @@ class _PassportPortrait extends StatelessWidget {
     );
     return Semantics(
       image: true,
-      label: context.l10n(
-        ko: '여행자 프로필 사진',
-        en: 'Traveler profile photo',
-        ja: '旅行者のプロフィール写真',
-      ),
+      label: context.l10n(ko: '프로필 사진', en: 'Profile photo', ja: 'プロフィール写真'),
       child: Container(
         width: size,
         height: size * 1.18,
@@ -245,7 +245,7 @@ class _PassportIdentity extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          context.l10n(ko: '성명 / NAME', en: 'NAME', ja: '氏名 / NAME'),
+          context.l10n(ko: '성명', en: 'Name', ja: '氏名'),
           style: theme.textTheme.labelSmall?.copyWith(
             color: colors.mutedInk,
             fontWeight: FontWeight.w600,
@@ -265,11 +265,7 @@ class _PassportIdentity extends StatelessWidget {
         ),
         const SizedBox(height: GBTSpacing.md),
         Text(
-          context.l10n(
-            ko: '발행일 / MEMBER SINCE',
-            en: 'MEMBER SINCE',
-            ja: '発行日 / MEMBER SINCE',
-          ),
+          context.l10n(ko: '가입일', en: 'Member since', ja: '登録日'),
           style: theme.textTheme.labelSmall?.copyWith(
             color: colors.mutedInk,
             fontWeight: FontWeight.w600,
@@ -340,7 +336,11 @@ class FanGradeStamp extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'FAN GRADE',
+                        context.l10n(
+                          ko: '팬 등급',
+                          en: 'Fan grade',
+                          ja: 'ファングレード',
+                        ),
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           color: colors.accent,
                           fontWeight: FontWeight.w800,

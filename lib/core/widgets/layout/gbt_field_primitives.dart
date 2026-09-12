@@ -81,7 +81,7 @@ class GBTFieldSurface extends StatelessWidget {
 class GBTFieldSectionHeader extends StatelessWidget {
   const GBTFieldSectionHeader({
     super.key,
-    required this.eyebrow,
+    this.eyebrow = '',
     required this.title,
     this.actionLabel,
     this.onAction,
@@ -96,37 +96,37 @@ class GBTFieldSectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final narrow =
-        MediaQuery.sizeOf(context).width < 360 ||
-        MediaQuery.textScalerOf(context).scale(1) > 1.3;
     final heading = Semantics(
       header: true,
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              SizedBox(
-                width: 20,
-                height: 2,
-                child: ColoredBox(color: colors.primary),
-              ),
-              const SizedBox(width: GBTSpacing.xs),
-              Flexible(
-                child: Text(
-                  eyebrow.toUpperCase(),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: colors.primary,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1.1,
+          if (eyebrow.trim().isNotEmpty) ...[
+            Row(
+              children: [
+                SizedBox(
+                  width: 20,
+                  height: 2,
+                  child: ColoredBox(color: colors.primary),
+                ),
+                const SizedBox(width: GBTSpacing.xs),
+                Flexible(
+                  child: Text(
+                    eyebrow.toUpperCase(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: colors.primary,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.1,
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: GBTSpacing.xs),
+              ],
+            ),
+            const SizedBox(height: GBTSpacing.xs),
+          ],
           Text(
             title,
             maxLines: 3,
@@ -154,22 +154,30 @@ class GBTFieldSectionHeader extends StatelessWidget {
       ),
     );
 
-    if (narrow) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          heading,
-          Align(alignment: AlignmentDirectional.centerEnd, child: action),
-        ],
-      );
-    }
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final narrow =
+            constraints.maxWidth < 320 ||
+            MediaQuery.textScalerOf(context).scale(1) > 1.3;
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(child: heading),
-        action,
-      ],
+        if (narrow) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              heading,
+              Align(alignment: AlignmentDirectional.centerEnd, child: action),
+            ],
+          );
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: heading),
+            action,
+          ],
+        );
+      },
     );
   }
 }

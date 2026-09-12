@@ -51,58 +51,77 @@ class GBTPageHeader extends StatelessWidget {
       ),
       child: Padding(
         padding: effectivePadding,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Semantics(
-                container: true,
-                header: true,
-                label: [
-                  if (eyebrow != null) eyebrow!,
-                  title,
-                  if (description != null) description!,
-                ].join('. '),
-                child: ExcludeSemantics(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (eyebrow != null) ...[
-                        Text(
-                          eyebrow!,
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: colors.primary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: GBTSpacing.xs2),
-                      ],
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final header = Semantics(
+              container: true,
+              header: true,
+              label: [
+                if (eyebrow != null) eyebrow!,
+                title,
+                if (description != null) description!,
+              ].join('. '),
+              child: ExcludeSemantics(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (eyebrow != null) ...[
                       Text(
-                        title,
-                        style: theme.textTheme.headlineMedium?.copyWith(
-                          color: colors.onSurface,
-                          fontWeight: FontWeight.w700,
+                        eyebrow!,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: colors.primary,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                      if (description != null) ...[
-                        const SizedBox(height: GBTSpacing.sm),
-                        Text(
-                          description!,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: colors.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
+                      const SizedBox(height: GBTSpacing.xs2),
                     ],
-                  ),
+                    Text(
+                      title,
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        color: colors.onSurface,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    if (description != null) ...[
+                      const SizedBox(height: GBTSpacing.sm),
+                      Text(
+                        description!,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: colors.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
-            ),
-            if (trailing != null) ...[
-              const SizedBox(width: GBTSpacing.sm),
-              trailing!,
-            ],
-          ],
+            );
+
+            if (trailing == null) return header;
+
+            if (constraints.maxWidth < 320 ||
+                MediaQuery.textScalerOf(context).scale(1) > 1.3) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  header,
+                  const SizedBox(height: GBTSpacing.sm),
+                  Align(
+                    alignment: AlignmentDirectional.centerEnd,
+                    child: trailing!,
+                  ),
+                ],
+              );
+            }
+
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: header),
+                const SizedBox(width: GBTSpacing.sm),
+                trailing!,
+              ],
+            );
+          },
         ),
       ),
     );

@@ -93,6 +93,91 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets(
+    'GBTPageHeader reflows two trailing actions at 320dp and 200 percent text',
+    (tester) async {
+      final semantics = tester.ensureSemantics();
+      tester.view.physicalSize = const Size(320, 640);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        MediaQuery(
+          data: const MediaQueryData(
+            size: Size(320, 640),
+            textScaler: TextScaler.linear(2),
+          ),
+          child: MaterialApp(
+            theme: GBTTheme.light,
+            home: Scaffold(
+              body: GBTPageHeader(
+                eyebrow: 'COMMUNITY',
+                title: '여행 기록과 커뮤니티',
+                description: '검색과 설정을 한 번에 사용할 수 있어야 합니다.',
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      tooltip: '검색',
+                      onPressed: () {},
+                      icon: const Icon(Icons.search_rounded),
+                    ),
+                    IconButton(
+                      tooltip: '설정',
+                      onPressed: () {},
+                      icon: const Icon(Icons.tune_rounded),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('여행 기록과 커뮤니티'), findsOneWidget);
+      expect(
+        MediaQuery.textScalerOf(
+          tester.element(find.byType(GBTPageHeader)),
+        ).scale(14),
+        28,
+      );
+      expect(
+        tester.getTopLeft(find.byType(IconButton).first).dy,
+        greaterThan(
+          tester.getBottomLeft(find.text('검색과 설정을 한 번에 사용할 수 있어야 합니다.')).dy,
+        ),
+      );
+      expect(find.byTooltip('검색'), findsOneWidget);
+      expect(find.byTooltip('설정'), findsOneWidget);
+      expect(
+        tester.getSize(find.byType(IconButton).at(0)).shortestSide,
+        greaterThanOrEqualTo(48),
+      );
+      expect(
+        tester.getSize(find.byType(IconButton).at(1)).shortestSide,
+        greaterThanOrEqualTo(48),
+      );
+      expect(
+        tester
+            .getSemantics(find.byTooltip('검색'))
+            .getSemanticsData()
+            .hasAction(SemanticsAction.tap),
+        isTrue,
+      );
+      expect(
+        tester
+            .getSemantics(find.byTooltip('설정'))
+            .getSemanticsData()
+            .hasAction(SemanticsAction.tap),
+        isTrue,
+      );
+      expect(tester.takeException(), isNull);
+      semantics.dispose();
+    },
+  );
+
   testWidgets('GBTPageHeader preserves trailing control semantics', (
     tester,
   ) async {

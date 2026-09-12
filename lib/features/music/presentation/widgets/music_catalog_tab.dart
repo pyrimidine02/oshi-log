@@ -39,6 +39,22 @@ String _formatMs(int ms) {
       '${(s % 60).toString().padLeft(2, '0')}';
 }
 
+String? _albumReleaseLabel({String? releaseDate, String? releaseDateText}) {
+  final date = releaseDate?.trim();
+  if (date != null && date.isNotEmpty) return date.split('-').first;
+  final text = releaseDateText?.trim();
+  return text == null || text.isEmpty ? null : text;
+}
+
+String? _albumTrackCountLabel(BuildContext context, int? trackCount) {
+  if (trackCount == null || trackCount <= 0) return null;
+  return context.l10n(
+    ko: '$trackCount곡',
+    en: '$trackCount tracks',
+    ja: '$trackCount曲',
+  );
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // MAIN WIDGET
 // ─────────────────────────────────────────────────────────────────────────────
@@ -847,9 +863,11 @@ class _AlbumCard extends StatelessWidget {
         ? GBTColors.darkTextSecondary
         : GBTColors.textSecondary;
     final hasCover = (album.coverUrl ?? '').trim().isNotEmpty;
-    final releaseYear = (album.releaseDate ?? '').trim().isNotEmpty
-        ? album.releaseDate!.trim().split('-').first
-        : null;
+    final releaseLabel = _albumReleaseLabel(
+      releaseDate: album.releaseDate,
+      releaseDateText: album.releaseDateText,
+    );
+    final trackCountLabel = _albumTrackCountLabel(context, album.trackCount);
     final usesLargeTextLayout = MediaQuery.textScalerOf(context).scale(1) >= 2;
     final details = Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -876,13 +894,8 @@ class _AlbumCard extends StatelessWidget {
           Text(
             [
               if (album.type.trim().isNotEmpty) album.type.toUpperCase(),
-              if (releaseYear != null) releaseYear,
-              if (album.trackCount > 0)
-                context.l10n(
-                  ko: '${album.trackCount}곡',
-                  en: '${album.trackCount} tracks',
-                  ja: '${album.trackCount}曲',
-                ),
+              if (releaseLabel != null) releaseLabel,
+              if (trackCountLabel != null) trackCountLabel,
             ].join('  ·  '),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -1305,12 +1318,11 @@ class _AlbumSheet extends StatelessWidget {
         : GBTColors.textSecondary;
     final divider = isDark ? GBTColors.darkBorder : GBTColors.border;
     final hasCover = (detail.coverUrl ?? '').trim().isNotEmpty;
-    final releaseYear = (detail.releaseDate ?? '').trim().isNotEmpty
-        ? detail.releaseDate!.trim().split('-').first
-        : null;
-    final effectiveTrackCount = detail.tracks.isNotEmpty
-        ? detail.tracks.length
-        : detail.trackCount;
+    final releaseLabel = _albumReleaseLabel(
+      releaseDate: detail.releaseDate,
+      releaseDateText: detail.releaseDateText,
+    );
+    final trackCountLabel = _albumTrackCountLabel(context, detail.trackCount);
     final usesLargeTextLayout = MediaQuery.textScalerOf(context).scale(1) >= 2;
     final headerText = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1340,13 +1352,8 @@ class _AlbumSheet extends StatelessWidget {
         Text(
           [
             if (detail.type.trim().isNotEmpty) detail.type.toUpperCase(),
-            if (releaseYear != null) releaseYear,
-            if (effectiveTrackCount > 0)
-              context.l10n(
-                ko: '$effectiveTrackCount곡',
-                en: '$effectiveTrackCount tracks',
-                ja: '$effectiveTrackCount曲',
-              ),
+            if (releaseLabel != null) releaseLabel,
+            if (trackCountLabel != null) trackCountLabel,
           ].join('  ·  '),
           maxLines: usesLargeTextLayout ? 1 : 2,
           overflow: TextOverflow.ellipsis,
@@ -1507,16 +1514,29 @@ class MusicAlbumSheetTrackRow extends StatelessWidget {
                 // KO: 트랙 번호 — 타이틀 트랙은 accent + w700.
                 SizedBox(
                   width: usesLargeText ? 48 : 28,
-                  child: Text(
-                    '${track.trackNo}',
-                    textAlign: TextAlign.center,
-                    style: GBTTypography.bodySmall.copyWith(
-                      color: trackNoColor,
-                      fontWeight: isTitleTrack
-                          ? FontWeight.w700
-                          : FontWeight.w400,
-                    ),
-                  ),
+                  child: track.trackNo == null
+                      ? Semantics(
+                          label: context.l10n(
+                            ko: '트랙 번호 미상',
+                            en: 'Track number unavailable',
+                            ja: 'トラック番号不明',
+                          ),
+                          child: Icon(
+                            Icons.music_note_outlined,
+                            size: usesLargeText ? 22 : 18,
+                            color: trackNoColor,
+                          ),
+                        )
+                      : Text(
+                          '${track.trackNo}'.padLeft(2, '0'),
+                          textAlign: TextAlign.center,
+                          style: GBTTypography.bodySmall.copyWith(
+                            color: trackNoColor,
+                            fontWeight: isTitleTrack
+                                ? FontWeight.w700
+                                : FontWeight.w400,
+                          ),
+                        ),
                 ),
                 const SizedBox(width: GBTSpacing.xs),
                 Expanded(

@@ -207,11 +207,7 @@ class _VisitLedger extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  context.l10n(
-                    ko: 'VISIT LEDGER',
-                    en: 'VISIT LEDGER',
-                    ja: '訪問台帳',
-                  ),
+                  context.l10n(ko: '방문 기록', en: 'Visit records', ja: '訪問記録'),
                   style: GBTTypography.overline.copyWith(
                     color: colors.primary,
                     fontWeight: FontWeight.w800,
@@ -247,9 +243,9 @@ class _VisitLedger extends StatelessWidget {
                       icon: const Icon(Icons.map_outlined),
                       label: Text(
                         context.l10n(
-                          ko: '방문 원장 열기',
-                          en: 'Open visit ledger',
-                          ja: '訪問台帳を開く',
+                          ko: '방문 기록 보기',
+                          en: 'Open visit history',
+                          ja: '訪問履歴を見る',
                         ),
                       ),
                     ),

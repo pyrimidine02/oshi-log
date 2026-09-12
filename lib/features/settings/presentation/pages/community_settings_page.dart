@@ -352,6 +352,7 @@ class _CommunityProfileCard extends StatelessWidget {
         final safeName = displayName.isEmpty
             ? context.l10n(ko: '사용자', en: 'User', ja: 'ユーザー')
             : displayName;
+        final textScale = MediaQuery.textScalerOf(context).scale(1);
 
         return Container(
           padding: const EdgeInsets.all(GBTSpacing.lg),
@@ -394,10 +395,10 @@ class _CommunityProfileCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: GBTSpacing.md),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final myProfileButton = _CommunityActionButtonFrame(
+                    child: FilledButton(
                       onPressed: onMyProfileTap,
                       child: Text(
                         context.l10n(
@@ -407,10 +408,9 @@ class _CommunityProfileCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: GBTSpacing.sm),
-                  Expanded(
-                    child: FilledButton.tonal(
+                  );
+                  final editProfileButton = _CommunityActionButtonFrame(
+                    child: OutlinedButton(
                       onPressed: onEditProfileTap,
                       child: Text(
                         context.l10n(
@@ -420,13 +420,44 @@ class _CommunityProfileCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  );
+                  if (constraints.maxWidth < 360 || textScale > 1.3) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        myProfileButton,
+                        const SizedBox(height: GBTSpacing.sm),
+                        editProfileButton,
+                      ],
+                    );
+                  }
+                  return Row(
+                    children: [
+                      Expanded(child: myProfileButton),
+                      const SizedBox(width: GBTSpacing.sm),
+                      Expanded(child: editProfileButton),
+                    ],
+                  );
+                },
               ),
             ],
           ),
         );
       },
+    );
+  }
+}
+
+class _CommunityActionButtonFrame extends StatelessWidget {
+  const _CommunityActionButtonFrame({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: GBTSpacing.touchTarget),
+      child: child,
     );
   }
 }

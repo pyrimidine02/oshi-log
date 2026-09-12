@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 
+import 'package:oshi_log/core/router/app_router.dart';
 import 'package:oshi_log/core/theme/gbt_theme.dart';
 import 'package:oshi_log/features/music/application/music_controller.dart';
 import 'package:oshi_log/features/music/domain/entities/music_entities.dart';
@@ -25,6 +27,108 @@ void main() {
     version: 'FULL',
     cues: <MusicCallCue>[],
   );
+
+  for (final fromSetlist in [false, true]) {
+    testWidgets(
+      'song entry and back work from ${fromSetlist ? 'setlist' : 'catalog'}',
+      (tester) async {
+        const linkedSongId = '11111111-1111-4111-8111-111111111111';
+        const linkedEventId = '22222222-2222-4222-8222-222222222222';
+        final origin = fromSetlist ? '/overlay/event' : '/information';
+        final router = GoRouter(
+          initialLocation: origin,
+          routes: [
+            GoRoute(
+              path: origin,
+              builder: (context, state) => Scaffold(
+                body: TextButton(
+                  onPressed: () => context.goToSongDetail(
+                    linkedSongId,
+                    projectId: projectId,
+                    eventId: fromSetlist ? linkedEventId : null,
+                  ),
+                  child: const Text('Open song'),
+                ),
+              ),
+            ),
+            for (final overlay in [false, true])
+              GoRoute(
+                path: overlay
+                    ? '/overlay/music/songs/:songId'
+                    : '/information/songs/:songId',
+                name: overlay
+                    ? AppRoutes.overlaySongDetail
+                    : AppRoutes.songDetail,
+                builder: (context, state) => MusicSongDetailPage(
+                  projectId: state.uri.queryParameters['projectId']!,
+                  songId: state.pathParameters['songId']!,
+                  eventId: state.uri.queryParameters['eventId'],
+                ),
+              ),
+          ],
+        );
+        await tester.pumpWidget(
+          _testApp(
+            router: router,
+            lyrics: const MusicLyricsPayload(
+              songId: linkedSongId,
+              version: 'FULL',
+              lines: <MusicLyricLine>[],
+            ),
+            emptyParts: emptyParts,
+            emptyCallGuide: emptyCallGuide,
+            textScaler: const TextScaler.linear(1.8),
+          ),
+        );
+        await tester.tap(find.text('Open song'));
+        await tester.pumpAndSettle();
+        final page = tester.widget<MusicSongDetailPage>(
+          find.byType(MusicSongDetailPage),
+        );
+        expect(page.songId, linkedSongId);
+        expect(page.eventId, fromSetlist ? linkedEventId : null);
+        expect(tester.takeException(), isNull);
+        await tester.tap(find.byTooltip('Back'));
+        await tester.pumpAndSettle();
+        expect(find.text('Open song'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox.shrink());
+        router.dispose();
+      },
+    );
+  }
+
+  for (final scale in [1.5, 1.8]) {
+    testWidgets('populated song header fits at ${scale}x text', (tester) async {
+      tester.view.physicalSize = const Size(320, 640);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(
+        _testApp(
+          detail: const MusicSongDetail(
+            id: songId,
+            projectId: projectId,
+            title: '아주 긴 곡 제목을 가진 도쿄 공연의 마지막 앙코르',
+            primaryUnitName: 'MyGO!!!!! and Ave Mujica collaboration',
+            bpm: 192,
+            durationMs: 368000,
+            isTitleTrack: true,
+          ),
+          lyrics: const MusicLyricsPayload(
+            songId: songId,
+            version: 'FULL',
+            lines: <MusicLyricLine>[],
+          ),
+          emptyParts: emptyParts,
+          emptyCallGuide: emptyCallGuide,
+          textScaler: TextScaler.linear(scale),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    });
+  }
 
   testWidgets('uses three task-focused tabs and a compact song dossier', (
     tester,
@@ -54,6 +158,58 @@ void main() {
     expect(dossier, findsOneWidget);
     expect(tester.getSize(dossier).height, lessThanOrEqualTo(220));
   });
+
+  testWidgets(
+    'shows every linked album appearance without unknown placeholders',
+    (tester) async {
+      await tester.pumpWidget(
+        _testApp(
+          detail: const MusicSongDetail(
+            id: songId,
+            projectId: projectId,
+            title: 'A song with reissues',
+            trackNo: null,
+            albums: [
+              MusicAlbumSummary(
+                id: 'album-primary',
+                projectId: projectId,
+                title: 'Primary release',
+                type: 'SINGLE',
+                releaseDate: '2026-09-12',
+                trackNo: 1,
+              ),
+              MusicAlbumSummary(
+                id: 'album-compilation',
+                projectId: projectId,
+                title: 'Compilation release',
+                type: 'ALBUM',
+                releaseDateText: '2027년 봄',
+                trackNo: null,
+                trackCount: null,
+              ),
+            ],
+          ),
+          lyrics: const MusicLyricsPayload(
+            songId: songId,
+            version: 'FULL',
+            lines: <MusicLyricLine>[],
+          ),
+          emptyParts: emptyParts,
+          emptyCallGuide: emptyCallGuide,
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+      await tester.tap(find.byType(Tab).at(2));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Primary release'), findsOneWidget);
+      expect(find.text('Compilation release'), findsOneWidget);
+      expect(find.textContaining('2027년 봄'), findsOneWidget);
+      expect(find.text('0곡'), findsNothing);
+      expect(find.text('null'), findsNothing);
+    },
+  );
 
   testWidgets('remains usable at 300 percent text scale', (tester) async {
     tester.view.physicalSize = const Size(320, 640);
@@ -335,13 +491,16 @@ void main() {
 }
 
 Widget _testApp({
+  GoRouter? router,
   MusicSongDetail? detail,
   required MusicLyricsPayload lyrics,
   required MusicPartsPayload emptyParts,
   required MusicCallGuidePayload emptyCallGuide,
   TextScaler? textScaler,
 }) {
-  const page = MusicSongDetailPage(projectId: 'project', songId: 'song');
+  final page = router == null
+      ? const MusicSongDetailPage(projectId: 'project', songId: 'song')
+      : Router.withConfig(config: router);
   return ProviderScope(
     overrides: [
       musicSongDetailProvider.overrideWith(
@@ -354,6 +513,13 @@ Widget _testApp({
             ),
       ),
       musicSongLyricsProvider.overrideWith((ref, key) async => lyrics),
+      musicSongLiveContextProvider.overrideWith(
+        (ref, key) async => MusicSongLiveContext(
+          lyrics: lyrics,
+          parts: emptyParts,
+          callGuide: emptyCallGuide,
+        ),
+      ),
       musicSongPartsProvider.overrideWith((ref, key) async => emptyParts),
       musicSongCallGuideProvider.overrideWith(
         (ref, key) async => emptyCallGuide,

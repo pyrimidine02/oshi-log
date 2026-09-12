@@ -17,9 +17,14 @@ extension MusicAlbumSummaryDtoDomainMapper on MusicAlbumSummaryDto {
       type: dto.type,
       coverUrl: dto.coverUrl,
       releaseDate: dto.releaseDate,
+      releaseDateText: dto.releaseDateText,
       trackCount: dto.trackCount,
       label: dto.label,
       catalogNo: dto.catalogNo,
+      unitId: dto.unitId,
+      unitName: dto.unitName,
+      discNo: dto.discNo,
+      trackNo: dto.trackNo,
     );
   }
 }
@@ -31,6 +36,7 @@ extension MusicAlbumTrackDtoDomainMapper on MusicAlbumTrackDto {
     return MusicAlbumTrack(
       songId: dto.songId,
       trackNo: dto.trackNo,
+      discNo: dto.discNo,
       title: dto.title,
       versionCode: dto.versionCode,
       durationMs: dto.durationMs,
@@ -49,9 +55,14 @@ extension MusicAlbumDetailDtoDomainMapper on MusicAlbumDetailDto {
       type: dto.type,
       coverUrl: dto.coverUrl,
       releaseDate: dto.releaseDate,
+      releaseDateText: dto.releaseDateText,
       trackCount: dto.trackCount,
       label: dto.label,
       catalogNo: dto.catalogNo,
+      unitId: dto.unitId,
+      unitName: dto.unitName,
+      discNo: dto.discNo,
+      trackNo: dto.trackNo,
       tracks: List.unmodifiable(
         dto.tracks.map((value) => value.toDomain()).toList(growable: false),
       ),
@@ -119,6 +130,9 @@ extension MusicSongDetailDtoDomainMapper on MusicSongDetailDto {
         dto.versions.map((value) => value.toDomain()).toList(growable: false),
       ),
       previewUrl: dto.previewUrl,
+      albums: List.unmodifiable(
+        dto.albums.map((value) => value.toDomain()).toList(growable: false),
+      ),
     );
   }
 }

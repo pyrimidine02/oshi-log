@@ -41,6 +41,7 @@ void main() {
 
         expect(find.byType(BackdropFilter), findsNothing);
         expect(find.text('새 여행 기록'), findsOneWidget);
+        expect(find.text('COMMUNITY NOTE'), findsNothing);
         final submit = find.byKey(const ValueKey('post-compose-submit'));
         expect(submit, findsOneWidget);
         expect(tester.getSize(submit).height, greaterThanOrEqualTo(48));
@@ -81,6 +82,7 @@ void main() {
 
         expect(find.byType(BackdropFilter), findsNothing);
         expect(find.text('여행 기록 수정'), findsOneWidget);
+        expect(find.text('COMMUNITY NOTE'), findsNothing);
         final submit = find.byKey(const ValueKey('post-compose-submit'));
         expect(submit, findsOneWidget);
         expect(tester.getSize(submit).height, greaterThanOrEqualTo(48));

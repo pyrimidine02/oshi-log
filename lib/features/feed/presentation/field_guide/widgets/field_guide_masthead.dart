@@ -38,7 +38,7 @@ class FieldGuideMasthead extends StatelessWidget {
     );
     return GBTPageHeader(
       eyebrow: projectLabel,
-      title: context.l10n(ko: '현장 안내서', en: 'Field guide', ja: 'フィールドガイド'),
+      title: context.l10n(ko: '정보', en: 'Info', ja: '情報'),
       showDivider: false,
       trailing: GBTAppBarIconButton(
         icon: Icons.search_rounded,

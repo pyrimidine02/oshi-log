@@ -154,7 +154,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
                   GBTBottomNavItem(
                     icon: Icons.person_outline_rounded,
                     activeIcon: Icons.person_rounded,
-                    label: context.l10n(ko: '유저', en: 'My', ja: 'マイ'),
+                    label: context.l10n(ko: '마이', en: 'My', ja: 'マイ'),
                   ),
                   GBTBottomNavItem(
                     icon: Icons.forum_outlined,

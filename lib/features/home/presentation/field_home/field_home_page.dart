@@ -123,15 +123,11 @@ class FieldHomePage extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 FieldSectionHeader(
-                  eyebrow: context.l10n(
-                    ko: 'JOURNEY BRIEF',
-                    en: 'JOURNEY BRIEF',
-                    ja: 'JOURNEY BRIEF',
-                  ),
+                  eyebrow: '',
                   title: context.l10n(
-                    ko: '오늘의 원정 브리핑',
-                    en: 'Today’s journey brief',
-                    ja: '今日の遠征ブリーフィング',
+                    ko: '다음 여행',
+                    en: 'Your next trip',
+                    ja: '次の旅',
                   ),
                 ),
                 const SizedBox(height: GBTSpacing.md),
@@ -159,6 +155,7 @@ class FieldHomePage extends ConsumerWidget {
                     onSecondaryAction: () =>
                         context.pushNamed(AppRoutes.calendar),
                     imageUrl: heroEvent.posterUrl,
+                    imageFit: BoxFit.contain,
                   )
                 else if (heroPlace != null)
                   JourneyBriefCard(
@@ -241,9 +238,9 @@ class FieldHomePage extends ConsumerWidget {
                 ja: '場所・イベント・ニュースが登録されるとここに表示されます。',
               )
             : context.l10n(
-                ko: '원본 정보는 있지만 현재 홈 노출 조건에 맞는 항목이 없어요.',
-                en: 'Source information exists, but nothing matches the current home rules.',
-                ja: '元の情報はありますが、現在のホーム表示条件に合う項目がありません。',
+                ko: '탐방에서 장소와 일정을 둘러보며 다음 여행을 준비해보세요.',
+                en: 'Explore places and schedules to plan your next trip.',
+                ja: '探索で場所や予定を探して、次の旅を準備しましょう。',
               ),
         actionLabel: isHardEmpty
             ? null
@@ -323,7 +320,7 @@ class _PlacesSection extends StatelessWidget {
     return Column(
       children: [
         FieldSectionHeader(
-          eyebrow: context.l10n(ko: 'PILGRIMAGE', en: 'PILGRIMAGE', ja: '巡礼'),
+          eyebrow: '',
           title: context.l10n(
             ko: '이 프로젝트의 성지',
             en: 'Places in this project',
@@ -361,8 +358,8 @@ class _EventsSection extends ConsumerWidget {
     return Column(
       children: [
         FieldSectionHeader(
-          eyebrow: context.l10n(ko: 'AGENDA', en: 'AGENDA', ja: '予定'),
-          title: context.l10n(ko: '그다음 일정', en: 'Later on', ja: 'その次の予定'),
+          eyebrow: '',
+          title: context.l10n(ko: '다가오는 공연', en: 'Upcoming shows', ja: '今後の公演'),
           actionLabel: context.l10n(ko: '캘린더', en: 'Calendar', ja: 'カレンダー'),
           onAction: () => context.pushNamed(AppRoutes.calendar),
         ),
@@ -430,7 +427,7 @@ class _DispatchSection extends StatelessWidget {
     return Column(
       children: [
         FieldSectionHeader(
-          eyebrow: context.l10n(ko: 'DISPATCH', en: 'DISPATCH', ja: 'ニュース'),
+          eyebrow: '',
           title: context.l10n(
             ko: '프로젝트 소식',
             en: 'Project updates',

@@ -534,7 +534,6 @@ class _PostEditPageState extends ConsumerState<PostEditPage> {
                   ),
                   children: [
                     const GBTPageHeader(
-                      eyebrow: 'COMMUNITY NOTE',
                       title: '여행 기록 수정',
                       description: '이미 공유한 여정의 맥락은 유지하고 내용을 더 정확하게 다듬어보세요.',
                       padding: EdgeInsets.only(bottom: GBTSpacing.md),
@@ -665,7 +664,6 @@ class _PostEditPageState extends ConsumerState<PostEditPage> {
                                   ],
                                 ),
                               ],
-                              const SizedBox(height: GBTSpacing.xs),
                               const SizedBox(height: GBTSpacing.xs),
                               PostComposeDocumentEditor(
                                 titleController: _titleController,

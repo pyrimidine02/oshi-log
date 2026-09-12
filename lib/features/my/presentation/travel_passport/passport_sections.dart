@@ -18,14 +18,12 @@ class PassportSectionHeading extends StatelessWidget {
     super.key,
     required this.index,
     required this.title,
-    required this.eyebrow,
     this.actionLabel,
     this.onAction,
   });
 
   final String index;
   final String title;
-  final String eyebrow;
   final String? actionLabel;
   final VoidCallback? onAction;
 
@@ -115,8 +113,7 @@ class JourneyLedger extends StatelessWidget {
       children: [
         PassportSectionHeading(
           index: '01',
-          eyebrow: 'JOURNEY LEDGER',
-          title: context.l10n(ko: '나의 여정 원장', en: 'Journey ledger', ja: '旅の台帳'),
+          title: context.l10n(ko: '여행 기록', en: 'Travel records', ja: '旅の記録'),
         ),
         const SizedBox(height: GBTSpacing.md),
         Container(
@@ -168,11 +165,7 @@ class JourneyLedger extends StatelessWidget {
                   Expanded(
                     child: _LedgerCell(
                       value: _availableValue(data.sharedNotes),
-                      label: context.l10n(
-                        ko: '공유한 기록',
-                        en: 'Shared notes',
-                        ja: '共有ノート',
-                      ),
+                      label: context.l10n(ko: '작성한 글', en: 'Posts', ja: '投稿'),
                       colors: colors,
                     ),
                   ),
@@ -303,8 +296,11 @@ class NextStopsSection extends StatelessWidget {
       children: [
         PassportSectionHeading(
           index: '02',
-          eyebrow: 'NEXT DEPARTURES',
-          title: context.l10n(ko: '다가오는 일정', en: 'Next departures', ja: '次の予定'),
+          title: context.l10n(
+            ko: '다가오는 일정',
+            en: 'Upcoming schedule',
+            ja: '今後の予定',
+          ),
           actionLabel: context.l10n(ko: '전체보기', en: 'Calendar', ja: 'カレンダー'),
           onAction: onOpenCalendar,
         ),
@@ -562,15 +558,11 @@ class TravelArchiveSection extends StatelessWidget {
       _ArchiveRowData(
         keyName: 'archive-bookmarks',
         number: '03',
-        title: context.l10n(
-          ko: '저장한 정보',
-          en: 'Saved information',
-          ja: '保存した情報',
-        ),
+        title: context.l10n(ko: '저장한 글', en: 'Saved posts', ja: '保存した投稿'),
         subtitle: context.l10n(
           ko: '커뮤니티에서 저장한 글',
-          en: 'Bookmarked community notes',
-          ja: 'ブックマークしたコミュニティノート',
+          en: 'Bookmarked community posts',
+          ja: 'ブックマークしたコミュニティ投稿',
         ),
         onTap: onOpenBookmarks,
       ),
@@ -579,9 +571,9 @@ class TravelArchiveSection extends StatelessWidget {
         number: '04',
         title: context.l10n(ko: '가고 싶은 곳', en: 'Saved places', ja: '行きたい場所'),
         subtitle: context.l10n(
-          ko: '즐겨찾기한 장소와 여정',
-          en: 'Favorite places and plans',
-          ja: 'お気に入りの場所と予定',
+          ko: '즐겨찾기한 성지',
+          en: 'Favorite pilgrimage places',
+          ja: 'お気に入りの聖地',
         ),
         onTap: onOpenFavorites,
       ),
@@ -593,7 +585,6 @@ class TravelArchiveSection extends StatelessWidget {
       children: [
         PassportSectionHeading(
           index: '03',
-          eyebrow: 'ARCHIVE INDEX',
           title: context.l10n(
             ko: '여행 보관함',
             en: 'Travel archive',

@@ -60,6 +60,34 @@ void main() {
     expect(tester.getSize(target).height, greaterThanOrEqualTo(48));
   });
 
+  testWidgets('unknown album track position stays neutral', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: MusicAlbumSheetTrackRow(
+            track: const MusicAlbumTrack(
+              songId: 'song-unknown-position',
+              trackNo: null,
+              title: 'Digital release',
+            ),
+            isDark: false,
+            accent: GBTColors.secondary,
+            isTitleTrack: false,
+            onTap: () {},
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byIcon(Icons.music_note_outlined), findsOneWidget);
+    expect(find.text('0'), findsNothing);
+    expect(find.text('null'), findsNothing);
+    expect(
+      find.bySemanticsLabel(RegExp('Track number unavailable')),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('album track row handles long metadata at 300 percent text', (
     tester,
   ) async {

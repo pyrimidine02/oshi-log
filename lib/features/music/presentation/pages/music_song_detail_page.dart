@@ -469,7 +469,11 @@ class _HeroBgData extends StatelessWidget {
       if (song.durationMs != null) _formatMs(song.durationMs!),
     ];
     final textScale = MediaQuery.textScalerOf(context).scale(1);
-    final usesLargeTextLayout = textScale >= 2;
+    // EN: Use the compact metadata layout before enlarged text exceeds the
+    // fixed hero height, including the intermediate 150–199% scale range.
+    // KO: 중간 확대 구간인 150–199%에서도 고정 헤더 높이를 넘지 않도록
+    // 메타정보를 간결한 레이아웃으로 전환합니다.
+    final usesLargeTextLayout = textScale >= 1.5;
 
     final textualDossier = Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -956,6 +960,27 @@ class _InfoTab extends ConsumerWidget {
                   : '-',
               isDark: isDark,
             ),
+            if (song.albums.isNotEmpty) ...[
+              const SizedBox(height: GBTSpacing.md),
+              _TabSectionHeader(
+                icon: Icons.album_outlined,
+                title: context.l10n(
+                  ko: '발매 기록',
+                  en: 'Release appearances',
+                  ja: '収録作品',
+                ),
+                isDark: isDark,
+                accent: accent,
+              ),
+              const SizedBox(height: GBTSpacing.xs),
+              ...song.albums.map(
+                (album) => _SongAlbumAppearanceRow(
+                  album: album,
+                  isDark: isDark,
+                  accent: accent,
+                ),
+              ),
+            ],
           ],
 
           const SizedBox(height: GBTSpacing.lg),
@@ -1438,6 +1463,90 @@ class _MetaRow extends StatelessWidget {
   }
 }
 
+/// EN: Shows one canonical album appearance for a song without inventing
+///     release dates or track positions when the API leaves them unknown.
+/// KO: API가 알 수 없는 발매일·트랙 위치를 제공할 때 값을 만들어내지 않고
+///     곡의 앨범 수록 기록 하나를 표시합니다.
+class _SongAlbumAppearanceRow extends StatelessWidget {
+  const _SongAlbumAppearanceRow({
+    required this.album,
+    required this.isDark,
+    required this.accent,
+  });
+
+  final MusicAlbumSummary album;
+  final bool isDark;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final textPrimary = isDark
+        ? GBTColors.darkTextPrimary
+        : GBTColors.textPrimary;
+    final textSecondary = isDark
+        ? GBTColors.darkTextSecondary
+        : GBTColors.textSecondary;
+    final releaseDate = album.releaseDate?.trim();
+    final releaseLabel = releaseDate != null && releaseDate.isNotEmpty
+        ? releaseDate
+        : album.releaseDateText?.trim();
+    final metadata = <String>[
+      if (album.type.trim().isNotEmpty) album.type.toUpperCase(),
+      if (releaseLabel != null && releaseLabel.isNotEmpty) releaseLabel,
+      if (album.discNo != null) 'Disc ${album.discNo}',
+      if (album.trackNo != null) 'Track ${album.trackNo}',
+    ];
+
+    return Container(
+      constraints: const BoxConstraints(minHeight: GBTSpacing.touchTarget),
+      margin: const EdgeInsets.only(bottom: GBTSpacing.xs),
+      padding: const EdgeInsets.symmetric(
+        horizontal: GBTSpacing.sm,
+        vertical: GBTSpacing.xs,
+      ),
+      decoration: BoxDecoration(
+        color: isDark ? GBTColors.darkSurfaceVariant : GBTColors.surfaceVariant,
+        borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
+        border: Border.all(
+          color: isDark ? GBTColors.darkBorder : GBTColors.border,
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(Icons.album_outlined, size: 18, color: accent),
+          const SizedBox(width: GBTSpacing.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  album.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: GBTTypography.bodySmall.copyWith(
+                    color: textPrimary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                if (metadata.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    metadata.join('  ·  '),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: GBTTypography.caption.copyWith(color: textSecondary),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 // ══════════════════════════════════════════════════════════════
 // LYRICS FILTER ROW
 // ══════════════════════════════════════════════════════════════
@@ -1502,15 +1611,17 @@ class _LyricsFilterRow extends StatelessWidget {
                     children: [
                       Icon(Icons.tune_rounded, size: 18, color: accent),
                       const SizedBox(width: GBTSpacing.xs),
-                      Text(
-                        context.l10n(
-                          ko: '표시 옵션',
-                          en: 'Display options',
-                          ja: '表示オプション',
-                        ),
-                        style: GBTTypography.labelMedium.copyWith(
-                          color: textColor,
-                          fontWeight: FontWeight.w700,
+                      Flexible(
+                        child: Text(
+                          context.l10n(
+                            ko: '표시 옵션',
+                            en: 'Display options',
+                            ja: '表示オプション',
+                          ),
+                          style: GBTTypography.labelMedium.copyWith(
+                            color: textColor,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
                     ],

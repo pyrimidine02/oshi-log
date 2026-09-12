@@ -22,7 +22,7 @@ void main() {
     ];
 
     expect(find.byKey(const Key('field-note-document')), findsOneWidget);
-    expect(find.text('COMMUNITY FIELD NOTE'), findsOneWidget);
+    expect(find.text('COMMUNITY FIELD NOTE'), findsNothing);
     expect(find.text('시모키타자와 공연장 기록'), findsOneWidget);
     expect(find.text('Mina'), findsOneWidget);
     expect(find.byType(Card), findsNothing);
@@ -66,15 +66,7 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(
-      MediaQuery(
-        data: const MediaQueryData(
-          size: Size(320, 640),
-          textScaler: TextScaler.linear(2),
-        ),
-        child: _buildSubject(isAuthenticated: true),
-      ),
-    );
+    await tester.pumpWidget(_buildSubject(isAuthenticated: true, textScale: 2));
     await tester.pump();
 
     expect(tester.takeException(), isNull);
@@ -83,23 +75,130 @@ void main() {
       greaterThanOrEqualTo(48),
     );
   });
+  testWidgets('logged-out comment prompt wraps at 320dp and 200 percent text', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(320, 640));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(_buildSubject(textScale: 2));
+    await tester.pump();
+    expect(find.text('댓글을 작성하려면 로그인하세요.'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('post actions have labels and remain tappable at large text', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(320, 760));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    var likes = 0;
+    var saves = 0;
+    await tester.pumpWidget(
+      _buildSubject(textScale: 2, onLike: () => likes++, onSave: () => saves++),
+    );
+    await tester.pump();
+    for (final label in ['좋아요 12', '저장']) {
+      final action = find.widgetWithText(TextButton, label);
+      await tester.ensureVisible(action);
+      await tester.pumpAndSettle();
+      expect(tester.getSize(action).height, greaterThanOrEqualTo(48));
+      await tester.tap(action);
+    }
+    expect(likes, 1);
+    expect(saves, 1);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('native comment sort changes visible root order', (tester) async {
+    final newer = PostComment(
+      id: 'comment-new',
+      postId: 'post-1',
+      projectId: 'bandori',
+      authorId: 'reader-2',
+      authorName: 'Saki',
+      content: '나중 댓글',
+      createdAt: DateTime.utc(2026, 7, 16),
+    );
+    await tester.pumpWidget(_buildSubject(comments: [_comments.first, newer]));
+    await tester.pump();
+    await tester.ensureVisible(find.text('등록순'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('등록순'));
+    await tester.pumpAndSettle();
+    expect(
+      tester.getTopLeft(find.text('첫 댓글')).dy,
+      lessThan(tester.getTopLeft(find.text('나중 댓글')).dy),
+    );
+    await tester.tap(find.text('최신순'));
+    await tester.pumpAndSettle();
+    expect(
+      tester.getTopLeft(find.text('나중 댓글')).dy,
+      lessThan(tester.getTopLeft(find.text('첫 댓글')).dy),
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('comment composer submits typed text with keyboard visible', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(320, 760));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    var submissions = 0;
+    await tester.pumpWidget(
+      _buildSubject(
+        isAuthenticated: true,
+        textScale: 2,
+        keyboardInset: 280,
+        onSubmit: () => submissions++,
+      ),
+    );
+    await tester.pump();
+    final send = find.byWidgetPredicate(
+      (widget) => widget is IconButton && widget.tooltip == '댓글 등록',
+    );
+    expect(tester.widget<IconButton>(send).onPressed, isNull);
+    await tester.enterText(find.byType(TextField), '공연장 가는 길이 궁금해요');
+    await tester.pumpAndSettle();
+    expect(tester.getSize(send).height, greaterThanOrEqualTo(48));
+    await tester.tap(send);
+    expect(submissions, 1);
+    expect(tester.takeException(), isNull);
+  });
 }
 
-Widget _buildSubject({bool isAuthenticated = false}) {
+Widget _buildSubject({
+  bool isAuthenticated = false,
+  double textScale = 1,
+  double keyboardInset = 0,
+  List<PostComment>? comments,
+  VoidCallback? onSubmit,
+  VoidCallback? onLike,
+  VoidCallback? onSave,
+}) {
   final commentController = TextEditingController();
   final commentFocusNode = FocusNode();
   final scrollController = ScrollController();
 
+  addTearDown(commentController.dispose);
+  addTearDown(commentFocusNode.dispose);
+  addTearDown(scrollController.dispose);
   return ProviderScope(
     overrides: [
       userActiveTitleProvider(_post.authorId).overrideWith((ref) async => null),
     ],
     child: MaterialApp(
       theme: GBTTheme.light,
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context).copyWith(
+          textScaler: TextScaler.linear(textScale),
+          viewInsets: EdgeInsets.only(bottom: keyboardInset),
+        ),
+        child: child!,
+      ),
       home: Scaffold(
         body: PostDetailDocumentView(
           post: _post,
-          commentsState: AsyncData(_comments),
+          commentsState: AsyncData(comments ?? _comments),
           likeState: const AsyncData(
             PostLikeStatus(postId: 'post-1', isLiked: false, likeCount: 12),
           ),
@@ -113,9 +212,9 @@ Widget _buildSubject({bool isAuthenticated = false}) {
           scrollController: scrollController,
           commentController: commentController,
           commentFocusNode: commentFocusNode,
-          onToggleLike: () {},
-          onToggleBookmark: () {},
-          onSubmitComment: () {},
+          onToggleLike: onLike ?? () {},
+          onToggleBookmark: onSave ?? () {},
+          onSubmitComment: onSubmit ?? () {},
           onEditComment: (_) {},
           onDeleteComment: (_) {},
           onReportComment: (_) {},

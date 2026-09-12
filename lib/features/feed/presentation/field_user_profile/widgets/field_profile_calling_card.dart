@@ -5,7 +5,6 @@ library;
 import 'package:flutter/material.dart';
 
 import '../../../../../core/localization/locale_text.dart';
-import '../../../../../core/theme/gbt_colors.dart';
 import '../../../../../core/theme/gbt_spacing.dart';
 import '../../../../../core/theme/gbt_typography.dart';
 import '../../../../../core/widgets/common/gbt_image.dart';
@@ -64,9 +63,9 @@ class FieldProfileCallingCard extends StatelessWidget {
           ja: '紹介はまだありません。',
         );
     final title = context.l10n(
-      ko: '${data.displayName}의 FIELD LOG',
-      en: '${data.displayName}\'s FIELD LOG',
-      ja: '${data.displayName}の FIELD LOG',
+      ko: '${data.displayName}의 여행 기록',
+      en: '${data.displayName}\'s travel record',
+      ja: '${data.displayName}の旅の記録',
     );
 
     return Semantics(
@@ -113,7 +112,11 @@ class FieldProfileCallingCard extends StatelessWidget {
                         runSpacing: GBTSpacing.xs,
                         children: [
                           Text(
-                            'TRAVELER FIELD CARD',
+                            context.l10n(
+                              ko: '여행자 프로필',
+                              en: 'Traveler profile',
+                              ja: '旅人プロフィール',
+                            ),
                             style: GBTTypography.overline.copyWith(
                               color: colors.primary,
                               fontWeight: FontWeight.w900,
@@ -121,7 +124,11 @@ class FieldProfileCallingCard extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            'PUBLIC FIELD RECORD',
+                            context.l10n(
+                              ko: '공개 활동 기록',
+                              en: 'Public activity record',
+                              ja: '公開アクティビティ記録',
+                            ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: GBTTypography.overline.copyWith(
@@ -139,7 +146,7 @@ class FieldProfileCallingCard extends StatelessWidget {
                       _IdentityRow(
                         avatarUrl: data.avatarUrl,
                         onAvatarTap: onAvatarTap,
-                        marker: data.accountRole,
+                        marker: data.accessLevelLabel,
                       ),
                       const SizedBox(height: GBTSpacing.md),
                       Text(
@@ -210,7 +217,7 @@ class _CoverPlate extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     final normalizedCover = coverImageUrl;
     return SizedBox(
-      height: 96,
+      height: normalizedCover == null ? 64 : 96,
       child: Stack(
         fit: StackFit.expand,
         children: [
@@ -228,26 +235,7 @@ class _CoverPlate extends StatelessWidget {
               ),
             )
           else
-            CustomPaint(
-              painter: _RouteGridPainter(
-                line: colors.secondary.withValues(alpha: 0.35),
-                paper: colors.surfaceContainerHighest,
-                route: colors.primary,
-              ),
-            ),
-          DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-                colors: [
-                  Colors.black.withValues(alpha: 0.38),
-                  Colors.black.withValues(alpha: 0.08),
-                  Colors.black.withValues(alpha: 0.32),
-                ],
-              ),
-            ),
-          ),
+            ColoredBox(color: colors.surfaceContainerLow),
           SafeArea(
             bottom: false,
             child: Align(
@@ -264,26 +252,6 @@ class _CoverPlate extends StatelessWidget {
                     ).backButtonTooltip,
                     icon: const Icon(Icons.arrow_back_rounded),
                   ),
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            right: GBTSpacing.sm,
-            bottom: GBTSpacing.sm,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: GBTColors.fieldInk.withValues(alpha: 0.82),
-                border: Border.all(color: Colors.white54),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: GBTSpacing.sm,
-                  vertical: GBTSpacing.xs,
-                ),
-                child: Text(
-                  'COMMUNITY / FIELD 01',
-                  style: GBTTypography.overline.copyWith(color: Colors.white),
                 ),
               ),
             ),
@@ -309,6 +277,7 @@ class _IdentityRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final normalizedAvatar = avatarUrl;
+    final normalizedMarker = marker.trim();
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -367,14 +336,20 @@ class _IdentityRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'ACCESS CLASS',
+                  context.l10n(
+                    ko: '계정 등급',
+                    en: 'Account level',
+                    ja: 'アカウントレベル',
+                  ),
                   style: GBTTypography.overline.copyWith(
                     color: colors.onSurfaceVariant,
                   ),
                 ),
                 const SizedBox(height: GBTSpacing.xs),
                 Text(
-                  marker.trim().isEmpty ? 'MEMBER' : marker.toUpperCase(),
+                  normalizedMarker.isEmpty
+                      ? context.l10n(ko: '회원', en: 'Member', ja: 'メンバー')
+                      : normalizedMarker,
                   style: GBTTypography.titleSmall.copyWith(
                     color: colors.onSurface,
                     fontWeight: FontWeight.w800,
@@ -519,34 +494,50 @@ class _Actions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textScale = MediaQuery.textScalerOf(context).scale(1);
     if (isMyProfile) {
-      return Row(
-        children: [
-          Expanded(
-            child: OutlinedButton.icon(
-              onPressed: onEdit,
-              icon: const Icon(Icons.edit_outlined),
-              label: Text(
-                context.l10n(ko: '프로필 수정', en: 'Edit profile', ja: 'プロフィール編集'),
-              ),
-            ),
+      final editButton = _ActionButtonFrame(
+        child: FilledButton.icon(
+          onPressed: onEdit,
+          icon: const Icon(Icons.edit_outlined),
+          label: Text(
+            context.l10n(ko: '프로필 수정', en: 'Edit profile', ja: 'プロフィール編集'),
           ),
-          const SizedBox(width: GBTSpacing.sm),
-          Expanded(
-            child: OutlinedButton.icon(
-              onPressed: onOpenTitlePicker,
-              icon: const Icon(Icons.workspace_premium_outlined),
-              label: Text(context.l10n(ko: '칭호', en: 'Title', ja: '称号')),
-            ),
-          ),
-        ],
+        ),
+      );
+      final titleButton = _ActionButtonFrame(
+        child: OutlinedButton.icon(
+          onPressed: onOpenTitlePicker,
+          icon: const Icon(Icons.workspace_premium_outlined),
+          label: Text(context.l10n(ko: '칭호', en: 'Title', ja: '称号')),
+        ),
+      );
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth < 380 || textScale > 1.3) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                editButton,
+                const SizedBox(height: GBTSpacing.sm),
+                titleButton,
+              ],
+            );
+          }
+          return Row(
+            children: [
+              Expanded(child: editButton),
+              const SizedBox(width: GBTSpacing.sm),
+              Expanded(child: titleButton),
+            ],
+          );
+        },
       );
     }
     if (!isAuthenticated) return const SizedBox.shrink();
 
-    final followButton = SizedBox(
+    final followButton = _ActionButtonFrame(
       key: const Key('traveler-profile-follow'),
-      height: GBTSpacing.touchTarget,
       child: FilledButton(
         key: const Key('field-profile-follow'),
         onPressed: isFollowBusy || isBlocked ? null : onFollow,
@@ -561,9 +552,8 @@ class _Actions extends StatelessWidget {
     );
     final messageButton = onMessage == null
         ? null
-        : SizedBox(
+        : _ActionButtonFrame(
             key: const Key('traveler-profile-message'),
-            height: GBTSpacing.touchTarget,
             child: OutlinedButton.icon(
               onPressed: onMessage,
               icon: const Icon(Icons.mail_outline_rounded, size: 18),
@@ -573,16 +563,18 @@ class _Actions extends StatelessWidget {
     final moreButton = SizedBox(
       width: GBTSpacing.touchTarget,
       height: GBTSpacing.touchTarget,
-      child: OutlinedButton(
-        onPressed: isMoreBusy ? null : onMore,
-        style: OutlinedButton.styleFrom(
-          padding: EdgeInsets.zero,
-          minimumSize: const Size.square(GBTSpacing.touchTarget),
+      child: Tooltip(
+        message: context.l10n(ko: '더 보기', en: 'More', ja: 'さらに表示'),
+        child: OutlinedButton(
+          onPressed: isMoreBusy ? null : onMore,
+          style: OutlinedButton.styleFrom(
+            padding: EdgeInsets.zero,
+            minimumSize: const Size.square(GBTSpacing.touchTarget),
+          ),
+          child: const Icon(Icons.more_horiz_rounded),
         ),
-        child: const Icon(Icons.more_horiz_rounded),
       ),
     );
-    final textScale = MediaQuery.textScalerOf(context).scale(1);
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth < 380 || textScale > 1.3) {
@@ -619,52 +611,16 @@ class _Actions extends StatelessWidget {
   }
 }
 
-class _RouteGridPainter extends CustomPainter {
-  const _RouteGridPainter({
-    required this.line,
-    required this.paper,
-    required this.route,
-  });
+class _ActionButtonFrame extends StatelessWidget {
+  const _ActionButtonFrame({super.key, required this.child});
 
-  final Color line;
-  final Color paper;
-  final Color route;
+  final Widget child;
 
   @override
-  void paint(Canvas canvas, Size size) {
-    canvas.drawRect(Offset.zero & size, Paint()..color = paper);
-    final gridPaint = Paint()
-      ..color = line
-      ..strokeWidth = 1;
-    for (var x = 20.0; x < size.width; x += 38) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), gridPaint);
-    }
-    for (var y = 18.0; y < size.height; y += 30) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
-    }
-    final routePath = Path()
-      ..moveTo(-10, size.height * 0.78)
-      ..cubicTo(
-        size.width * 0.25,
-        size.height * 0.25,
-        size.width * 0.62,
-        size.height * 1.1,
-        size.width + 12,
-        size.height * 0.2,
-      );
-    canvas.drawPath(
-      routePath,
-      Paint()
-        ..color = route
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 5,
+  Widget build(BuildContext context) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: GBTSpacing.touchTarget),
+      child: child,
     );
-  }
-
-  @override
-  bool shouldRepaint(covariant _RouteGridPainter oldDelegate) {
-    return oldDelegate.line != line ||
-        oldDelegate.paper != paper ||
-        oldDelegate.route != route;
   }
 }

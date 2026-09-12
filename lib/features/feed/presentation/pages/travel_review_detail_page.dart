@@ -14,6 +14,7 @@ import '../../../../core/theme/gbt_typography.dart';
 import '../../../../core/utils/result.dart';
 import '../../../../core/widgets/common/gbt_image.dart';
 import '../../../../core/widgets/layout/gbt_page_header.dart';
+import '../../../../core/widgets/layout/gbt_field_primitives.dart';
 import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
 import '../../../settings/application/settings_controller.dart';
 import '../../application/travel_reviews_controller.dart';
@@ -202,7 +203,6 @@ class _TravelReviewContent extends StatelessWidget {
       slivers: [
         SliverToBoxAdapter(
           child: GBTPageHeader(
-            eyebrow: 'PILGRIMAGE LOG',
             title: review.post.title,
             description: _description,
           ),
@@ -277,7 +277,6 @@ class _TravelReviewContent extends StatelessWidget {
               Divider(color: colorScheme.outlineVariant),
               const SizedBox(height: GBTSpacing.xl),
               _SectionHeading(
-                eyebrow: 'ROUTE NOTE',
                 title: '방문한 순서',
                 description: '이동한 흐름을 지도와 인증 상태로 함께 확인해보세요.',
               ),
@@ -294,7 +293,6 @@ class _TravelReviewContent extends StatelessWidget {
               if (review.events.isNotEmpty) ...[
                 const SizedBox(height: GBTSpacing.xl),
                 const _SectionHeading(
-                  eyebrow: 'LIVE MOMENTS',
                   title: '함께한 라이브',
                   description: '여행 기록과 연결된 라이브 일정입니다.',
                 ),
@@ -425,13 +423,8 @@ class _RouteNote extends StatelessWidget {
 }
 
 class _SectionHeading extends StatelessWidget {
-  const _SectionHeading({
-    required this.eyebrow,
-    required this.title,
-    required this.description,
-  });
+  const _SectionHeading({required this.title, required this.description});
 
-  final String eyebrow;
   final String title;
   final String description;
 
@@ -441,19 +434,7 @@ class _SectionHeading extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          eyebrow,
-          style: GBTTypography.labelSmall.copyWith(
-            color: colorScheme.primary,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 1.1,
-          ),
-        ),
-        const SizedBox(height: GBTSpacing.xs),
-        Text(
-          title,
-          style: GBTTypography.titleLarge.copyWith(fontWeight: FontWeight.w800),
-        ),
+        GBTFieldSectionHeader(title: title),
         const SizedBox(height: GBTSpacing.xs),
         Text(
           description,

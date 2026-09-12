@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:oshi_log/core/widgets/layout/gbt_page_header.dart';
 import 'package:oshi_log/features/calendar/domain/entities/calendar_event.dart';
 import 'package:oshi_log/features/fan_level/domain/entities/fan_level.dart';
 import 'package:oshi_log/features/my/presentation/travel_passport/passport_sections.dart';
@@ -25,7 +26,6 @@ void main() {
               child: PassportSectionHeading(
                 index: '02',
                 title: 'Upcoming schedule',
-                eyebrow: 'NEXT DEPARTURES',
                 actionLabel: 'Open calendar',
                 onAction: () {},
               ),
@@ -55,7 +55,7 @@ void main() {
   });
 
   testWidgets(
-    'renders a document-led passport hierarchy without glass or gradients',
+    'uses the shared page header and localized travel passport labels',
     (tester) async {
       await tester.pumpWidget(
         _TestApp(
@@ -88,8 +88,14 @@ void main() {
       expect(find.byType(ShaderMask), findsNothing);
       expect(find.text('MY FIELD LOG'), findsNothing);
       expect(find.text('TRAVEL DOCUMENT  /  JP'), findsNothing);
+      expect(find.byType(GBTPageHeader), findsOneWidget);
+      expect(find.text('My travels'), findsOneWidget);
       expect(find.text('Travel passport'), findsOneWidget);
-      expect(find.text('OSHI@LOG · TRAVEL PASSPORT'), findsOneWidget);
+      expect(find.text('Travel records'), findsOneWidget);
+      expect(find.text('Travel archive'), findsOneWidget);
+      expect(find.text('Member since'), findsOneWidget);
+      expect(find.text('2024.03.07'), findsOneWidget);
+      expect(find.text('OSHI@LOG · TRAVEL PASSPORT'), findsNothing);
       final sectionHeadings = find.byType(PassportSectionHeading);
       for (final folio in const ['01', '02', '03']) {
         expect(
@@ -107,13 +113,14 @@ void main() {
     tester,
   ) async {
     var visitsOpened = false;
+    var settingsOpened = false;
     String? openedStop;
     await tester.pumpWidget(
       _TestApp(
         child: TravelPassportView(
           data: _data(),
           onRefresh: () async {},
-          onOpenSettings: () {},
+          onOpenSettings: () => settingsOpened = true,
           onOpenFanLevel: () {},
           onOpenCalendar: () {},
           onOpenStop: (stop) => openedStop = stop.eventId,
@@ -127,6 +134,11 @@ void main() {
 
     final visitsFinder = find.byKey(const Key('archive-visits'));
     final stopFinder = find.byKey(const Key('next-stop-live-01'));
+    final settingsFinder = find.byKey(const Key('travel-passport-settings'));
+    expect(tester.getSize(settingsFinder).height, greaterThanOrEqualTo(48));
+    expect(tester.getSize(settingsFinder).width, greaterThanOrEqualTo(48));
+    await tester.tap(settingsFinder);
+    expect(settingsOpened, isTrue);
     await tester.ensureVisible(visitsFinder);
     await tester.pumpAndSettle();
     expect(tester.getSize(visitsFinder).height, greaterThanOrEqualTo(48));

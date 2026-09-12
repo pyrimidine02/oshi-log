@@ -1068,19 +1068,9 @@ class PostDetailDocumentView extends ConsumerWidget {
                     children: [
                       Text(
                         key: const ValueKey<String>('field-note-header'),
-                        'COMMUNITY FIELD NOTE',
-                        style: GBTTypography.labelSmall.copyWith(
-                          color: Theme.of(context).colorScheme.primary,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1.1,
-                        ),
-                      ),
-                      const SizedBox(height: GBTSpacing.xs),
-                      Text(
                         post.title,
-                        style: GBTTypography.headlineMedium.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
+                        style: Theme.of(context).textTheme.headlineMedium
+                            ?.copyWith(fontWeight: FontWeight.w700),
                       ),
                       const SizedBox(height: GBTSpacing.md),
                       Row(
@@ -1282,7 +1272,7 @@ class PostDetailDocumentView extends ConsumerWidget {
                           children: [
                             _TimelineActionButton(
                               icon: GBTActionIcons.comment,
-                              label: commentCountLabel,
+                              label: '댓글 $commentCountLabel',
                               color: commentActionColor,
                               onTap: onFocusComment,
                             ),
@@ -1290,7 +1280,7 @@ class PostDetailDocumentView extends ConsumerWidget {
                               icon: isLiked
                                   ? GBTActionIcons.likeActive
                                   : GBTActionIcons.like,
-                              label: _compactCountLabel(likeCount),
+                              label: '좋아요 ${_compactCountLabel(likeCount)}',
                               color: isLiked
                                   ? GBTColors.favorite
                                   : tertiaryColor,
@@ -1301,7 +1291,7 @@ class PostDetailDocumentView extends ConsumerWidget {
                               icon: isBookmarked
                                   ? GBTActionIcons.bookmarkActive
                                   : GBTActionIcons.bookmark,
-                              label: isBookmarked ? '북마크됨' : '북마크',
+                              label: isBookmarked ? '저장됨' : '저장',
                               color: isBookmarked
                                   ? (isDark
                                         ? GBTColors.darkPrimary
@@ -1394,10 +1384,12 @@ class PostDetailDocumentView extends ConsumerWidget {
                 children: [
                   Icon(Icons.lock_outline, size: 16, color: secondaryColor),
                   const SizedBox(width: GBTSpacing.sm),
-                  Text(
-                    '댓글을 작성하려면 로그인하세요.',
-                    style: GBTTypography.bodySmall.copyWith(
-                      color: secondaryColor,
+                  Expanded(
+                    child: Text(
+                      '댓글을 작성하려면 로그인하세요.',
+                      style: GBTTypography.bodySmall.copyWith(
+                        color: secondaryColor,
+                      ),
                     ),
                   ),
                 ],
@@ -1554,10 +1546,6 @@ class _PostCommentsSectionState extends State<_PostCommentsSection> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final borderColor = isDark ? GBTColors.darkBorder : GBTColors.border;
-    final tertiaryColor = isDark
-        ? GBTColors.darkTextTertiary
-        : GBTColors.textTertiary;
-    final selectedColor = isDark ? GBTColors.darkPrimary : GBTColors.primary;
 
     return widget.state.when(
       loading: () => const GBTLoading(message: '댓글을 불러오는 중...'),
@@ -1630,25 +1618,25 @@ class _PostCommentsSectionState extends State<_PostCommentsSection> {
                 GBTSpacing.pageHorizontal,
                 GBTSpacing.sm,
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  _CommentSortTextButton(
-                    label: '최신순',
-                    selected: _sort == _CommentSort.latest,
-                    selectedColor: selectedColor,
-                    textColor: tertiaryColor,
-                    onTap: () => setState(() => _sort = _CommentSort.latest),
-                  ),
-                  const SizedBox(width: GBTSpacing.xs),
-                  _CommentSortTextButton(
-                    label: '등록순',
-                    selected: _sort == _CommentSort.oldest,
-                    selectedColor: selectedColor,
-                    textColor: tertiaryColor,
-                    onTap: () => setState(() => _sort = _CommentSort.oldest),
-                  ),
-                ],
+              child: Align(
+                alignment: AlignmentDirectional.centerEnd,
+                child: SegmentedButton<_CommentSort>(
+                  showSelectedIcon: false,
+                  segments: const [
+                    ButtonSegment(
+                      value: _CommentSort.latest,
+                      label: Text('최신순'),
+                    ),
+                    ButtonSegment(
+                      value: _CommentSort.oldest,
+                      label: Text('등록순'),
+                    ),
+                  ],
+                  selected: {_sort},
+                  onSelectionChanged: (selection) => setState(() {
+                    _sort = selection.single;
+                  }),
+                ),
               ),
             ),
             // EN: Comment list separated by dividers.
@@ -2030,7 +2018,9 @@ class _CommentItemState extends ConsumerState<_CommentItem> {
                     const SizedBox(height: GBTSpacing.sm),
                     // EN: Action row — reply button + expand-replies toggle.
                     // KO: 액션 행 — 답글 버튼 + 답글 펼치기 토글.
-                    Row(
+                    Wrap(
+                      spacing: GBTSpacing.sm,
+                      runSpacing: GBTSpacing.xs,
                       children: [
                         if (canReply)
                           _ReplyActionButton(
@@ -2039,7 +2029,6 @@ class _CommentItemState extends ConsumerState<_CommentItem> {
                             onTap: () => widget.onReply(comment),
                           ),
                         if (replyCount > 0) ...[
-                          if (canReply) const SizedBox(width: GBTSpacing.sm),
                           _ReplyActionButton(
                             label: _repliesExpanded
                                 ? '답글 숨기기'
@@ -2405,35 +2394,19 @@ class _ReplyActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 48),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: GBTSpacing.xs),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  label,
-                  style: GBTTypography.labelSmall.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                if (icon != null) ...[
-                  const SizedBox(width: 2),
-                  Icon(icon, size: 14, color: color),
-                ],
-              ],
-            ),
-          ),
-        ),
-      ),
+    final style = TextButton.styleFrom(
+      foregroundColor: color,
+      minimumSize: const Size(48, 48),
+      padding: const EdgeInsets.symmetric(horizontal: GBTSpacing.xs),
     );
+    return icon == null
+        ? TextButton(onPressed: onTap, style: style, child: Text(label))
+        : TextButton.icon(
+            onPressed: onTap,
+            style: style,
+            icon: Icon(icon, size: 18),
+            label: Text(label),
+          );
   }
 }
 
@@ -2521,55 +2494,6 @@ class _CommentMenuButton extends StatelessWidget {
           onReport();
         }
       },
-    );
-  }
-}
-
-class _CommentSortTextButton extends StatelessWidget {
-  const _CommentSortTextButton({
-    required this.label,
-    required this.selected,
-    required this.selectedColor,
-    required this.textColor,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final Color selectedColor;
-  final Color textColor;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
-        child: AnimatedContainer(
-          duration: GBTAnimations.fast,
-          curve: Curves.easeOutCubic,
-          constraints: const BoxConstraints(minHeight: 48),
-          padding: const EdgeInsets.symmetric(horizontal: GBTSpacing.sm),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            border: Border(
-              bottom: BorderSide(
-                color: selected ? selectedColor : Colors.transparent,
-                width: 2,
-              ),
-            ),
-          ),
-          child: Text(
-            label,
-            style: GBTTypography.labelSmall.copyWith(
-              color: selected ? selectedColor : textColor,
-              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-            ),
-          ),
-        ),
-      ),
     );
   }
 }
@@ -2860,41 +2784,16 @@ class _TimelineActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 48),
-          child: Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: GBTSpacing.sm2,
-              vertical: GBTSpacing.xs,
-            ),
-            decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: isSelected ? color : Colors.transparent,
-                  width: 2,
-                ),
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(icon, size: 17, color: color),
-                if (label.isNotEmpty) ...[
-                  const SizedBox(width: 6),
-                  Text(
-                    label,
-                    style: GBTTypography.labelSmall.copyWith(color: color),
-                  ),
-                ],
-              ],
-            ),
-          ),
+    return Semantics(
+      selected: isSelected,
+      child: TextButton.icon(
+        onPressed: onTap,
+        style: TextButton.styleFrom(
+          foregroundColor: color,
+          minimumSize: const Size(48, 48),
         ),
+        icon: Icon(icon, size: 20),
+        label: Text(label),
       ),
     );
   }

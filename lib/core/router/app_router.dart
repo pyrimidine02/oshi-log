@@ -1134,11 +1134,11 @@ extension AppRouterExtension on BuildContext {
   }
 
   String _resolveCurrentPathFromContext() {
-    try {
-      return GoRouterState.of(this).uri.path;
-    } catch (_) {
-      return GoRouter.of(this).routeInformationProvider.value.uri.path;
-    }
+    // EN: Read the active match directly. Ancestor lookup can loop forever
+    // from a Navigator-pushed page inside a stateful shell navigator.
+    // KO: 활성 경로를 직접 조회합니다. 상태 유지 쉘에서 Navigator로 연
+    // 화면의 조상을 탐색하면 같은 내비게이터를 무한 반복할 수 있습니다.
+    return GoRouter.of(this).state.uri.path;
   }
 
   bool _isInOverlayContext() {

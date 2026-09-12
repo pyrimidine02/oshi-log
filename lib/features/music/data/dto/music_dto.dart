@@ -56,9 +56,14 @@ class MusicAlbumSummaryDto {
     required this.type,
     this.coverUrl,
     this.releaseDate,
-    this.trackCount = 0,
+    this.releaseDateText,
+    this.trackCount,
     this.label,
     this.catalogNo,
+    this.unitId,
+    this.unitName,
+    this.discNo,
+    this.trackNo,
   });
 
   final String id;
@@ -67,9 +72,14 @@ class MusicAlbumSummaryDto {
   final String type;
   final String? coverUrl;
   final String? releaseDate;
-  final int trackCount;
+  final String? releaseDateText;
+  final int? trackCount;
   final String? label;
   final String? catalogNo;
+  final String? unitId;
+  final String? unitName;
+  final int? discNo;
+  final int? trackNo;
 
   factory MusicAlbumSummaryDto.fromJson(Map<String, dynamic> json) {
     return MusicAlbumSummaryDto(
@@ -81,9 +91,14 @@ class MusicAlbumSummaryDto {
       type: _string(json['type'], fallback: 'ALBUM'),
       coverUrl: _stringOrNull(json['coverUrl'] ?? json['thumbnailUrl']),
       releaseDate: _stringOrNull(json['releaseDate']),
-      trackCount: _int(json['trackCount']),
+      releaseDateText: _stringOrNull(json['releaseDateText']),
+      trackCount: _intOrNull(json['trackCount']),
       label: _stringOrNull(json['label']),
       catalogNo: _stringOrNull(json['catalogNo']),
+      unitId: _stringOrNull(json['unitId']),
+      unitName: _stringOrNull(json['unitName']),
+      discNo: _intOrNull(json['discNo']),
+      trackNo: _intOrNull(json['trackNo']),
     );
   }
 
@@ -94,9 +109,14 @@ class MusicAlbumSummaryDto {
     'type': type,
     if (coverUrl != null) 'coverUrl': coverUrl,
     if (releaseDate != null) 'releaseDate': releaseDate,
-    'trackCount': trackCount,
+    if (releaseDateText != null) 'releaseDateText': releaseDateText,
+    if (trackCount != null) 'trackCount': trackCount,
     if (label != null) 'label': label,
     if (catalogNo != null) 'catalogNo': catalogNo,
+    if (unitId != null) 'unitId': unitId,
+    if (unitName != null) 'unitName': unitName,
+    if (discNo != null) 'discNo': discNo,
+    if (trackNo != null) 'trackNo': trackNo,
   };
 }
 
@@ -105,12 +125,14 @@ class MusicAlbumTrackDto {
     required this.songId,
     required this.trackNo,
     required this.title,
+    this.discNo,
     this.versionCode,
     this.durationMs,
   });
 
   final String songId;
-  final int trackNo;
+  final int? trackNo;
+  final int? discNo;
   final String title;
   final String? versionCode;
   final int? durationMs;
@@ -118,7 +140,8 @@ class MusicAlbumTrackDto {
   factory MusicAlbumTrackDto.fromJson(Map<String, dynamic> json) {
     return MusicAlbumTrackDto(
       songId: _string(json['songId']),
-      trackNo: _int(json['trackNo']),
+      trackNo: _intOrNull(json['trackNo']),
+      discNo: _intOrNull(json['discNo']),
       title: _string(json['title']),
       versionCode: _stringOrNull(json['versionCode']),
       durationMs: _intOrNull(json['durationMs']),
@@ -127,7 +150,8 @@ class MusicAlbumTrackDto {
 
   Map<String, dynamic> toJson() => {
     'songId': songId,
-    'trackNo': trackNo,
+    if (trackNo != null) 'trackNo': trackNo,
+    if (discNo != null) 'discNo': discNo,
     'title': title,
     if (versionCode != null) 'versionCode': versionCode,
     if (durationMs != null) 'durationMs': durationMs,
@@ -142,9 +166,14 @@ class MusicAlbumDetailDto extends MusicAlbumSummaryDto {
     required super.type,
     super.coverUrl,
     super.releaseDate,
+    super.releaseDateText,
     super.trackCount,
     super.label,
     super.catalogNo,
+    super.unitId,
+    super.unitName,
+    super.discNo,
+    super.trackNo,
     this.tracks = const [],
   });
 
@@ -164,9 +193,14 @@ class MusicAlbumDetailDto extends MusicAlbumSummaryDto {
       type: _string(json['type'], fallback: 'ALBUM'),
       coverUrl: _stringOrNull(json['coverUrl'] ?? json['thumbnailUrl']),
       releaseDate: _stringOrNull(json['releaseDate']),
-      trackCount: _int(json['trackCount'], fallback: tracks.length),
+      releaseDateText: _stringOrNull(json['releaseDateText']),
+      trackCount: _intOrNull(json['trackCount']),
       label: _stringOrNull(json['label']),
       catalogNo: _stringOrNull(json['catalogNo']),
+      unitId: _stringOrNull(json['unitId']),
+      unitName: _stringOrNull(json['unitName']),
+      discNo: _intOrNull(json['discNo']),
+      trackNo: _intOrNull(json['trackNo']),
       tracks: tracks,
     );
   }
@@ -263,15 +297,21 @@ class MusicSongDetailDto extends MusicSongSummaryDto {
     super.defaultVersionCode,
     this.versions = const [],
     this.previewUrl,
+    this.albums = const [],
   });
 
   final List<MusicSongVersionInfoDto> versions;
   final String? previewUrl;
+  final List<MusicAlbumSummaryDto> albums;
 
   factory MusicSongDetailDto.fromJson(Map<String, dynamic> json) {
     final versions = _extractList(json, preferredKey: 'versions')
         .whereType<Map<String, dynamic>>()
         .map(MusicSongVersionInfoDto.fromJson)
+        .toList(growable: false);
+    final albums = _extractList(json, preferredKey: 'albums')
+        .whereType<Map<String, dynamic>>()
+        .map(MusicAlbumSummaryDto.fromJson)
         .toList(growable: false);
     return MusicSongDetailDto(
       id: _string(json['id']),
@@ -293,6 +333,7 @@ class MusicSongDetailDto extends MusicSongSummaryDto {
       previewUrl: _stringOrNull(
         json['previewUrl'] ?? _asMap(json['preview'])?['url'],
       ),
+      albums: albums,
     );
   }
 
@@ -301,6 +342,8 @@ class MusicSongDetailDto extends MusicSongSummaryDto {
     ...super.toJson(),
     'versions': versions.map((v) => v.toJson()).toList(),
     if (previewUrl != null) 'previewUrl': previewUrl,
+    if (albums.isNotEmpty)
+      'albums': albums.map((album) => album.toJson()).toList(),
   };
 }
 
@@ -786,8 +829,10 @@ class MusicAvailabilityDto {
 
   Map<String, dynamic> toJson() => {
     'isAvailableNow': isAvailableNow,
-    if (availableFrom != null) 'availableFrom': availableFrom!.toIso8601String(),
-    if (availableUntil != null) 'availableUntil': availableUntil!.toIso8601String(),
+    if (availableFrom != null)
+      'availableFrom': availableFrom!.toIso8601String(),
+    if (availableUntil != null)
+      'availableUntil': availableUntil!.toIso8601String(),
     'allowedCountries': allowedCountries,
     'blockedCountries': blockedCountries,
     'rightsPolicy': rightsPolicy,

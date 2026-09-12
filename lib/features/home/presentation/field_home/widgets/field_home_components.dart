@@ -28,6 +28,7 @@ class JourneyBriefCard extends StatelessWidget {
     required this.secondaryActionLabel,
     required this.onSecondaryAction,
     this.imageUrl,
+    this.imageFit = BoxFit.cover,
   });
 
   final String markerLabel;
@@ -39,6 +40,7 @@ class JourneyBriefCard extends StatelessWidget {
   final String secondaryActionLabel;
   final VoidCallback onSecondaryAction;
   final String? imageUrl;
+  final BoxFit imageFit;
 
   @override
   Widget build(BuildContext context) {
@@ -48,8 +50,10 @@ class JourneyBriefCard extends StatelessWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final largeText = MediaQuery.textScalerOf(context).scale(1) > 1.3;
+          final hasImage = imageUrl?.trim().isNotEmpty ?? false;
+          final showImage = hasImage && !largeText;
           final artWidth = constraints.maxWidth < 330 ? 88.0 : 112.0;
-          return IntrinsicHeight(
+          final content = IntrinsicHeight(
             child: ConstrainedBox(
               constraints: const BoxConstraints(minHeight: 176),
               child: Row(
@@ -60,7 +64,7 @@ class JourneyBriefCard extends StatelessWidget {
                       padding: const EdgeInsets.fromLTRB(
                         GBTSpacing.md,
                         GBTSpacing.md,
-                        GBTSpacing.sm,
+                        GBTSpacing.md,
                         GBTSpacing.sm,
                       ),
                       child: Column(
@@ -129,13 +133,13 @@ class JourneyBriefCard extends StatelessWidget {
                                 onPressed: onPrimaryAction,
                                 style: FilledButton.styleFrom(
                                   minimumSize: const Size(
-                                    0,
+                                    GBTSpacing.touchTarget,
                                     GBTSpacing.touchTarget,
                                   ),
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: GBTSpacing.md,
                                   ),
-                                  visualDensity: VisualDensity.compact,
+                                  visualDensity: VisualDensity.standard,
                                 ),
                                 child: Text(primaryActionLabel),
                               ),
@@ -143,13 +147,13 @@ class JourneyBriefCard extends StatelessWidget {
                                 onPressed: onSecondaryAction,
                                 style: TextButton.styleFrom(
                                   minimumSize: const Size(
-                                    0,
+                                    GBTSpacing.touchTarget,
                                     GBTSpacing.touchTarget,
                                   ),
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: GBTSpacing.sm,
                                   ),
-                                  visualDensity: VisualDensity.compact,
+                                  visualDensity: VisualDensity.standard,
                                 ),
                                 child: Text(secondaryActionLabel),
                               ),
@@ -159,80 +163,45 @@ class JourneyBriefCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  if (!largeText)
+                  if (showImage)
                     SizedBox(
                       width: artWidth,
-                      child: imageUrl == null || imageUrl!.trim().isEmpty
-                          ? const _JourneyArtPlaceholder()
-                          : ExcludeSemantics(
-                              child: GBTImage(
-                                imageUrl: imageUrl!,
-                                fit: BoxFit.cover,
-                                semanticLabel: title,
-                              ),
-                            ),
+                      child: ExcludeSemantics(
+                        child: GBTImage(
+                          imageUrl: imageUrl!,
+                          fit: imageFit,
+                          semanticLabel: title,
+                        ),
+                      ),
                     ),
                 ],
               ),
             ),
           );
+          if (!hasImage || !largeText) return content;
+
+          // EN: Reflow real artwork below the actions when text is enlarged.
+          // KO: 글자를 확대하면 실제 아트워크를 액션 아래로 재배치합니다.
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              content,
+              SizedBox(
+                height: 160,
+                child: ExcludeSemantics(
+                  child: GBTImage(
+                    imageUrl: imageUrl!,
+                    fit: imageFit,
+                    semanticLabel: title,
+                  ),
+                ),
+              ),
+            ],
+          );
         },
       ),
     );
-  }
-}
-
-class _JourneyArtPlaceholder extends StatelessWidget {
-  const _JourneyArtPlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    return ExcludeSemantics(
-      child: CustomPaint(
-        painter: _RailGridPainter(
-          lineColor: colors.outlineVariant,
-          accentColor: colors.secondary,
-        ),
-        child: Center(
-          child: Icon(
-            Icons.location_city_outlined,
-            size: 52,
-            color: colors.secondary,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _RailGridPainter extends CustomPainter {
-  const _RailGridPainter({required this.lineColor, required this.accentColor});
-
-  final Color lineColor;
-  final Color accentColor;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final line = Paint()..color = lineColor;
-    for (double y = 20; y < size.height; y += 28) {
-      canvas.drawLine(Offset.zero.translate(0, y), Offset(size.width, y), line);
-    }
-    final route = Paint()
-      ..color = accentColor
-      ..strokeWidth = 4
-      ..strokeCap = StrokeCap.round;
-    canvas.drawLine(
-      Offset(size.width * 0.18, size.height * 0.72),
-      Offset(size.width * 0.82, size.height * 0.28),
-      route,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _RailGridPainter oldDelegate) {
-    return lineColor != oldDelegate.lineColor ||
-        accentColor != oldDelegate.accentColor;
   }
 }
 
@@ -416,23 +385,21 @@ class FieldPlaceFeature extends StatelessWidget {
           excludeFromSemantics: true,
           child: LayoutBuilder(
             builder: (context, constraints) {
+              final hasImage = imageUrl?.trim().isNotEmpty ?? false;
               final imageWidth = constraints.maxWidth * 0.38;
               return IntrinsicHeight(
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(minHeight: 132),
+                  constraints: BoxConstraints(minHeight: hasImage ? 132 : 112),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       SizedBox(
-                        width: imageWidth,
-                        child: imageUrl == null || imageUrl!.trim().isEmpty
-                            ? ColoredBox(
-                                color: colors.secondaryContainer,
-                                child: Icon(
-                                  Icons.map_outlined,
-                                  size: 38,
-                                  color: colors.secondary,
-                                ),
+                        width: hasImage ? imageWidth : 56,
+                        child: !hasImage
+                            ? Icon(
+                                Icons.place_outlined,
+                                size: 28,
+                                color: colors.secondary,
                               )
                             : GBTImage(
                                 imageUrl: imageUrl!,
@@ -448,23 +415,19 @@ class FieldPlaceFeature extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                meta.toUpperCase(),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.labelSmall
-                                    ?.copyWith(
-                                      color: colors.secondary,
-                                      fontWeight: FontWeight.w800,
-                                      letterSpacing: 0.6,
-                                    ),
-                              ),
-                              const SizedBox(height: GBTSpacing.xs),
-                              Text(
                                 title,
                                 maxLines: 3,
                                 overflow: TextOverflow.ellipsis,
                                 style: Theme.of(context).textTheme.titleMedium
-                                    ?.copyWith(fontWeight: FontWeight.w800),
+                                    ?.copyWith(fontWeight: FontWeight.w700),
+                              ),
+                              const SizedBox(height: GBTSpacing.xs),
+                              Text(
+                                meta,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(color: colors.onSurfaceVariant),
                               ),
                               const SizedBox(height: GBTSpacing.sm),
                               Icon(

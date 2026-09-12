@@ -18,6 +18,7 @@ void main() {
         expect(viewData.displayName, '마리');
         expect(viewData.bio, '도쿄의 라이브 하우스와 성지를 기록합니다.');
         expect(viewData.joinedAt, DateTime.utc(2024, 3, 2));
+        expect(viewData.accessLevelLabel, '일반 사용자');
         expect(viewData.followerCount, 12);
         expect(viewData.followingCount, 7);
         expect(

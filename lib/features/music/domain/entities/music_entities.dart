@@ -22,9 +22,14 @@ class MusicAlbumSummary {
     required this.type,
     this.coverUrl,
     this.releaseDate,
-    this.trackCount = 0,
+    this.releaseDateText,
+    this.trackCount,
     this.label,
     this.catalogNo,
+    this.unitId,
+    this.unitName,
+    this.discNo,
+    this.trackNo,
   });
 
   final String id;
@@ -33,9 +38,14 @@ class MusicAlbumSummary {
   final String type;
   final String? coverUrl;
   final String? releaseDate;
-  final int trackCount;
+  final String? releaseDateText;
+  final int? trackCount;
   final String? label;
   final String? catalogNo;
+  final String? unitId;
+  final String? unitName;
+  final int? discNo;
+  final int? trackNo;
 }
 
 class MusicAlbumTrack {
@@ -43,12 +53,14 @@ class MusicAlbumTrack {
     required this.songId,
     required this.trackNo,
     required this.title,
+    this.discNo,
     this.versionCode,
     this.durationMs,
   });
 
   final String songId;
-  final int trackNo;
+  final int? trackNo;
+  final int? discNo;
   final String title;
   final String? versionCode;
   final int? durationMs;
@@ -62,9 +74,14 @@ class MusicAlbumDetail extends MusicAlbumSummary {
     required super.type,
     super.coverUrl,
     super.releaseDate,
+    super.releaseDateText,
     super.trackCount,
     super.label,
     super.catalogNo,
+    super.unitId,
+    super.unitName,
+    super.discNo,
+    super.trackNo,
     this.tracks = const [],
   });
 
@@ -140,10 +157,12 @@ class MusicSongDetail extends MusicSongSummary {
     super.defaultVersionCode,
     this.versions = const [],
     this.previewUrl,
+    this.albums = const [],
   });
 
   final List<MusicSongVersionInfo> versions;
   final String? previewUrl;
+  final List<MusicAlbumSummary> albums;
 }
 
 class MusicLyricLine {

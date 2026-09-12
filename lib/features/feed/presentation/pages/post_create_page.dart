@@ -496,7 +496,6 @@ class _PostCreatePageState extends ConsumerState<PostCreatePage> {
                   ),
                   children: [
                     const GBTPageHeader(
-                      eyebrow: 'COMMUNITY NOTE',
                       title: '새 여행 기록',
                       description: '성지와 공연에서 발견한 순간을 나만의 필드 노트로 남겨보세요.',
                       padding: EdgeInsets.only(bottom: GBTSpacing.md),

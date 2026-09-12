@@ -8,14 +8,15 @@ import 'package:oshi_log/features/feed/presentation/field_user_profile/widgets/f
 
 void main() {
   testWidgets(
-    'public profile reads as a traveler field card and activity ledger',
+    'public profile reads as a traveler profile and activity record',
     (tester) async {
       await tester.pumpWidget(_TestApp(child: _document()));
 
       final card = find.byKey(const Key('traveler-field-card'));
       final ledger = find.byKey(const Key('traveler-field-ledger'));
 
-      expect(find.text('TRAVELER FIELD CARD'), findsOneWidget);
+      expect(find.text('여행자 프로필'), findsOneWidget);
+      expect(find.text('TRAVELER FIELD CARD'), findsNothing);
       expect(card, findsOneWidget);
       expect(ledger, findsOneWidget);
       expect(
@@ -65,7 +66,7 @@ void main() {
     expect(tester.getSize(message).height, greaterThanOrEqualTo(48));
   });
 
-  testWidgets('visit ledger remains available while post activity fails', (
+  testWidgets('visit records remain available while post activity fails', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -79,6 +80,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('성지 14곳을 기록했어요.'), findsOneWidget);
+    expect(find.text('방문 기록'), findsWidgets);
+    expect(find.text('VISIT LEDGER'), findsNothing);
     expect(find.text('활동을 불러오지 못했어요'), findsNothing);
   });
 }

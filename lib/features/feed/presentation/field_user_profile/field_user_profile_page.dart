@@ -480,7 +480,7 @@ class _AccountLedger extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              context.l10n(ko: '계정 원장', en: 'ACCOUNT LEDGER', ja: 'アカウント台帳'),
+              context.l10n(ko: '계정 정보', en: 'Account details', ja: 'アカウント情報'),
               style: GBTTypography.overline.copyWith(
                 color: colors.onSurfaceVariant,
                 fontWeight: FontWeight.w800,

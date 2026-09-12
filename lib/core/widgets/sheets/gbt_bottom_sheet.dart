@@ -35,15 +35,12 @@ Future<T?> showGBTBottomSheet<T>({
           top: false,
           child: Align(
             alignment: Alignment.bottomCenter,
-            child: Padding(
-              padding: EdgeInsets.only(bottom: mediaQuery.viewInsets.bottom),
-              child: Material(
-                color: Colors.transparent,
-                child: GBTBottomSheet(
-                  title: title,
-                  maxHeight: heightLimit,
-                  child: child,
-                ),
+            child: Material(
+              color: Colors.transparent,
+              child: GBTBottomSheet(
+                title: title,
+                maxHeight: heightLimit,
+                child: child,
               ),
             ),
           ),
@@ -235,16 +232,19 @@ Future<T?> showGBTActionSheet<T>({
   return showGBTBottomSheet<T>(
     context: context,
     title: title,
+    isScrollControlled: true,
     child: SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ...actions.map((action) => _ActionItem<T>(action: action)),
-          if (cancelLabel != null) ...[
-            const Divider(height: 1),
-            _CancelItem(label: cancelLabel),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ...actions.map((action) => _ActionItem<T>(action: action)),
+            if (cancelLabel != null) ...[
+              const Divider(height: 1),
+              _CancelItem(label: cancelLabel),
+            ],
           ],
-        ],
+        ),
       ),
     ),
   );
@@ -346,12 +346,13 @@ Future<bool?> showGBTConfirmationSheet({
 }) {
   return showGBTBottomSheet<bool>(
     context: context,
+    isScrollControlled: true,
     child: SafeArea(
       child: Builder(
         builder: (context) {
           final isDark = Theme.of(context).brightness == Brightness.dark;
 
-          return Padding(
+          return SingleChildScrollView(
             padding: GBTSpacing.paddingPage,
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -378,31 +379,29 @@ Future<bool?> showGBTConfirmationSheet({
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: GBTSpacing.lg),
-                Row(
+                OverflowBar(
+                  alignment: MainAxisAlignment.end,
+                  overflowAlignment: OverflowBarAlignment.end,
+                  spacing: GBTSpacing.md,
+                  overflowSpacing: GBTSpacing.sm,
                   children: [
-                    Expanded(
-                      child: SizedBox(
-                        height: GBTSpacing.touchTarget,
-                        child: OutlinedButton(
-                          onPressed: () => Navigator.of(context).pop(false),
-                          child: Text(cancelLabel),
-                        ),
-                      ),
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(false),
+                      child: Text(cancelLabel),
                     ),
-                    const SizedBox(width: GBTSpacing.md),
-                    Expanded(
-                      child: SizedBox(
-                        height: GBTSpacing.touchTarget,
-                        child: ElevatedButton(
-                          onPressed: () => Navigator.of(context).pop(true),
-                          style: isDestructive
-                              ? ElevatedButton.styleFrom(
-                                  backgroundColor: GBTColors.error,
-                                )
-                              : null,
-                          child: Text(confirmLabel),
-                        ),
-                      ),
+                    FilledButton(
+                      onPressed: () => Navigator.of(context).pop(true),
+                      style: isDestructive
+                          ? FilledButton.styleFrom(
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.error,
+                              foregroundColor: Theme.of(
+                                context,
+                              ).colorScheme.onError,
+                            )
+                          : null,
+                      child: Text(confirmLabel),
                     ),
                   ],
                 ),

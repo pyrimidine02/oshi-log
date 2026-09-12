@@ -36,7 +36,7 @@ class GBTSpacing {
   // ========================================
   static const double cardPadding = 16.0;
   static const double cardMargin = 12.0;
-  static const double cardRadius = 20.0;
+  static const double cardRadius = 16.0;
 
   static const double listItemPadding = 16.0;
   static const double listItemSpacing = 12.0;
@@ -123,9 +123,9 @@ class GBTSpacing {
   static const double radiusMd = 12.0;
   static const double radiusLg = 16.0;
 
-  /// EN: Card surfaces (2026 large-radius trend) — between lg and xl.
-  /// KO: 카드 표면 (2026 라지 라운드 트렌드) — lg와 xl 사이.
-  static const double radiusCard = 20.0;
+  /// EN: Shared corner radius for content cards.
+  /// KO: 콘텐츠 카드가 공유하는 모서리 반경입니다.
+  static const double radiusCard = 16.0;
   static const double radiusXl = 24.0;
   static const double radiusFull = 9999.0;
 

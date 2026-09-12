@@ -69,7 +69,7 @@ void main() {
     await tester.pumpWidget(buildSubject());
     await tester.pump();
 
-    expect(find.text('Field guide'), findsOneWidget);
+    expect(find.text('Info'), findsOneWidget);
     expect(find.text('Bandori'), findsOneWidget);
     expect(find.text('GBT / TRAVEL & FANDOM'), findsNothing);
     expect(find.text('ISSUE 01'), findsNothing);

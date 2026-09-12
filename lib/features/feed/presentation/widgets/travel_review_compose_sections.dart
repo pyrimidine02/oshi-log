@@ -50,37 +50,41 @@ class TravelReviewComposeMetadata extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'TRIP CONTEXT',
-          style: GBTTypography.labelSmall.copyWith(
-            color: colorScheme.primary,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 1.1,
-          ),
-        ),
-        const SizedBox(height: GBTSpacing.xs),
-        Text(
           '여행 정보',
           style: GBTTypography.titleLarge.copyWith(fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: GBTSpacing.sm),
-        Row(
-          children: [
-            Expanded(
-              child: _DateButton(
-                label: '시작일',
-                value: tripStartedOn,
-                onPressed: onPickStartDate,
-              ),
-            ),
-            const SizedBox(width: GBTSpacing.sm),
-            Expanded(
-              child: _DateButton(
-                label: '종료일',
-                value: tripEndedOn,
-                onPressed: onPickEndDate,
-              ),
-            ),
-          ],
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final textScale = MediaQuery.textScalerOf(context).scale(1);
+            final startButton = _DateButton(
+              label: '시작일',
+              value: tripStartedOn,
+              onPressed: onPickStartDate,
+            );
+            final endButton = _DateButton(
+              label: '종료일',
+              value: tripEndedOn,
+              onPressed: onPickEndDate,
+            );
+            if (constraints.maxWidth < 360 || textScale > 1.3) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  startButton,
+                  const SizedBox(height: GBTSpacing.sm),
+                  endButton,
+                ],
+              );
+            }
+            return Row(
+              children: [
+                Expanded(child: startButton),
+                const SizedBox(width: GBTSpacing.sm),
+                Expanded(child: endButton),
+              ],
+            );
+          },
         ),
         const SizedBox(height: GBTSpacing.sm),
         TextField(
@@ -283,12 +287,17 @@ class _DateButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final formattedValue = value == null
+        ? null
+        : DateFormat('yyyy.MM.dd').format(value!);
     return OutlinedButton.icon(
       onPressed: onPressed,
       icon: const Icon(Icons.calendar_today_outlined, size: 18),
       label: Text(
-        value == null ? label : DateFormat('yyyy.MM.dd').format(value!),
-        overflow: TextOverflow.ellipsis,
+        formattedValue == null ? label : '$label $formattedValue',
+        maxLines: 2,
+        overflow: TextOverflow.visible,
+        textAlign: TextAlign.center,
       ),
       style: OutlinedButton.styleFrom(minimumSize: const Size(0, 48)),
     );
@@ -312,22 +321,41 @@ class _SelectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            count == 0 ? title : '$title $count',
-            style: GBTTypography.titleMedium.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-        OutlinedButton.icon(
-          onPressed: onPressed,
-          icon: Icon(icon, size: 18),
-          label: Text(actionLabel),
-        ),
-      ],
+    final textScale = MediaQuery.textScalerOf(context).scale(1);
+    final titleText = Text(
+      count == 0 ? title : '$title $count',
+      style: GBTTypography.titleMedium.copyWith(fontWeight: FontWeight.w700),
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+    );
+    final actionButton = OutlinedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 18),
+      label: Text(actionLabel),
+      style: OutlinedButton.styleFrom(
+        minimumSize: const Size(0, GBTSpacing.touchTarget),
+      ),
+    );
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 360 || textScale > 1.3) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              titleText,
+              const SizedBox(height: GBTSpacing.xs),
+              actionButton,
+            ],
+          );
+        }
+        return Row(
+          children: [
+            Expanded(child: titleText),
+            const SizedBox(width: GBTSpacing.sm),
+            Flexible(flex: 0, child: actionButton),
+          ],
+        );
+      },
     );
   }
 }
@@ -364,6 +392,9 @@ class _PickerScaffold extends StatelessWidget {
                   ),
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(),
+                    style: TextButton.styleFrom(
+                      minimumSize: const Size(48, GBTSpacing.touchTarget),
+                    ),
                     child: const Text('완료'),
                   ),
                 ],

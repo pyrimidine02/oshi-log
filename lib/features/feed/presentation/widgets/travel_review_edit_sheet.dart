@@ -10,6 +10,7 @@ import '../../../../core/theme/gbt_typography.dart';
 import '../../../../core/utils/result.dart';
 import '../../application/travel_reviews_controller.dart';
 import '../../domain/entities/travel_review.dart';
+import 'post_compose_components.dart';
 
 class TravelReviewEditSheet extends ConsumerStatefulWidget {
   const TravelReviewEditSheet({
@@ -105,21 +106,16 @@ class _TravelReviewEditSheetState extends ConsumerState<TravelReviewEditSheet> {
               ),
             ),
             const SizedBox(height: GBTSpacing.md),
-            TextField(
-              controller: _titleController,
-              maxLength: 255,
-              decoration: const InputDecoration(labelText: '제목'),
-            ),
-            const SizedBox(height: GBTSpacing.sm),
-            TextField(
-              controller: _contentController,
-              minLines: 4,
-              maxLines: 8,
-              maxLength: 20000,
-              decoration: const InputDecoration(
-                labelText: '내용',
-                alignLabelWithHint: true,
-              ),
+            PostComposeDocumentEditor(
+              titleController: _titleController,
+              contentController: _contentController,
+              autofocusTitle: false,
+              titleHintText: '이번 여행은 어떠셨나요?',
+              contentHintText: '자세한 후기를 남겨주세요.',
+              maxTitleLines: 2,
+              minContentLines: 4,
+              maxTitleLength: 255,
+              maxContentLength: 20000,
             ),
             const SizedBox(height: GBTSpacing.sm),
             TextField(
@@ -133,18 +129,36 @@ class _TravelReviewEditSheetState extends ConsumerState<TravelReviewEditSheet> {
               ),
             ),
             const SizedBox(height: GBTSpacing.md),
-            FilledButton(
-              onPressed: _submitting ? null : _submit,
-              style: FilledButton.styleFrom(
-                minimumSize: const Size(double.infinity, 48),
-              ),
-              child: _submitting
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('수정 완료'),
+            Row(
+              children: [
+                TextButton(
+                  onPressed: _submitting
+                      ? null
+                      : () => Navigator.of(context).pop(false),
+                  style: TextButton.styleFrom(
+                    minimumSize: const Size(72, GBTSpacing.touchTarget),
+                  ),
+                  child: const Text('취소'),
+                ),
+                const SizedBox(width: GBTSpacing.sm),
+                Expanded(
+                  child: FilledButton(
+                    onPressed: _submitting ? null : _submit,
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(
+                        GBTSpacing.touchTarget,
+                      ),
+                    ),
+                    child: _submitting
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text('수정 완료'),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

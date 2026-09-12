@@ -5,6 +5,24 @@
 - Added regression checks for shared HTTPS and `www.` link spans, including
   trailing punctuation, as used by the new voice actor activity tab.
 
+- Unified community deep-page actions, post/travel editors and profile labels.
+  Replaced custom social/sort controls with native Material buttons, raised
+  shared text/icon targets to 48dp, and let long profile actions grow vertically.
+  Fixed compact large-text overflow in comment prompts, reply rows, action menus
+  and confirmation sheets, plus duplicate iOS keyboard spacing in shared sheets.
+  Removed ornamental field codes and synthetic profile-cover map artwork.
+
+- Reproduced the song-title navigation freeze through the actual information
+  hub and music archive. Replaced the shared `GoRouterState.of(context)` ancestor
+  walk, which looped on a Navigator-pushed page, with the active GoRouter state.
+  Added actual title-button, delayed-response, and back-stack regression tests.
+- Kept the travel theme across home and My: next trips, pilgrimage places,
+  travel passports, and visit stamps. Unified light/dark Material surface roles,
+  card corners, accessible headers, and native guide/community mode controls;
+  removed redundant decorative labels and absent-media artwork.
+- Fixed song detail layout failures at 320dp with 150–180% text, shared by
+  catalog and event-setlist entry. Added route-context/back-navigation checks;
+  native process termination still needs an installed-device reproduction.
 - Added an activity and profile tab to voice actor details. Long biographies
   remain selectable and scrollable, while official links render only when they
   use HTTPS with a valid host.

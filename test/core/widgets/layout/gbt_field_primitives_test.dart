@@ -6,6 +6,24 @@ import 'package:oshi_log/core/theme/gbt_theme.dart';
 import 'package:oshi_log/core/widgets/layout/gbt_field_primitives.dart';
 
 void main() {
+  testWidgets('plain service headings reserve no decorative label space', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: GBTTheme.light,
+        home: const Scaffold(
+          body: GBTFieldSectionHeader(eyebrow: '', title: '다가오는 공연'),
+        ),
+      ),
+    );
+    expect(
+      tester.getSize(find.byType(GBTFieldSectionHeader)).height,
+      tester.getSize(find.text('다가오는 공연')).height,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('section header keeps its eyebrow visible and accessible', (
     tester,
   ) async {
@@ -59,6 +77,78 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.text('Your recorded pilgrimage places'), findsOneWidget);
     expect(find.text('View all places'), findsOneWidget);
+  });
+
+  testWidgets('section header stacks action inside a 280dp parent', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: GBTTheme.light,
+        home: Scaffold(
+          body: Center(
+            child: SizedBox(
+              width: 280,
+              child: GBTFieldSectionHeader(
+                eyebrow: 'TRAVEL LOGBOOK',
+                title: 'Your recorded pilgrimage places',
+                actionLabel: 'View all places',
+                onAction: () {},
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final titleBottom = tester
+        .getBottomLeft(find.text('Your recorded pilgrimage places'))
+        .dy;
+    final actionTop = tester.getTopLeft(find.text('View all places')).dy;
+
+    expect(actionTop, greaterThan(titleBottom));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('section header keeps a 350dp parent side by side', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: GBTTheme.light,
+        home: Scaffold(
+          body: Center(
+            child: SizedBox(
+              width: 350,
+              child: GBTFieldSectionHeader(
+                eyebrow: 'TRAVEL LOGBOOK',
+                title: 'Your recorded pilgrimage places',
+                actionLabel: 'View all',
+                onAction: () {},
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final titleTop = tester
+        .getTopLeft(find.text('Your recorded pilgrimage places'))
+        .dy;
+    final actionTop = tester.getTopLeft(find.text('View all')).dy;
+
+    expect((actionTop - titleTop).abs(), lessThan(48));
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('field surface enforces a 48dp action target', (tester) async {

@@ -40,8 +40,8 @@ void main() {
       width: 320,
       textScaler: const TextScaler.linear(1.5),
     );
-    expect(find.text('다음 원정'), findsOneWidget);
-    expect(find.text('지도에서 이어지는 장소'), findsOneWidget);
+    expect(find.text('다음 여행'), findsOneWidget);
+    expect(find.text('이 프로젝트의 성지'), findsOneWidget);
     expect(tester.takeException(), isNull);
     await expectLater(
       find.byKey(const ValueKey('field-home-visual-compact')),
@@ -128,28 +128,22 @@ class _FieldHomeShowcase extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        GBTFieldSectionHeader(
-          eyebrow: 'NEXT STOP',
-          title: '오늘의 원정 기록',
-          actionLabel: '전체 보기',
-          onAction: _noop,
-        ),
+        GBTFieldSectionHeader(title: '다음 여행'),
         const SizedBox(height: 16),
         JourneyBriefCard(
           markerLabel: 'D-5',
-          eyebrow: '다음 원정',
+          eyebrow: '가장 가까운 일정',
           title: 'Girls Band Cry 라이브 인 도쿄',
           meta: '2026년 7월 20일 · 18:00',
           primaryActionLabel: '상세 보기',
           onPrimaryAction: _noop,
-          secondaryActionLabel: '지도 열기',
+          secondaryActionLabel: '전체 일정',
           onSecondaryAction: _noop,
         ),
         const SizedBox(height: 28),
         GBTFieldSectionHeader(
-          eyebrow: 'PILGRIMAGE',
-          title: '지도에서 이어지는 장소',
-          actionLabel: '지도 보기',
+          title: '이 프로젝트의 성지',
+          actionLabel: '지도 열기',
           onAction: _noop,
         ),
         const SizedBox(height: 16),
@@ -158,23 +152,8 @@ class _FieldHomeShowcase extends StatelessWidget {
           meta: '도쿄 · 방문 4회',
           onTap: _noop,
         ),
-        FieldRouteRail(
-          nodes: [
-            FieldRouteNode(
-              label: '시모키타자와역',
-              meta: '도보 8분 · 이동 시작',
-              icon: Icons.train_outlined,
-            ),
-            FieldRouteNode(
-              label: '오늘의 라이브',
-              meta: '18:00 · 방문 예정',
-              icon: Icons.music_note_outlined,
-              isEmphasized: true,
-            ),
-          ],
-        ),
         const SizedBox(height: 16),
-        GBTFieldSectionHeader(eyebrow: 'LIVE AGENDA', title: '기록할 다음 장면'),
+        GBTFieldSectionHeader(title: '다가오는 공연'),
         FieldAgendaTile(
           dateLabel: 'JUL 20',
           title: 'Girls Band Cry 라이브',
@@ -183,16 +162,16 @@ class _FieldHomeShowcase extends StatelessWidget {
         ),
         FieldAgendaTile(
           dateLabel: 'JUL 21',
-          title: '시모키타자와 성지 산책',
-          typeLabel: '장소',
+          title: 'Girls Band Cry 앙코르 라이브',
+          typeLabel: '이벤트',
           onTap: _noop,
         ),
         const SizedBox(height: 16),
-        GBTFieldSectionHeader(eyebrow: 'FIELD DISPATCH', title: '현장에서 남긴 소식'),
+        GBTFieldSectionHeader(title: '프로젝트 소식'),
         FieldDispatchRow(
           title: '공연장 주변의 다음 목적지',
-          meta: 'TRAVEL NOTE · 2시간 전',
-          summary: '지도에 저장한 장소를 나만의 원정 기록으로 이어보세요.',
+          meta: '2026년 7월 15일',
+          summary: '공연 전 들를 수 있는 시모키타자와의 성지를 소개합니다.',
           onTap: _noop,
         ),
       ],

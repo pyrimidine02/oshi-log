@@ -47,19 +47,44 @@ class _UserConnectionsPageState extends ConsumerState<UserConnectionsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final displayName = widget.displayName?.trim();
+    final ownerName = displayName == null || displayName.isEmpty
+        ? null
+        : displayName;
     return DefaultTabController(
       length: 2,
       initialIndex: widget.initialTab == UserConnectionsTab.followers ? 0 : 1,
       child: Scaffold(
         appBar: gbtStandardAppBar(
           context,
-          title: widget.displayName == null
-              ? context.l10n(ko: '연결', en: 'Connections', ja: 'つながり')
-              : '${widget.displayName} ${context.l10n(ko: "연결", en: "connections", ja: "つながり")}',
+          title: context.l10n(ko: '연결', en: 'Connections', ja: 'つながり'),
         ),
         body: Column(
           children: [
             const SizedBox(height: GBTSpacing.sm),
+            if (ownerName != null) ...[
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: GBTSpacing.pageHorizontal,
+                ),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    context.l10n(
+                      ko: '$ownerName님의 연결',
+                      en: '$ownerName\'s connections',
+                      ja: '$ownerNameのつながり',
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: GBTTypography.bodySmall.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: GBTSpacing.sm),
+            ],
             GBTSegmentedTabBar(
               tabs: [
                 Tab(
