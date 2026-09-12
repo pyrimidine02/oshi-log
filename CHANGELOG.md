@@ -2,6 +2,12 @@
 
 ## 2026-09-12
 
+- Added regression checks for shared HTTPS and `www.` link spans, including
+  trailing punctuation, as used by the new voice actor activity tab.
+
+- Added an activity and profile tab to voice actor details. Long biographies
+  remain selectable and scrollable, while official links render only when they
+  use HTTPS with a valid host.
 - Preserved the full aspect ratio of official band logos in feed unit cards and
   Field Guide artist cards with contain fitting; news, character, and other
   photographic surfaces keep their existing crop behavior.

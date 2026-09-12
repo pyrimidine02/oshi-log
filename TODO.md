@@ -1,5 +1,11 @@
 # TODO
 
+- Verify the voice actor activity and profile tab in a newly installed build
+  (2026-09-12):
+  - Confirm long biographies remain readable at compact widths and enlarged
+    text scales, and that verified HTTPS official sites open externally.
+  - Removal criteria: focused widget tests and one installed-build check pass.
+
 - Verify the official logo fit in a newly installed build (2026-09-12):
   - Feed unit cards and Field Guide artist cards now use contain fitting so
     long logos remain legible without changing photographic surfaces.

@@ -11,6 +11,7 @@ import '../../../../core/theme/gbt_colors.dart';
 import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';
 import '../../../../core/widgets/common/gbt_image.dart';
+import '../../../../core/widgets/common/gbt_linkified_text.dart';
 import '../../../../core/widgets/feedback/gbt_empty_state.dart';
 import '../../../../core/widgets/feedback/gbt_loading.dart' hide GBTEmptyState;
 import '../../../../core/widgets/navigation/gbt_segmented_tab_bar.dart';
@@ -42,7 +43,7 @@ class _VoiceActorDetailPageState extends ConsumerState<VoiceActorDetailPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   @override
@@ -90,6 +91,7 @@ class _VoiceActorDetailPageState extends ConsumerState<VoiceActorDetailPage>
               const SizedBox(height: GBTSpacing.sm),
               GBTSegmentedTabBar(
                 controller: _tabController,
+                isScrollable: true,
                 tabs: [
                   Tab(
                     text: context.l10n(
@@ -100,6 +102,13 @@ class _VoiceActorDetailPageState extends ConsumerState<VoiceActorDetailPage>
                   ),
                   Tab(
                     text: context.l10n(ko: '크레딧', en: 'Credits', ja: 'クレジット'),
+                  ),
+                  Tab(
+                    text: context.l10n(
+                      ko: '활동·소개',
+                      en: 'Profile & activities',
+                      ja: '活動・紹介',
+                    ),
                   ),
                 ],
               ),
@@ -118,6 +127,7 @@ class _VoiceActorDetailPageState extends ConsumerState<VoiceActorDetailPage>
                       projectId: widget.projectId,
                       voiceActorId: widget.voiceActorId,
                     ),
+                    VoiceActorActivityTab(detail: detail),
                   ],
                 ),
               ),
@@ -239,6 +249,125 @@ class VoiceActorProfileHeader extends StatelessWidget {
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// EN: Displays a voice actor's full biography and supplied HTTPS website.
+/// KO: 성우의 전체 소개와 제공된 HTTPS 웹사이트를 표시합니다.
+class VoiceActorActivityTab extends StatelessWidget {
+  const VoiceActorActivityTab({super.key, required this.detail});
+
+  final VoiceActorDetail detail;
+
+  @override
+  Widget build(BuildContext context) {
+    final bio = _nonEmpty(detail.bio);
+    final officialWebsite = _validatedOfficialWebsite(detail.officialWebsite);
+    final hasProfile = bio != null || officialWebsite != null;
+
+    if (!hasProfile) {
+      return ListView(
+        padding: const EdgeInsets.symmetric(vertical: GBTSpacing.xxl),
+        children: [
+          GBTEmptyState(
+            icon: Icons.badge_outlined,
+            title: context.l10n(
+              ko: '소개 정보가 없습니다',
+              en: 'No profile information',
+              ja: '紹介情報がありません',
+            ),
+          ),
+        ],
+      );
+    }
+
+    return ListView(
+      key: const ValueKey('voice-actor-activity-scroll'),
+      padding: const EdgeInsets.fromLTRB(
+        GBTSpacing.pageHorizontal,
+        GBTSpacing.sm,
+        GBTSpacing.pageHorizontal,
+        GBTSpacing.xl,
+      ),
+      children: [
+        if (bio != null)
+          _VoiceActorProfileSection(
+            title: context.l10n(ko: '소개', en: 'About', ja: '紹介'),
+            child: GBTLinkifiedText(
+              bio,
+              selectable: true,
+              style: GBTTypography.bodyMedium.copyWith(height: 1.55),
+            ),
+          ),
+        if (officialWebsite != null) ...[
+          if (bio != null) const SizedBox(height: GBTSpacing.md),
+          _VoiceActorProfileSection(
+            title: context.l10n(
+              ko: '공식 사이트',
+              en: 'Official website',
+              ja: '公式サイト',
+            ),
+            child: GBTLinkifiedText(
+              officialWebsite.toString(),
+              selectable: true,
+              style: GBTTypography.bodyMedium.copyWith(height: 1.55),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  static String? _nonEmpty(String? value) {
+    final normalized = value?.trim();
+    return normalized == null || normalized.isEmpty ? null : normalized;
+  }
+
+  static Uri? _validatedOfficialWebsite(String? value) {
+    final normalized = _nonEmpty(value);
+    if (normalized == null) return null;
+    final uri = Uri.tryParse(normalized);
+    if (uri == null || uri.scheme.toLowerCase() != 'https') return null;
+    if (uri.host.isEmpty || uri.userInfo.isNotEmpty) {
+      return null;
+    }
+    return uri;
+  }
+}
+
+class _VoiceActorProfileSection extends StatelessWidget {
+  const _VoiceActorProfileSection({required this.title, required this.child});
+
+  final String title;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(GBTSpacing.md),
+      decoration: BoxDecoration(
+        color: isDark ? GBTColors.darkSurfaceVariant : GBTColors.surfaceVariant,
+        borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
+        border: Border.all(
+          color: isDark ? GBTColors.darkBorder : GBTColors.border,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: GBTTypography.titleSmall.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: GBTSpacing.sm),
+          child,
         ],
       ),
     );

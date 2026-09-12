@@ -161,6 +161,25 @@ official [GBC First Riff Togenashi Togeari logo](https://gbc-firstriff.com/wp-co
 and [Girls Band Cry Diamond Dust logo](https://girls-band-cry.com/wp-content/themes/gbc_v1-1/assets/webp/common/character/logo_dd.webp)
 hosts; the client does not assume a fixed logo ratio.
 
+### Voice actor profile activity decision
+
+Voice actor details retain the existing members and credits tabs and add an
+activity and profile tab for the full biography and official website. The
+biography is rendered as selectable, scrollable text. An official website is
+shown only when its parsed URL uses HTTPS and has a non-empty host; malformed
+or insecure values remain hidden. The focused widget coverage exercises long
+content, empty data, and compact enlarged-text layouts. Existing shared URL
+matching is reused unchanged; regression checks cover clickable HTTPS/`www.`
+spans and trailing punctuation. Both checks also pass against the original
+helper, so no regex repair is needed.
+
+Validation used Flutter 3.41: static analysis and the 664-test suite passed.
+After allowing valid HTTPS fragment anchors, all seven focused activity/link
+regressions passed; credential-bearing and malformed links remain hidden.
+The activity tab uses existing `bio` and `officialWebsite` domain fields; no
+new endpoint, dependency, or route is introduced. Installed-device validation
+remains separate from widget coverage.
+
 ## Visual scope
 
 The existing Field pages remain the routed experience. Shared paper surfaces,
