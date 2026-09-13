@@ -848,6 +848,8 @@ class PlacesRepositoryImpl implements PlacesRepository {
   }
 
   String _detailCacheKey(String projectId, String placeId) {
-    return 'place_detail:$projectId:$placeId';
+    // EN: Version the key so pre-contract caches cannot hide related units.
+    // KO: 계약 이전 캐시가 관련 유닛을 숨기지 않도록 키 버전을 올립니다.
+    return 'place_detail:v2:$projectId:$placeId';
   }
 }

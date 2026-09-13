@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-09-13
+
+- Show only bands explicitly associated with a place, preserving server unit,
+  project and character IDs through DTO, cache and domain mapping. Read server
+  Markdown descriptions and invalidate the older lossy place-detail cache.
+- Verified with Flutter 3.41.0: all 735 tests and static analysis pass.
+
 ## 2026-09-12
 
 - Fixed song metadata hidden beneath tabs on notched phones: the header now

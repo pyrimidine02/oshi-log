@@ -83,6 +83,9 @@ class PlaceDetail {
     this.favoriteCount,
     this.tags = const [],
     this.directions,
+    this.unitIds = const [],
+    this.projectIds = const [],
+    this.characterIds = const [],
   });
 
   final String id;
@@ -99,6 +102,9 @@ class PlaceDetail {
   final int? favoriteCount;
   final List<String> tags;
   final PlaceDirections? directions;
+  final List<String> unitIds;
+  final List<String> projectIds;
+  final List<String> characterIds;
 }
 
 class PlaceDirectionProvider {

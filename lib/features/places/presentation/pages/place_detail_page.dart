@@ -20,6 +20,7 @@ import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
 import '../../../favorites/application/favorites_controller.dart';
 import '../../../favorites/domain/entities/favorite_entities.dart';
 import '../../../projects/application/projects_controller.dart';
+import '../../../projects/domain/entities/project_entities.dart';
 import '../../../settings/application/settings_controller.dart';
 import '../../../verification/application/verification_controller.dart';
 import '../../../verification/presentation/widgets/verification_sheet.dart';
@@ -29,6 +30,7 @@ import '../../domain/entities/place_entities.dart';
 import '../../domain/entities/place_guide_entities.dart';
 import '../../domain/utils/place_type_search.dart';
 import '../utils/place_directions_launcher.dart';
+import '../utils/place_related_units.dart';
 import '../../../../core/widgets/common/registrant_credit_widget.dart';
 import '../widgets/place_review_sheet.dart';
 
@@ -198,9 +200,10 @@ class PlaceDetailPage extends ConsumerWidget {
       orElse: () => place.isFavorite,
     );
     final projectKey = selection.projectKey;
-    final unitsState = projectKey != null && projectKey.isNotEmpty
+    final unitsState =
+        place.unitIds.isNotEmpty && projectKey != null && projectKey.isNotEmpty
         ? ref.watch(projectUnitsControllerProvider(projectKey))
-        : null;
+        : const AsyncData<List<Unit>>([]);
     final guidesState = ref.watch(placeGuidesControllerProvider(place.id));
     final commentsState = ref.watch(placeCommentsControllerProvider(place.id));
 
@@ -368,68 +371,57 @@ class PlaceDetailPage extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: GBTSpacing.sm),
-                  if (unitsState == null)
-                    Text(
-                      context.l10n(
-                        ko: '관련 밴드 정보가 없습니다.',
-                        en: 'No related band information.',
-                        ja: '関連バンド情報がありません。',
+                  unitsState.when(
+                    loading: () => const SizedBox(
+                      height: 32,
+                      child: GBTShimmer(
+                        child: SizedBox(width: 120, height: 28),
                       ),
-                      style: GBTTypography.bodySmall.copyWith(
-                        color: secondaryColor,
-                      ),
-                    )
-                  else
-                    unitsState.when(
-                      loading: () => const SizedBox(
-                        height: 32,
-                        child: GBTShimmer(
-                          child: SizedBox(width: 120, height: 28),
+                    ),
+                    error: (error, _) {
+                      final message = error is Failure
+                          ? error.userMessage
+                          : context.l10n(
+                              ko: '관련 밴드를 불러오지 못했어요',
+                              en: 'Could not load related bands',
+                              ja: '関連バンドを読み込めませんでした',
+                            );
+                      return Text(
+                        message,
+                        style: GBTTypography.bodySmall.copyWith(
+                          color: secondaryColor,
                         ),
-                      ),
-                      error: (error, _) {
-                        final message = error is Failure
-                            ? error.userMessage
-                            : context.l10n(
-                                ko: '관련 밴드를 불러오지 못했어요',
-                                en: 'Could not load related bands',
-                                ja: '関連バンドを読み込めませんでした',
-                              );
+                      );
+                    },
+                    data: (units) {
+                      final relatedUnits = unitsForPlace(place, units);
+                      if (relatedUnits.isEmpty) {
                         return Text(
-                          message,
+                          context.l10n(
+                            ko: '관련 밴드 정보가 없습니다.',
+                            en: 'No related band information.',
+                            ja: '関連バンド情報がありません。',
+                          ),
                           style: GBTTypography.bodySmall.copyWith(
                             color: secondaryColor,
                           ),
                         );
-                      },
-                      data: (units) {
-                        if (units.isEmpty) {
-                          return Text(
-                            context.l10n(
-                              ko: '관련 밴드 정보가 없습니다.',
-                              en: 'No related band information.',
-                              ja: '関連バンド情報がありません。',
-                            ),
-                            style: GBTTypography.bodySmall.copyWith(
-                              color: secondaryColor,
-                            ),
-                          );
-                        }
-                        return Wrap(
-                          spacing: GBTSpacing.xs,
-                          runSpacing: GBTSpacing.xs,
-                          children: units
-                              .map(
-                                (unit) => _FieldTag(
-                                  label: unit.displayName.isNotEmpty
-                                      ? unit.displayName
-                                      : unit.code,
-                                ),
-                              )
-                              .toList(),
-                        );
-                      },
-                    ),
+                      }
+                      return Wrap(
+                        spacing: GBTSpacing.xs,
+                        runSpacing: GBTSpacing.xs,
+                        children: relatedUnits
+                            .map(
+                              (unit) => _FieldTag(
+                                label: unit.displayName.isNotEmpty
+                                    ? unit.displayName
+                                    : unit.code,
+                              ),
+                            )
+                            .toList(),
+                      );
+                    },
+                  ),
                   const SizedBox(height: GBTSpacing.xl),
                   _RecordSectionHeader(
                     indexLabel: '04',

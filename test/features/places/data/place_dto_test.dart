@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:oshi_log/features/places/data/dto/place_dto.dart';
+import 'package:oshi_log/features/places/data/mappers/place_entities_mappers.dart';
 
 void main() {
   test('PlaceSummaryDto parses flexible keys', () {
@@ -96,4 +97,36 @@ void main() {
     expect(dto.directions?.providers.length, 2);
     expect(dto.directions?.providers.first.provider, 'apple_maps');
   });
+
+  test(
+    'PlaceDetailDto preserves related IDs and markdown through cache roundtrip',
+    () {
+      final sourceJson = {
+        'id': 'place-related',
+        'name': 'Related place',
+        'types': ['STUDIO'],
+        'latitude': 35.0,
+        'longitude': 139.0,
+        'address': 'Tokyo',
+        'descriptionMarkdown': '## Official place description',
+        'tags': const <String>[],
+        'unitIds': ['unit-place'],
+        'projectIds': ['project-place'],
+        'characterIds': ['character-place'],
+        'images': const <Map<String, dynamic>>[],
+      };
+
+      final dto = PlaceDetailDto.fromJson(sourceJson);
+      final restoredDto = PlaceDetailDto.fromJson(dto.toJson());
+      final detail = restoredDto.toDomain();
+
+      expect(restoredDto.unitIds, ['unit-place']);
+      expect(restoredDto.projectIds, ['project-place']);
+      expect(restoredDto.characterIds, ['character-place']);
+      expect(detail.unitIds, ['unit-place']);
+      expect(detail.projectIds, ['project-place']);
+      expect(detail.characterIds, ['character-place']);
+      expect(detail.description, '## Official place description');
+    },
+  );
 }

@@ -1,5 +1,11 @@
 # TODO
 
+- Verify place associations in the next installed build (2026-09-13):
+  - A place linked to one band must not list every project band; a place without
+    unit IDs must show the empty state. Verify detailed Markdown copy after upgrade.
+  - Cross-project places show matching bands within the selected project scope.
+    Remove after device QA; the existing TestFlight binary needs a new build.
+
 - Verify catalog/header follow-up on an installed phone (2026-09-12):
   - Check the reported Japanese song title with the notch, all three tabs,
     300% text, and catalog search with keyboard, unit/type filters and sort.

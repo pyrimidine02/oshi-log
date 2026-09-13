@@ -242,6 +242,9 @@ class PlaceDetailDto {
     this.primaryImage,
     this.regionSummary,
     this.directions,
+    this.unitIds = const [],
+    this.projectIds = const [],
+    this.characterIds = const [],
   });
 
   final String id;
@@ -257,6 +260,9 @@ class PlaceDetailDto {
   final List<ImageMetaDto> images;
   final PlaceRegionSummaryDto? regionSummary;
   final PlaceDirectionsDto? directions;
+  final List<String> unitIds;
+  final List<String> projectIds;
+  final List<String> characterIds;
 
   factory PlaceDetailDto.fromJson(Map<String, dynamic> json) {
     final imagesRaw = json['images'];
@@ -274,7 +280,10 @@ class PlaceDetailDto {
       introText: json['introText'] as String?,
       latitude: _double(json['latitude']),
       longitude: _double(json['longitude']),
-      description: json['description'] as String?,
+      description: _firstNonEmptyString(
+        json['description'],
+        json['descriptionMarkdown'] ?? json['description_markdown'],
+      ),
       address: json['address'] as String?,
       tags: _stringList(json['tags']),
       primaryImage: json['primaryImage'] is Map<String, dynamic>
@@ -291,6 +300,9 @@ class PlaceDetailDto {
               json['directions'] as Map<String, dynamic>,
             )
           : null,
+      unitIds: _stringList(json['unitIds'] ?? json['unit_ids']),
+      projectIds: _stringList(json['projectIds'] ?? json['project_ids']),
+      characterIds: _stringList(json['characterIds'] ?? json['character_ids']),
     );
   }
 
@@ -309,6 +321,9 @@ class PlaceDetailDto {
       'images': images.map((image) => image.toJson()).toList(),
       'regionSummary': regionSummary?.toJson(),
       'directions': directions?.toJson(),
+      'unitIds': unitIds,
+      'projectIds': projectIds,
+      'characterIds': characterIds,
     };
   }
 }
@@ -339,4 +354,10 @@ List<String> _stringList(dynamic value) {
     return value.whereType<String>().toList();
   }
   return <String>[];
+}
+
+String? _firstNonEmptyString(dynamic primary, dynamic fallback) {
+  if (primary is String && primary.isNotEmpty) return primary;
+  if (fallback is String && fallback.isNotEmpty) return fallback;
+  return null;
 }

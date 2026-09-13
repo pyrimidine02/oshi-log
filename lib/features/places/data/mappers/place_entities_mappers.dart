@@ -56,6 +56,9 @@ extension PlaceDetailDtoDomainMapper on PlaceDetailDto {
       favoriteCount: stats?.favoriteCount,
       tags: List.unmodifiable(dto.tags),
       directions: dto.directions?.toDomain(),
+      unitIds: List.unmodifiable(dto.unitIds),
+      projectIds: List.unmodifiable(dto.projectIds),
+      characterIds: List.unmodifiable(dto.characterIds),
     );
   }
 }
