@@ -3,10 +3,11 @@ name: Android Internal Distribution
 on:
   pull_request:
     branches:
-      - main
+      - dev
+      - release
   push:
     branches:
-      - main
+      - dev
   workflow_dispatch:
 
 concurrency:
@@ -19,7 +20,6 @@ permissions:
 jobs:
   quality:
     name: Analyze and Test
-    if: github.ref != 'refs/heads/dev'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
