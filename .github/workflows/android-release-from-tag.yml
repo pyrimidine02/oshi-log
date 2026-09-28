@@ -2,13 +2,16 @@ name: Android Release From Tag
 
 on:
   push:
-    tags:
-      - 'v*.*.*'
+    branches:
+      - release
+  pull_request:
+    branches:
+      - release
   workflow_dispatch:
     inputs:
       tag_version:
-        description: 'Release version without leading v (e.g. 1.2.3)'
-        required: true
+        description: 'Release version without leading v (e.g. 1.2.3), only needed to override pubspec version'
+        required: false
         type: string
 
 concurrency:
@@ -16,12 +19,11 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   quality:
     name: Analyze and Test
-    if: github.ref != 'refs/heads/dev'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -52,6 +54,7 @@ jobs:
 
   release:
     name: Build and Upload (Production Draft)
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     needs: quality
     steps:
@@ -77,17 +80,11 @@ jobs:
         run: |
           pubspec_raw=$(grep -m1 '^version:' pubspec.yaml | awk '{print $2}')
           pubspec_version="${pubspec_raw%%+*}"
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            requested_version="${{ github.event.inputs.tag_version }}"
-          else
-            requested_version="${GITHUB_REF_NAME#v}"
-          fi
-          if [ "${requested_version}" != "${pubspec_version}" ]; then
-            echo "Tag/Input version (${requested_version}) does not match pubspec version (${pubspec_version})."
+          requested_version="${{ github.event.inputs.tag_version }}"
+          if [ -n "${requested_version}" ] && [ "${requested_version}" != "${pubspec_version}" ]; then
+            echo "Input version (${requested_version}) does not match pubspec version (${pubspec_version})."
             exit 1
           fi
-
-
 
           echo "app_version=${pubspec_version}" >> "$GITHUB_OUTPUT"
 
@@ -129,3 +126,10 @@ jobs:
           track: production
           status: draft
           releaseName: ${{ steps.version.outputs.app_version }} (${{ steps.version.outputs.build_number }})
+
+      - name: Tag release
+        if: github.event_name == 'push'
+        run: |
+          tag="v${{ steps.version.outputs.app_version }}"
+          git tag "${tag}"
+          git push origin "${tag}"
