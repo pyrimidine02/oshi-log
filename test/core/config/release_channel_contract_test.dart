@@ -16,9 +16,9 @@ void main() {
     );
   });
 
-  test('tag release embeds production', () {
+  test('release-branch production build embeds production', () {
     expect(
-      read('.github/workflows/android-release-from-tag.yml'),
+      read('.github/workflows/android-production-release.yml'),
       contains('--dart-define=APP_ENV=production'),
     );
   });

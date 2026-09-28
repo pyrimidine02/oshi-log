@@ -17,7 +17,7 @@ Android 배포 자동화는 내부테스터 라인만 존재했고,
     (`sequence = (run_number + run_attempt - 1) % 100`)
 - 워크플로를 2라인으로 분리한다.
   1. `android-internal-distribution.yml`: PR 검증 + main 내부테스터 자동 배포
-  2. `android-release-from-tag.yml`: `vX.Y.Z` 태그 기준 production draft 업로드
+  2. `android-production-release.yml`: `release` 브랜치 push 기준 production draft 업로드 (2026-09-28, D-027)
 - 릴리스 워크플로에서 태그 버전과 pubspec 버전의 일치 여부를 강제한다.
 - 버전 업데이트 편의를 위해 `scripts/bump_version.sh`를 추가한다.
 - 운영 문서를 `docs/모바일버전배포가이드_v1.0.0.md`로 제공한다.
