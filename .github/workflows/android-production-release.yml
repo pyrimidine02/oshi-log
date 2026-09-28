@@ -1,4 +1,4 @@
-name: Android Release From Tag
+name: Android Production Release
 
 on:
   push:
@@ -113,7 +113,7 @@ jobs:
       - name: Upload AAB artifact
         uses: actions/upload-artifact@v4
         with:
-          name: android-release-tag-aab
+          name: android-production-aab
           path: build/app/outputs/bundle/release/app-release.aab
           retention-days: 30
 
