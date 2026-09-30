@@ -93,6 +93,14 @@ abstract class MusicRepository {
     bool includeTranslated = false,
   });
 
+  /// EN: Live events where the song was performed, newest first.
+  /// KO: 곡이 공연된 라이브 이벤트 목록이며 최신순입니다.
+  Future<Result<List<MusicSongPerformance>>> getSongPerformances({
+    required String projectId,
+    required String songId,
+    String? lang,
+  });
+
   Future<Result<MusicLiveSetlist>> getLiveSetlist({
     required String projectId,
     required String liveEventId,

@@ -210,6 +210,18 @@ class MusicRemoteDataSource {
     );
   }
 
+  Future<Result<List<MusicSongPerformanceDto>>> fetchSongPerformances({
+    required String projectId,
+    required String songId,
+    String? lang,
+  }) {
+    return _apiClient.get<List<MusicSongPerformanceDto>>(
+      ApiEndpoints.musicSongPerformances(projectId, songId),
+      queryParameters: {if (_nonBlank(lang) != null) 'lang': _nonBlank(lang)},
+      fromJson: (json) => _decodeList(json, MusicSongPerformanceDto.fromJson),
+    );
+  }
+
   Future<Result<MusicLiveSetlistDto>> fetchLiveSetlist({
     required String projectId,
     required String liveEventId,
