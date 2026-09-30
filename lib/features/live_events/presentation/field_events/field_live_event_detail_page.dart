@@ -24,6 +24,7 @@ import '../../application/live_events_controller.dart';
 import '../../domain/entities/live_event_entities.dart';
 import 'field_event_detail_sections.dart';
 import 'field_event_detail_widgets.dart';
+import 'live_schedule_status_badge.dart';
 
 /// EN: Event detail entry used by shell and overlay event routes.
 /// KO: 쉘 및 오버레이 이벤트 라우트에서 사용하는 이벤트 상세 진입점입니다.
@@ -159,6 +160,7 @@ class _FieldEventDetailContent extends ConsumerWidget {
               .whenData<MusicLiveSetlist?>((value) => value);
     final ticketUrl = event.ticketUrl?.trim();
     final placeId = event.placeId?.trim();
+    final rescheduledEventId = event.rescheduledEventId;
     return RefreshIndicator(
       onRefresh: () async {
         final attendanceRefresh = attendanceContext == null
@@ -217,6 +219,9 @@ class _FieldEventDetailContent extends ConsumerWidget {
                   onVenueTap: placeId == null || placeId.isEmpty
                       ? null
                       : () => context.goToPlaceDetail(placeId),
+                  onRescheduledTap: rescheduledEventId == null
+                      ? null
+                      : () => context.goToEventDetail(rescheduledEventId),
                 ),
                 const SizedBox(height: GBTSpacing.xl),
                 FieldEventSectionHeading(
@@ -286,9 +291,10 @@ class _FieldEventDetailContent extends ConsumerWidget {
         .toggle(!isAttended);
     if (!context.mounted || result.failureOrNull == null) return;
     final failure = result.failureOrNull!;
-    final message =
-        failure is ValidationFailure &&
-            failure.code == 'ATTENDANCE_UPDATE_FAILED'
+    final message = isLiveNotAttendableFailure(failure)
+        ? liveCancelledMessage(context)
+        : failure is ValidationFailure &&
+              failure.code == 'ATTENDANCE_UPDATE_FAILED'
         ? context.l10n(
             ko: '검증 완료된 방문 기록은 취소할 수 없어요.',
             en: 'Verified attendance cannot be undone.',
@@ -379,6 +385,7 @@ class FieldEventTicketDocument extends StatelessWidget {
     required this.onAttendanceToggle,
     required this.onTicketTap,
     this.onVenueTap,
+    this.onRescheduledTap,
   });
 
   final LiveEventDetail event;
@@ -387,12 +394,20 @@ class FieldEventTicketDocument extends StatelessWidget {
   final VoidCallback? onTicketTap;
   final VoidCallback? onVenueTap;
 
+  /// EN: Opens the replacement event of a postponed show.
+  /// KO: 연기된 공연의 새 일정 이벤트를 엽니다.
+  final VoidCallback? onRescheduledTap;
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final locale = Localizations.localeOf(context).toLanguageTag();
     final startsAt = event.showStartTime.toLocal();
     final endTime = event.endTime?.toLocal();
+    final scheduleNotice = _scheduleNotice(context);
+    // EN: Undo stays available so pre-cancellation records can be removed.
+    // KO: 취소 전에 남긴 기록을 지울 수 있도록 되돌리기는 허용합니다.
+    final canToggle = event.isAttendable || attendance.attendance.attended;
     return Container(
       decoration: BoxDecoration(
         color: colors.surface,
@@ -421,6 +436,8 @@ class FieldEventTicketDocument extends StatelessWidget {
                         ),
                       ),
                     ),
+                    LiveScheduleStatusBadge(status: event.scheduleStatus),
+                    const SizedBox(width: GBTSpacing.sm),
                     Text(
                       event.dDayLabel,
                       style: Theme.of(context).textTheme.labelLarge?.copyWith(
@@ -538,38 +555,66 @@ class FieldEventTicketDocument extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  _attendanceStatusLabel(context, attendance),
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: colors.onSurfaceVariant,
+                if (scheduleNotice != null) ...[
+                  Text(
+                    scheduleNotice,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: event.isCancelled ? colors.error : colors.tertiary,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
-                ),
-                const SizedBox(height: GBTSpacing.sm),
+                  if (event.rescheduledEventId != null &&
+                      onRescheduledTap != null)
+                    TextButton.icon(
+                      onPressed: onRescheduledTap,
+                      icon: const Icon(Icons.event_repeat_rounded),
+                      label: Text(
+                        context.l10n(
+                          ko: '새 일정 보기',
+                          en: 'View new date',
+                          ja: '新しい日程を見る',
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: GBTSpacing.sm),
+                ],
+                if (event.isAttendable) ...[
+                  Text(
+                    _attendanceStatusLabel(context, attendance),
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: colors.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: GBTSpacing.sm),
+                ],
                 FieldAttendanceStamp(
                   attended: attendance.attendance.attended,
                   canUndo: attendance.attendance.canUndo,
                   isBusy: attendance.isLoading || attendance.isSubmitting,
-                  onToggle: onAttendanceToggle,
+                  onToggle: canToggle ? onAttendanceToggle : null,
                 ),
-                const SizedBox(height: GBTSpacing.sm),
-                OutlinedButton.icon(
-                  onPressed: onTicketTap,
-                  icon: const Icon(Icons.open_in_new_rounded),
-                  label: Text(
-                    onTicketTap == null
-                        ? context.l10n(
-                            ko: '티켓 정보 없음',
-                            en: 'No ticket information',
-                            ja: 'チケット情報なし',
-                          )
-                        : context.l10n(
-                            ko: '티켓 페이지 열기',
-                            en: 'Open ticket page',
-                            ja: 'チケットページを開く',
-                          ),
+                if (!event.isCancelled) ...[
+                  const SizedBox(height: GBTSpacing.sm),
+                  OutlinedButton.icon(
+                    onPressed: onTicketTap,
+                    icon: const Icon(Icons.open_in_new_rounded),
+                    label: Text(
+                      onTicketTap == null
+                          ? context.l10n(
+                              ko: '티켓 정보 없음',
+                              en: 'No ticket information',
+                              ja: 'チケット情報なし',
+                            )
+                          : context.l10n(
+                              ko: '티켓 페이지 열기',
+                              en: 'Open ticket page',
+                              ja: 'チケットページを開く',
+                            ),
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
@@ -582,6 +627,23 @@ class FieldEventTicketDocument extends StatelessWidget {
     final start = DateFormat.Hm(locale).format(startsAt);
     if (endTime == null) return start;
     return '$start – ${DateFormat.Hm(locale).format(endTime)}';
+  }
+
+  String? _scheduleNotice(BuildContext context) {
+    if (event.isCancelled) return liveCancelledMessage(context);
+    if (!event.isPostponed) return null;
+    if (event.rescheduledEventId == null) {
+      return context.l10n(
+        ko: '연기 — 새 일정 미정',
+        en: 'Postponed — new date TBA',
+        ja: '延期 — 新しい日程は未定',
+      );
+    }
+    return context.l10n(
+      ko: '이 공연은 연기되었습니다',
+      en: 'This show has been postponed',
+      ja: 'この公演は延期になりました',
+    );
   }
 
   String _attendanceStatusLabel(
