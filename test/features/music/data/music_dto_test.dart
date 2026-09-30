@@ -94,4 +94,41 @@ void main() {
     expect(song.albums.last.discNo, 2);
     expect(song.albums.last.trackNo, isNull);
   });
+
+  test('song performance parses server fields and invalid dates', () {
+    final dto = MusicSongPerformanceDto.fromJson({
+      'eventId': 'event-1',
+      'title': 'Live A',
+      'startTime': '2026-09-12T18:00:00+09:00',
+      'placeId': null,
+      'isUpcoming': true,
+      'order': 4,
+      'isEncore': true,
+    });
+    final performance = dto.toDomain();
+
+    expect(performance.eventId, 'event-1');
+    expect(performance.title, 'Live A');
+    expect(performance.startTime, DateTime.utc(2026, 9, 12, 9));
+    expect(performance.placeId, isNull);
+    expect(performance.isUpcoming, isTrue);
+    expect(performance.order, 4);
+    expect(performance.isEncore, isTrue);
+
+    final fallback = MusicSongPerformanceDto.fromJson({
+      'eventId': 'event-2',
+      'title': 'Live B',
+      'startTime': 'not-a-date',
+      'placeId': 'place-1',
+      'upcoming': false,
+      'order': '2',
+      'encore': true,
+    }).toDomain();
+
+    expect(fallback.startTime, isNull);
+    expect(fallback.placeId, 'place-1');
+    expect(fallback.isUpcoming, isFalse);
+    expect(fallback.order, 2);
+    expect(fallback.isEncore, isTrue);
+  });
 }

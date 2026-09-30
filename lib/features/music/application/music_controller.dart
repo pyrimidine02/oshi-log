@@ -305,6 +305,12 @@ typedef MusicLiveContextKey = ({
   bool includeTranslated,
 });
 
+typedef MusicPerformancesKey = ({
+  String projectId,
+  String songId,
+  String? lang,
+});
+
 final musicRepositoryProvider = FutureProvider<MusicRepository>((ref) async {
   final apiClient = ref.watch(apiClientProvider);
   return MusicRepositoryImpl(
@@ -543,6 +549,26 @@ final musicSongLiveContextProvider = FutureProvider.autoDispose
           const UnknownFailure(
             'Unknown music live-context provider state',
             code: 'unknown_music_live_context_provider',
+          );
+    });
+
+/// EN: Live events where a song was performed, newest first.
+/// KO: 곡이 공연된 라이브 이벤트 목록(최신순)입니다.
+final musicSongPerformancesProvider = FutureProvider.autoDispose
+    .family<List<MusicSongPerformance>, MusicPerformancesKey>((ref, key) async {
+      final repository = await ref.watch(musicRepositoryProvider.future);
+      final result = await repository.getSongPerformances(
+        projectId: key.projectId,
+        songId: key.songId,
+        lang: key.lang,
+      );
+      if (result case Success<List<MusicSongPerformance>>(:final data)) {
+        return data;
+      }
+      throw result.failureOrNull ??
+          const UnknownFailure(
+            'Unknown music performances provider state',
+            code: 'unknown_music_performances_provider',
           );
     });
 

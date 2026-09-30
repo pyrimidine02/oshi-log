@@ -69,5 +69,22 @@ void main() {
       expect(event.date, DateTime.parse('2026-07-17T15:00:00Z'));
       expect(dto.endDate, DateTime.parse('2026-07-19T14:59:59Z'));
     });
+
+    test('carries live scheduleStatus when present', () {
+      final cancelled = CalendarEventDto.fromLiveEventJson(const {
+        'id': 'live-2',
+        'title': 'Cancelled show',
+        'showStartTime': '2026-07-17T15:00:00Z',
+        'scheduleStatus': 'CANCELLED',
+      }, projectKey: 'bang-dream').toEntity();
+      final regular = CalendarEventDto.fromLiveEventJson(const {
+        'id': 'live-3',
+        'title': 'Regular show',
+        'showStartTime': '2026-07-17T15:00:00Z',
+      }, projectKey: 'bang-dream').toEntity();
+
+      expect(cancelled.scheduleStatus, 'CANCELLED');
+      expect(regular.scheduleStatus, isNull);
+    });
   });
 }

@@ -20,6 +20,7 @@ class CalendarEventDto {
     this.relatedEntityId,
     this.relatedEntityType,
     this.isRecurringAnnually = false,
+    this.scheduleStatus,
   });
 
   /// EN: Constructs a [CalendarEventDto] from a JSON map.
@@ -81,6 +82,7 @@ class CalendarEventDto {
       projectCode: projectKey,
       relatedEntityId: sourceId,
       relatedEntityType: 'live_event',
+      scheduleStatus: json['scheduleStatus'] as String?,
     );
   }
 
@@ -97,6 +99,10 @@ class CalendarEventDto {
   final String? relatedEntityType;
   final bool isRecurringAnnually;
 
+  /// EN: Live `scheduleStatus` (null for non-live sources).
+  /// KO: 라이브 `scheduleStatus` (라이브가 아닌 소스는 null).
+  final String? scheduleStatus;
+
   /// EN: Maps this DTO to the domain [CalendarEvent] entity.
   /// KO: 이 DTO를 도메인 [CalendarEvent] 엔티티로 매핑합니다.
   CalendarEvent toEntity() => CalendarEvent(
@@ -111,6 +117,7 @@ class CalendarEventDto {
     relatedEntityId: relatedEntityId,
     relatedEntityType: relatedEntityType,
     isRecurringAnnually: isRecurringAnnually,
+    scheduleStatus: scheduleStatus,
   );
 }
 

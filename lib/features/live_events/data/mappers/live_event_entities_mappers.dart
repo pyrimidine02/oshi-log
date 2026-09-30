@@ -26,6 +26,11 @@ extension LiveEventSummaryDtoDomainMapper on LiveEventSummaryDto {
       unitIds: List.unmodifiable(dto.unitIds),
       bannerUrl: dto.bannerUrl,
       ticketUrl: dto.ticketUrl,
+      scheduleStatus: LiveScheduleStatus.normalize(dto.scheduleStatus),
+      rescheduledEventId: _rescheduledEventId(
+        dto.scheduleStatus,
+        dto.rescheduledEventId,
+      ),
     );
   }
 }
@@ -51,6 +56,11 @@ extension LiveEventDetailDtoDomainMapper on LiveEventDetailDto {
       unitIds: List.unmodifiable(dto.unitIds),
       bannerUrl: dto.banner?.url,
       ticketUrl: dto.ticketUrl,
+      scheduleStatus: LiveScheduleStatus.normalize(dto.scheduleStatus),
+      rescheduledEventId: _rescheduledEventId(
+        dto.scheduleStatus,
+        dto.rescheduledEventId,
+      ),
     );
   }
 }
@@ -69,4 +79,13 @@ extension LiveAttendanceStateDtoDomainMapper on LiveAttendanceStateDto {
       attendedAt: dto.attendedAt,
     );
   }
+}
+
+/// EN: Keeps the replacement id only for postponed events (server invariant).
+/// KO: 연기된 이벤트에서만 대체 일정 ID를 유지합니다(서버 불변식).
+String? _rescheduledEventId(String? rawStatus, String? rawId) {
+  final id = rawId?.trim();
+  if (id == null || id.isEmpty) return null;
+  final status = LiveScheduleStatus.normalize(rawStatus);
+  return status == LiveScheduleStatus.postponed ? id : null;
 }

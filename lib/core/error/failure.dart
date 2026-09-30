@@ -86,7 +86,10 @@ final class ValidationFailure extends Failure {
   final Map<String, dynamic>? details;
 
   @override
-  String get userMessage => '입력값이 올바르지 않습니다';
+  String get userMessage => switch (code) {
+    'LIVE_EVENT_NOT_ATTENDABLE' => '취소되었거나 일정이 변경된 공연이라 참여할 수 없습니다',
+    _ => '입력값이 올바르지 않습니다',
+  };
 
   /// EN: Get error message for specific field
   /// KO: 특정 필드의 에러 메시지 반환
