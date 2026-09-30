@@ -219,6 +219,7 @@ class ApiV3EndpointCatalog {
     '/api/v1/projects/{projectId}/music/songs/{songId}/media-links': ['GET'],
     '/api/v1/projects/{projectId}/music/songs/{songId}/availability': ['GET'],
     '/api/v1/projects/{projectId}/music/songs/{songId}/live-context': ['GET'],
+    '/api/v1/projects/{projectId}/music/songs/{songId}/performances': ['GET'],
     '/api/v1/projects/{projectId}/news': ['GET', 'POST'],
     '/api/v1/projects/{projectId}/news/{newsId}': ['DELETE', 'GET', 'PUT'],
     '/api/v1/projects/{projectId}/news/{newsId}/images': ['POST'],

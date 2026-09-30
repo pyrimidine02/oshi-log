@@ -1022,6 +1022,42 @@ class MusicSongLiveContextDto {
   };
 }
 
+/// EN: One live event where a song was performed.
+/// KO: 곡이 공연된 라이브 이벤트 한 건입니다.
+class MusicSongPerformanceDto {
+  const MusicSongPerformanceDto({
+    required this.eventId,
+    required this.title,
+    required this.startTime,
+    required this.isUpcoming,
+    required this.order,
+    required this.isEncore,
+    this.placeId,
+  });
+
+  final String eventId;
+  final String title;
+  final String startTime;
+  final String? placeId;
+  final bool isUpcoming;
+  final int order;
+  final bool isEncore;
+
+  factory MusicSongPerformanceDto.fromJson(Map<String, dynamic> json) {
+    return MusicSongPerformanceDto(
+      eventId: _string(json['eventId']),
+      title: _string(json['title']),
+      startTime: _string(json['startTime']),
+      placeId: _stringOrNull(json['placeId']),
+      // EN: Accept the bean-style `upcoming`/`encore` names as a fallback.
+      // KO: bean 스타일 `upcoming`/`encore` 이름도 대체로 허용합니다.
+      isUpcoming: _bool(json['isUpcoming'] ?? json['upcoming']),
+      order: _int(json['order']),
+      isEncore: _bool(json['isEncore'] ?? json['encore']),
+    );
+  }
+}
+
 Map<String, dynamic>? _asMap(dynamic value) {
   if (value is Map<String, dynamic>) {
     return value;
