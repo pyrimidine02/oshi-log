@@ -123,6 +123,7 @@ Iterable<CalendarEvent> _projectIntoMonth(
       relatedEntityId: source.relatedEntityId,
       relatedEntityType: source.relatedEntityType,
       isRecurringAnnually: source.isRecurringAnnually,
+      scheduleStatus: source.scheduleStatus,
     );
     day = DateTime(day.year, day.month, day.day + 1);
   }

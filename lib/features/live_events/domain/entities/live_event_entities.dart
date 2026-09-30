@@ -21,6 +21,8 @@ class LiveEventSummary {
     this.doorsOpenTime,
     this.endTime,
     this.ticketUrl,
+    this.scheduleStatus = LiveScheduleStatus.scheduled,
+    this.rescheduledEventId,
   });
 
   final String id;
@@ -38,6 +40,11 @@ class LiveEventSummary {
   final List<String> unitIds;
   final String? bannerUrl;
   final String? ticketUrl;
+
+  /// EN: Normalized [LiveScheduleStatus]; unrelated to [status].
+  /// KO: 정규화된 [LiveScheduleStatus]이며 [status]와 무관합니다.
+  final String scheduleStatus;
+  final String? rescheduledEventId;
 
   bool get isUpcoming {
     return showStartTime.isAfter(DateTime.now());
@@ -83,6 +90,8 @@ class LiveEventDetail {
     required this.unitIds,
     this.bannerUrl,
     this.ticketUrl,
+    this.scheduleStatus = LiveScheduleStatus.scheduled,
+    this.rescheduledEventId,
   });
 
   final String id;
@@ -101,6 +110,19 @@ class LiveEventDetail {
   final List<String> unitIds;
   final String? bannerUrl;
   final String? ticketUrl;
+
+  /// EN: Normalized [LiveScheduleStatus]; unrelated to [status].
+  /// KO: 정규화된 [LiveScheduleStatus]이며 [status]와 무관합니다.
+  final String scheduleStatus;
+  final String? rescheduledEventId;
+
+  bool get isCancelled => scheduleStatus == LiveScheduleStatus.cancelled;
+  bool get isPostponed => scheduleStatus == LiveScheduleStatus.postponed;
+
+  /// EN: Mirrors the server rule: cancelled, or postponed to a known event.
+  /// KO: 서버 규칙과 동일: 취소, 또는 새 일정이 정해진 연기는 참여 불가.
+  bool get isAttendable =>
+      !isCancelled && !(isPostponed && rescheduledEventId != null);
 
   String get metaLabel {
     final lang = _languageCode();
@@ -133,6 +155,23 @@ class LiveEventDetail {
       return '미정';
     }
     return DateFormat('HH:mm').format(doorsOpenTime!.toLocal());
+  }
+}
+
+/// EN: Live event schedule status (`scheduleStatus` on the wire).
+/// KO: 라이브 이벤트 일정 상태 (API 필드 `scheduleStatus`).
+class LiveScheduleStatus {
+  const LiveScheduleStatus._();
+
+  static const scheduled = 'SCHEDULED';
+  static const cancelled = 'CANCELLED';
+  static const postponed = 'POSTPONED';
+
+  /// EN: Absent or unknown values fall back to [scheduled].
+  /// KO: 값이 없거나 알 수 없으면 [scheduled]로 처리합니다.
+  static String normalize(String? raw) {
+    final upper = raw?.trim().toUpperCase();
+    return upper == cancelled || upper == postponed ? upper! : scheduled;
   }
 }
 

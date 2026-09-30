@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/localization/locale_text.dart';
 import '../../../../core/theme/theme.dart';
 import '../../domain/entities/calendar_event.dart';
+import '../../../live_events/presentation/field_events/live_schedule_status_badge.dart';
 import 'calendar_view_data.dart';
 
 /// EN: Month grid remains visible and interactive even with zero events.
@@ -132,10 +133,13 @@ class _FieldDayCell extends StatelessWidget {
     final fullDate = MaterialLocalizations.of(context).formatFullDate(date);
     final eventDetails = events
         .take(3)
-        .map(
-          (event) =>
-              '${event.title} (${_eventTypeSemanticLabel(context, event.type)})',
-        )
+        .map((event) {
+          final tags = [
+            _eventTypeSemanticLabel(context, event.type),
+            ?liveScheduleStatusLabel(context, event.scheduleStatus),
+          ];
+          return '${event.title} (${tags.join(', ')})';
+        })
         .join('; ');
     final hiddenEventCount = events.length - 3;
     final hiddenEventLabel = hiddenEventCount > 0
