@@ -424,3 +424,31 @@ class MusicSongLiveContext {
   final MusicCallGuidePayload? callGuide;
   final MusicLiveSetlist? setlistContext;
 }
+
+/// EN: A live event where the song was performed, with its setlist slot.
+/// KO: 곡이 공연된 라이브 이벤트와 세트리스트 위치입니다.
+class MusicSongPerformance {
+  const MusicSongPerformance({
+    required this.eventId,
+    required this.title,
+    required this.isUpcoming,
+    required this.order,
+    required this.isEncore,
+    this.startTime,
+    this.placeId,
+  });
+
+  final String eventId;
+  final String title;
+
+  /// EN: Event start; null when the server value is not ISO-8601.
+  /// KO: 이벤트 시작 시각이며 서버 값이 ISO-8601이 아니면 null입니다.
+  final DateTime? startTime;
+  final String? placeId;
+  final bool isUpcoming;
+
+  /// EN: Setlist position as stored (1-based display order).
+  /// KO: 저장된 세트리스트 위치(1부터 시작하는 표시 순서)입니다.
+  final int order;
+  final bool isEncore;
+}

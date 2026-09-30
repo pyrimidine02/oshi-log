@@ -409,6 +409,8 @@ class ApiEndpoints {
       '${musicSong(projectId, songId)}/availability';
   static String musicSongLiveContext(String projectId, String songId) =>
       '${musicSong(projectId, songId)}/live-context';
+  static String musicSongPerformances(String projectId, String songId) =>
+      '${musicSong(projectId, songId)}/performances';
 
   // ============================================================
   // EN: Community endpoints (8.16) - Uses projectCode!

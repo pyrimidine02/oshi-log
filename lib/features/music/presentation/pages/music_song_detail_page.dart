@@ -4,6 +4,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/error/failure.dart';
@@ -132,6 +133,13 @@ class _MusicSongDetailPageState extends ConsumerState<MusicSongDetailPage>
     ref.invalidate(musicSongDifficultyProvider(_songKey));
     ref.invalidate(musicSongMediaLinksProvider(_songKey));
     ref.invalidate(musicSongAvailabilityProvider(_availabilityKey(context)));
+    ref.invalidate(
+      musicSongPerformancesProvider((
+        projectId: widget.projectId,
+        songId: widget.songId,
+        lang: _lang,
+      )),
+    );
     if (_eventId != null) {
       ref.invalidate(
         musicSongLiveContextProvider((
@@ -887,6 +895,18 @@ class _InfoTab extends ConsumerWidget {
               ),
             ],
           ],
+
+          const SizedBox(height: GBTSpacing.lg),
+
+          // EN: Performances section; failures stay inline.
+          // KO: 공연 기록 섹션이며 실패해도 섹션 안에서만 표시합니다.
+          _SongPerformancesSection(
+            projectId: projectId,
+            songId: songId,
+            lang: lang,
+            isDark: isDark,
+            accent: accent,
+          ),
 
           const SizedBox(height: GBTSpacing.lg),
 
@@ -2899,6 +2919,223 @@ class _SetlistRow extends StatelessWidget {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// PERFORMANCES
+// ══════════════════════════════════════════════════════════════
+
+/// EN: Lists live events where the song was performed, newest first.
+/// KO: 이 곡을 부른 라이브 이벤트를 최신순으로 보여줍니다.
+class _SongPerformancesSection extends ConsumerWidget {
+  const _SongPerformancesSection({
+    required this.projectId,
+    required this.songId,
+    required this.lang,
+    required this.isDark,
+    required this.accent,
+  });
+
+  final String projectId;
+  final String songId;
+  final String lang;
+  final bool isDark;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(
+      musicSongPerformancesProvider((
+        projectId: projectId,
+        songId: songId,
+        lang: lang,
+      )),
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _TabSectionHeader(
+          icon: Icons.mic_external_on_rounded,
+          title: context.l10n(
+            ko: '이 곡을 부른 라이브',
+            en: 'Lives featuring this song',
+            ja: 'この曲を披露したライブ',
+          ),
+          isDark: isDark,
+          accent: accent,
+        ),
+        const SizedBox(height: GBTSpacing.sm),
+        state.when(
+          data: (performances) => performances.isEmpty
+              ? _EmptyHint(
+                  text: context.l10n(
+                    ko: '아직 공연 기록이 없어요',
+                    en: 'No performances yet.',
+                    ja: 'まだ公演記録がありません。',
+                  ),
+                )
+              : Column(
+                  children: performances
+                      .map(
+                        (performance) => _PerformanceRow(
+                          performance: performance,
+                          isDark: isDark,
+                          accent: accent,
+                          onTap: () =>
+                              context.goToEventDetail(performance.eventId),
+                        ),
+                      )
+                      .toList(growable: false),
+                ),
+          loading: () => const _InlineLoading(),
+          error: (e, _) => _InlineError(message: _errorText(context, e)),
+        ),
+      ],
+    );
+  }
+}
+
+class _PerformanceRow extends StatelessWidget {
+  const _PerformanceRow({
+    required this.performance,
+    required this.isDark,
+    required this.accent,
+    required this.onTap,
+  });
+
+  final MusicSongPerformance performance;
+  final bool isDark;
+  final Color accent;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final textSecondary = isDark
+        ? GBTColors.darkTextSecondary
+        : GBTColors.textSecondary;
+    final surfaceVar = isDark
+        ? GBTColors.darkSurfaceVariant
+        : GBTColors.surfaceVariant;
+    final start = performance.startTime;
+    final dateText = start == null
+        ? '-'
+        : DateFormat('yyyy.MM.dd').format(start.toLocal());
+    final orderText = context.l10n(
+      ko: '${performance.order}번째 곡',
+      en: 'Song #${performance.order}',
+      ja: '${performance.order}曲目',
+    );
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: GBTSpacing.xs),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
+        onTap: onTap,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 48),
+          child: Ink(
+            padding: const EdgeInsets.symmetric(
+              horizontal: GBTSpacing.sm,
+              vertical: GBTSpacing.xs2,
+            ),
+            decoration: BoxDecoration(
+              color: surfaceVar,
+              borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        performance.title,
+                        style: GBTTypography.bodySmall.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Wrap(
+                        spacing: GBTSpacing.xs,
+                        runSpacing: 2,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          Text(
+                            '$dateText · $orderText',
+                            style: GBTTypography.caption.copyWith(
+                              color: textSecondary,
+                            ),
+                          ),
+                          if (performance.isEncore)
+                            _PerformanceBadge(
+                              label: context.l10n(
+                                ko: '앙코르',
+                                en: 'Encore',
+                                ja: 'アンコール',
+                              ),
+                              color: accent,
+                            ),
+                          if (performance.isUpcoming)
+                            _PerformanceBadge(
+                              label: context.l10n(
+                                ko: '예정',
+                                en: 'Upcoming',
+                                ja: '予定',
+                              ),
+                              color: isDark
+                                  ? GBTColors.darkPrimary
+                                  : GBTColors.primary,
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(left: 4),
+                  child: Icon(
+                    Icons.chevron_right_rounded,
+                    size: 16,
+                    color: textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PerformanceBadge extends StatelessWidget {
+  const _PerformanceBadge({required this.label, required this.color});
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: GBTSpacing.xs,
+        vertical: 2,
+      ),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
+      ),
+      child: Text(
+        label,
+        style: GBTTypography.caption.copyWith(
+          color: color,
+          fontWeight: FontWeight.w700,
         ),
       ),
     );

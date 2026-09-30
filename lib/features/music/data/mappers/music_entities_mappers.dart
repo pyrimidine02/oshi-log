@@ -389,3 +389,17 @@ extension MusicSongLiveContextDtoDomainMapper on MusicSongLiveContextDto {
     );
   }
 }
+
+extension MusicSongPerformanceDtoDomainMapper on MusicSongPerformanceDto {
+  MusicSongPerformance toDomain() {
+    return MusicSongPerformance(
+      eventId: eventId,
+      title: title,
+      startTime: DateTime.tryParse(startTime),
+      placeId: placeId,
+      isUpcoming: isUpcoming,
+      order: order,
+      isEncore: isEncore,
+    );
+  }
+}

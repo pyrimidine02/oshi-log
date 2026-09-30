@@ -223,6 +223,15 @@ class _CatalogRepository implements MusicRepository {
   }
 
   @override
+  Future<Result<List<MusicSongPerformance>>> getSongPerformances({
+    required String projectId,
+    required String songId,
+    String? lang,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
   Future<Result<MusicLiveSetlist>> getLiveSetlist({
     required String projectId,
     required String liveEventId,
