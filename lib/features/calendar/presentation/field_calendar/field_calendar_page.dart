@@ -16,6 +16,7 @@ import '../../../../core/widgets/feedback/gbt_empty_state.dart';
 import '../../../../core/widgets/feedback/gbt_loading.dart' hide GBTEmptyState;
 import '../../../../core/widgets/layout/gbt_field_primitives.dart';
 import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
+import '../../../live_events/presentation/field_events/live_schedule_status_badge.dart';
 import '../../../projects/presentation/widgets/field_project_lens.dart';
 import '../../application/calendar_controller.dart';
 import '../../domain/entities/calendar_event.dart';
@@ -384,6 +385,10 @@ class _FieldEventTicket extends StatelessWidget {
     final accent = calendarEventTypeColor(event.type, context);
     final local = event.date.toLocal();
     final locale = Localizations.localeOf(context).toLanguageTag();
+    final scheduleLabel = liveScheduleStatusLabel(
+      context,
+      event.scheduleStatus,
+    );
     final ticket = Container(
       constraints: const BoxConstraints(minHeight: 104),
       margin: const EdgeInsets.only(bottom: GBTSpacing.sm),
@@ -452,6 +457,10 @@ class _FieldEventTicket extends StatelessWidget {
                           letterSpacing: 0.7,
                         ),
                       ),
+                      if (scheduleLabel != null) ...[
+                        const SizedBox(width: GBTSpacing.xs),
+                        LiveScheduleStatusBadge(status: event.scheduleStatus),
+                      ],
                     ],
                   ),
                   const SizedBox(height: GBTSpacing.xs),
@@ -503,7 +512,11 @@ class _FieldEventTicket extends StatelessWidget {
 
     return Semantics(
       button: onTap != null,
-      label: '${event.title}, ${_eventTypeLabel(context, event.type)}',
+      label: [
+        event.title,
+        _eventTypeLabel(context, event.type),
+        ?scheduleLabel,
+      ].join(', '),
       excludeSemantics: true,
       child: onTap == null
           ? ticket

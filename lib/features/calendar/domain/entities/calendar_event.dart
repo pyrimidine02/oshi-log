@@ -67,6 +67,7 @@ class CalendarEvent {
     this.relatedEntityId,
     this.relatedEntityType,
     this.isRecurringAnnually = false,
+    this.scheduleStatus,
   });
 
   final String id;
@@ -86,6 +87,10 @@ class CalendarEvent {
   /// EN: True for annual recurring events like birthdays.
   /// KO: 생일 같은 연간 반복 이벤트는 true.
   final bool isRecurringAnnually;
+
+  /// EN: Live event schedule status (`SCHEDULED|CANCELLED|POSTPONED`), or null.
+  /// KO: 라이브 일정 상태(`SCHEDULED|CANCELLED|POSTPONED`) 또는 null.
+  final String? scheduleStatus;
 
   @override
   bool operator ==(Object other) =>

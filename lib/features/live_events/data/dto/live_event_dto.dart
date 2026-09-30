@@ -23,6 +23,8 @@ class LiveEventSummaryDto {
     this.bannerFilename,
     this.bannerSize,
     this.ticketUrl,
+    this.scheduleStatus,
+    this.rescheduledEventId,
   });
 
   final String id;
@@ -40,6 +42,8 @@ class LiveEventSummaryDto {
   final String? bannerFilename;
   final int? bannerSize;
   final String? ticketUrl;
+  final String? scheduleStatus;
+  final String? rescheduledEventId;
   final List<String> projectIds;
   final List<String> unitIds;
 
@@ -60,6 +64,8 @@ class LiveEventSummaryDto {
       bannerFilename: json['bannerFilename'] as String?,
       bannerSize: _intOrNull(json['bannerSize']),
       ticketUrl: json['ticketUrl'] as String?,
+      scheduleStatus: json['scheduleStatus'] as String?,
+      rescheduledEventId: json['rescheduledEventId'] as String?,
       projectIds: _stringList(json['projectIds']),
       unitIds: _stringList(json['unitIds']),
     );
@@ -82,6 +88,8 @@ class LiveEventSummaryDto {
       'bannerFilename': bannerFilename,
       'bannerSize': bannerSize,
       'ticketUrl': ticketUrl,
+      'scheduleStatus': scheduleStatus,
+      'rescheduledEventId': rescheduledEventId,
       'projectIds': projectIds,
       'unitIds': unitIds,
     };
@@ -106,6 +114,8 @@ class LiveEventDetailDto {
     this.endTime,
     this.banner,
     this.ticketUrl,
+    this.scheduleStatus,
+    this.rescheduledEventId,
   });
 
   final String id;
@@ -122,6 +132,8 @@ class LiveEventDetailDto {
   final String status;
   final ImageMetaDto? banner;
   final String? ticketUrl;
+  final String? scheduleStatus;
+  final String? rescheduledEventId;
   final List<String> projectIds;
   final List<String> unitIds;
 
@@ -143,6 +155,8 @@ class LiveEventDetailDto {
           ? ImageMetaDto.fromJson(json['banner'] as Map<String, dynamic>)
           : null,
       ticketUrl: json['ticketUrl'] as String?,
+      scheduleStatus: json['scheduleStatus'] as String?,
+      rescheduledEventId: json['rescheduledEventId'] as String?,
       projectIds: _stringList(json['projectIds']),
       unitIds: _stringList(json['unitIds']),
     );
@@ -164,6 +178,8 @@ class LiveEventDetailDto {
       'status': status,
       'banner': banner?.toJson(),
       'ticketUrl': ticketUrl,
+      'scheduleStatus': scheduleStatus,
+      'rescheduledEventId': rescheduledEventId,
       'projectIds': projectIds,
       'unitIds': unitIds,
     };

@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:oshi_log/features/live_events/data/dto/live_event_dto.dart';
 import 'package:oshi_log/features/live_events/data/mappers/live_event_entities_mappers.dart';
+import 'package:oshi_log/features/live_events/domain/entities/live_event_entities.dart';
 
 void main() {
   test('LiveEventSummaryDto parses swagger keys', () {
@@ -133,5 +134,68 @@ void main() {
     expect(dto.attended, isFalse);
     expect(dto.status, 'NONE');
     expect(dto.canUndo, isFalse);
+  });
+
+  group('scheduleStatus', () {
+    Map<String, dynamic> base([Map<String, dynamic> extra = const {}]) => {
+      'id': 'event-1',
+      'title': 'Live Show',
+      'showStartTime': '2026-02-01T18:00:00Z',
+      'status': 'SCHEDULED',
+      'projectIds': ['proj-1'],
+      'unitIds': <String>[],
+      ...extra,
+    };
+
+    test('absent fields default to SCHEDULED without replacement', () {
+      final summary = LiveEventSummaryDto.fromJson(base()).toDomain();
+      final detail = LiveEventDetailDto.fromJson(base()).toDomain();
+
+      expect(summary.scheduleStatus, LiveScheduleStatus.scheduled);
+      expect(summary.rescheduledEventId, isNull);
+      expect(detail.scheduleStatus, LiveScheduleStatus.scheduled);
+      expect(detail.isAttendable, isTrue);
+    });
+
+    test('parses CANCELLED and blocks attendance', () {
+      final detail = LiveEventDetailDto.fromJson(
+        base({'scheduleStatus': 'CANCELLED', 'rescheduledEventId': null}),
+      ).toDomain();
+
+      expect(detail.isCancelled, isTrue);
+      expect(detail.isAttendable, isFalse);
+      expect(detail.status, 'SCHEDULED');
+    });
+
+    test('parses POSTPONED with replacement id', () {
+      final dto = LiveEventSummaryDto.fromJson(
+        base({'scheduleStatus': 'postponed', 'rescheduledEventId': 'event-2'}),
+      );
+      expect(dto.toJson()['rescheduledEventId'], 'event-2');
+
+      final detail = LiveEventDetailDto.fromJson(dto.toJson()).toDomain();
+      expect(detail.isPostponed, isTrue);
+      expect(detail.rescheduledEventId, 'event-2');
+      expect(detail.isAttendable, isFalse);
+    });
+
+    test('POSTPONED without id stays attendable', () {
+      final detail = LiveEventDetailDto.fromJson(
+        base({'scheduleStatus': 'POSTPONED'}),
+      ).toDomain();
+
+      expect(detail.isPostponed, isTrue);
+      expect(detail.rescheduledEventId, isNull);
+      expect(detail.isAttendable, isTrue);
+    });
+
+    test('unknown status falls back and drops a stray replacement id', () {
+      final summary = LiveEventSummaryDto.fromJson(
+        base({'scheduleStatus': 'WHATEVER', 'rescheduledEventId': 'event-2'}),
+      ).toDomain();
+
+      expect(summary.scheduleStatus, LiveScheduleStatus.scheduled);
+      expect(summary.rescheduledEventId, isNull);
+    });
   });
 }
