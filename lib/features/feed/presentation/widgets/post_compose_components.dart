@@ -6,6 +6,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
+import '../../../../core/localization/locale_text.dart';
 import '../../../../core/theme/gbt_colors.dart';
 import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';
@@ -42,8 +43,8 @@ class PostComposeDocumentEditor extends StatelessWidget {
     this.header,
     this.enabled = true,
     this.autofocusTitle = true,
-    this.titleHintText = '제목을 입력해주세요',
-    this.contentHintText = '어디서 무엇을 보았는지, 왜 기억하고 싶은지 남겨보세요.',
+    this.titleHintText,
+    this.contentHintText,
     this.maxTitleLines = 1,
     this.minContentLines = 8,
     this.maxTitleLength = 60,
@@ -57,8 +58,8 @@ class PostComposeDocumentEditor extends StatelessWidget {
   final Widget? header;
   final bool enabled;
   final bool autofocusTitle;
-  final String titleHintText;
-  final String contentHintText;
+  final String? titleHintText;
+  final String? contentHintText;
   final int maxTitleLines;
   final int minContentLines;
   final int maxTitleLength;
@@ -104,7 +105,13 @@ class PostComposeDocumentEditor extends StatelessWidget {
                 color: colors.onSurface,
               ),
               decoration: InputDecoration(
-                hintText: titleHintText,
+                hintText:
+                    titleHintText ??
+                    context.l10n(
+                      ko: '제목을 입력해주세요',
+                      en: 'Enter a title',
+                      ja: 'タイトルを入力してください',
+                    ),
                 counterText: '',
                 filled: false,
                 border: fieldBorder,
@@ -137,7 +144,13 @@ class PostComposeDocumentEditor extends StatelessWidget {
                 color: colors.onSurface,
               ),
               decoration: InputDecoration(
-                hintText: contentHintText,
+                hintText:
+                    contentHintText ??
+                    context.l10n(
+                      ko: '어디서 무엇을 보았는지, 왜 기억하고 싶은지 남겨보세요.',
+                      en: 'Share where and what you saw, and why you want to remember it.',
+                      ja: 'どこで何を見たか、なぜ覚えておきたいかを書いてみましょう。',
+                    ),
                 counterText: '',
                 filled: false,
                 border: fieldBorder,
@@ -225,7 +238,10 @@ class PostTopicTagSelector extends StatelessWidget {
           ActionChip(
             onPressed: onTapTopic,
             avatar: const Icon(Icons.topic_outlined, size: 16),
-            label: Text(selectedTopic ?? '토픽 선택'),
+            label: Text(
+              selectedTopic ??
+                  context.l10n(ko: '토픽 선택', en: 'Select topic', ja: 'トピック選択'),
+            ),
             side: BorderSide(
               color: colorScheme.outlineVariant.withValues(alpha: 0.75),
             ),
@@ -257,7 +273,7 @@ class PostTopicTagSelector extends StatelessWidget {
           ActionChip(
             onPressed: onTapAddTag,
             avatar: const Icon(Icons.add, size: 16),
-            label: const Text('태그'),
+            label: Text(context.l10n(ko: '태그', en: 'Tags', ja: 'タグ')),
             side: BorderSide(
               color: colorScheme.outlineVariant.withValues(alpha: 0.75),
             ),
@@ -310,7 +326,11 @@ Future<String?> showPostTopicPickerSheet(
                     children: [
                       Expanded(
                         child: Text(
-                          '토픽 선택',
+                          context.l10n(
+                            ko: '토픽 선택',
+                            en: 'Select topic',
+                            ja: 'トピック選択',
+                          ),
                           style: GBTTypography.titleLarge.copyWith(
                             fontWeight: FontWeight.w800,
                             color: colorScheme.onSurface,
@@ -322,7 +342,9 @@ Future<String?> showPostTopicPickerSheet(
                         style: TextButton.styleFrom(
                           minimumSize: const Size(48, GBTSpacing.touchTarget),
                         ),
-                        child: const Text('닫기'),
+                        child: Text(
+                          context.l10n(ko: '닫기', en: 'Close', ja: '閉じる'),
+                        ),
                       ),
                     ],
                   ),
@@ -333,7 +355,11 @@ Future<String?> showPostTopicPickerSheet(
                     shrinkWrap: true,
                     children: [
                       _PostTopicOptionTile(
-                        label: '선택 안 함',
+                        label: context.l10n(
+                          ko: '선택 안 함',
+                          en: 'None selected',
+                          ja: '選択しない',
+                        ),
                         isSelected: currentValue.isEmpty,
                         onTap: () => Navigator.of(sheetContext).pop(''),
                       ),
@@ -401,7 +427,11 @@ Future<String?> showPostTagPickerSheet(
                     children: [
                       Expanded(
                         child: Text(
-                          '태그 선택',
+                          context.l10n(
+                            ko: '태그 선택',
+                            en: 'Select tags',
+                            ja: 'タグ選択',
+                          ),
                           style: GBTTypography.titleLarge.copyWith(
                             color: colorScheme.onSurface,
                             fontWeight: FontWeight.w800,
@@ -413,7 +443,9 @@ Future<String?> showPostTagPickerSheet(
                         style: TextButton.styleFrom(
                           minimumSize: const Size(48, GBTSpacing.touchTarget),
                         ),
-                        child: const Text('닫기'),
+                        child: Text(
+                          context.l10n(ko: '닫기', en: 'Close', ja: '閉じる'),
+                        ),
                       ),
                     ],
                   ),
@@ -424,7 +456,11 @@ Future<String?> showPostTagPickerSheet(
                     padding: const EdgeInsets.all(GBTSpacing.md),
                     child: orderedSuggestions.isEmpty
                         ? Text(
-                            '선택 가능한 태그가 없습니다.',
+                            context.l10n(
+                              ko: '선택 가능한 태그가 없습니다.',
+                              en: 'No tags available.',
+                              ja: '選択できるタグがありません。',
+                            ),
                             style: GBTTypography.bodySmall.copyWith(
                               color: colorScheme.onSurfaceVariant,
                             ),
@@ -625,14 +661,22 @@ class PostComposeDraftRecoveryBanner extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '임시 저장된 글이 있어요',
+                  context.l10n(
+                    ko: '임시 저장된 글이 있어요',
+                    en: 'You have a saved draft',
+                    ja: '保存された下書きがあります',
+                  ),
                   style: GBTTypography.labelLarge.copyWith(
                     color: colorScheme.onSurface,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
                 Text(
-                  '저장 시각 $hour:$minute$projectLabel',
+                  context.l10n(
+                    ko: '저장 시각 $hour:$minute$projectLabel',
+                    en: 'Saved at $hour:$minute$projectLabel',
+                    ja: '保存時刻 $hour:$minute$projectLabel',
+                  ),
                   style: GBTTypography.labelSmall.copyWith(
                     color: colorScheme.onSurfaceVariant,
                   ),
@@ -648,7 +692,7 @@ class PostComposeDraftRecoveryBanner extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 8),
               minimumSize: const Size(0, GBTSpacing.touchTarget),
             ),
-            child: const Text('삭제'),
+            child: Text(context.l10n(ko: '삭제', en: 'Delete', ja: '削除する')),
           ),
           const SizedBox(width: 4),
           FilledButton.tonal(
@@ -659,7 +703,7 @@ class PostComposeDraftRecoveryBanner extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 12),
               minimumSize: const Size(0, GBTSpacing.touchTarget),
             ),
-            child: const Text('복구'),
+            child: Text(context.l10n(ko: '복구', en: 'Recover', ja: '復元する')),
           ),
         ],
       ),
@@ -701,7 +745,7 @@ class PostComposeStatusCard extends StatelessWidget {
               Icon(Icons.auto_awesome, color: colorScheme.primary, size: 18),
               const SizedBox(width: GBTSpacing.xs),
               Text(
-                '작성 가이드',
+                context.l10n(ko: '작성 가이드', en: 'Writing guide', ja: '作成ガイド'),
                 style: GBTTypography.titleSmall.copyWith(
                   color: colorScheme.onSurface,
                 ),
@@ -730,9 +774,26 @@ class PostComposeStatusCard extends StatelessWidget {
             spacing: GBTSpacing.sm,
             runSpacing: GBTSpacing.sm,
             children: [
-              _PostComposeGuideChip(label: '제목', isDone: hasTitle),
-              _PostComposeGuideChip(label: '내용 30자+', isDone: hasContent),
-              _PostComposeGuideChip(label: '이미지(선택)', isDone: hasImage),
+              _PostComposeGuideChip(
+                label: context.l10n(ko: '제목', en: 'Title', ja: 'タイトル'),
+                isDone: hasTitle,
+              ),
+              _PostComposeGuideChip(
+                label: context.l10n(
+                  ko: '내용 30자+',
+                  en: 'Content 30+ chars',
+                  ja: '内容30文字以上',
+                ),
+                isDone: hasContent,
+              ),
+              _PostComposeGuideChip(
+                label: context.l10n(
+                  ko: '이미지(선택)',
+                  en: 'Image (optional)',
+                  ja: '画像（任意）',
+                ),
+                isDone: hasImage,
+              ),
             ],
           ),
         ],
@@ -819,8 +880,16 @@ class PostComposeProjectBadge extends StatelessWidget {
           Expanded(
             child: Text(
               projectCode == null || projectCode!.isEmpty
-                  ? '프로젝트를 선택해주세요'
-                  : '현재 프로젝트: $projectCode',
+                  ? context.l10n(
+                      ko: '프로젝트를 선택해주세요',
+                      en: 'Please select a project',
+                      ja: 'プロジェクトを選択してください',
+                    )
+                  : context.l10n(
+                      ko: '현재 프로젝트: $projectCode',
+                      en: 'Current project: $projectCode',
+                      ja: '現在のプロジェクト：$projectCode',
+                    ),
               style: GBTTypography.bodySmall.copyWith(
                 color: colorScheme.onSurfaceVariant,
               ),
@@ -865,7 +934,7 @@ class PostComposeImageSection extends StatelessWidget {
           Row(
             children: [
               Text(
-                '사진',
+                context.l10n(ko: '사진', en: 'Photos', ja: '写真'),
                 style: GBTTypography.labelLarge.copyWith(
                   color: colorScheme.onSurface,
                 ),
@@ -883,18 +952,24 @@ class PostComposeImageSection extends StatelessWidget {
                     ? null
                     : onPickImages,
                 icon: const Icon(Icons.photo_library_outlined),
-                label: const Text('추가'),
+                label: Text(context.l10n(ko: '추가', en: 'Add', ja: '追加する')),
               ),
               if (onClearAll != null)
                 TextButton(
                   onPressed: isSubmitting ? null : onClearAll,
-                  child: const Text('전체 삭제'),
+                  child: Text(
+                    context.l10n(ko: '전체 삭제', en: 'Delete all', ja: '全削除する'),
+                  ),
                 ),
             ],
           ),
           const SizedBox(height: GBTSpacing.xs),
           Text(
-            '장소 사진을 추가하면 게시글 전달력이 좋아져요.',
+            context.l10n(
+              ko: '장소 사진을 추가하면 게시글 전달력이 좋아져요.',
+              en: 'Adding a photo of the place makes your post more vivid.',
+              ja: '場所の写真を追加すると投稿が伝わりやすくなります。',
+            ),
             style: GBTTypography.bodySmall.copyWith(
               color: colorScheme.onSurfaceVariant,
             ),
@@ -921,7 +996,11 @@ class PostComposeImageSection extends StatelessWidget {
                   ),
                   const SizedBox(height: GBTSpacing.xs),
                   Text(
-                    '최대 $maxImageCount장 첨부 가능',
+                    context.l10n(
+                      ko: '최대 $maxImageCount장 첨부 가능',
+                      en: 'Up to $maxImageCount images allowed',
+                      ja: '最大$maxImageCount枚まで添付可能',
+                    ),
                     style: GBTTypography.bodySmall.copyWith(
                       color: colorScheme.onSurfaceVariant,
                     ),
@@ -970,7 +1049,11 @@ class PostComposePickedImageTile extends StatelessWidget {
 
     return Semantics(
       button: true,
-      label: '$filename 미리보기',
+      label: context.l10n(
+        ko: '$filename 미리보기',
+        en: '$filename preview',
+        ja: '$filenameのプレビュー',
+      ),
       child: Material(
         borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
         clipBehavior: Clip.antiAlias,
@@ -1023,7 +1106,11 @@ class PostComposePickedImageTile extends StatelessWidget {
                     onPressed: onRemove,
                     iconSize: 14,
                     icon: const Icon(Icons.close),
-                    tooltip: '사진 제거',
+                    tooltip: context.l10n(
+                      ko: '사진 제거',
+                      en: 'Remove photo',
+                      ja: '写真を削除する',
+                    ),
                   ),
                 ),
               ),
@@ -1057,7 +1144,11 @@ class PostComposeRemoteImageTile extends StatelessWidget {
 
     return Semantics(
       button: true,
-      label: '$filename 미리보기',
+      label: context.l10n(
+        ko: '$filename 미리보기',
+        en: '$filename preview',
+        ja: '$filenameのプレビュー',
+      ),
       child: Material(
         borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
         clipBehavior: Clip.antiAlias,
@@ -1111,7 +1202,11 @@ class PostComposeRemoteImageTile extends StatelessWidget {
                       onPressed: onRemove,
                       iconSize: 14,
                       icon: const Icon(Icons.close),
-                      tooltip: '사진 제거',
+                      tooltip: context.l10n(
+                        ko: '사진 제거',
+                        en: 'Remove photo',
+                        ja: '写真を削除する',
+                      ),
                     ),
                   ),
                 ),
@@ -1147,7 +1242,11 @@ class PostComposeLoginRequiredMessage extends StatelessWidget {
             ),
             const SizedBox(height: GBTSpacing.md),
             Text(
-              '로그인 후 게시글을 작성할 수 있어요.',
+              context.l10n(
+                ko: '로그인 후 게시글을 작성할 수 있어요.',
+                en: 'Log in to write a post.',
+                ja: 'ログイン後に投稿を作成できます。',
+              ),
               style: GBTTypography.bodyMedium.copyWith(
                 color: isDark
                     ? GBTColors.darkTextSecondary

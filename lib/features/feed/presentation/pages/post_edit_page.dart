@@ -13,6 +13,7 @@ import 'package:path/path.dart' as p;
 
 import '../../../../core/error/error_handler.dart';
 import '../../../../core/error/failure.dart';
+import '../../../../core/localization/locale_text.dart';
 import '../../../../core/logging/app_logger.dart';
 import '../../../../core/providers/core_providers.dart';
 
@@ -230,15 +231,33 @@ class _PostEditPageState extends ConsumerState<PostEditPage> {
         ..clear()
         ..addAll(sanitizePostTags(draft.tags));
     });
-    _autosaveController.consumeRecoverableDraft(message: '임시 저장 글을 복구했어요');
+    _autosaveController.consumeRecoverableDraft(
+      message: context.l10n(
+        ko: '임시 저장 글을 복구했어요',
+        en: 'Draft recovered.',
+        ja: '下書きを復元しました',
+      ),
+    );
 
     _scheduleDraftSave();
-    _showMessage('임시 저장 글을 복구했어요.');
+    _showMessage(
+      context.l10n(
+        ko: '임시 저장 글을 복구했어요.',
+        en: 'Draft recovered.',
+        ja: '下書きを復元しました。',
+      ),
+    );
   }
 
   Future<void> _discardRecoverableDraft() async {
     await _autosaveController.clearSavedDraft(silent: true);
-    _showMessage('임시 저장 글을 삭제했어요.');
+    _showMessage(
+      context.l10n(
+        ko: '임시 저장 글을 삭제했어요.',
+        en: 'Draft deleted.',
+        ja: '下書きを削除しました。',
+      ),
+    );
   }
 
   Future<bool> _handleWillPop() async {
@@ -251,10 +270,18 @@ class _PostEditPageState extends ConsumerState<PostEditPage> {
 
     final shouldDiscard = await showGBTAdaptiveConfirmDialog(
       context: context,
-      title: '작성 중인 내용을 나갈까요?',
-      message: '현재 입력 내용은 임시 저장되어 다음에 복구할 수 있어요.',
-      confirmLabel: '나가기',
-      cancelLabel: '계속 작성',
+      title: context.l10n(
+        ko: '작성 중인 내용을 나갈까요?',
+        en: 'Leave without saving?',
+        ja: '作成中の内容を破棄しますか？',
+      ),
+      message: context.l10n(
+        ko: '현재 입력 내용은 임시 저장되어 다음에 복구할 수 있어요.',
+        en: 'Your current input will be saved as a draft for later.',
+        ja: '現在の入力内容は下書きとして保存され、後で復元できます。',
+      ),
+      confirmLabel: context.l10n(ko: '나가기', en: 'Leave', ja: '退出する'),
+      cancelLabel: context.l10n(ko: '계속 작성', en: 'Keep writing', ja: '作成を続ける'),
     );
 
     return shouldDiscard ?? false;
@@ -354,7 +381,11 @@ class _PostEditPageState extends ConsumerState<PostEditPage> {
 
   String? get _taxonomyStatusMessage {
     if (_isTaxonomyLoading) {
-      return '토픽/태그 목록을 불러오는 중입니다.';
+      return context.l10n(
+        ko: '토픽/태그 목록을 불러오는 중입니다.',
+        en: 'Loading topics/tags…',
+        ja: 'トピック・タグ一覧を読み込み中です。',
+      );
     }
 
     if (_taxonomyLoadFailed) {
@@ -363,24 +394,48 @@ class _PostEditPageState extends ConsumerState<PostEditPage> {
         switch (failure.code) {
           case '401':
           case 'auth_required':
-            return '로그인이 만료되었습니다. 다시 로그인해주세요.';
+            return context.l10n(
+              ko: '로그인이 만료되었습니다. 다시 로그인해주세요.',
+              en: 'Your session has expired. Please log in again.',
+              ja: 'ログインの有効期限が切れました。再度ログインしてください。',
+            );
           case '403':
-            return '토픽/태그 목록 조회 권한이 없습니다.';
+            return context.l10n(
+              ko: '토픽/태그 목록 조회 권한이 없습니다.',
+              en: 'You do not have permission to view topics/tags.',
+              ja: 'トピック・タグ一覧を閲覧する権限がありません。',
+            );
         }
       }
-      return '토픽/태그 목록을 불러오지 못했습니다.';
+      return context.l10n(
+        ko: '토픽/태그 목록을 불러오지 못했습니다.',
+        en: 'Failed to load topics/tags.',
+        ja: 'トピック・タグ一覧を読み込めませんでした。',
+      );
     }
 
     if (_topicOptions.isEmpty && _tagSuggestions.isEmpty) {
-      return '현재 선택 가능한 토픽/태그가 없습니다.';
+      return context.l10n(
+        ko: '현재 선택 가능한 토픽/태그가 없습니다.',
+        en: 'No topics/tags are currently available.',
+        ja: '現在選択できるトピック・タグがありません。',
+      );
     }
 
     if (_topicOptions.isEmpty) {
-      return '현재 선택 가능한 토픽이 없습니다.';
+      return context.l10n(
+        ko: '현재 선택 가능한 토픽이 없습니다.',
+        en: 'No topics are currently available.',
+        ja: '現在選択できるトピックがありません。',
+      );
     }
 
     if (_tagSuggestions.isEmpty) {
-      return '현재 선택 가능한 태그가 없습니다.';
+      return context.l10n(
+        ko: '현재 선택 가능한 태그가 없습니다.',
+        en: 'No tags are currently available.',
+        ja: '現在選択できるタグがありません。',
+      );
     }
 
     return null;
@@ -396,7 +451,13 @@ class _PostEditPageState extends ConsumerState<PostEditPage> {
   Future<void> _openDraftShelf(PostComposeAutosaveState autosaveState) async {
     final recoverableDraft = autosaveState.recoverableDraft;
     if (recoverableDraft == null) {
-      _showMessage('복구 가능한 임시 저장 글이 없습니다.');
+      _showMessage(
+        context.l10n(
+          ko: '복구 가능한 임시 저장 글이 없습니다.',
+          en: 'No recoverable draft.',
+          ja: '復元できる下書きがありません。',
+        ),
+      );
       return;
     }
 
@@ -409,7 +470,13 @@ class _PostEditPageState extends ConsumerState<PostEditPage> {
             children: [
               ListTile(
                 leading: const Icon(Icons.restore),
-                title: const Text('임시 저장 글 복구'),
+                title: Text(
+                  context.l10n(
+                    ko: '임시 저장 글 복구',
+                    en: 'Recover draft',
+                    ja: '下書きの復元',
+                  ),
+                ),
                 subtitle: Text(
                   '${recoverableDraft.savedAt.toLocal()}',
                   style: GBTTypography.labelSmall,
@@ -418,7 +485,13 @@ class _PostEditPageState extends ConsumerState<PostEditPage> {
               ),
               ListTile(
                 leading: const Icon(Icons.delete_outline),
-                title: const Text('임시 저장 글 삭제'),
+                title: Text(
+                  context.l10n(
+                    ko: '임시 저장 글 삭제',
+                    en: 'Delete draft',
+                    ja: '下書きの削除',
+                  ),
+                ),
                 onTap: () => Navigator.of(sheetContext).pop('discard'),
               ),
             ],
@@ -460,11 +533,15 @@ class _PostEditPageState extends ConsumerState<PostEditPage> {
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: gbtStandardAppBar(
           context,
-          title: '수정',
+          title: context.l10n(ko: '수정', en: 'Edit', ja: '編集する'),
           leading: IconButton(
             onPressed: _isSubmitting ? null : _handleCancelPressed,
             icon: const Icon(Icons.close_rounded),
-            tooltip: '수정 취소',
+            tooltip: context.l10n(
+              ko: '수정 취소',
+              en: 'Cancel edit',
+              ja: '編集をキャンセル',
+            ),
           ),
           actions: [
             IconButton(
@@ -472,7 +549,7 @@ class _PostEditPageState extends ConsumerState<PostEditPage> {
                   ? null
                   : () => _openDraftShelf(autosaveState),
               icon: const Icon(Icons.inventory_2_outlined),
-              tooltip: '임시 보관함',
+              tooltip: context.l10n(ko: '임시 보관함', en: 'Drafts', ja: '下書き保存'),
             ),
             Padding(
               padding: const EdgeInsets.only(right: GBTSpacing.xs),
@@ -489,7 +566,9 @@ class _PostEditPageState extends ConsumerState<PostEditPage> {
                   ),
                 ),
                 child: Text(
-                  _isSubmitting ? '수정 중' : '저장',
+                  _isSubmitting
+                      ? context.l10n(ko: '수정 중', en: 'Updating', ja: '編集中')
+                      : context.l10n(ko: '저장', en: 'Save', ja: '保存する'),
                   style: GBTTypography.labelLarge.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
@@ -533,9 +612,17 @@ class _PostEditPageState extends ConsumerState<PostEditPage> {
                     GBTSpacing.md,
                   ),
                   children: [
-                    const GBTPageHeader(
-                      title: '여행 기록 수정',
-                      description: '이미 공유한 여정의 맥락은 유지하고 내용을 더 정확하게 다듬어보세요.',
+                    GBTPageHeader(
+                      title: context.l10n(
+                        ko: '여행 기록 수정',
+                        en: 'Edit travel record',
+                        ja: '旅行記録の編集',
+                      ),
+                      description: context.l10n(
+                        ko: '이미 공유한 여정의 맥락은 유지하고 내용을 더 정확하게 다듬어보세요.',
+                        en: 'Keep the context of your shared journey and refine the details.',
+                        ja: 'すでに共有した旅の文脈はそのままに、内容をより正確に整えましょう。',
+                      ),
                       padding: EdgeInsets.only(bottom: GBTSpacing.md),
                     ),
                     const SizedBox(height: GBTSpacing.md),
@@ -613,7 +700,11 @@ class _PostEditPageState extends ConsumerState<PostEditPage> {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                '수정 시 프로젝트는 변경할 수 없어요',
+                                context.l10n(
+                                  ko: '수정 시 프로젝트는 변경할 수 없어요',
+                                  en: 'The project cannot be changed when editing.',
+                                  ja: '編集時にプロジェクトは変更できません。',
+                                ),
                                 style: GBTTypography.labelSmall.copyWith(
                                   color: colorScheme.onSurfaceVariant,
                                 ),
@@ -653,13 +744,25 @@ class _PostEditPageState extends ConsumerState<PostEditPage> {
                                                   forceRefresh: true,
                                                 ),
                                               ),
-                                        child: const Text('다시 시도'),
+                                        child: Text(
+                                          context.l10n(
+                                            ko: '다시 시도',
+                                            en: 'Retry',
+                                            ja: '再試行する',
+                                          ),
+                                        ),
                                       ),
                                     if (_taxonomyLoadFailed &&
                                         _shouldShowTaxonomyLoginAction)
                                       TextButton(
                                         onPressed: () => context.go('/login'),
-                                        child: const Text('로그인'),
+                                        child: Text(
+                                          context.l10n(
+                                            ko: '로그인',
+                                            en: 'Log in',
+                                            ja: 'ログインする',
+                                          ),
+                                        ),
                                       ),
                                   ],
                                 ),
@@ -789,7 +892,15 @@ class _PostEditPageState extends ConsumerState<PostEditPage> {
         if (_isSubmitting)
           Container(
             color: Colors.black.withValues(alpha: 0.22),
-            child: const Center(child: GBTLoading(message: '게시글을 수정하는 중...')),
+            child: Center(
+              child: GBTLoading(
+                message: context.l10n(
+                  ko: '게시글을 수정하는 중...',
+                  en: 'Updating…',
+                  ja: '投稿を編集中…',
+                ),
+              ),
+            ),
           ),
       ],
     );
@@ -813,9 +924,13 @@ class _PostEditPageState extends ConsumerState<PostEditPage> {
                     child: GBTImage(
                       imageUrl: imageUrl,
                       fit: BoxFit.contain,
-                      errorWidget: const Center(
+                      errorWidget: Center(
                         child: Text(
-                          '이미지를 표시할 수 없습니다',
+                          context.l10n(
+                            ko: '이미지를 표시할 수 없습니다',
+                            en: 'Cannot display the image.',
+                            ja: '画像を表示できません。',
+                          ),
                           style: TextStyle(color: Colors.white),
                         ),
                       ),
@@ -828,7 +943,7 @@ class _PostEditPageState extends ConsumerState<PostEditPage> {
                   child: IconButton.filledTonal(
                     onPressed: () => Navigator.of(context).pop(),
                     icon: const Icon(Icons.close),
-                    tooltip: '닫기',
+                    tooltip: context.l10n(ko: '닫기', en: 'Close', ja: '閉じる'),
                   ),
                 ),
               ],
@@ -857,9 +972,13 @@ class _PostEditPageState extends ConsumerState<PostEditPage> {
                     child: Image.file(
                       File(image.path),
                       fit: BoxFit.contain,
-                      errorBuilder: (_, __, ___) => const Center(
+                      errorBuilder: (_, __, ___) => Center(
                         child: Text(
-                          '이미지를 표시할 수 없습니다',
+                          context.l10n(
+                            ko: '이미지를 표시할 수 없습니다',
+                            en: 'Cannot display the image.',
+                            ja: '画像を表示できません。',
+                          ),
                           style: TextStyle(color: Colors.white),
                         ),
                       ),
@@ -872,7 +991,7 @@ class _PostEditPageState extends ConsumerState<PostEditPage> {
                   child: IconButton.filledTonal(
                     onPressed: () => Navigator.of(context).pop(),
                     icon: const Icon(Icons.close),
-                    tooltip: '닫기',
+                    tooltip: context.l10n(ko: '닫기', en: 'Close', ja: '閉じる'),
                   ),
                 ),
               ],
@@ -885,11 +1004,23 @@ class _PostEditPageState extends ConsumerState<PostEditPage> {
 
   Future<void> _handleTopicTap() async {
     if (_isTaxonomyLoading) {
-      _showMessage('토픽/태그 목록을 불러오는 중입니다.');
+      _showMessage(
+        context.l10n(
+          ko: '토픽/태그 목록을 불러오는 중입니다.',
+          en: 'Loading topics/tags…',
+          ja: 'トピック・タグ一覧を読み込み中です。',
+        ),
+      );
       return;
     }
     if (_topicOptions.isEmpty) {
-      _showMessage('선택 가능한 토픽이 없습니다.');
+      _showMessage(
+        context.l10n(
+          ko: '선택 가능한 토픽이 없습니다.',
+          en: 'No topics available.',
+          ja: '選択できるトピックがありません。',
+        ),
+      );
       return;
     }
 
@@ -913,15 +1044,33 @@ class _PostEditPageState extends ConsumerState<PostEditPage> {
 
   Future<void> _handleTagAddTap() async {
     if (_selectedTags.length >= kPostMaxTagCount) {
-      _showMessage('태그는 최대 $kPostMaxTagCount개까지 추가할 수 있어요.');
+      _showMessage(
+        context.l10n(
+          ko: '태그는 최대 $kPostMaxTagCount개까지 추가할 수 있어요.',
+          en: 'You can add up to $kPostMaxTagCount tags.',
+          ja: 'タグは最大$kPostMaxTagCount個まで追加できます。',
+        ),
+      );
       return;
     }
     if (_isTaxonomyLoading) {
-      _showMessage('토픽/태그 목록을 불러오는 중입니다.');
+      _showMessage(
+        context.l10n(
+          ko: '토픽/태그 목록을 불러오는 중입니다.',
+          en: 'Loading topics/tags…',
+          ja: 'トピック・タグ一覧を読み込み中です。',
+        ),
+      );
       return;
     }
     if (_tagSuggestions.isEmpty) {
-      _showMessage('선택 가능한 태그가 없습니다.');
+      _showMessage(
+        context.l10n(
+          ko: '선택 가능한 태그가 없습니다.',
+          en: 'No tags available.',
+          ja: '選択できるタグがありません。',
+        ),
+      );
       return;
     }
     final selected = await showPostTagPickerSheet(
@@ -940,7 +1089,13 @@ class _PostEditPageState extends ConsumerState<PostEditPage> {
       (tag) => tag.toLowerCase() == normalized.toLowerCase(),
     );
     if (exists) {
-      _showMessage('이미 선택된 태그예요.');
+      _showMessage(
+        context.l10n(
+          ko: '이미 선택된 태그예요.',
+          en: 'This tag is already selected.',
+          ja: 'すでに選択されているタグです。',
+        ),
+      );
       return;
     }
     setState(() {
@@ -963,12 +1118,32 @@ class _PostEditPageState extends ConsumerState<PostEditPage> {
     final content = _contentController.text.trim();
 
     if (title.isEmpty || content.isEmpty) {
-      messenger.showSnackBar(const SnackBar(content: Text('제목과 내용을 입력해주세요')));
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            context.l10n(
+              ko: '제목과 내용을 입력해주세요',
+              en: 'Please enter a title and content.',
+              ja: 'タイトルと内容を入力してください。',
+            ),
+          ),
+        ),
+      );
       return;
     }
 
     if (_editProjectCode.isEmpty) {
-      messenger.showSnackBar(const SnackBar(content: Text('프로젝트를 먼저 선택해주세요')));
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            context.l10n(
+              ko: '프로젝트를 먼저 선택해주세요',
+              en: 'Please select a project first.',
+              ja: '先にプロジェクトを選択してください。',
+            ),
+          ),
+        ),
+      );
       return;
     }
 
@@ -989,7 +1164,11 @@ class _PostEditPageState extends ConsumerState<PostEditPage> {
         return;
       } catch (_) {
         setState(() {
-          _errorMessage = '이미지 업로드에 실패했습니다.';
+          _errorMessage = context.l10n(
+            ko: '이미지 업로드에 실패했습니다.',
+            en: 'Failed to upload the image.',
+            ja: '画像のアップロードに失敗しました。',
+          );
           _isSubmitting = false;
         });
         return;
@@ -1030,7 +1209,17 @@ class _PostEditPageState extends ConsumerState<PostEditPage> {
       if (!mounted) {
         return;
       }
-      messenger.showSnackBar(const SnackBar(content: Text('게시글을 수정했어요')));
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            context.l10n(
+              ko: '게시글을 수정했어요',
+              en: 'Post updated.',
+              ja: '投稿を編集しました。',
+            ),
+          ),
+        ),
+      );
       router.pop();
     } else if (result case Err<PostDetail>(:final failure)) {
       messenger.showSnackBar(SnackBar(content: Text(failure.userMessage)));
@@ -1044,7 +1233,13 @@ class _PostEditPageState extends ConsumerState<PostEditPage> {
 
   Future<void> _pickFromGallery() async {
     if (_remainingImageSlots <= 0) {
-      _showMessage('이미지는 최대 $_maxImageCount장까지 첨부할 수 있어요.');
+      _showMessage(
+        context.l10n(
+          ko: '이미지는 최대 $_maxImageCount장까지 첨부할 수 있어요.',
+          en: 'You can attach up to $_maxImageCount images.',
+          ja: '画像は最大$_maxImageCount枚まで添付できます。',
+        ),
+      );
       return;
     }
 
@@ -1064,18 +1259,36 @@ class _PostEditPageState extends ConsumerState<PostEditPage> {
       if (!mounted) {
         return;
       }
-      _showMessage('갤러리를 열지 못했어요.');
+      _showMessage(
+        context.l10n(
+          ko: '갤러리를 열지 못했어요.',
+          en: 'Couldn\'t open the gallery.',
+          ja: 'ギャラリーを開けませんでした。',
+        ),
+      );
     }
   }
 
   Future<void> _pickFromCamera() async {
     if (_remainingImageSlots <= 0) {
-      _showMessage('이미지는 최대 $_maxImageCount장까지 첨부할 수 있어요.');
+      _showMessage(
+        context.l10n(
+          ko: '이미지는 최대 $_maxImageCount장까지 첨부할 수 있어요.',
+          en: 'You can attach up to $_maxImageCount images.',
+          ja: '画像は最大$_maxImageCount枚まで添付できます。',
+        ),
+      );
       return;
     }
 
     if (!_picker.supportsImageSource(ImageSource.camera)) {
-      _showMessage('이 기기에서는 카메라를 사용할 수 없어요.');
+      _showMessage(
+        context.l10n(
+          ko: '이 기기에서는 카메라를 사용할 수 없어요.',
+          en: 'This device cannot use the camera.',
+          ja: 'この端末ではカメラを使用できません。',
+        ),
+      );
       return;
     }
 
@@ -1096,7 +1309,13 @@ class _PostEditPageState extends ConsumerState<PostEditPage> {
       if (!mounted) {
         return;
       }
-      _showMessage('카메라를 열지 못했어요.');
+      _showMessage(
+        context.l10n(
+          ko: '카메라를 열지 못했어요.',
+          en: 'Couldn\'t open the camera.',
+          ja: 'カメラを開けませんでした。',
+        ),
+      );
     }
   }
 
@@ -1110,7 +1329,13 @@ class _PostEditPageState extends ConsumerState<PostEditPage> {
     }
 
     if (uniquePicked.isEmpty) {
-      _showMessage('이미 추가된 사진입니다.');
+      _showMessage(
+        context.l10n(
+          ko: '이미 추가된 사진입니다.',
+          en: 'This photo is already added.',
+          ja: 'すでに追加された写真です。',
+        ),
+      );
       return;
     }
 
@@ -1123,7 +1348,13 @@ class _PostEditPageState extends ConsumerState<PostEditPage> {
     _scheduleDraftSave();
 
     if (droppedCount > 0) {
-      _showMessage('$_maxImageCount장까지만 첨부할 수 있어요.');
+      _showMessage(
+        context.l10n(
+          ko: '$_maxImageCount장까지만 첨부할 수 있어요.',
+          en: 'You can attach up to $_maxImageCount images.',
+          ja: '画像は$_maxImageCount枚までです。',
+        ),
+      );
     }
   }
 
@@ -1399,7 +1630,7 @@ class _ComposerLocalImageTile extends StatelessWidget {
                   onPressed: onRemove,
                   icon: const Icon(Icons.close, size: 18),
                   color: Colors.white,
-                  tooltip: '삭제',
+                  tooltip: context.l10n(ko: '삭제', en: 'Delete', ja: '削除する'),
                 ),
               ),
             ),
@@ -1476,7 +1707,7 @@ class _ComposerRemoteImageTile extends StatelessWidget {
                   onPressed: onRemove,
                   icon: const Icon(Icons.close, size: 18),
                   color: Colors.white,
-                  tooltip: '삭제',
+                  tooltip: context.l10n(ko: '삭제', en: 'Delete', ja: '削除する'),
                 ),
               ),
             ),

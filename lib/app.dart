@@ -15,6 +15,7 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'core/connectivity/connectivity_service.dart';
+import 'core/localization/locale_resolution.dart';
 import 'core/localization/locale_text.dart';
 import 'core/notifications/local_notifications_service.dart';
 import 'core/providers/core_providers.dart';
@@ -143,6 +144,26 @@ class GBTApp extends ConsumerWidget {
 
     final themeMode = ref.watch(themeModeProvider);
     final appLocale = ref.watch(localeProvider);
+    const supportedLocales = [
+      Locale('ko', 'KR'),
+      Locale('en', 'US'),
+      Locale('ja', 'JP'),
+    ];
+    // EN: `appLocale` is only non-null for an explicit ko/en/ja user choice,
+    // so this already matches a supported locale and the theme follows it
+    // directly. For `system` (null), approximate the resolved locale from
+    // the device so the text theme's font fallback matches before the
+    // framework finishes locale resolution.
+    // KO: `appLocale`은 사용자가 ko/en/ja를 명시적으로 선택했을 때만
+    // non-null이므로 이미 지원 로케일과 일치하여 테마가 그대로 따릅니다.
+    // `system`(null)인 경우 프레임워크의 로케일 결정이 끝나기 전에 텍스트
+    // 테마의 폰트 폴백이 맞도록 기기 로케일로부터 근사 결정합니다.
+    final effectiveLanguageCode =
+        appLocale?.languageCode ??
+        resolveAppLocale(
+          WidgetsBinding.instance.platformDispatcher.locale,
+          supportedLocales,
+        ).languageCode;
 
     return MaterialApp.router(
       title: 'Oshi@log',
@@ -150,8 +171,8 @@ class GBTApp extends ConsumerWidget {
 
       // EN: Theme configuration
       // KO: 테마 구성
-      theme: GBTTheme.light,
-      darkTheme: GBTTheme.dark,
+      theme: GBTTheme.lightFor(effectiveLanguageCode),
+      darkTheme: GBTTheme.darkFor(effectiveLanguageCode),
       themeMode: _parseThemeMode(themeMode),
 
       // EN: Router configuration
@@ -161,11 +182,18 @@ class GBTApp extends ConsumerWidget {
       // EN: Localization
       // KO: 다국어 지원
       locale: appLocale,
-      supportedLocales: const [
-        Locale('ko', 'KR'),
-        Locale('en', 'US'),
-        Locale('ja', 'JP'),
-      ],
+      supportedLocales: supportedLocales,
+      // EN: Japan is the primary market: an unsupported or missing device
+      // locale (null `appLocale`, i.e. `system`) resolves to `ja` instead of
+      // the first supportedLocale (`ko`). An explicit saved choice always
+      // wins because it is passed via `locale:` above and never reaches
+      // this callback.
+      // KO: 일본이 주 시장이므로, 지원하지 않거나 알 수 없는 기기 로케일
+      // (`appLocale`이 null인 `system`)은 supportedLocales의 첫 항목(`ko`)이
+      // 아닌 `ja`로 결정됩니다. 명시적으로 저장된 선택은 위 `locale:`로 바로
+      // 전달되어 이 콜백에 도달하지 않으므로 항상 우선합니다.
+      localeResolutionCallback: (deviceLocale, supported) =>
+          resolveAppLocale(deviceLocale, supported),
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,

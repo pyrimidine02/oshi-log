@@ -18,14 +18,24 @@ class GBTTheme {
   // EN: Light Theme
   // KO: 라이트 테마
   // ========================================
-  static ThemeData get light {
+  /// EN: Default light theme (ko typography). Prefer [lightFor] when the
+  /// app's resolved locale is known.
+  /// KO: 기본 라이트 테마(ko 타이포그래피). 앱의 로케일을 알 때는 [lightFor]를
+  /// 사용하세요.
+  static ThemeData get light => lightFor('ko');
+
+  /// EN: [languageCode] adapts the text theme's font family (e.g. `ja` uses
+  /// system JP fallbacks instead of Pretendard).
+  /// KO: [languageCode]에 따라 텍스트 테마의 폰트 패밀리가 조정됩니다
+  /// (예: `ja`는 Pretendard 대신 시스템 JP 폴백 사용).
+  static ThemeData lightFor(String languageCode) {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
       visualDensity: VisualDensity.adaptivePlatformDensity,
       materialTapTargetSize: MaterialTapTargetSize.padded,
       colorScheme: _lightColorScheme,
-      textTheme: _textTheme,
+      textTheme: _textTheme(languageCode),
       pageTransitionsTheme: _pageTransitionsTheme,
       appBarTheme: _lightAppBarTheme,
       bottomNavigationBarTheme: _lightBottomNavTheme,
@@ -56,21 +66,39 @@ class GBTTheme {
       scaffoldBackgroundColor: GBTColors.appBackground,
       splashColor: GBTColors.ripple,
       highlightColor: Colors.transparent,
-    );
+      // EN: `ThemeData(textTheme:)` merges over Material's default
+      // TextTheme, which fills a null fontFamily back in with 'Roboto'.
+      // `copyWith` replaces outright, so this is reapplied here to keep the
+      // ja text theme's null fontFamily (system font via fontFamilyFallback).
+      // KO: `ThemeData(textTheme:)`는 Material 기본 TextTheme과 병합되어
+      // null fontFamily를 'Roboto'로 되돌립니다. `copyWith`는 그대로
+      // 교체하므로, ja 텍스트 테마의 null fontFamily(fontFamilyFallback을
+      // 통한 시스템 폰트)를 유지하기 위해 여기서 다시 적용합니다.
+    ).copyWith(textTheme: _textTheme(languageCode));
   }
 
   // ========================================
   // EN: Dark Theme
   // KO: 다크 테마
   // ========================================
-  static ThemeData get dark {
+  /// EN: Default dark theme (ko typography). Prefer [darkFor] when the
+  /// app's resolved locale is known.
+  /// KO: 기본 다크 테마(ko 타이포그래피). 앱의 로케일을 알 때는 [darkFor]를
+  /// 사용하세요.
+  static ThemeData get dark => darkFor('ko');
+
+  /// EN: [languageCode] adapts the text theme's font family (e.g. `ja` uses
+  /// system JP fallbacks instead of Pretendard).
+  /// KO: [languageCode]에 따라 텍스트 테마의 폰트 패밀리가 조정됩니다
+  /// (예: `ja`는 Pretendard 대신 시스템 JP 폴백 사용).
+  static ThemeData darkFor(String languageCode) {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
       visualDensity: VisualDensity.adaptivePlatformDensity,
       materialTapTargetSize: MaterialTapTargetSize.padded,
       colorScheme: _darkColorScheme,
-      textTheme: _darkTextTheme,
+      textTheme: _darkTextTheme(languageCode),
       pageTransitionsTheme: _pageTransitionsTheme,
       appBarTheme: _darkAppBarTheme,
       bottomNavigationBarTheme: _darkBottomNavTheme,
@@ -101,7 +129,13 @@ class GBTTheme {
       scaffoldBackgroundColor: GBTColors.darkAppBackground,
       splashColor: GBTColors.ripple,
       highlightColor: Colors.transparent,
-    );
+      // EN: See the matching note in `lightFor`: `copyWith` (unlike the
+      // constructor's `textTheme:` merge) replaces the TextTheme outright,
+      // keeping ja's null fontFamily instead of Material's 'Roboto' default.
+      // KO: `lightFor`의 동일한 설명 참고: `copyWith`는 생성자의
+      // `textTheme:` 병합과 달리 TextTheme을 그대로 교체하여, Material의
+      // 'Roboto' 기본값 대신 ja의 null fontFamily를 유지합니다.
+    ).copyWith(textTheme: _darkTextTheme(languageCode));
   }
 
   // ========================================
@@ -180,89 +214,115 @@ class GBTTheme {
   // EN: Text Theme
   // KO: 텍스트 테마
   // ========================================
-  static TextTheme get _textTheme => TextTheme(
-    displayLarge: GBTTypography.displayLarge.copyWith(
-      color: GBTColors.textPrimary,
-    ),
-    displayMedium: GBTTypography.displayMedium.copyWith(
-      color: GBTColors.textPrimary,
-    ),
-    displaySmall: GBTTypography.displaySmall.copyWith(
-      color: GBTColors.textPrimary,
-    ),
-    headlineLarge: GBTTypography.headlineLarge.copyWith(
-      color: GBTColors.textPrimary,
-    ),
-    headlineMedium: GBTTypography.headlineMedium.copyWith(
-      color: GBTColors.textPrimary,
-    ),
-    headlineSmall: GBTTypography.headlineSmall.copyWith(
-      color: GBTColors.textPrimary,
-    ),
-    titleLarge: GBTTypography.titleLarge.copyWith(color: GBTColors.textPrimary),
-    titleMedium: GBTTypography.titleMedium.copyWith(
-      color: GBTColors.textPrimary,
-    ),
-    titleSmall: GBTTypography.titleSmall.copyWith(color: GBTColors.textPrimary),
-    bodyLarge: GBTTypography.bodyLarge.copyWith(color: GBTColors.textPrimary),
-    bodyMedium: GBTTypography.bodyMedium.copyWith(color: GBTColors.textPrimary),
-    bodySmall: GBTTypography.bodySmall.copyWith(color: GBTColors.textSecondary),
-    labelLarge: GBTTypography.labelLarge.copyWith(color: GBTColors.textPrimary),
-    labelMedium: GBTTypography.labelMedium.copyWith(
-      color: GBTColors.textSecondary,
-    ),
-    labelSmall: GBTTypography.labelSmall.copyWith(
-      color: GBTColors.textTertiary,
-    ),
-  );
+  static TextTheme _textTheme(String languageCode) {
+    TextStyle loc(TextStyle style, {bool isBody = false}) =>
+        GBTTypography.forLanguage(style, languageCode, isBody: isBody);
+    return TextTheme(
+      displayLarge: loc(
+        GBTTypography.displayLarge,
+      ).copyWith(color: GBTColors.textPrimary),
+      displayMedium: loc(
+        GBTTypography.displayMedium,
+      ).copyWith(color: GBTColors.textPrimary),
+      displaySmall: loc(
+        GBTTypography.displaySmall,
+      ).copyWith(color: GBTColors.textPrimary),
+      headlineLarge: loc(
+        GBTTypography.headlineLarge,
+      ).copyWith(color: GBTColors.textPrimary),
+      headlineMedium: loc(
+        GBTTypography.headlineMedium,
+      ).copyWith(color: GBTColors.textPrimary),
+      headlineSmall: loc(
+        GBTTypography.headlineSmall,
+      ).copyWith(color: GBTColors.textPrimary),
+      titleLarge: loc(
+        GBTTypography.titleLarge,
+      ).copyWith(color: GBTColors.textPrimary),
+      titleMedium: loc(
+        GBTTypography.titleMedium,
+      ).copyWith(color: GBTColors.textPrimary),
+      titleSmall: loc(
+        GBTTypography.titleSmall,
+      ).copyWith(color: GBTColors.textPrimary),
+      bodyLarge: loc(
+        GBTTypography.bodyLarge,
+        isBody: true,
+      ).copyWith(color: GBTColors.textPrimary),
+      bodyMedium: loc(
+        GBTTypography.bodyMedium,
+        isBody: true,
+      ).copyWith(color: GBTColors.textPrimary),
+      bodySmall: loc(
+        GBTTypography.bodySmall,
+        isBody: true,
+      ).copyWith(color: GBTColors.textSecondary),
+      labelLarge: loc(
+        GBTTypography.labelLarge,
+      ).copyWith(color: GBTColors.textPrimary),
+      labelMedium: loc(
+        GBTTypography.labelMedium,
+      ).copyWith(color: GBTColors.textSecondary),
+      labelSmall: loc(
+        GBTTypography.labelSmall,
+      ).copyWith(color: GBTColors.textTertiary),
+    );
+  }
 
-  static TextTheme get _darkTextTheme => TextTheme(
-    displayLarge: GBTTypography.displayLarge.copyWith(
-      color: GBTColors.darkTextPrimary,
-    ),
-    displayMedium: GBTTypography.displayMedium.copyWith(
-      color: GBTColors.darkTextPrimary,
-    ),
-    displaySmall: GBTTypography.displaySmall.copyWith(
-      color: GBTColors.darkTextPrimary,
-    ),
-    headlineLarge: GBTTypography.headlineLarge.copyWith(
-      color: GBTColors.darkTextPrimary,
-    ),
-    headlineMedium: GBTTypography.headlineMedium.copyWith(
-      color: GBTColors.darkTextPrimary,
-    ),
-    headlineSmall: GBTTypography.headlineSmall.copyWith(
-      color: GBTColors.darkTextPrimary,
-    ),
-    titleLarge: GBTTypography.titleLarge.copyWith(
-      color: GBTColors.darkTextPrimary,
-    ),
-    titleMedium: GBTTypography.titleMedium.copyWith(
-      color: GBTColors.darkTextPrimary,
-    ),
-    titleSmall: GBTTypography.titleSmall.copyWith(
-      color: GBTColors.darkTextPrimary,
-    ),
-    bodyLarge: GBTTypography.bodyLarge.copyWith(
-      color: GBTColors.darkTextPrimary,
-    ),
-    bodyMedium: GBTTypography.bodyMedium.copyWith(
-      color: GBTColors.darkTextPrimary,
-    ),
-    bodySmall: GBTTypography.bodySmall.copyWith(
-      color: GBTColors.darkTextSecondary,
-    ),
-    labelLarge: GBTTypography.labelLarge.copyWith(
-      color: GBTColors.darkTextPrimary,
-    ),
-    labelMedium: GBTTypography.labelMedium.copyWith(
-      color: GBTColors.darkTextSecondary,
-    ),
-    labelSmall: GBTTypography.labelSmall.copyWith(
-      color: GBTColors.darkTextTertiary,
-    ),
-  );
+  static TextTheme _darkTextTheme(String languageCode) {
+    TextStyle loc(TextStyle style, {bool isBody = false}) =>
+        GBTTypography.forLanguage(style, languageCode, isBody: isBody);
+    return TextTheme(
+      displayLarge: loc(
+        GBTTypography.displayLarge,
+      ).copyWith(color: GBTColors.darkTextPrimary),
+      displayMedium: loc(
+        GBTTypography.displayMedium,
+      ).copyWith(color: GBTColors.darkTextPrimary),
+      displaySmall: loc(
+        GBTTypography.displaySmall,
+      ).copyWith(color: GBTColors.darkTextPrimary),
+      headlineLarge: loc(
+        GBTTypography.headlineLarge,
+      ).copyWith(color: GBTColors.darkTextPrimary),
+      headlineMedium: loc(
+        GBTTypography.headlineMedium,
+      ).copyWith(color: GBTColors.darkTextPrimary),
+      headlineSmall: loc(
+        GBTTypography.headlineSmall,
+      ).copyWith(color: GBTColors.darkTextPrimary),
+      titleLarge: loc(
+        GBTTypography.titleLarge,
+      ).copyWith(color: GBTColors.darkTextPrimary),
+      titleMedium: loc(
+        GBTTypography.titleMedium,
+      ).copyWith(color: GBTColors.darkTextPrimary),
+      titleSmall: loc(
+        GBTTypography.titleSmall,
+      ).copyWith(color: GBTColors.darkTextPrimary),
+      bodyLarge: loc(
+        GBTTypography.bodyLarge,
+        isBody: true,
+      ).copyWith(color: GBTColors.darkTextPrimary),
+      bodyMedium: loc(
+        GBTTypography.bodyMedium,
+        isBody: true,
+      ).copyWith(color: GBTColors.darkTextPrimary),
+      bodySmall: loc(
+        GBTTypography.bodySmall,
+        isBody: true,
+      ).copyWith(color: GBTColors.darkTextSecondary),
+      labelLarge: loc(
+        GBTTypography.labelLarge,
+      ).copyWith(color: GBTColors.darkTextPrimary),
+      labelMedium: loc(
+        GBTTypography.labelMedium,
+      ).copyWith(color: GBTColors.darkTextSecondary),
+      labelSmall: loc(
+        GBTTypography.labelSmall,
+      ).copyWith(color: GBTColors.darkTextTertiary),
+    );
+  }
 
   // ========================================
   // EN: AppBar Theme

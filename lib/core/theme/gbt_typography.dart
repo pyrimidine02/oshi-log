@@ -23,6 +23,58 @@ class GBTTypography {
     fontFamilyFallback: ['Apple SD Gothic Neo', 'Noto Sans KR', 'sans-serif'],
   );
 
+  /// EN: System font fallback chain for Japanese so kana/kanji render with
+  /// Japanese glyph forms instead of Pretendard's Korean shapes. No bundled
+  /// JP font file is added (app size); this relies on OS-provided fonts.
+  /// KO: 가나/한자가 Pretendard의 한국어 글리프 형태 대신 일본어 글리프로
+  /// 렌더링되도록 하는 일본어 시스템 폰트 폴백 체인입니다. 앱 용량을 위해
+  /// 번들 일본어 폰트 파일은 추가하지 않고 OS 제공 폰트에 의존합니다.
+  static const List<String> jaFontFallback = [
+    'Hiragino Sans',
+    'Hiragino Kaku Gothic ProN',
+    'Noto Sans JP',
+    'Noto Sans CJK JP',
+    'sans-serif',
+  ];
+
+  /// EN: Adapts a style for [languageCode]. For `ja`, drops Pretendard
+  /// (no kana coverage) in favor of system JP fallbacks; when [isBody] is
+  /// true also applies the ja body text rule (height 1.6, letterSpacing
+  /// 0.02em, min 14sp) per docs/product/design-references-v1.md §4.1.
+  /// Other locales are returned unchanged.
+  /// KO: [languageCode]에 맞춰 스타일을 조정합니다. `ja`인 경우 가나를
+  /// 지원하지 않는 Pretendard 대신 시스템 JP 폴백을 사용하며, [isBody]가
+  /// true면 §4.1의 일본어 본문 규칙(줄높이 1.6, 자간 0.02em, 최소 14sp)도
+  /// 적용합니다. 그 외 로케일은 변경 없이 반환합니다.
+  static TextStyle forLanguage(
+    TextStyle style,
+    String languageCode, {
+    bool isBody = false,
+  }) {
+    if (languageCode != 'ja') return style;
+    // EN: TextStyle.copyWith can't null out fontFamily (it falls back to
+    // `fontFamily ?? this.fontFamily`), so rebuild explicitly instead of
+    // copying from a Pretendard-bearing style.
+    // KO: TextStyle.copyWith는 fontFamily를 null로 되돌릴 수 없어
+    // (`fontFamily ?? this.fontFamily`) Pretendard가 들어있는 스타일을
+    // 복사하는 대신 명시적으로 새로 만듭니다.
+    final jaStyle = TextStyle(
+      fontFamilyFallback: jaFontFallback,
+      fontSize: style.fontSize,
+      fontWeight: style.fontWeight,
+      letterSpacing: style.letterSpacing,
+      height: style.height,
+      fontFeatures: style.fontFeatures,
+    );
+    if (!isBody) return jaStyle;
+    final size = (style.fontSize ?? 16).clamp(14, double.infinity).toDouble();
+    return jaStyle.copyWith(
+      fontSize: size,
+      height: 1.6,
+      letterSpacing: size * 0.02,
+    );
+  }
+
   // ========================================
   // EN: Display styles for concise editorial headlines.
   // KO: 간결한 에디토리얼 헤드라인용 디스플레이 스타일.

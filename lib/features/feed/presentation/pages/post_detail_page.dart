@@ -12,6 +12,7 @@ import 'package:gal/gal.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/error/failure.dart';
+import '../../../../core/localization/locale_text.dart';
 import '../../../../core/providers/core_providers.dart';
 import '../../../../core/security/user_access_level.dart';
 import '../../../../core/router/app_router.dart';
@@ -130,9 +131,23 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
   void _setReplyTarget(PostComment comment) {
     if (!_canReplyToComment(comment)) {
       if (_isDeletedCommentPlaceholder(comment.content)) {
-        _showSnackBar(context, '삭제된 댓글에는 답글을 작성할 수 없어요');
+        _showSnackBar(
+          context,
+          context.l10n(
+            ko: '삭제된 댓글에는 답글을 작성할 수 없어요',
+            en: 'You can\'t reply to a deleted comment.',
+            ja: '削除されたコメントには返信できません。',
+          ),
+        );
       } else {
-        _showSnackBar(context, '답글은 최대 $_maxCommentReplyDepth단계까지만 작성할 수 있어요');
+        _showSnackBar(
+          context,
+          context.l10n(
+            ko: '답글은 최대 $_maxCommentReplyDepth단계까지만 작성할 수 있어요',
+            en: 'Replies can be nested up to $_maxCommentReplyDepth levels.',
+            ja: '返信は最大$_maxCommentReplyDepth階層までです。',
+          ),
+        );
       }
       return;
     }
@@ -246,32 +261,42 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
         !canManagePost && currentPost != null && isAuthenticated
         ? ref.watch(userFollowControllerProvider(currentPost.authorId))
         : null;
-    final blockLabel = blockStatus?.blockedByMe == true ? '차단 해제' : '차단';
+    final blockLabel = blockStatus?.blockedByMe == true
+        ? context.l10n(ko: '차단 해제', en: 'Unblock', ja: 'ブロック解除')
+        : context.l10n(ko: '차단', en: 'Block', ja: 'ブロック');
 
     final actions = !isAuthenticated || currentPost == null
         ? null
         : canManagePost
         ? [
             IconButton(
-              tooltip: '게시글 관리',
+              tooltip: context.l10n(
+                ko: '게시글 관리',
+                en: 'Manage post',
+                ja: '投稿管理',
+              ),
               icon: const Icon(Icons.more_horiz),
               onPressed: () async {
                 final action = await showGBTActionSheet<_PostAction>(
                   context: context,
                   actions: [
-                    const GBTActionSheetItem(
-                      label: '수정',
+                    GBTActionSheetItem(
+                      label: context.l10n(ko: '수정', en: 'Edit', ja: '編集する'),
                       value: _PostAction.edit,
                       icon: Icons.edit_outlined,
                     ),
-                    const GBTActionSheetItem(
-                      label: '삭제',
+                    GBTActionSheetItem(
+                      label: context.l10n(ko: '삭제', en: 'Delete', ja: '削除する'),
                       value: _PostAction.delete,
                       icon: Icons.delete_outline,
                       isDestructive: true,
                     ),
                   ],
-                  cancelLabel: '취소',
+                  cancelLabel: context.l10n(
+                    ko: '취소',
+                    en: 'Cancel',
+                    ja: 'キャンセル',
+                  ),
                 );
                 if (action != null && context.mounted) {
                   _handlePostAction(context, action, currentPost);
@@ -281,14 +306,18 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
           ]
         : [
             IconButton(
-              tooltip: '게시글 옵션',
+              tooltip: context.l10n(
+                ko: '게시글 옵션',
+                en: 'Post options',
+                ja: '投稿オプション',
+              ),
               icon: const Icon(Icons.more_horiz),
               onPressed: () async {
                 final action = await showGBTActionSheet<_PostOtherAction>(
                   context: context,
                   actions: [
-                    const GBTActionSheetItem(
-                      label: '신고',
+                    GBTActionSheetItem(
+                      label: context.l10n(ko: '신고', en: 'Report', ja: '通報'),
                       value: _PostOtherAction.report,
                       icon: Icons.flag_outlined,
                     ),
@@ -298,7 +327,11 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
                       icon: Icons.person_off_outlined,
                     ),
                   ],
-                  cancelLabel: '취소',
+                  cancelLabel: context.l10n(
+                    ko: '취소',
+                    en: 'Cancel',
+                    ja: 'キャンセル',
+                  ),
                 );
                 if (action != null && context.mounted) {
                   _handlePostOtherAction(context, action, currentPost);
@@ -309,13 +342,25 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: gbtStandardAppBar(context, title: '커뮤니티 기록', actions: actions),
+      appBar: gbtStandardAppBar(
+        context,
+        title: context.l10n(
+          ko: '커뮤니티 기록',
+          en: 'Community record',
+          ja: 'コミュニティ記録',
+        ),
+        actions: actions,
+      ),
       body: state.when(
         loading: () => const _PostDetailSkeleton(),
         error: (error, _) {
           final message = error is Failure
               ? error.userMessage
-              : '게시글을 불러오지 못했어요';
+              : context.l10n(
+                  ko: '게시글을 불러오지 못했어요',
+                  en: 'Couldn\'t load the post.',
+                  ja: '投稿を読み込めませんでした。',
+                );
           return GBTErrorState(
             message: message,
             onRetry: () => ref
@@ -344,7 +389,14 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
                 .read(postLikeControllerProvider(reactionTarget).notifier)
                 .toggleLike();
             if (result is Err<PostLikeStatus> && context.mounted) {
-              _showSnackBar(context, '좋아요 상태를 반영하지 못했어요');
+              _showSnackBar(
+                context,
+                context.l10n(
+                  ko: '좋아요 상태를 반영하지 못했어요',
+                  en: 'Couldn\'t update the like.',
+                  ja: 'いいねの状態を更新できませんでした。',
+                ),
+              );
             }
           },
           onToggleBookmark: () async {
@@ -378,7 +430,14 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
               }
             }
             if (result is Err<PostBookmarkStatus> && context.mounted) {
-              _showSnackBar(context, '북마크 상태를 반영하지 못했어요');
+              _showSnackBar(
+                context,
+                context.l10n(
+                  ko: '북마크 상태를 반영하지 못했어요',
+                  en: 'Couldn\'t update the bookmark.',
+                  ja: 'ブックマークの状態を更新できませんでした。',
+                ),
+              );
             }
           },
           onSubmitComment: () async {
@@ -399,7 +458,17 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
             if (result is Err<PostComment> && context.mounted) {
               _showSnackBar(
                 context,
-                parentId != null ? '답글을 등록하지 못했어요' : '댓글을 등록하지 못했어요',
+                parentId != null
+                    ? context.l10n(
+                        ko: '답글을 등록하지 못했어요',
+                        en: 'Couldn\'t post the reply.',
+                        ja: '返信を投稿できませんでした。',
+                      )
+                    : context.l10n(
+                        ko: '댓글을 등록하지 못했어요',
+                        en: 'Couldn\'t post the comment.',
+                        ja: 'コメントを投稿できませんでした。',
+                      ),
               );
             }
             if (result is Success<PostComment>) {
@@ -408,7 +477,17 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
               if (context.mounted) {
                 _showSnackBar(
                   context,
-                  parentId != null ? '답글이 등록되었어요' : '댓글이 등록되었어요',
+                  parentId != null
+                      ? context.l10n(
+                          ko: '답글이 등록되었어요',
+                          en: 'Reply posted.',
+                          ja: '返信を投稿しました。',
+                        )
+                      : context.l10n(
+                          ko: '댓글이 등록되었어요',
+                          en: 'Comment posted.',
+                          ja: 'コメントを投稿しました。',
+                        ),
                 );
               }
             }
@@ -463,10 +542,27 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
                   if (result is Success<bool>) {
                     _showSnackBar(
                       context,
-                      result.data ? '작성자를 팔로우했어요' : '팔로우를 취소했어요',
+                      result.data
+                          ? context.l10n(
+                              ko: '작성자를 팔로우했어요',
+                              en: 'Followed the author.',
+                              ja: '投稿者をフォローしました。',
+                            )
+                          : context.l10n(
+                              ko: '팔로우를 취소했어요',
+                              en: 'Unfollowed.',
+                              ja: 'フォローを解除しました。',
+                            ),
                     );
                   } else {
-                    _showSnackBar(context, '팔로우 상태를 변경하지 못했어요');
+                    _showSnackBar(
+                      context,
+                      context.l10n(
+                        ko: '팔로우 상태를 변경하지 못했어요',
+                        en: 'Couldn\'t update the follow status.',
+                        ja: 'フォロー状態を変更できませんでした。',
+                      ),
+                    );
                   }
                 },
           onRefresh: _onRefresh,
@@ -506,17 +602,29 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
   Future<void> _confirmDeletePost(BuildContext context, PostDetail post) async {
     final projectCode = ref.read(selectedProjectKeyProvider);
     if (projectCode == null || projectCode.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('프로젝트를 먼저 선택해주세요')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            context.l10n(
+              ko: '프로젝트를 먼저 선택해주세요',
+              en: 'Please select a project first.',
+              ja: '先にプロジェクトを選択してください。',
+            ),
+          ),
+        ),
+      );
       return;
     }
     final confirm = await showGBTAdaptiveConfirmDialog(
       context: context,
-      title: '게시글 삭제',
-      message: '정말로 이 게시글을 삭제할까요?',
-      cancelLabel: '취소',
-      confirmLabel: '삭제',
+      title: context.l10n(ko: '게시글 삭제', en: 'Delete post', ja: '投稿削除'),
+      message: context.l10n(
+        ko: '정말로 이 게시글을 삭제할까요?',
+        en: 'Are you sure you want to delete this post?',
+        ja: 'この投稿を削除しますか？',
+      ),
+      cancelLabel: context.l10n(ko: '취소', en: 'Cancel', ja: 'キャンセル'),
+      confirmLabel: context.l10n(ko: '삭제', en: 'Delete', ja: '削除する'),
       isDestructive: true,
     );
 
@@ -533,7 +641,10 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
           .read(postListControllerProvider.notifier)
           .load(forceRefresh: true);
       if (context.mounted) {
-        _showSnackBar(context, '게시글을 삭제했어요');
+        _showSnackBar(
+          context,
+          context.l10n(ko: '게시글을 삭제했어요', en: 'Post deleted.', ja: '投稿を削除しました。'),
+        );
         if (context.canPop()) {
           context.pop();
         } else {
@@ -541,7 +652,14 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
         }
       }
     } else if (result is Err<void> && context.mounted) {
-      _showSnackBar(context, '게시글을 삭제하지 못했어요');
+      _showSnackBar(
+        context,
+        context.l10n(
+          ko: '게시글을 삭제하지 못했어요',
+          en: 'Couldn\'t delete the post.',
+          ja: '投稿を削除できませんでした。',
+        ),
+      );
     }
   }
 
@@ -554,7 +672,7 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
     final newContent = await showGBTBottomSheet<String>(
       context: context,
       isScrollControlled: true,
-      title: '댓글 수정',
+      title: context.l10n(ko: '댓글 수정', en: 'Edit comment', ja: 'コメント編集'),
       child: Builder(
         builder: (sheetContext) {
           final bottomInset = MediaQuery.of(sheetContext).viewInsets.bottom;
@@ -582,7 +700,11 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
                       maxLines: 6,
                       textInputAction: TextInputAction.newline,
                       decoration: InputDecoration(
-                        hintText: '댓글 내용을 입력하세요',
+                        hintText: context.l10n(
+                          ko: '댓글 내용을 입력하세요',
+                          en: 'Enter your comment',
+                          ja: 'コメントを入力してください',
+                        ),
                         filled: true,
                         fillColor: Theme.of(
                           context,
@@ -601,7 +723,9 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
                         Expanded(
                           child: OutlinedButton(
                             onPressed: () => Navigator.of(sheetContext).pop(),
-                            child: const Text('취소'),
+                            child: Text(
+                              context.l10n(ko: '취소', en: 'Cancel', ja: 'キャンセル'),
+                            ),
                           ),
                         ),
                         const SizedBox(width: GBTSpacing.sm),
@@ -610,7 +734,9 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
                             onPressed: canSave
                                 ? () => Navigator.of(sheetContext).pop(trimmed)
                                 : null,
-                            child: const Text('저장'),
+                            child: Text(
+                              context.l10n(ko: '저장', en: 'Save', ja: '保存する'),
+                            ),
                           ),
                         ),
                       ],
@@ -633,11 +759,25 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
         )
         .updateComment(comment.id, newContent);
     if (result is Err<PostComment> && context.mounted) {
-      _showSnackBar(context, '댓글을 수정하지 못했어요');
+      _showSnackBar(
+        context,
+        context.l10n(
+          ko: '댓글을 수정하지 못했어요',
+          en: 'Couldn\'t edit the comment.',
+          ja: 'コメントを編集できませんでした。',
+        ),
+      );
       return;
     }
     if (result is Success<PostComment> && context.mounted) {
-      _showSnackBar(context, '댓글을 수정했어요');
+      _showSnackBar(
+        context,
+        context.l10n(
+          ko: '댓글을 수정했어요',
+          en: 'Comment updated.',
+          ja: 'コメントを編集しました。',
+        ),
+      );
     }
   }
 
@@ -649,10 +789,14 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
   }) async {
     final confirm = await showGBTAdaptiveConfirmDialog(
       context: context,
-      title: '댓글 삭제',
-      message: '댓글을 삭제할까요?',
-      cancelLabel: '취소',
-      confirmLabel: '삭제',
+      title: context.l10n(ko: '댓글 삭제', en: 'Delete comment', ja: 'コメント削除'),
+      message: context.l10n(
+        ko: '댓글을 삭제할까요?',
+        en: 'Delete this comment?',
+        ja: 'コメントを削除しますか？',
+      ),
+      cancelLabel: context.l10n(ko: '취소', en: 'Cancel', ja: 'キャンセル'),
+      confirmLabel: context.l10n(ko: '삭제', en: 'Delete', ja: '削除する'),
       isDestructive: true,
     );
 
@@ -663,7 +807,14 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
       final projectCode = ref.read(selectedProjectKeyProvider);
       if (projectCode == null || projectCode.isEmpty) {
         if (context.mounted) {
-          _showSnackBar(context, '프로젝트를 먼저 선택해주세요');
+          _showSnackBar(
+            context,
+            context.l10n(
+              ko: '프로젝트를 먼저 선택해주세요',
+              en: 'Please select a project first.',
+              ja: '先にプロジェクトを選択してください。',
+            ),
+          );
         }
         return;
       }
@@ -692,11 +843,25 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
           .deleteComment(comment.id);
     }
     if (result is Err<void> && context.mounted) {
-      _showSnackBar(context, '댓글을 삭제하지 못했어요');
+      _showSnackBar(
+        context,
+        context.l10n(
+          ko: '댓글을 삭제하지 못했어요',
+          en: 'Couldn\'t delete the comment.',
+          ja: 'コメントを削除できませんでした。',
+        ),
+      );
       return;
     }
     if (result is Success<void> && context.mounted) {
-      _showSnackBar(context, '댓글을 삭제했어요');
+      _showSnackBar(
+        context,
+        context.l10n(
+          ko: '댓글을 삭제했어요',
+          en: 'Comment deleted.',
+          ja: 'コメントを削除しました。',
+        ),
+      );
     }
   }
 
@@ -708,7 +873,14 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
     final projectCode = ref.read(selectedProjectKeyProvider);
     if (projectCode == null || projectCode.isEmpty) {
       if (context.mounted) {
-        _showSnackBar(context, '프로젝트를 먼저 선택해주세요');
+        _showSnackBar(
+          context,
+          context.l10n(
+            ko: '프로젝트를 먼저 선택해주세요',
+            en: 'Please select a project first.',
+            ja: '先にプロジェクトを選択してください。',
+          ),
+        );
       }
       return;
     }
@@ -724,7 +896,14 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
 
     if (!context.mounted) return;
     if (result is Err<List<CommentThreadNode>>) {
-      _showSnackBar(context, '답글 스레드를 불러오지 못했어요');
+      _showSnackBar(
+        context,
+        context.l10n(
+          ko: '답글 스레드를 불러오지 못했어요',
+          en: 'Couldn\'t load the reply thread.',
+          ja: '返信スレッドを読み込めませんでした。',
+        ),
+      );
       return;
     }
 
@@ -734,7 +913,7 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
     await showGBTBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      title: '답글 스레드',
+      title: context.l10n(ko: '답글 스레드', en: 'Reply thread', ja: '返信スレッド'),
       child: Builder(
         builder: (sheetContext) {
           return SafeArea(
@@ -745,7 +924,15 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
                 children: [
                   Expanded(
                     child: thread.isEmpty
-                        ? const Center(child: Text('표시할 답글이 없습니다'))
+                        ? Center(
+                            child: Text(
+                              context.l10n(
+                                ko: '표시할 답글이 없습니다',
+                                en: 'No replies to show.',
+                                ja: '表示する返信がありません。',
+                              ),
+                            ),
+                          )
                         : ListView(
                             children: thread
                                 .map(
@@ -775,14 +962,21 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
       final remaining = rateLimiter.remainingCooldown(targetId);
       final minutes = remaining.inMinutes + 1;
       if (!context.mounted) return;
-      _showSnackBar(context, '$minutes분 후 다시 신고할 수 있어요');
+      _showSnackBar(
+        context,
+        context.l10n(
+          ko: '$minutes분 후 다시 신고할 수 있어요',
+          en: 'You can report again in $minutes min',
+          ja: '$minutes分後に再度通報できます',
+        ),
+      );
       return;
     }
 
     final payload = await showGBTBottomSheet<CommunityReportPayload>(
       context: context,
       isScrollControlled: true,
-      title: '신고',
+      title: context.l10n(ko: '신고', en: 'Report', ja: '通報'),
       child: const CommunityReportSheet(),
     );
     if (payload == null) return;
@@ -790,11 +984,15 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
     if (!context.mounted) return;
     final confirmed = await showGBTAdaptiveConfirmDialog(
       context: context,
-      title: '신고 접수',
+      title: context.l10n(ko: '신고 접수', en: 'Submit report', ja: '通報を送信する'),
       message:
           '${targetType.label}을(를) "${payload.reason.label}" 사유로 신고합니다.\n접수하시겠어요?',
-      cancelLabel: '취소',
-      confirmLabel: '신고 접수',
+      cancelLabel: context.l10n(ko: '취소', en: 'Cancel', ja: 'キャンセル'),
+      confirmLabel: context.l10n(
+        ko: '신고 접수',
+        en: 'Submit report',
+        ja: '通報を送信する',
+      ),
     );
     if (confirmed != true) return;
 
@@ -807,13 +1005,27 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
     );
 
     if (result is Err<void> && context.mounted) {
-      _showSnackBar(context, '신고를 접수하지 못했어요');
+      _showSnackBar(
+        context,
+        context.l10n(
+          ko: '신고를 접수하지 못했어요',
+          en: 'Couldn\'t submit the report.',
+          ja: '通報を送信できませんでした。',
+        ),
+      );
       return;
     }
     if (result is Success<void>) {
       rateLimiter.recordReport(targetId);
       if (context.mounted) {
-        _showSnackBar(context, '신고가 접수되었어요. 검토 후 조치할게요');
+        _showSnackBar(
+          context,
+          context.l10n(
+            ko: '신고가 접수되었어요. 검토 후 조치할게요',
+            en: 'Report submitted. We will review it.',
+            ja: '通報を受け付けました。確認のうえ対応します。',
+          ),
+        );
       }
     }
   }
@@ -826,7 +1038,7 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
     final controller = TextEditingController();
     final reason = await showGBTBottomSheet<String>(
       context: context,
-      title: '이의제기',
+      title: context.l10n(ko: '이의제기', en: 'Appeal', ja: '異議申し立て'),
       child: Builder(
         builder: (dialogContext) => Padding(
           padding: EdgeInsets.fromLTRB(
@@ -839,12 +1051,24 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('이의제기 사유를 입력해주세요.'),
+              Text(
+                context.l10n(
+                  ko: '이의제기 사유를 입력해주세요.',
+                  en: 'Enter the reason for your appeal.',
+                  ja: '異議申し立ての理由を入力してください。',
+                ),
+              ),
               const SizedBox(height: GBTSpacing.md),
               TextField(
                 controller: controller,
                 maxLines: 4,
-                decoration: const InputDecoration(hintText: '사유를 입력하세요'),
+                decoration: InputDecoration(
+                  hintText: context.l10n(
+                    ko: '사유를 입력하세요',
+                    en: 'Enter a reason',
+                    ja: '理由を入力してください',
+                  ),
+                ),
               ),
               const SizedBox(height: GBTSpacing.md),
               Row(
@@ -852,7 +1076,9 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () => Navigator.of(dialogContext).pop(),
-                      child: const Text('취소'),
+                      child: Text(
+                        context.l10n(ko: '취소', en: 'Cancel', ja: 'キャンセル'),
+                      ),
                     ),
                   ),
                   const SizedBox(width: GBTSpacing.sm),
@@ -863,7 +1089,9 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
                         if (text.isEmpty) return;
                         Navigator.of(dialogContext).pop(text);
                       },
-                      child: const Text('제출'),
+                      child: Text(
+                        context.l10n(ko: '제출', en: 'Submit', ja: '送信する'),
+                      ),
                     ),
                   ),
                 ],
@@ -886,11 +1114,25 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
 
     if (!context.mounted) return;
     if (result is Success<void>) {
-      _showSnackBar(context, '이의제기가 접수되었어요');
+      _showSnackBar(
+        context,
+        context.l10n(
+          ko: '이의제기가 접수되었어요',
+          en: 'Appeal submitted.',
+          ja: '異議申し立てを受け付けました。',
+        ),
+      );
       return;
     }
     if (result is Err<void>) {
-      _showSnackBar(context, '이의제기 접수에 실패했어요');
+      _showSnackBar(
+        context,
+        context.l10n(
+          ko: '이의제기 접수에 실패했어요',
+          en: 'Failed to submit the appeal.',
+          ja: '異議申し立ての送信に失敗しました。',
+        ),
+      );
     }
   }
 
@@ -899,7 +1141,14 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
     final result = await controller.toggleBlock();
 
     if (result is Err<void> && context.mounted) {
-      _showSnackBar(context, '차단 상태를 변경하지 못했어요');
+      _showSnackBar(
+        context,
+        context.l10n(
+          ko: '차단 상태를 변경하지 못했어요',
+          en: 'Couldn\'t change the block status.',
+          ja: 'ブロック状態を変更できませんでした。',
+        ),
+      );
       return;
     }
 
@@ -909,7 +1158,16 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
       data: (value) => value.blockedByMe,
       orElse: () => false,
     );
-    _showSnackBar(context, blockedByMe ? '사용자를 차단했어요' : '차단을 해제했어요');
+    _showSnackBar(
+      context,
+      blockedByMe
+          ? context.l10n(
+              ko: '사용자를 차단했어요',
+              en: 'User blocked.',
+              ja: 'ユーザーをブロックしました。',
+            )
+          : context.l10n(ko: '차단을 해제했어요', en: 'Unblocked.', ja: 'ブロックを解除しました。'),
+    );
   }
 
   void _showSnackBar(BuildContext context, String message) {
@@ -987,7 +1245,7 @@ class PostDetailDocumentView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authorLabel = post.authorName?.isNotEmpty == true
         ? post.authorName!
-        : '익명';
+        : context.l10n(ko: '익명', en: 'Anonymous', ja: '匿名');
     final authorAvatarUrl = post.authorAvatarUrl?.isNotEmpty == true
         ? post.authorAvatarUrl
         : null;
@@ -1079,7 +1337,11 @@ class PostDetailDocumentView extends ConsumerWidget {
                           _Avatar(
                             url: authorAvatarUrl,
                             radius: 26,
-                            semanticLabel: '$authorLabel 프로필 사진',
+                            semanticLabel: context.l10n(
+                              ko: '$authorLabel 프로필 사진',
+                              en: '$authorLabel profile photo',
+                              ja: '$authorLabelのプロフィール写真',
+                            ),
                             onTap: () => onTapAuthor(post.authorId),
                           ),
                           const SizedBox(width: GBTSpacing.md),
@@ -1107,7 +1369,7 @@ class PostDetailDocumentView extends ConsumerWidget {
                                 const SizedBox(height: GBTSpacing.xs2),
                                 Text(
                                   '${post.timeAgoLabel}'
-                                  '${post.updatedAt != null && post.updatedAt!.isAfter(post.createdAt) ? ' · 수정됨' : ''}',
+                                  '${post.updatedAt != null && post.updatedAt!.isAfter(post.createdAt) ? context.l10n(ko: ' · 수정됨', en: ' · Edited', ja: '・編集済み') : ''}',
                                   style: GBTTypography.labelSmall.copyWith(
                                     color: tertiaryColor,
                                   ),
@@ -1143,10 +1405,22 @@ class PostDetailDocumentView extends ConsumerWidget {
                             ),
                             label: Text(
                               isAuthorBlocked
-                                  ? '차단됨'
+                                  ? context.l10n(
+                                      ko: '차단됨',
+                                      en: 'Blocked',
+                                      ja: 'ブロック済み',
+                                    )
                                   : (followStatus?.following ?? false)
-                                  ? '팔로잉'
-                                  : '팔로우',
+                                  ? context.l10n(
+                                      ko: '팔로잉',
+                                      en: 'Following',
+                                      ja: 'フォロー中',
+                                    )
+                                  : context.l10n(
+                                      ko: '팔로우',
+                                      en: 'Follow',
+                                      ja: 'フォローする',
+                                    ),
                               style: GBTTypography.labelLarge.copyWith(
                                 fontWeight: FontWeight.w700,
                               ),
@@ -1177,7 +1451,11 @@ class PostDetailDocumentView extends ConsumerWidget {
                               const SizedBox(width: GBTSpacing.sm),
                               Expanded(
                                 child: Text(
-                                  '이 콘텐츠는 현재 검토 중입니다.',
+                                  context.l10n(
+                                    ko: '이 콘텐츠는 현재 검토 중입니다.',
+                                    en: 'This content is currently under review.',
+                                    ja: 'このコンテンツは現在審査中です。',
+                                  ),
                                   style: GBTTypography.bodySmall.copyWith(
                                     color: GBTColors.warningDark,
                                   ),
@@ -1186,7 +1464,13 @@ class PostDetailDocumentView extends ConsumerWidget {
                               if (isOwnPost)
                                 TextButton(
                                   onPressed: onAppealPost,
-                                  child: const Text('이의제기'),
+                                  child: Text(
+                                    context.l10n(
+                                      ko: '이의제기',
+                                      en: 'Appeal',
+                                      ja: '異議申し立て',
+                                    ),
+                                  ),
                                 ),
                             ],
                           ),
@@ -1248,7 +1532,11 @@ class PostDetailDocumentView extends ConsumerWidget {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                '좋아요 $likeCount명이 공감했어요',
+                                context.l10n(
+                                  ko: '좋아요 $likeCount명이 공감했어요',
+                                  en: '$likeCount people liked this.',
+                                  ja: '$likeCount人がいいねしました。',
+                                ),
                                 style: GBTTypography.labelSmall.copyWith(
                                   color: secondaryColor,
                                   fontWeight: FontWeight.w500,
@@ -1262,17 +1550,21 @@ class PostDetailDocumentView extends ConsumerWidget {
                       Semantics(
                         key: const ValueKey<String>('field-note-actions'),
                         label:
-                            '좋아요 $likeCount개, '
-                            '${isLiked ? "좋아요 누른 상태" : "좋아요 안 누른 상태"}, '
-                            '댓글 $commentCountLabel개, '
-                            '${isBookmarked ? "북마크됨" : "북마크 안 됨"}',
+                            '${context.l10n(ko: '좋아요 $likeCount개, ', en: '$likeCount likes, ', ja: 'いいね$likeCount件、')}'
+                            '${isLiked ? context.l10n(ko: "좋아요 누른 상태", en: "Liked", ja: "いいね済み") : context.l10n(ko: "좋아요 안 누른 상태", en: "Not liked", ja: "未いいね")}, '
+                            '${context.l10n(ko: '댓글 $commentCountLabel개, ', en: '$commentCountLabel comments, ', ja: 'コメント$commentCountLabel件、')}'
+                            '${isBookmarked ? context.l10n(ko: "북마크됨", en: "Bookmarked", ja: "保存済み") : context.l10n(ko: "북마크 안 됨", en: "Not bookmarked", ja: "未保存")}',
                         child: Wrap(
                           spacing: GBTSpacing.sm,
                           runSpacing: GBTSpacing.xs,
                           children: [
                             _TimelineActionButton(
                               icon: GBTActionIcons.comment,
-                              label: '댓글 $commentCountLabel',
+                              label: context.l10n(
+                                ko: '댓글 $commentCountLabel',
+                                en: 'Comments $commentCountLabel',
+                                ja: 'コメント$commentCountLabel',
+                              ),
                               color: commentActionColor,
                               onTap: onFocusComment,
                             ),
@@ -1280,7 +1572,11 @@ class PostDetailDocumentView extends ConsumerWidget {
                               icon: isLiked
                                   ? GBTActionIcons.likeActive
                                   : GBTActionIcons.like,
-                              label: '좋아요 ${_compactCountLabel(likeCount)}',
+                              label: context.l10n(
+                                ko: '좋아요 ${_compactCountLabel(context, likeCount)}',
+                                en: 'Like ${_compactCountLabel(context, likeCount)}',
+                                ja: 'いいね${_compactCountLabel(context, likeCount)}',
+                              ),
                               color: isLiked
                                   ? GBTColors.favorite
                                   : tertiaryColor,
@@ -1291,7 +1587,17 @@ class PostDetailDocumentView extends ConsumerWidget {
                               icon: isBookmarked
                                   ? GBTActionIcons.bookmarkActive
                                   : GBTActionIcons.bookmark,
-                              label: isBookmarked ? '저장됨' : '저장',
+                              label: isBookmarked
+                                  ? context.l10n(
+                                      ko: '저장됨',
+                                      en: 'Saved',
+                                      ja: '保存済み',
+                                    )
+                                  : context.l10n(
+                                      ko: '저장',
+                                      en: 'Save',
+                                      ja: '保存する',
+                                    ),
                               color: isBookmarked
                                   ? (isDark
                                         ? GBTColors.darkPrimary
@@ -1326,7 +1632,11 @@ class PostDetailDocumentView extends ConsumerWidget {
                       ),
                       const SizedBox(width: GBTSpacing.xs),
                       Text(
-                        '댓글 $commentCountLabel개',
+                        context.l10n(
+                          ko: '댓글 $commentCountLabel개',
+                          en: '$commentCountLabel comments',
+                          ja: 'コメント$commentCountLabel件',
+                        ),
                         style: GBTTypography.titleSmall.copyWith(
                           fontWeight: FontWeight.w600,
                         ),
@@ -1386,7 +1696,11 @@ class PostDetailDocumentView extends ConsumerWidget {
                   const SizedBox(width: GBTSpacing.sm),
                   Expanded(
                     child: Text(
-                      '댓글을 작성하려면 로그인하세요.',
+                      context.l10n(
+                        ko: '댓글을 작성하려면 로그인하세요.',
+                        en: 'Log in to write a comment.',
+                        ja: 'コメントを書くにはログインしてください。',
+                      ),
                       style: GBTTypography.bodySmall.copyWith(
                         color: secondaryColor,
                       ),
@@ -1548,9 +1862,21 @@ class _PostCommentsSectionState extends State<_PostCommentsSection> {
     final borderColor = isDark ? GBTColors.darkBorder : GBTColors.border;
 
     return widget.state.when(
-      loading: () => const GBTLoading(message: '댓글을 불러오는 중...'),
+      loading: () => GBTLoading(
+        message: context.l10n(
+          ko: '댓글을 불러오는 중...',
+          en: 'Loading comments…',
+          ja: 'コメントを読み込み中…',
+        ),
+      ),
       error: (error, _) {
-        final message = error is Failure ? error.userMessage : '댓글을 불러오지 못했어요';
+        final message = error is Failure
+            ? error.userMessage
+            : context.l10n(
+                ko: '댓글을 불러오지 못했어요',
+                en: 'Couldn\'t load comments.',
+                ja: 'コメントを読み込めませんでした。',
+              );
         return GBTErrorState(message: message);
       },
       data: (comments) {
@@ -1582,7 +1908,11 @@ class _PostCommentsSectionState extends State<_PostCommentsSection> {
                   ),
                   const SizedBox(height: GBTSpacing.md),
                   Text(
-                    '아직 댓글이 없어요',
+                    context.l10n(
+                      ko: '아직 댓글이 없어요',
+                      en: 'No comments yet.',
+                      ja: 'まだコメントがありません。',
+                    ),
                     style: GBTTypography.bodyLarge.copyWith(
                       fontWeight: FontWeight.w600,
                       color: isDark
@@ -1592,7 +1922,11 @@ class _PostCommentsSectionState extends State<_PostCommentsSection> {
                   ),
                   const SizedBox(height: GBTSpacing.xs),
                   Text(
-                    '첫 번째로 생각을 남겨보세요!',
+                    context.l10n(
+                      ko: '첫 번째로 생각을 남겨보세요!',
+                      en: 'Be the first to share your thoughts!',
+                      ja: '最初のコメントを残しましょう！',
+                    ),
                     style: GBTTypography.bodySmall.copyWith(
                       color: isDark
                           ? GBTColors.darkTextTertiary
@@ -1622,14 +1956,18 @@ class _PostCommentsSectionState extends State<_PostCommentsSection> {
                 alignment: AlignmentDirectional.centerEnd,
                 child: SegmentedButton<_CommentSort>(
                   showSelectedIcon: false,
-                  segments: const [
+                  segments: [
                     ButtonSegment(
                       value: _CommentSort.latest,
-                      label: Text('최신순'),
+                      label: Text(
+                        context.l10n(ko: '최신순', en: 'Newest first', ja: '新着順'),
+                      ),
                     ),
                     ButtonSegment(
                       value: _CommentSort.oldest,
-                      label: Text('등록순'),
+                      label: Text(
+                        context.l10n(ko: '등록순', en: 'Oldest first', ja: '登録順'),
+                      ),
                     ),
                   ],
                   selected: {_sort},
@@ -1768,7 +2106,11 @@ class _DeletedRootCommentItemState extends State<_DeletedRootCommentItem> {
               Icon(Icons.remove_circle_outline, size: 16, color: tertiaryColor),
               const SizedBox(width: GBTSpacing.xs),
               Text(
-                '삭제된 댓글입니다',
+                context.l10n(
+                  ko: '삭제된 댓글입니다',
+                  en: 'This comment was deleted.',
+                  ja: '削除されたコメントです。',
+                ),
                 style: GBTTypography.bodySmall.copyWith(color: tertiaryColor),
               ),
             ],
@@ -1783,7 +2125,13 @@ class _DeletedRootCommentItemState extends State<_DeletedRootCommentItem> {
               GBTSpacing.xs,
             ),
             child: _ReplyActionButton(
-              label: _repliesExpanded ? '답글 숨기기' : '답글 $replyCount개 보기',
+              label: _repliesExpanded
+                  ? context.l10n(ko: '답글 숨기기', en: 'Hide replies', ja: '返信を隠す')
+                  : context.l10n(
+                      ko: '답글 $replyCount개 보기',
+                      en: 'View $replyCount replies',
+                      ja: '返信を$replyCount件見る',
+                    ),
               color: primaryColor,
               icon: _repliesExpanded
                   ? Icons.keyboard_arrow_up_rounded
@@ -1893,7 +2241,7 @@ class _CommentItemState extends ConsumerState<_CommentItem> {
     final comment = widget.comment;
     final authorLabel = comment.authorName?.isNotEmpty == true
         ? comment.authorName!
-        : '익명';
+        : context.l10n(ko: '익명', en: 'Anonymous', ja: '匿名');
     final avatarUrl = comment.authorAvatarUrl?.isNotEmpty == true
         ? comment.authorAvatarUrl
         : null;
@@ -1930,7 +2278,11 @@ class _CommentItemState extends ConsumerState<_CommentItem> {
               _Avatar(
                 url: avatarUrl,
                 radius: 15,
-                semanticLabel: '$authorLabel 프로필 사진',
+                semanticLabel: context.l10n(
+                  ko: '$authorLabel 프로필 사진',
+                  en: '$authorLabel profile photo',
+                  ja: '$authorLabelのプロフィール写真',
+                ),
                 onTap: () => widget.onTapAuthor(comment.authorId),
               ),
               const SizedBox(width: GBTSpacing.sm),
@@ -1976,7 +2328,11 @@ class _CommentItemState extends ConsumerState<_CommentItem> {
                               ),
                               if (isEdited)
                                 Text(
-                                  '(수정)',
+                                  context.l10n(
+                                    ko: '(수정)',
+                                    en: '(Edited)',
+                                    ja: '（編集済み）',
+                                  ),
                                   style: GBTTypography.labelSmall.copyWith(
                                     color: tertiaryColor,
                                   ),
@@ -2024,15 +2380,27 @@ class _CommentItemState extends ConsumerState<_CommentItem> {
                       children: [
                         if (canReply)
                           _ReplyActionButton(
-                            label: '답글',
+                            label: context.l10n(
+                              ko: '답글',
+                              en: 'Reply',
+                              ja: '返信',
+                            ),
                             color: secondaryColor,
                             onTap: () => widget.onReply(comment),
                           ),
                         if (replyCount > 0) ...[
                           _ReplyActionButton(
                             label: _repliesExpanded
-                                ? '답글 숨기기'
-                                : '답글 $replyCount개 보기',
+                                ? context.l10n(
+                                    ko: '답글 숨기기',
+                                    en: 'Hide replies',
+                                    ja: '返信を隠す',
+                                  )
+                                : context.l10n(
+                                    ko: '답글 $replyCount개 보기',
+                                    en: 'View $replyCount replies',
+                                    ja: '返信を$replyCount件見る',
+                                  ),
                             color: primaryColor,
                             icon: _repliesExpanded
                                 ? Icons.keyboard_arrow_up_rounded
@@ -2151,7 +2519,9 @@ class _ReplyItem extends StatelessWidget {
 
     final authorLabel = _isDeletedCommentPlaceholder(reply.content)
         ? _deletedCommentPlaceholderLegacy
-        : (reply.authorName?.isNotEmpty == true ? reply.authorName! : '익명');
+        : (reply.authorName?.isNotEmpty == true
+              ? reply.authorName!
+              : context.l10n(ko: '익명', en: 'Anonymous', ja: '匿名'));
     final avatarUrl = reply.authorAvatarUrl?.isNotEmpty == true
         ? reply.authorAvatarUrl
         : null;
@@ -2195,7 +2565,11 @@ class _ReplyItem extends StatelessWidget {
                   _Avatar(
                     url: avatarUrl,
                     radius: 12,
-                    semanticLabel: '$authorLabel 프로필 사진',
+                    semanticLabel: context.l10n(
+                      ko: '$authorLabel 프로필 사진',
+                      en: '$authorLabel profile photo',
+                      ja: '$authorLabelのプロフィール写真',
+                    ),
                     onTap: isDeletedPlaceholder
                         ? null
                         : () => onTapAuthor(reply.authorId),
@@ -2241,7 +2615,11 @@ class _ReplyItem extends StatelessWidget {
                                   ),
                                   if (isEdited && !isDeletedPlaceholder)
                                     Text(
-                                      '(수정)',
+                                      context.l10n(
+                                        ko: '(수정)',
+                                        en: '(Edited)',
+                                        ja: '（編集済み）',
+                                      ),
                                       style: GBTTypography.labelSmall.copyWith(
                                         color: tertiaryColor,
                                       ),
@@ -2329,7 +2707,11 @@ class _ReplyItem extends StatelessWidget {
                         if (canReply) ...[
                           const SizedBox(height: GBTSpacing.xs),
                           _ReplyActionButton(
-                            label: '답글',
+                            label: context.l10n(
+                              ko: '답글',
+                              en: 'Reply',
+                              ja: '返信',
+                            ),
                             color: secondaryColor,
                             onTap: () => onReply(reply),
                           ),
@@ -2369,7 +2751,7 @@ class _AuthorBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(GBTSpacing.radiusFull),
       ),
       child: Text(
-        '글쓴이',
+        context.l10n(ko: '글쓴이', en: 'Author', ja: '投稿者'),
         style: GBTTypography.labelSmall.copyWith(
           color: color,
           fontWeight: FontWeight.w700,
@@ -2436,7 +2818,7 @@ class _CommentMenuButton extends StatelessWidget {
 
     if (canEdit || canDelete) {
       return IconButton(
-        tooltip: '댓글 관리',
+        tooltip: context.l10n(ko: '댓글 관리', en: 'Manage comment', ja: 'コメント管理'),
         icon: Icon(Icons.more_horiz, size: iconSize, color: tertiaryColor),
         padding: EdgeInsets.zero,
         constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
@@ -2446,20 +2828,26 @@ class _CommentMenuButton extends StatelessWidget {
             context: context,
             actions: [
               if (canEdit)
-                const GBTActionSheetItem(
-                  label: '수정',
+                GBTActionSheetItem(
+                  label: context.l10n(ko: '수정', en: 'Edit', ja: '編集する'),
                   value: _CommentAction.edit,
                   icon: Icons.edit_outlined,
                 ),
               if (canDelete)
                 GBTActionSheetItem(
-                  label: canEdit ? '삭제' : '관리 삭제',
+                  label: canEdit
+                      ? context.l10n(ko: '삭제', en: 'Delete', ja: '削除する')
+                      : context.l10n(
+                          ko: '관리 삭제',
+                          en: 'Admin delete',
+                          ja: '管理者削除',
+                        ),
                   value: _CommentAction.delete,
                   icon: Icons.delete_outline,
                   isDestructive: true,
                 ),
             ],
-            cancelLabel: '취소',
+            cancelLabel: context.l10n(ko: '취소', en: 'Cancel', ja: 'キャンセル'),
           );
           if (action != null) {
             if (action == _CommentAction.edit) {
@@ -2473,7 +2861,11 @@ class _CommentMenuButton extends StatelessWidget {
     }
 
     return IconButton(
-      tooltip: '댓글 옵션',
+      tooltip: context.l10n(
+        ko: '댓글 옵션',
+        en: 'Comment options',
+        ja: 'コメントオプション',
+      ),
       icon: Icon(Icons.more_horiz, size: iconSize, color: tertiaryColor),
       padding: EdgeInsets.zero,
       constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
@@ -2481,14 +2873,14 @@ class _CommentMenuButton extends StatelessWidget {
       onPressed: () async {
         final action = await showGBTActionSheet<_CommentOtherAction>(
           context: context,
-          actions: const [
+          actions: [
             GBTActionSheetItem(
-              label: '신고',
+              label: context.l10n(ko: '신고', en: 'Report', ja: '通報'),
               value: _CommentOtherAction.report,
               icon: Icons.flag_outlined,
             ),
           ],
-          cancelLabel: '취소',
+          cancelLabel: context.l10n(ko: '취소', en: 'Cancel', ja: 'キャンセル'),
         );
         if (action != null) {
           onReport();
@@ -2614,7 +3006,7 @@ class _CommentComposerBarState extends State<_CommentComposerBar> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
-                                  '${widget.replyTarget!.authorName ?? '익명'}에게 답글',
+                                  '${widget.replyTarget!.authorName ?? context.l10n(ko: '익명', en: 'Anonymous', ja: '匿名')}에게 답글',
                                   style: GBTTypography.labelSmall.copyWith(
                                     color: primaryColor,
                                     fontWeight: FontWeight.w700,
@@ -2639,7 +3031,11 @@ class _CommentComposerBarState extends State<_CommentComposerBar> {
                               size: 18,
                               color: tertiaryColor,
                             ),
-                            tooltip: '답글 취소',
+                            tooltip: context.l10n(
+                              ko: '답글 취소',
+                              en: 'Cancel reply',
+                              ja: '返信をキャンセル',
+                            ),
                             padding: const EdgeInsets.all(GBTSpacing.xs),
                             constraints: const BoxConstraints(
                               minWidth: 48,
@@ -2694,8 +3090,16 @@ class _CommentComposerBarState extends State<_CommentComposerBar> {
                             style: GBTTypography.bodyMedium,
                             decoration: InputDecoration(
                               hintText: widget.replyTarget != null
-                                  ? '답글 작성...'
-                                  : '댓글 작성...',
+                                  ? context.l10n(
+                                      ko: '답글 작성...',
+                                      en: 'Write a reply…',
+                                      ja: '返信を入力…',
+                                    )
+                                  : context.l10n(
+                                      ko: '댓글 작성...',
+                                      en: 'Write a comment…',
+                                      ja: 'コメントを入力…',
+                                    ),
                               hintStyle: GBTTypography.bodyMedium.copyWith(
                                 color: tertiaryColor,
                               ),
@@ -2748,8 +3152,16 @@ class _CommentComposerBarState extends State<_CommentComposerBar> {
                                       : tertiaryColor,
                                 ),
                           tooltip: widget.replyTarget != null
-                              ? '답글 등록'
-                              : '댓글 등록',
+                              ? context.l10n(
+                                  ko: '답글 등록',
+                                  en: 'Post reply',
+                                  ja: '返信を投稿する',
+                                )
+                              : context.l10n(
+                                  ko: '댓글 등록',
+                                  en: 'Post comment',
+                                  ja: 'コメントを投稿する',
+                                ),
                         ),
                       ),
                     ],
@@ -2799,9 +3211,19 @@ class _TimelineActionButton extends StatelessWidget {
   }
 }
 
-String _compactCountLabel(int count) {
-  if (count >= 10000) return '${(count / 10000).toStringAsFixed(1)}만';
-  if (count >= 1000) return '${(count / 1000).toStringAsFixed(1)}천';
+String _compactCountLabel(BuildContext context, int count) {
+  if (count >= 10000)
+    return context.l10n(
+      ko: '${(count / 10000).toStringAsFixed(1)}만',
+      en: '${(count / 10000).toStringAsFixed(1)}0K',
+      ja: '${(count / 10000).toStringAsFixed(1)}万',
+    );
+  if (count >= 1000)
+    return context.l10n(
+      ko: '${(count / 1000).toStringAsFixed(1)}천',
+      en: '${(count / 1000).toStringAsFixed(1)}K',
+      ja: '${(count / 1000).toStringAsFixed(1)}千',
+    );
   return count.toString();
 }
 
@@ -2818,7 +3240,9 @@ class _CommentThreadNodeView extends StatelessWidget {
     final isDeletedPlaceholder = _isDeletedCommentPlaceholder(comment.content);
     final author = isDeletedPlaceholder
         ? _deletedCommentPlaceholderLegacy
-        : (comment.authorName?.isNotEmpty == true ? comment.authorName! : '익명');
+        : (comment.authorName?.isNotEmpty == true
+              ? comment.authorName!
+              : context.l10n(ko: '익명', en: 'Anonymous', ja: '匿名'));
     final avatarUrl = comment.authorAvatarUrl?.isNotEmpty == true
         ? comment.authorAvatarUrl
         : null;
@@ -2857,7 +3281,11 @@ class _CommentThreadNodeView extends StatelessWidget {
                   _Avatar(
                     url: avatarUrl,
                     radius: depth > 0 ? 11 : 13,
-                    semanticLabel: '$author 프로필 사진',
+                    semanticLabel: context.l10n(
+                      ko: '$author 프로필 사진',
+                      en: '$author profile photo',
+                      ja: '$authorのプロフィール写真',
+                    ),
                     onTap: null,
                   ),
                   const SizedBox(width: GBTSpacing.sm),
@@ -3043,8 +3471,16 @@ class _ImageCarousel extends StatelessWidget {
             bottom: index < imageUrls.length - 1 ? GBTSpacing.sm : 0,
           ),
           child: Semantics(
-            label: '첨부 이미지 ${index + 1}/${imageUrls.length}',
-            hint: '탭하면 확대합니다',
+            label: context.l10n(
+              ko: '첨부 이미지 ${index + 1}/${imageUrls.length}',
+              en: 'Attached image ${index + 1} of ${imageUrls.length}',
+              ja: '添付画像${index + 1}/${imageUrls.length}',
+            ),
+            hint: context.l10n(
+              ko: '탭하면 확대합니다',
+              en: 'Tap to zoom',
+              ja: '押すと拡大します',
+            ),
             button: true,
             child: GestureDetector(
               onTap: () => onTapImage(index),
@@ -3061,7 +3497,11 @@ class _ImageCarousel extends StatelessWidget {
                     imageUrl: imageUrls[index],
                     width: double.infinity,
                     fit: BoxFit.fitWidth,
-                    semanticLabel: '첨부 이미지 ${index + 1}',
+                    semanticLabel: context.l10n(
+                      ko: '첨부 이미지 ${index + 1}',
+                      en: 'Attached image ${index + 1}',
+                      ja: '添付画像${index + 1}',
+                    ),
                   ),
                 ),
               ),
@@ -3142,9 +3582,17 @@ class _FullScreenImageViewerState extends State<_FullScreenImageViewer> {
         final granted = await Gal.requestAccess(toAlbum: false);
         if (!granted) {
           if (mounted) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(const SnackBar(content: Text('사진 저장 권한이 필요합니다')));
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  context.l10n(
+                    ko: '사진 저장 권한이 필요합니다',
+                    en: 'Photo save permission is required.',
+                    ja: '写真の保存には権限が必要です。',
+                  ),
+                ),
+              ),
+            );
           }
           return;
         }
@@ -3158,15 +3606,31 @@ class _FullScreenImageViewerState extends State<_FullScreenImageViewer> {
       await Gal.putImageBytes(bytes);
 
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('이미지가 저장되었어요')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              context.l10n(
+                ko: '이미지가 저장되었어요',
+                en: 'Image saved.',
+                ja: '画像を保存しました。',
+              ),
+            ),
+          ),
+        );
       }
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('이미지 저장에 실패했어요')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              context.l10n(
+                ko: '이미지 저장에 실패했어요',
+                en: 'Failed to save the image.',
+                ja: '画像の保存に失敗しました。',
+              ),
+            ),
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _isDownloading = false);
@@ -3190,7 +3654,7 @@ class _FullScreenImageViewerState extends State<_FullScreenImageViewer> {
             : null,
         leading: IconButton(
           icon: const Icon(Icons.close),
-          tooltip: '닫기',
+          tooltip: context.l10n(ko: '닫기', en: 'Close', ja: '閉じる'),
           onPressed: () => Navigator.of(context).pop(),
         ),
         actions: [
@@ -3209,7 +3673,11 @@ class _FullScreenImageViewerState extends State<_FullScreenImageViewer> {
           else
             IconButton(
               icon: const Icon(Icons.download_rounded),
-              tooltip: '이미지 저장',
+              tooltip: context.l10n(
+                ko: '이미지 저장',
+                en: 'Save image',
+                ja: '画像を保存する',
+              ),
               onPressed: _downloadCurrentImage,
             ),
         ],
@@ -3229,7 +3697,11 @@ class _FullScreenImageViewerState extends State<_FullScreenImageViewer> {
                 child: GBTImage(
                   imageUrl: widget.imageUrls[index],
                   fit: BoxFit.contain,
-                  semanticLabel: '이미지 ${index + 1}',
+                  semanticLabel: context.l10n(
+                    ko: '이미지 ${index + 1}',
+                    en: 'Image ${index + 1}',
+                    ja: '画像${index + 1}',
+                  ),
                 ),
               ),
             ),
@@ -3308,7 +3780,13 @@ class _Avatar extends StatelessWidget {
               width: radius * 2,
               height: radius * 2,
               fit: BoxFit.cover,
-              semanticLabel: semanticLabel ?? '프로필 사진',
+              semanticLabel:
+                  semanticLabel ??
+                  context.l10n(
+                    ko: '프로필 사진',
+                    en: 'Profile photo',
+                    ja: 'プロフィール写真',
+                  ),
             ),
           );
 
@@ -3318,7 +3796,9 @@ class _Avatar extends StatelessWidget {
     // KO: 접근성을 위해 최소 48x48 터치 타겟을 보장합니다.
     return Semantics(
       button: true,
-      label: semanticLabel ?? '프로필 보기',
+      label:
+          semanticLabel ??
+          context.l10n(ko: '프로필 보기', en: 'View profile', ja: 'プロフィールを見る'),
       child: InkWell(
         onTap: onTap,
         customBorder: const CircleBorder(),
