@@ -1,5 +1,50 @@
 # TODO
 
+- OAuth redirect: carry-over from login-return redirect contract (2026-10-02).
+  - App currently requires explicit redirect to app routes; OAuth flows hardcoded
+    to `/home` per server endpoint design.
+  - If server adds redirect-to-home redirection, client may auto-comply without
+    design change; verify after server API expansion.
+
+- core/router/app_router.dart export shim (2026-10-02):
+  - Routes exported from `lib/app/router/` for backward compatibility during
+    PR 3 (router split). Re-export will be removed in PR 8 (namespace cleanup).
+  - Current allowlist entries: 133. Track usage to confirm re-export can be
+    safely deleted.
+
+- Dependency allowlist must reach 0 by PR 8 (2026-10-02):
+  - Baseline: 133 violations recorded in `test/architecture/layer_import_boundary_test.dart`.
+  - Each PR should maintain or decrease allowlist size. New violations cause test
+    failure. By-PR targets:
+    - PR 1 (legacy delete): ≤120
+    - PR 2 (boundary expand): ≤120 (no new)
+    - PR 6 (feed split): ≤80
+    - PR 8 (final): **0**
+
+- Japanese golden baselines not yet added (2026-10-02):
+  - Core screens (home, places_map, live_event_detail, place_detail, song_detail)
+    need ja golden tests with light/dark modes and 320dp/200% text scaling.
+  - Cherry-pick from existing ko golden snapshots and adapt text/metrics.
+  - Defer until PR 4 (Japanese localization base) implementation review.
+
+- Account switch: selectedProjectId leak risk (2026-10-02):
+  - `logout()` calls `clearUserScopedMutations()` which targets inferred provider
+    keys; however `selectedProjectId` is not member-scoped in the controller.
+  - When switching from Account A (Project X) → Account B, selectedProjectId
+    stays X if B also has access to X.
+  - Full cleanup via `clearAllStates()` handles it correctly; currently only
+    logout triggers full cleanup.
+  - If user-initiated account switch UI added (instead of logout-relogin), must
+    ensure selectedProjectId is reset or validated against Account B's accessible
+    projects.
+  - Tests cover logout/relogin case; account-switch UI case remains TODO.
+
+- Backup branches: delete after redesign merge (2026-10-02):
+  - `backup/lost-stash-20261002` — uncommitted changes from 2026-10-02
+  - `backup/stash0?` — transient stash slot (confirm before delete)
+  - `backup/stash2-20261002` — second uncommitted stash
+  - Keep until PR 8 complete, then prune.
+
 - Verify place associations in the next installed build (2026-09-13):
   - A place linked to one band must not list every project band; a place without
     unit IDs must show the empty state. Verify detailed Markdown copy after upgrade.

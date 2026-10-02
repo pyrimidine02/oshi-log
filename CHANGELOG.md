@@ -1,5 +1,21 @@
 # Changelog
 
+## 2026-10-02
+
+- Fixed bottom sheet content painting: ListTiles inside action sheets now have a
+  Material container to enable ink feedback; layout passes 320dp/200% text tests
+  without overflow or hidden actions.
+- Fixed login redirect after password-based authentication: the app now returns to
+  the initially requested screen via `?redirect=` parameter. Only relative in-app
+  paths are accepted (e.g., `/places?region=tokyo`); external and auth routes
+  fall back to `/home`. Prevents open-redirect attacks. OAuth flow still lands
+  on `/home` per API contract.
+- Baseline testing infrastructure: enforced route inventory, auth redirect, and
+  account switch contracts with regression tests. Dependency boundary checker
+  (layer/feature/cycle rules) added with shrinking allowlist (133 current
+  violations tracked for incremental cleanup). All 659 tests pass; coverage
+  increased to 35.08% (15,063 → 16,153 lines).
+
 ## 2026-09-13
 
 - Show only bands explicitly associated with a place, preserving server unit,
