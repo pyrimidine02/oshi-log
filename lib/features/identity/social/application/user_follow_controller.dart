@@ -3,12 +3,12 @@
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:oshi_log/core/error/failure.dart';
+import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/features/auth/application/session_state.dart';
 
-import '../../../core/error/failure.dart';
-import '../../auth/application/session_state.dart';
-import '../../../core/utils/result.dart';
-import '../domain/entities/community_moderation.dart';
-import 'community_moderation_controller.dart';
+import '../domain/entities/social_entities.dart';
+import 'social_repository_provider.dart';
 
 class UserFollowController extends StateNotifier<AsyncValue<UserFollowStatus>> {
   UserFollowController(this._ref, this.userId) : super(const AsyncLoading()) {
@@ -40,7 +40,7 @@ class UserFollowController extends StateNotifier<AsyncValue<UserFollowStatus>> {
     }
 
     state = const AsyncLoading();
-    final repository = await _ref.read(communityRepositoryProvider.future);
+    final repository = await _ref.read(socialRepositoryProvider.future);
     final result = await repository.getFollowStatus(userId: userId);
     if (result is Success<UserFollowStatus>) {
       state = AsyncData(result.data);
@@ -58,7 +58,7 @@ class UserFollowController extends StateNotifier<AsyncValue<UserFollowStatus>> {
   }
 
   Future<Result<bool>> _follow() async {
-    final repository = await _ref.read(communityRepositoryProvider.future);
+    final repository = await _ref.read(socialRepositoryProvider.future);
     final result = await repository.followUser(userId: userId);
     if (result is Success<UserFollowStatus>) {
       state = AsyncData(result.data);
@@ -74,7 +74,7 @@ class UserFollowController extends StateNotifier<AsyncValue<UserFollowStatus>> {
   }
 
   Future<Result<bool>> _unfollow() async {
-    final repository = await _ref.read(communityRepositoryProvider.future);
+    final repository = await _ref.read(socialRepositoryProvider.future);
     final result = await repository.unfollowUser(userId: userId);
     if (result is Err<void>) {
       state = AsyncError(result.failure, StackTrace.current);

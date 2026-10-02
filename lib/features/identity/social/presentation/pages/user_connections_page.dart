@@ -6,21 +6,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../core/error/failure.dart';
-import '../../../../core/localization/locale_text.dart';
-import '../../../../core/router/app_router.dart';
-import '../../../../core/theme/gbt_colors.dart';
-import '../../../../core/theme/gbt_spacing.dart';
-import '../../../../core/theme/gbt_typography.dart';
-import '../../../../core/widgets/common/gbt_image.dart';
-import '../../../../core/widgets/common/gbt_linkified_text.dart';
-import '../../../../core/widgets/feedback/gbt_empty_state.dart';
-import '../../../../core/widgets/feedback/gbt_loading.dart' hide GBTEmptyState;
-import '../../../../core/widgets/inputs/gbt_search_bar.dart';
-import '../../../../core/widgets/navigation/gbt_segmented_tab_bar.dart';
-import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
+import 'package:oshi_log/core/error/failure.dart';
+import 'package:oshi_log/core/localization/locale_text.dart';
+import 'package:oshi_log/core/router/app_router.dart';
+import 'package:oshi_log/core/theme/gbt_colors.dart';
+import 'package:oshi_log/core/theme/gbt_spacing.dart';
+import 'package:oshi_log/core/theme/gbt_typography.dart';
+import 'package:oshi_log/core/widgets/common/gbt_image.dart';
+import 'package:oshi_log/core/widgets/common/gbt_linkified_text.dart';
+import 'package:oshi_log/core/widgets/feedback/gbt_empty_state.dart';
+import 'package:oshi_log/core/widgets/feedback/gbt_loading.dart'
+    hide GBTEmptyState;
+import 'package:oshi_log/core/widgets/inputs/gbt_search_bar.dart';
+import 'package:oshi_log/core/widgets/navigation/gbt_segmented_tab_bar.dart';
+import 'package:oshi_log/core/widgets/navigation/gbt_standard_app_bar.dart';
+
 import '../../application/user_follow_list_controller.dart';
-import '../../domain/entities/community_moderation.dart';
+import '../../domain/entities/social_entities.dart';
 
 enum UserConnectionsTab { followers, following }
 

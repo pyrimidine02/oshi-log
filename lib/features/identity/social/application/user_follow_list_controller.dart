@@ -3,11 +3,11 @@
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:oshi_log/core/error/failure.dart';
+import 'package:oshi_log/core/utils/result.dart';
 
-import '../../../core/error/failure.dart';
-import '../../../core/utils/result.dart';
-import '../domain/entities/community_moderation.dart';
-import 'community_moderation_controller.dart';
+import '../domain/entities/social_entities.dart';
+import 'social_repository_provider.dart';
 
 final userFollowersProvider = FutureProvider.autoDispose
     .family<List<UserFollowSummary>, String>((ref, userId) async {
@@ -17,7 +17,7 @@ final userFollowersProvider = FutureProvider.autoDispose
           code: 'follow_target_empty',
         );
       }
-      final repository = await ref.read(communityRepositoryProvider.future);
+      final repository = await ref.read(socialRepositoryProvider.future);
       final result = await repository.getFollowers(userId: userId, size: 100);
       if (result is Success<List<UserFollowSummary>>) {
         return result.data;
@@ -39,7 +39,7 @@ final userFollowingProvider = FutureProvider.autoDispose
           code: 'follow_target_empty',
         );
       }
-      final repository = await ref.read(communityRepositoryProvider.future);
+      final repository = await ref.read(socialRepositoryProvider.future);
       final result = await repository.getFollowing(userId: userId, size: 100);
       if (result is Success<List<UserFollowSummary>>) {
         return result.data;

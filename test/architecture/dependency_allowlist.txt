@@ -4,9 +4,8 @@ lib/features/calendar/presentation/field_calendar/field_month_grid.dart -> lib/f
 lib/features/community/posts/data/mappers/feed_entities_mappers.dart -> lib/features/feed/domain/entities/community_moderation.dart : R5
 lib/features/community/posts/domain/entities/feed_entities.dart -> lib/features/feed/domain/entities/community_moderation.dart : R5
 lib/features/community/posts/presentation/pages/post_create_page.dart -> lib/features/oshikatsu/catalog/presentation/widgets/project_selector.dart : R2
-lib/features/community/posts/presentation/pages/post_detail_page.dart -> lib/features/feed/application/community_moderation_controller.dart : R5
+lib/features/community/posts/presentation/pages/post_detail_page.dart -> lib/features/feed/application/community_repository_provider.dart : R5
 lib/features/community/posts/presentation/pages/post_detail_page.dart -> lib/features/feed/application/report_rate_limiter.dart : R5
-lib/features/community/posts/presentation/pages/post_detail_page.dart -> lib/features/feed/application/user_follow_controller.dart : R5
 lib/features/community/posts/presentation/pages/post_detail_page.dart -> lib/features/feed/domain/entities/community_moderation.dart : R5
 lib/features/community/posts/presentation/pages/post_detail_page.dart -> lib/features/feed/presentation/widgets/community_report_sheet.dart : R2
 lib/features/community/posts/presentation/pages/post_detail_page.dart -> lib/features/feed/presentation/widgets/community_report_sheet.dart : R5

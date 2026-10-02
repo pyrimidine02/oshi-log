@@ -19,7 +19,7 @@ import '../../../features/feed/presentation/field_user_profile/field_user_profil
 import '../../../features/community/news/presentation/pages/news_detail_page.dart';
 import 'package:oshi_log/features/community/posts/presentation/pages/post_bookmarks_page.dart';
 import 'package:oshi_log/features/community/posts/presentation/pages/post_detail_page.dart';
-import '../../../features/feed/presentation/pages/user_connections_page.dart';
+import 'package:oshi_log/features/identity/social/presentation/pages/user_connections_page.dart';
 import '../../../features/live_events/presentation/field_events/field_live_event_detail_page.dart';
 import '../../../features/music/presentation/pages/music_song_detail_page.dart';
 import '../../../features/notifications/presentation/pages/notifications_page.dart';
