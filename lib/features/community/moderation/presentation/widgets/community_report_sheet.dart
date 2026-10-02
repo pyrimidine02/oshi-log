@@ -4,9 +4,9 @@ library;
 
 import 'package:flutter/material.dart';
 
-import '../../../../core/localization/locale_text.dart';
-import '../../../../core/theme/gbt_spacing.dart';
-import '../../../../core/theme/gbt_typography.dart';
+import '../../../../../core/localization/locale_text.dart';
+import '../../../../../core/theme/gbt_spacing.dart';
+import '../../../../../core/theme/gbt_typography.dart';
 import '../../domain/entities/community_moderation.dart';
 
 class CommunityReportPayload {

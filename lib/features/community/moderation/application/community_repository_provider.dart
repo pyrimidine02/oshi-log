@@ -4,7 +4,7 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/providers/core_providers.dart';
+import '../../../../core/providers/core_providers.dart';
 import '../data/datasources/community_remote_data_source.dart';
 import '../data/repositories/community_repository_impl.dart';
 import '../domain/repositories/community_repository.dart';

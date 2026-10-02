@@ -3,10 +3,10 @@ import 'package:mocktail/mocktail.dart';
 
 import 'package:oshi_log/core/error/failure.dart';
 import 'package:oshi_log/core/utils/result.dart';
-import 'package:oshi_log/features/feed/data/datasources/community_remote_data_source.dart';
-import 'package:oshi_log/features/feed/data/dto/community_moderation_dto.dart';
-import 'package:oshi_log/features/feed/data/repositories/community_repository_impl.dart';
-import 'package:oshi_log/features/feed/domain/entities/community_moderation.dart';
+import 'package:oshi_log/features/community/moderation/data/datasources/community_remote_data_source.dart';
+import 'package:oshi_log/features/community/moderation/data/dto/community_moderation_dto.dart';
+import 'package:oshi_log/features/community/moderation/data/repositories/community_repository_impl.dart';
+import 'package:oshi_log/features/community/moderation/domain/entities/community_moderation.dart';
 
 class MockCommunityRemoteDataSource extends Mock
     implements CommunityRemoteDataSource {}

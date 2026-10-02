@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:oshi_log/features/feed/application/report_rate_limiter.dart';
+import 'package:oshi_log/features/community/moderation/application/report_rate_limiter.dart';
 
 void main() {
   test('canReport returns true for first report', () {

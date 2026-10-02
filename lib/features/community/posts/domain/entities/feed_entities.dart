@@ -4,7 +4,7 @@ library;
 
 import 'package:intl/intl.dart';
 
-import 'package:oshi_log/features/feed/domain/entities/community_moderation.dart';
+import 'package:oshi_log/features/community/moderation/domain/entities/community_moderation.dart';
 
 class PostSummary {
   const PostSummary({
