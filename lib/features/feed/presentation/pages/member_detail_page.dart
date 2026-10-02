@@ -5,6 +5,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/localization/locale_text.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/theme.dart';
 import '../../../../core/utils/date_utils.dart';
@@ -50,7 +51,10 @@ class MemberDetailPage extends ConsumerWidget {
         );
 
     return Scaffold(
-      appBar: gbtStandardAppBar(context, title: '멤버 기록'),
+      appBar: gbtStandardAppBar(
+        context,
+        title: context.l10n(ko: '멤버 기록', en: 'Member Dossier', ja: 'メンバー記録'),
+      ),
       body: MemberDossierView(
         member: member,
         unit: resolvedUnit,
@@ -81,9 +85,9 @@ class MemberDossierView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final voiceActors = _voiceActorsFor(member);
-    final profileFacts = _profileFactsFor(member);
+    final profileFacts = _profileFactsFor(context, member);
     final birthdayDays = daysUntilBirthday(member.birthdate);
-    final metadata = _memberMetadata(member, unit);
+    final metadata = _memberMetadata(context, member, unit);
 
     return Material(
       color: Theme.of(context).scaffoldBackgroundColor,
@@ -102,16 +106,22 @@ class MemberDossierView extends StatelessWidget {
             SliverToBoxAdapter(child: _MemberIntroduction(member: member)),
           if (birthdayDays != null && birthdayDays <= 30)
             SliverToBoxAdapter(child: _BirthdayNote(days: birthdayDays)),
-          const SliverToBoxAdapter(
+          SliverToBoxAdapter(
             child: _DossierSectionHeader(
               index: '01',
               eyebrow: 'PROFILE',
-              title: '인물 기록',
+              title: context.l10n(ko: '인물 기록', en: 'Profile', ja: '人物記録'),
             ),
           ),
           if (profileFacts.isEmpty)
-            const SliverToBoxAdapter(
-              child: _InlineEmptyNote(text: '아직 등록된 프로필 메모가 없어요.'),
+            SliverToBoxAdapter(
+              child: _InlineEmptyNote(
+                text: context.l10n(
+                  ko: '아직 등록된 프로필 메모가 없어요.',
+                  en: 'No profile notes yet.',
+                  ja: 'まだプロフィールメモが登録されていません。',
+                ),
+              ),
             )
           else
             SliverList.builder(
@@ -122,11 +132,11 @@ class MemberDossierView extends StatelessWidget {
               ),
             ),
           if (voiceActors.isNotEmpty) ...[
-            const SliverToBoxAdapter(
+            SliverToBoxAdapter(
               child: _DossierSectionHeader(
                 index: '02',
                 eyebrow: 'VOICE CAST',
-                title: '성우 기록',
+                title: context.l10n(ko: '성우 기록', en: 'Voice Cast', ja: '声優記録'),
               ),
             ),
             SliverList.builder(
@@ -163,27 +173,41 @@ List<VoiceActorRole> _voiceActorsFor(UnitMember member) {
   return <VoiceActorRole>[VoiceActorRole(id: '', displayName: fallbackName)];
 }
 
-String _memberMetadata(UnitMember member, Unit unit) {
+String _memberMetadata(BuildContext context, UnitMember member, Unit unit) {
   return <String>[
     if (unit.displayName.trim().isNotEmpty) unit.displayName.trim(),
     if (member.characterNameKana?.trim().isNotEmpty == true)
       member.characterNameKana!.trim(),
-    if (member.isLeader == true) '리더',
-    if (member.isActive == false) '활동 종료',
+    if (member.isLeader == true)
+      context.l10n(ko: '리더', en: 'Leader', ja: 'リーダー'),
+    if (member.isActive == false)
+      context.l10n(ko: '활동 종료', en: 'Inactive', ja: '活動終了'),
   ].join('  ·  ');
 }
 
-List<_ProfileFact> _profileFactsFor(UnitMember member) {
+List<_ProfileFact> _profileFactsFor(BuildContext context, UnitMember member) {
   return <_ProfileFact>[
     if (member.birthdate?.trim().isNotEmpty == true)
-      _ProfileFact(label: '생일', value: member.birthdate!.trim()),
+      _ProfileFact(
+        label: context.l10n(ko: '생일', en: 'Birthday', ja: '誕生日'),
+        value: member.birthdate!.trim(),
+      ),
     if (member.hometown?.trim().isNotEmpty == true)
-      _ProfileFact(label: '출신', value: member.hometown!.trim()),
+      _ProfileFact(
+        label: context.l10n(ko: '출신', en: 'Hometown', ja: '出身'),
+        value: member.hometown!.trim(),
+      ),
     if (member.instrument?.trim().isNotEmpty == true)
-      _ProfileFact(label: '담당', value: member.instrument!.trim()),
+      _ProfileFact(
+        label: context.l10n(ko: '담당', en: 'Part', ja: '担当'),
+        value: member.instrument!.trim(),
+      ),
     if (member.role?.trim().isNotEmpty == true &&
         member.role!.trim() != member.instrument?.trim())
-      _ProfileFact(label: '역할', value: member.role!.trim()),
+      _ProfileFact(
+        label: context.l10n(ko: '역할', en: 'Role', ja: '役割'),
+        value: member.role!.trim(),
+      ),
   ];
 }
 
@@ -217,7 +241,11 @@ class _MemberIntroduction extends StatelessWidget {
               height: 128,
               borderRadius: BorderRadius.circular(GBTSpacing.radiusXs),
               fit: BoxFit.cover,
-              semanticLabel: '${member.name} 캐릭터 이미지',
+              semanticLabel: context.l10n(
+                ko: '${member.name} 캐릭터 이미지',
+                en: '${member.name} character image',
+                ja: '${member.name}のキャラクター画像',
+              ),
             ),
           if (hasImage && description?.isNotEmpty == true)
             const SizedBox(height: GBTSpacing.md),
@@ -255,7 +283,17 @@ class _BirthdayNote extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final message = days == 0 ? '오늘은 생일이에요.' : '생일까지 $days일 남았어요.';
+    final message = days == 0
+        ? context.l10n(
+            ko: '오늘은 생일이에요.',
+            en: 'Today is the birthday.',
+            ja: '今日は誕生日です。',
+          )
+        : context.l10n(
+            ko: '생일까지 $days일 남았어요.',
+            en: '$days days until the birthday.',
+            ja: '誕生日まであと$days日です。',
+          );
     return Padding(
       padding: EdgeInsets.fromLTRB(
         GBTResponsiveSpacing.pageHorizontal(context),
@@ -439,7 +477,11 @@ class _VoiceActorIndexRow extends StatelessWidget {
 
     return Semantics(
       button: true,
-      label: '${actor.displayName}. 성우 상세 보기',
+      label: context.l10n(
+        ko: '${actor.displayName}. 성우 상세 보기',
+        en: '${actor.displayName}. View voice actor details',
+        ja: '${actor.displayName}。声優の詳細を見る',
+      ),
       child: ExcludeSemantics(
         child: InkWell(onTap: onTap, child: content),
       ),
@@ -499,7 +541,11 @@ class _VoiceActorRowContent extends StatelessWidget {
               height: 60,
               borderRadius: BorderRadius.circular(GBTSpacing.radiusXs),
               fit: BoxFit.cover,
-              semanticLabel: '${actor.displayName} 성우 이미지',
+              semanticLabel: context.l10n(
+                ko: '${actor.displayName} 성우 이미지',
+                en: '${actor.displayName} voice actor image',
+                ja: '${actor.displayName}の声優画像',
+              ),
             ),
             const SizedBox(width: GBTSpacing.md),
           ],
@@ -518,7 +564,11 @@ class _VoiceActorRowContent extends StatelessWidget {
                 Text(
                   role?.isNotEmpty == true
                       ? '$memberName  ·  $role'
-                      : '$memberName 담당 성우',
+                      : context.l10n(
+                          ko: '$memberName 담당 성우',
+                          en: 'Voice actor for $memberName',
+                          ja: '$memberName担当声優',
+                        ),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: colors.onSurfaceVariant,
                   ),

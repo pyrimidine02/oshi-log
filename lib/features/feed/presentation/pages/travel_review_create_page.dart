@@ -15,6 +15,7 @@ import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';
 import '../../../../core/widgets/layout/gbt_page_header.dart';
 import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
+import '../../../../core/localization/locale_text.dart';
 import '../../../../core/utils/result.dart';
 import '../../../live_events/application/live_events_controller.dart';
 import '../../../live_events/domain/entities/live_event_entities.dart';
@@ -108,7 +109,15 @@ class _TravelReviewCreatePageState
     if (_selectedPlaces.length >= 20 &&
         !_selectedPlaces.any((selected) => selected.id == place.id)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('방문 장소는 최대 20곳까지 추가할 수 있어요.')),
+        SnackBar(
+          content: Text(
+            context.l10n(
+              ko: '방문 장소는 최대 20곳까지 추가할 수 있어요.',
+              en: 'You can add up to 20 places.',
+              ja: '訪問場所は最大20件まで追加できます。',
+            ),
+          ),
+        ),
       );
       return;
     }
@@ -142,31 +151,63 @@ class _TravelReviewCreatePageState
   Future<void> _submit() async {
     if (_titleController.text.trim().isEmpty ||
         _contentController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('제목과 내용을 입력해주세요')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            context.l10n(
+              ko: '제목과 내용을 입력해주세요',
+              en: 'Please enter a title and content.',
+              ja: 'タイトルと内容を入力してください。',
+            ),
+          ),
+        ),
+      );
       return;
     }
     if (_selectedPlaces.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('최소 1개 이상의 장소를 추가해주세요')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            context.l10n(
+              ko: '최소 1개 이상의 장소를 추가해주세요',
+              en: 'Please add at least one place.',
+              ja: '場所を1件以上追加してください。',
+            ),
+          ),
+        ),
+      );
       return;
     }
 
     final projectCode = ref.read(selectedProjectKeyProvider)?.trim();
     if (projectCode == null || projectCode.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('여행을 기록할 프로젝트를 먼저 선택해주세요.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            context.l10n(
+              ko: '여행을 기록할 프로젝트를 먼저 선택해주세요.',
+              en: 'Please select a project to record this trip.',
+              ja: '旅の記録先プロジェクトを先に選択してください。',
+            ),
+          ),
+        ),
+      );
       return;
     }
     if (_tripStartedOn != null &&
         _tripEndedOn != null &&
         _tripEndedOn!.isBefore(_tripStartedOn!)) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('종료일은 시작일보다 빠를 수 없어요.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            context.l10n(
+              ko: '종료일은 시작일보다 빠를 수 없어요.',
+              en: 'The end date cannot be before the start date.',
+              ja: '終了日は開始日より前にできません。',
+            ),
+          ),
+        ),
+      );
       return;
     }
 
@@ -218,9 +259,17 @@ class _TravelReviewCreatePageState
     setState(() => _isSubmitting = false);
     switch (result) {
       case Success():
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('여행 후기가 등록되었습니다.')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              context.l10n(
+                ko: '여행 후기가 등록되었습니다.',
+                en: 'Your travel review has been posted.',
+                ja: '旅の記録を投稿しました。',
+              ),
+            ),
+          ),
+        );
         context.pop();
       case Err(:final failure):
         ScaffoldMessenger.of(
@@ -252,7 +301,7 @@ class _TravelReviewCreatePageState
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: gbtStandardAppBar(
         context,
-        title: '후기 작성',
+        title: context.l10n(ko: '후기 작성', en: 'Write Review', ja: 'レビュー作成'),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: GBTSpacing.xs),
@@ -266,7 +315,7 @@ class _TravelReviewCreatePageState
                   borderRadius: BorderRadius.circular(GBTSpacing.radiusSm),
                 ),
               ),
-              child: const Text('등록'),
+              child: Text(context.l10n(ko: '등록', en: 'Post', ja: '投稿する')),
             ),
           ),
         ],
@@ -276,10 +325,18 @@ class _TravelReviewCreatePageState
           CustomScrollView(
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             slivers: [
-              const SliverToBoxAdapter(
+              SliverToBoxAdapter(
                 child: GBTPageHeader(
-                  title: '오늘의 순례를 기록하세요',
-                  description: '방문한 순서와 현장의 감정을 함께 남기면 다음 여행의 지도가 됩니다.',
+                  title: context.l10n(
+                    ko: '오늘의 순례를 기록하세요',
+                    en: 'Record today’s pilgrimage',
+                    ja: '今日の聖地巡礼を記録しましょう',
+                  ),
+                  description: context.l10n(
+                    ko: '방문한 순서와 현장의 감정을 함께 남기면 다음 여행의 지도가 됩니다.',
+                    en: 'Note the order you visited and how it felt to become a map for your next trip.',
+                    ja: '訪れた順番とその場の感動を記録すると、次の旅の地図になります。',
+                  ),
                 ),
               ),
               SliverPadding(
@@ -295,8 +352,16 @@ class _TravelReviewCreatePageState
                       titleController: _titleController,
                       contentController: _contentController,
                       enabled: !_isSubmitting,
-                      titleHintText: '이번 여행은 어떠셨나요?',
-                      contentHintText: '자세한 후기를 남겨주세요.',
+                      titleHintText: context.l10n(
+                        ko: '이번 여행은 어떠셨나요?',
+                        en: 'How was this trip?',
+                        ja: '今回の旅はいかがでしたか？',
+                      ),
+                      contentHintText: context.l10n(
+                        ko: '자세한 후기를 남겨주세요.',
+                        en: 'Share the details of your trip.',
+                        ja: '詳しいレビューを書いてください。',
+                      ),
                       maxTitleLines: 2,
                       minContentLines: 5,
                       maxTitleLength: 255,
@@ -330,7 +395,11 @@ class _TravelReviewCreatePageState
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '방문 순서',
+                          context.l10n(
+                            ko: '방문 순서',
+                            en: 'Visit Order',
+                            ja: '訪問順',
+                          ),
                           style: GBTTypography.titleLarge.copyWith(
                             fontWeight: FontWeight.w800,
                           ),
@@ -338,8 +407,16 @@ class _TravelReviewCreatePageState
                         const SizedBox(height: GBTSpacing.xs),
                         Text(
                           _selectedPlaces.isEmpty
-                              ? '장소를 추가하면 이동 순서를 지도에 그려드려요.'
-                              : '총 ${_selectedPlaces.length}곳 · 길게 눌러 순서를 바꿀 수 있어요.',
+                              ? context.l10n(
+                                  ko: '장소를 추가하면 이동 순서를 지도에 그려드려요.',
+                                  en: 'Add places to draw your route on the map.',
+                                  ja: '場所を追加すると移動順を地図に描画します。',
+                                )
+                              : context.l10n(
+                                  ko: '총 ${_selectedPlaces.length}곳 · 길게 눌러 순서를 바꿀 수 있어요.',
+                                  en: '${_selectedPlaces.length} places total · Long-press to reorder.',
+                                  ja: '合計${_selectedPlaces.length}件・長押しで順番を変更できます。',
+                                ),
                           style: GBTTypography.bodyMedium.copyWith(
                             color: colorScheme.onSurfaceVariant,
                           ),
@@ -348,7 +425,13 @@ class _TravelReviewCreatePageState
                         OutlinedButton.icon(
                           onPressed: _showPlacePicker,
                           icon: const Icon(Icons.add),
-                          label: const Text('장소 추가'),
+                          label: Text(
+                            context.l10n(
+                              ko: '장소 추가',
+                              en: 'Add Place',
+                              ja: '場所を追加',
+                            ),
+                          ),
                           style: OutlinedButton.styleFrom(
                             minimumSize: const Size(0, 48),
                             shape: RoundedRectangleBorder(
@@ -415,7 +498,11 @@ class _TravelReviewCreatePageState
                             Text(place.address, style: GBTTypography.bodySmall),
                             if (verifiedVisitProofId(visits, place.id) != null)
                               Text(
-                                '인증된 방문 기록 연결',
+                                context.l10n(
+                                  ko: '인증된 방문 기록 연결',
+                                  en: 'Linked to verified visit',
+                                  ja: '認証済み訪問記録にリンク',
+                                ),
                                 style: GBTTypography.labelSmall.copyWith(
                                   color: colorScheme.primary,
                                   fontWeight: FontWeight.w700,
@@ -429,7 +516,11 @@ class _TravelReviewCreatePageState
                             IconButton(
                               icon: const Icon(Icons.close, size: 20),
                               onPressed: () => _removePlace(index),
-                              tooltip: '${place.name} 제거',
+                              tooltip: context.l10n(
+                                ko: '${place.name} 제거',
+                                en: 'Remove ${place.name}',
+                                ja: '${place.name}を削除',
+                              ),
                             ),
                             ReorderableDragStartListener(
                               index: index,
@@ -474,7 +565,11 @@ class _TravelReviewCreatePageState
               ),
               const SizedBox(height: GBTSpacing.sm),
               Text(
-                '아직 표시할 여정이 없어요',
+                context.l10n(
+                  ko: '아직 표시할 여정이 없어요',
+                  en: 'No route to show yet',
+                  ja: 'まだ表示する経路がありません',
+                ),
                 textAlign: TextAlign.center,
                 style: GBTTypography.bodyMedium.copyWith(
                   color: colorScheme.onSurfaceVariant,
@@ -659,9 +754,17 @@ class _TravelReviewCreatePageState
   Future<void> _showFanSubjectPicker() async {
     final projectCode = ref.read(selectedProjectKeyProvider)?.trim();
     if (projectCode == null || projectCode.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('프로젝트를 먼저 선택해주세요.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            context.l10n(
+              ko: '프로젝트를 먼저 선택해주세요.',
+              en: 'Please select a project first.',
+              ja: 'プロジェクトを先に選択してください。',
+            ),
+          ),
+        ),
+      );
       return;
     }
     await showModalBottomSheet<void>(

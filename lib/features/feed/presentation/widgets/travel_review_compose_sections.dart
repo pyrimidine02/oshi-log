@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/localization/locale_text.dart';
 import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';
 import '../../../live_events/application/live_events_controller.dart';
@@ -50,7 +51,7 @@ class TravelReviewComposeMetadata extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '여행 정보',
+          context.l10n(ko: '여행 정보', en: 'Trip Info', ja: '旅の情報'),
           style: GBTTypography.titleLarge.copyWith(fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: GBTSpacing.sm),
@@ -58,12 +59,12 @@ class TravelReviewComposeMetadata extends StatelessWidget {
           builder: (context, constraints) {
             final textScale = MediaQuery.textScalerOf(context).scale(1);
             final startButton = _DateButton(
-              label: '시작일',
+              label: context.l10n(ko: '시작일', en: 'Start Date', ja: '開始日'),
               value: tripStartedOn,
               onPressed: onPickStartDate,
             );
             final endButton = _DateButton(
-              label: '종료일',
+              label: context.l10n(ko: '종료일', en: 'End Date', ja: '終了日'),
               value: tripEndedOn,
               onPressed: onPickEndDate,
             );
@@ -92,17 +93,29 @@ class TravelReviewComposeMetadata extends StatelessWidget {
           minLines: 2,
           maxLines: 4,
           maxLength: 2000,
-          decoration: const InputDecoration(
-            labelText: '동선 메모',
-            hintText: '교통, 예약, 이동 팁을 남겨보세요.',
+          decoration: InputDecoration(
+            labelText: context.l10n(ko: '동선 메모', en: 'Route Notes', ja: '移動メモ'),
+            hintText: context.l10n(
+              ko: '교통, 예약, 이동 팁을 남겨보세요.',
+              en: 'Add transport, booking, or travel tips.',
+              ja: '交通、予約、移動のコツを書いてみましょう。',
+            ),
             alignLabelWithHint: true,
           ),
         ),
         const SizedBox(height: GBTSpacing.md),
         _SelectionHeader(
-          title: '함께한 라이브',
+          title: context.l10n(
+            ko: '함께한 라이브',
+            en: 'Linked Live Events',
+            ja: '一緒に参加したライブ',
+          ),
           count: selectedEvents.length,
-          actionLabel: '라이브 선택',
+          actionLabel: context.l10n(
+            ko: '라이브 선택',
+            en: 'Select Live',
+            ja: 'ライブを選択',
+          ),
           icon: Icons.event_available_outlined,
           onPressed: onPickEvents,
         ),
@@ -127,7 +140,11 @@ class TravelReviewComposeMetadata extends StatelessWidget {
                   ),
                   if (verifiedEventIds.contains(event.id))
                     Text(
-                      '인증된 참석 기록 연결',
+                      context.l10n(
+                        ko: '인증된 참석 기록 연결',
+                        en: 'Linked to verified attendance',
+                        ja: '認証済み参加記録にリンク',
+                      ),
                       style: GBTTypography.labelSmall.copyWith(
                         color: colorScheme.primary,
                         fontWeight: FontWeight.w700,
@@ -138,15 +155,23 @@ class TravelReviewComposeMetadata extends StatelessWidget {
               trailing: IconButton(
                 onPressed: () => onRemoveEvent(event.id),
                 icon: const Icon(Icons.close_rounded),
-                tooltip: '${event.title} 제거',
+                tooltip: context.l10n(
+                  ko: '${event.title} 제거',
+                  en: 'Remove ${event.title}',
+                  ja: '${event.title}を削除',
+                ),
               ),
             ),
         ],
         const SizedBox(height: GBTSpacing.md),
         _SelectionHeader(
-          title: '기록 대상',
+          title: context.l10n(ko: '기록 대상', en: 'Tagged Subjects', ja: '記録対象'),
           count: selectedSubjects.length,
-          actionLabel: '대상 선택',
+          actionLabel: context.l10n(
+            ko: '대상 선택',
+            en: 'Select Subjects',
+            ja: '対象を選択',
+          ),
           icon: Icons.auto_awesome_outlined,
           onPressed: onPickSubjects,
         ),
@@ -184,20 +209,32 @@ class TravelEventPickerSheet extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final events = ref.watch(liveEventsListControllerProvider);
     return _PickerScaffold(
-      title: '함께한 라이브',
+      title: context.l10n(
+        ko: '함께한 라이브',
+        en: 'Linked Live Events',
+        ja: '一緒に参加したライブ',
+      ),
       child: events.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => _PickerMessage(
           icon: Icons.cloud_off_rounded,
-          message: '라이브 일정을 불러오지 못했어요.',
+          message: context.l10n(
+            ko: '라이브 일정을 불러오지 못했어요.',
+            en: 'Could not load live schedules.',
+            ja: 'ライブ日程を読み込めませんでした。',
+          ),
           onRetry: () => ref
               .read(liveEventsListControllerProvider.notifier)
               .load(forceRefresh: true),
         ),
         data: (items) => items.isEmpty
-            ? const _PickerMessage(
+            ? _PickerMessage(
                 icon: Icons.event_busy_outlined,
-                message: '선택할 수 있는 라이브가 없어요.',
+                message: context.l10n(
+                  ko: '선택할 수 있는 라이브가 없어요.',
+                  en: 'No live events to select.',
+                  ja: '選択できるライブがありません。',
+                ),
               )
             : ListView.builder(
                 itemCount: items.length,
@@ -241,17 +278,25 @@ class TravelFanSubjectPickerSheet extends ConsumerWidget {
       fanSubjectsProvider(FanSubjectQuery(projectId: projectCode, size: 100)),
     );
     return _PickerScaffold(
-      title: '기록할 팬 대상',
+      title: context.l10n(ko: '기록할 팬 대상', en: 'Tagged Subjects', ja: '記録対象'),
       child: subjects.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => const _PickerMessage(
+        error: (error, _) => _PickerMessage(
           icon: Icons.cloud_off_rounded,
-          message: '프로젝트·밴드·성우 목록을 불러오지 못했어요.',
+          message: context.l10n(
+            ko: '프로젝트·밴드·성우 목록을 불러오지 못했어요.',
+            en: 'Could not load the project/band/voice-actor list.',
+            ja: 'プロジェクト・バンド・声優の一覧を読み込めませんでした。',
+          ),
         ),
         data: (items) => items.isEmpty
-            ? const _PickerMessage(
+            ? _PickerMessage(
                 icon: Icons.auto_awesome_outlined,
-                message: '선택할 수 있는 팬 대상이 없어요.',
+                message: context.l10n(
+                  ko: '선택할 수 있는 팬 대상이 없어요.',
+                  en: 'No subjects to select.',
+                  ja: '選択できる記録対象がありません。',
+                ),
               )
             : ListView.builder(
                 itemCount: items.length,
@@ -261,7 +306,7 @@ class TravelFanSubjectPickerSheet extends ConsumerWidget {
                     value: selectedIds.contains(item.id),
                     onChanged: (_) => onToggle(item),
                     title: Text(item.name),
-                    subtitle: Text(_subjectTypeLabel(item.kind)),
+                    subtitle: Text(_subjectTypeLabel(context, item.kind)),
                     secondary: CircleAvatar(
                       child: Icon(_subjectTypeIcon(item.kind), size: 20),
                     ),
@@ -395,7 +440,7 @@ class _PickerScaffold extends StatelessWidget {
                     style: TextButton.styleFrom(
                       minimumSize: const Size(48, GBTSpacing.touchTarget),
                     ),
-                    child: const Text('완료'),
+                    child: Text(context.l10n(ko: '완료', en: 'Done', ja: '完了する')),
                   ),
                 ],
               ),
@@ -433,7 +478,12 @@ class _PickerMessage extends StatelessWidget {
             Text(message, textAlign: TextAlign.center),
             if (onRetry != null) ...[
               const SizedBox(height: GBTSpacing.sm),
-              OutlinedButton(onPressed: onRetry, child: const Text('다시 시도')),
+              OutlinedButton(
+                onPressed: onRetry,
+                child: Text(
+                  context.l10n(ko: '다시 시도', en: 'Retry', ja: '再試行する'),
+                ),
+              ),
             ],
           ],
         ),
@@ -442,14 +492,31 @@ class _PickerMessage extends StatelessWidget {
   }
 }
 
-String _subjectTypeLabel(FanSubjectKind kind) => switch (kind) {
-  FanSubjectKind.project => '프로젝트',
-  FanSubjectKind.unit => '밴드·유닛',
-  FanSubjectKind.voiceActor => '성우',
-  FanSubjectKind.artist => '아티스트',
-  FanSubjectKind.anime => '애니메이션',
-  FanSubjectKind.unknown => '기타',
-};
+String _subjectTypeLabel(BuildContext context, FanSubjectKind kind) =>
+    switch (kind) {
+      FanSubjectKind.project => context.l10n(
+        ko: '프로젝트',
+        en: 'Project',
+        ja: 'プロジェクト',
+      ),
+      FanSubjectKind.unit => context.l10n(
+        ko: '밴드·유닛',
+        en: 'Band/Unit',
+        ja: 'バンド・ユニット',
+      ),
+      FanSubjectKind.voiceActor => context.l10n(
+        ko: '성우',
+        en: 'Voice Actor',
+        ja: '声優',
+      ),
+      FanSubjectKind.artist => context.l10n(
+        ko: '아티스트',
+        en: 'Artist',
+        ja: 'アーティスト',
+      ),
+      FanSubjectKind.anime => context.l10n(ko: '애니메이션', en: 'Anime', ja: 'アニメ'),
+      FanSubjectKind.unknown => context.l10n(ko: '기타', en: 'Other', ja: 'その他'),
+    };
 
 IconData _subjectTypeIcon(FanSubjectKind kind) => switch (kind) {
   FanSubjectKind.project => Icons.folder_outlined,

@@ -7,6 +7,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/localization/locale_text.dart';
 import '../../../../core/theme/gbt_colors.dart';
 import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';
@@ -72,7 +73,11 @@ class _TravelReviewPlacePickerSheetState
                   children: [
                     Expanded(
                       child: Text(
-                        '어디를 다녀왔나요?',
+                        context.l10n(
+                          ko: '어디를 다녀왔나요?',
+                          en: 'Where did you visit?',
+                          ja: 'どこを訪れましたか？',
+                        ),
                         style: GBTTypography.titleLarge.copyWith(
                           fontWeight: FontWeight.w800,
                         ),
@@ -83,7 +88,9 @@ class _TravelReviewPlacePickerSheetState
                       style: TextButton.styleFrom(
                         minimumSize: const Size(48, GBTSpacing.touchTarget),
                       ),
-                      child: const Text('닫기'),
+                      child: Text(
+                        context.l10n(ko: '닫기', en: 'Close', ja: '閉じる'),
+                      ),
                     ),
                   ],
                 ),
@@ -93,7 +100,11 @@ class _TravelReviewPlacePickerSheetState
                   onChanged: _onSearchChanged,
                   style: GBTTypography.bodyMedium,
                   decoration: InputDecoration(
-                    hintText: '장소명 또는 주소로 검색',
+                    hintText: context.l10n(
+                      ko: '장소명 또는 주소로 검색',
+                      en: 'Search by place name or address',
+                      ja: '場所名または住所で検索',
+                    ),
                     hintStyle: GBTTypography.bodyMedium.copyWith(
                       color: tertiaryColor,
                     ),
@@ -128,7 +139,11 @@ class _TravelReviewPlacePickerSheetState
               ),
               error: (error, _) => _PlacePickerMessage(
                 icon: Icons.cloud_off_rounded,
-                message: '장소를 불러오지 못했어요.',
+                message: context.l10n(
+                  ko: '장소를 불러오지 못했어요.',
+                  en: 'Could not load places.',
+                  ja: '場所を読み込めませんでした。',
+                ),
                 color: tertiaryColor,
               ),
               data: (all) {
@@ -137,8 +152,16 @@ class _TravelReviewPlacePickerSheetState
                   return _PlacePickerMessage(
                     icon: Icons.search_off_rounded,
                     message: _query.isEmpty
-                        ? '등록된 장소가 없어요.'
-                        : '"$_query" 검색 결과가 없어요.',
+                        ? context.l10n(
+                            ko: '등록된 장소가 없어요.',
+                            en: 'No places registered.',
+                            ja: '登録された場所がありません。',
+                          )
+                        : context.l10n(
+                            ko: '"$_query" 검색 결과가 없어요.',
+                            en: 'No results for "$_query".',
+                            ja: '"$_query"の検索結果がありません。',
+                          ),
                     color: tertiaryColor,
                   );
                 }
@@ -228,7 +251,17 @@ class _PlacePickerItem extends StatelessWidget {
       button: !isAdded,
       selected: isAdded,
       label: '${place.name}, ${place.address}',
-      hint: isAdded ? '이미 여정에 추가됨' : '탭하면 여정에 추가합니다',
+      hint: isAdded
+          ? context.l10n(
+              ko: '이미 여정에 추가됨',
+              en: 'Already added to route',
+              ja: 'すでに旅程に追加済み',
+            )
+          : context.l10n(
+              ko: '탭하면 여정에 추가합니다',
+              en: 'Tap to add to route',
+              ja: '押すと旅程に追加します',
+            ),
       child: InkWell(
         onTap: onTap,
         child: Padding(
@@ -272,7 +305,9 @@ class _PlacePickerItem extends StatelessWidget {
                 child: Icon(
                   isAdded ? Icons.check_rounded : Icons.add_rounded,
                   color: isAdded ? tertiaryColor : primaryColor,
-                  semanticLabel: isAdded ? '추가됨' : '추가',
+                  semanticLabel: isAdded
+                      ? context.l10n(ko: '추가됨', en: 'Added', ja: '追加済み')
+                      : context.l10n(ko: '추가', en: 'Add', ja: '追加する'),
                 ),
               ),
             ],
@@ -301,7 +336,11 @@ class _PlaceThumbnail extends StatelessWidget {
               child: GBTImage(
                 imageUrl: imageUrl!,
                 fit: BoxFit.cover,
-                semanticLabel: '${place.name} 이미지',
+                semanticLabel: context.l10n(
+                  ko: '${place.name} 이미지',
+                  en: '${place.name} image',
+                  ja: '${place.name}の画像',
+                ),
               ),
             )
           : Container(

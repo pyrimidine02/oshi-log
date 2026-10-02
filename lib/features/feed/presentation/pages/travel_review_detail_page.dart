@@ -11,6 +11,7 @@ import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/gbt_map_styles.dart';
 import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';
+import '../../../../core/localization/locale_text.dart';
 import '../../../../core/utils/result.dart';
 import '../../../../core/widgets/common/gbt_image.dart';
 import '../../../../core/widgets/layout/gbt_page_header.dart';
@@ -61,13 +62,17 @@ class _TravelReviewDetailPageState
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: gbtStandardAppBar(
         context,
-        title: '여행 후기',
+        title: context.l10n(ko: '여행 후기', en: 'Travel Review', ja: '旅の記録'),
         actions: [
           if (canManage)
             IconButton(
               icon: const Icon(Icons.more_horiz),
               onPressed: () => _showMoreOptions(projectCode, loadedReview),
-              tooltip: '후기 관리',
+              tooltip: context.l10n(
+                ko: '후기 관리',
+                en: 'Manage Review',
+                ja: 'レビューを管理',
+              ),
             ),
         ],
       ),
@@ -99,7 +104,7 @@ class _TravelReviewDetailPageState
             children: [
               ListTile(
                 leading: const Icon(Icons.edit_outlined),
-                title: const Text('수정'),
+                title: Text(context.l10n(ko: '수정', en: 'Edit', ja: '編集する')),
                 onTap: () {
                   Navigator.of(sheetContext).pop();
                   _showEditSheet(projectCode, review);
@@ -111,7 +116,7 @@ class _TravelReviewDetailPageState
                   color: Theme.of(context).colorScheme.error,
                 ),
                 title: Text(
-                  '삭제',
+                  context.l10n(ko: '삭제', en: 'Delete', ja: '削除する'),
                   style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
                 onTap: () {
@@ -151,16 +156,28 @@ class _TravelReviewDetailPageState
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('여행 후기를 삭제할까요?'),
-        content: const Text('연결된 게시글과 여행 경로도 함께 삭제됩니다.'),
+        title: Text(
+          context.l10n(
+            ko: '여행 후기를 삭제할까요?',
+            en: 'Delete this travel review?',
+            ja: 'この旅の記録を削除しますか？',
+          ),
+        ),
+        content: Text(
+          context.l10n(
+            ko: '연결된 게시글과 여행 경로도 함께 삭제됩니다.',
+            en: 'The linked post and travel route will also be deleted.',
+            ja: '関連する投稿と旅のルートも削除されます。',
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('취소'),
+            child: Text(context.l10n(ko: '취소', en: 'Cancel', ja: 'キャンセル')),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('삭제'),
+            child: Text(context.l10n(ko: '삭제', en: 'Delete', ja: '削除する')),
           ),
         ],
       ),
@@ -172,9 +189,17 @@ class _TravelReviewDetailPageState
     if (!mounted) return;
     switch (result) {
       case Success():
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('여행 후기를 삭제했어요.')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              context.l10n(
+                ko: '여행 후기를 삭제했어요.',
+                en: 'Your travel review has been deleted.',
+                ja: '旅の記録を削除しました。',
+              ),
+            ),
+          ),
+        );
         context.pop();
       case Err(:final failure):
         ScaffoldMessenger.of(
@@ -204,7 +229,7 @@ class _TravelReviewContent extends StatelessWidget {
         SliverToBoxAdapter(
           child: GBTPageHeader(
             title: review.post.title,
-            description: _description,
+            description: _description(context),
           ),
         ),
         SliverPadding(
@@ -257,7 +282,13 @@ class _TravelReviewContent extends StatelessWidget {
                   TextButton.icon(
                     onPressed: () => _openPost(context),
                     icon: const Icon(Icons.favorite_border),
-                    label: Text('좋아요 ${review.post.likeCount ?? 0}'),
+                    label: Text(
+                      context.l10n(
+                        ko: '좋아요 ${review.post.likeCount ?? 0}',
+                        en: 'Like ${review.post.likeCount ?? 0}',
+                        ja: 'いいね${review.post.likeCount ?? 0}',
+                      ),
+                    ),
                     style: TextButton.styleFrom(
                       foregroundColor: colorScheme.onSurface,
                       minimumSize: const Size(0, 48),
@@ -266,7 +297,13 @@ class _TravelReviewContent extends StatelessWidget {
                   TextButton.icon(
                     onPressed: () => _openPost(context),
                     icon: const Icon(Icons.comment_outlined),
-                    label: Text('댓글 ${review.post.commentCount ?? 0}'),
+                    label: Text(
+                      context.l10n(
+                        ko: '댓글 ${review.post.commentCount ?? 0}',
+                        en: 'Comment ${review.post.commentCount ?? 0}',
+                        ja: 'コメント${review.post.commentCount ?? 0}',
+                      ),
+                    ),
                     style: TextButton.styleFrom(
                       foregroundColor: colorScheme.onSurface,
                       minimumSize: const Size(0, 48),
@@ -277,8 +314,12 @@ class _TravelReviewContent extends StatelessWidget {
               Divider(color: colorScheme.outlineVariant),
               const SizedBox(height: GBTSpacing.xl),
               _SectionHeading(
-                title: '방문한 순서',
-                description: '이동한 흐름을 지도와 인증 상태로 함께 확인해보세요.',
+                title: context.l10n(ko: '방문한 순서', en: 'Visit Order', ja: '訪問順'),
+                description: context.l10n(
+                  ko: '이동한 흐름을 지도와 인증 상태로 함께 확인해보세요.',
+                  en: 'Check the route and verification status together on the map.',
+                  ja: '移動の流れと認証状況を地図で確認しましょう。',
+                ),
               ),
               const SizedBox(height: GBTSpacing.md),
               _TravelRouteMap(
@@ -292,9 +333,17 @@ class _TravelReviewContent extends StatelessWidget {
                 _StopRow(stop: stop, colorScheme: colorScheme),
               if (review.events.isNotEmpty) ...[
                 const SizedBox(height: GBTSpacing.xl),
-                const _SectionHeading(
-                  title: '함께한 라이브',
-                  description: '여행 기록과 연결된 라이브 일정입니다.',
+                _SectionHeading(
+                  title: context.l10n(
+                    ko: '함께한 라이브',
+                    en: 'Linked Live Events',
+                    ja: '一緒に参加したライブ',
+                  ),
+                  description: context.l10n(
+                    ko: '여행 기록과 연결된 라이브 일정입니다.',
+                    en: 'Live schedules linked to this travel record.',
+                    ja: 'この旅の記録に紐づくライブ日程です。',
+                  ),
                 ),
                 const SizedBox(height: GBTSpacing.sm),
                 for (final event in review.events)
@@ -308,9 +357,13 @@ class _TravelReviewContent extends StatelessWidget {
     );
   }
 
-  String get _description {
+  String _description(BuildContext context) {
     final date = review.tripDateLabel;
-    final route = '총 ${review.stops.length}곳을 이은 성지순례 기록';
+    final route = context.l10n(
+      ko: '총 ${review.stops.length}곳을 이은 성지순례 기록',
+      en: 'A pilgrimage record linking ${review.stops.length} places',
+      ja: '合計${review.stops.length}件をつないだ聖地巡礼の記録',
+    );
     return date.isEmpty ? route : '$date · $route';
   }
 
@@ -352,7 +405,7 @@ class _AuthorRow extends StatelessWidget {
               Text(
                 review.post.authorName?.trim().isNotEmpty == true
                     ? review.post.authorName!
-                    : '여행자',
+                    : context.l10n(ko: '여행자', en: 'Traveler', ja: '旅人'),
                 style: GBTTypography.labelLarge,
               ),
               Text(
@@ -655,9 +708,18 @@ class _TravelReviewError extends StatelessWidget {
           children: [
             const Icon(Icons.cloud_off_rounded, size: 44),
             const SizedBox(height: GBTSpacing.sm),
-            const Text('여행 후기를 불러오지 못했어요.'),
+            Text(
+              context.l10n(
+                ko: '여행 후기를 불러오지 못했어요.',
+                en: 'Could not load the travel review.',
+                ja: '旅の記録を読み込めませんでした。',
+              ),
+            ),
             const SizedBox(height: GBTSpacing.sm),
-            OutlinedButton(onPressed: onRetry, child: const Text('다시 시도')),
+            OutlinedButton(
+              onPressed: onRetry,
+              child: Text(context.l10n(ko: '다시 시도', en: 'Retry', ja: '再試行する')),
+            ),
           ],
         ),
       ),
@@ -673,7 +735,10 @@ class _MissingProjectScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: gbtStandardAppBar(context, title: '여행 후기'),
+      appBar: gbtStandardAppBar(
+        context,
+        title: context.l10n(ko: '여행 후기', en: 'Travel Review', ja: '旅の記録'),
+      ),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(GBTSpacing.xl),
@@ -682,9 +747,18 @@ class _MissingProjectScaffold extends StatelessWidget {
             children: [
               const Icon(Icons.folder_off_outlined, size: 44),
               const SizedBox(height: GBTSpacing.sm),
-              const Text('프로젝트를 먼저 선택해주세요.'),
+              Text(
+                context.l10n(
+                  ko: '프로젝트를 먼저 선택해주세요.',
+                  en: 'Please select a project first.',
+                  ja: 'プロジェクトを先に選択してください。',
+                ),
+              ),
               const SizedBox(height: GBTSpacing.sm),
-              OutlinedButton(onPressed: onBack, child: const Text('돌아가기')),
+              OutlinedButton(
+                onPressed: onBack,
+                child: Text(context.l10n(ko: '돌아가기', en: 'Go Back', ja: '戻る')),
+              ),
             ],
           ),
         ),

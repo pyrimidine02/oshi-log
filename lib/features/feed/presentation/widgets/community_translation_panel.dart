@@ -5,6 +5,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/localization/locale_text.dart';
 import '../../../../core/providers/core_providers.dart';
 import '../../../../core/theme/gbt_colors.dart';
 import '../../../../core/theme/gbt_spacing.dart';
@@ -71,9 +72,17 @@ class CommunityTranslationPanel extends ConsumerWidget {
 
     Future<void> onTranslateTap() async {
       if (!isAuthenticated) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('번역은 로그인 후 이용할 수 있어요')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              context.l10n(
+                ko: '번역은 로그인 후 이용할 수 있어요',
+                en: 'Please log in to use translation.',
+                ja: '翻訳はログイン後にご利用いただけます',
+              ),
+            ),
+          ),
+        );
         return;
       }
       await ref
@@ -104,7 +113,11 @@ class CommunityTranslationPanel extends ConsumerWidget {
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  '번역 중...',
+                  context.l10n(
+                    ko: '번역 중...',
+                    en: 'Translating...',
+                    ja: '翻訳中...',
+                  ),
                   style: GBTTypography.labelSmall.copyWith(
                     color: tertiaryColor,
                   ),
@@ -117,7 +130,11 @@ class CommunityTranslationPanel extends ConsumerWidget {
             onPressed: onTranslateTap,
             icon: const Icon(Icons.refresh_rounded, size: 14),
             label: Text(
-              '번역 다시 시도',
+              context.l10n(
+                ko: '번역 다시 시도',
+                en: 'Retry Translation',
+                ja: '翻訳を再試行する',
+              ),
               style: GBTTypography.labelSmall.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -134,8 +151,8 @@ class CommunityTranslationPanel extends ConsumerWidget {
             icon: const Icon(Icons.translate_rounded, size: 14),
             label: Text(
               entry.status == CommunityTranslationLoadStatus.translated
-                  ? '번역됨'
-                  : '번역',
+                  ? context.l10n(ko: '번역됨', en: 'Translated', ja: '翻訳済み')
+                  : context.l10n(ko: '번역', en: 'Translate', ja: '翻訳する'),
               style: GBTTypography.labelSmall.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -160,7 +177,11 @@ class CommunityTranslationPanel extends ConsumerWidget {
           return Padding(
             padding: const EdgeInsets.only(top: GBTSpacing.xxs),
             child: Text(
-              '번역 결과 없음',
+              context.l10n(
+                ko: '번역 결과 없음',
+                en: 'No translation result',
+                ja: '翻訳結果なし',
+              ),
               style: GBTTypography.labelSmall.copyWith(color: tertiaryColor),
             ),
           );

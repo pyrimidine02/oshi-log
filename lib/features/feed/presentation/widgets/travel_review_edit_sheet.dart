@@ -5,6 +5,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/localization/locale_text.dart';
 import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';
 import '../../../../core/utils/result.dart';
@@ -56,9 +57,17 @@ class _TravelReviewEditSheetState extends ConsumerState<TravelReviewEditSheet> {
   Future<void> _submit() async {
     if (_titleController.text.trim().isEmpty ||
         _contentController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('제목과 내용을 입력해주세요.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            context.l10n(
+              ko: '제목과 내용을 입력해주세요.',
+              en: 'Please enter a title and content.',
+              ja: 'タイトルと内容を入力してください。',
+            ),
+          ),
+        ),
+      );
       return;
     }
     setState(() => _submitting = true);
@@ -100,7 +109,11 @@ class _TravelReviewEditSheetState extends ConsumerState<TravelReviewEditSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '여행 후기 수정',
+              context.l10n(
+                ko: '여행 후기 수정',
+                en: 'Edit Travel Review',
+                ja: '旅の記録を編集',
+              ),
               style: GBTTypography.titleLarge.copyWith(
                 fontWeight: FontWeight.w800,
               ),
@@ -110,8 +123,16 @@ class _TravelReviewEditSheetState extends ConsumerState<TravelReviewEditSheet> {
               titleController: _titleController,
               contentController: _contentController,
               autofocusTitle: false,
-              titleHintText: '이번 여행은 어떠셨나요?',
-              contentHintText: '자세한 후기를 남겨주세요.',
+              titleHintText: context.l10n(
+                ko: '이번 여행은 어떠셨나요?',
+                en: 'How was this trip?',
+                ja: '今回の旅はいかがでしたか？',
+              ),
+              contentHintText: context.l10n(
+                ko: '자세한 후기를 남겨주세요.',
+                en: 'Share the details of your trip.',
+                ja: '詳しいレビューを書いてください。',
+              ),
               maxTitleLines: 2,
               minContentLines: 4,
               maxTitleLength: 255,
@@ -123,8 +144,12 @@ class _TravelReviewEditSheetState extends ConsumerState<TravelReviewEditSheet> {
               minLines: 2,
               maxLines: 4,
               maxLength: 2000,
-              decoration: const InputDecoration(
-                labelText: '동선 메모',
+              decoration: InputDecoration(
+                labelText: context.l10n(
+                  ko: '동선 메모',
+                  en: 'Route Notes',
+                  ja: '移動メモ',
+                ),
                 alignLabelWithHint: true,
               ),
             ),
@@ -138,7 +163,9 @@ class _TravelReviewEditSheetState extends ConsumerState<TravelReviewEditSheet> {
                   style: TextButton.styleFrom(
                     minimumSize: const Size(72, GBTSpacing.touchTarget),
                   ),
-                  child: const Text('취소'),
+                  child: Text(
+                    context.l10n(ko: '취소', en: 'Cancel', ja: 'キャンセル'),
+                  ),
                 ),
                 const SizedBox(width: GBTSpacing.sm),
                 Expanded(
@@ -155,7 +182,13 @@ class _TravelReviewEditSheetState extends ConsumerState<TravelReviewEditSheet> {
                             height: 20,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Text('수정 완료'),
+                        : Text(
+                            context.l10n(
+                              ko: '수정 완료',
+                              en: 'Save Changes',
+                              ja: '編集を完了する',
+                            ),
+                          ),
                   ),
                 ),
               ],

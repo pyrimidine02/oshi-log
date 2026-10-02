@@ -5,6 +5,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/localization/locale_text.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/theme.dart';
 import '../../../../core/utils/date_utils.dart';
@@ -36,14 +37,21 @@ class UnitDetailPage extends ConsumerWidget {
     final unit =
         unitState.valueOrNull ??
         initialUnit ??
-        Unit(id: unitIdentifier, code: unitIdentifier, displayName: '유닛');
+        Unit(
+          id: unitIdentifier,
+          code: unitIdentifier,
+          displayName: context.l10n(ko: '유닛', en: 'Unit', ja: 'ユニット'),
+        );
     final resolvedUnitIdentifier = unit.code.isNotEmpty ? unit.code : unit.id;
     final membersState = ref.watch(
       unitMembersControllerProvider((projectId, resolvedUnitIdentifier)),
     );
 
     return Scaffold(
-      appBar: gbtStandardAppBar(context, title: '유닛 기록'),
+      appBar: gbtStandardAppBar(
+        context,
+        title: context.l10n(ko: '유닛 기록', en: 'Unit Dossier', ja: 'ユニット記録'),
+      ),
       body: UnitDossierView(
         unit: unit,
         membersState: membersState,
@@ -73,7 +81,7 @@ class UnitDossierView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final metadata = _unitMetadata(unit);
+    final metadata = _unitMetadata(context, unit);
 
     return Material(
       color: Theme.of(context).scaffoldBackgroundColor,
@@ -95,29 +103,53 @@ class UnitDossierView extends StatelessWidget {
             child: _DossierSectionHeader(
               index: '01',
               eyebrow: 'ROSTER',
-              title: '멤버 · 성우',
+              title: context.l10n(
+                ko: '멤버 · 성우',
+                en: 'Members · Voice Cast',
+                ja: 'メンバー・声優',
+              ),
               detail: membersState.valueOrNull == null
                   ? null
-                  : '${membersState.valueOrNull!.length}명',
+                  : context.l10n(
+                      ko: '${membersState.valueOrNull!.length}명',
+                      en: '${membersState.valueOrNull!.length} members',
+                      ja: '${membersState.valueOrNull!.length}名',
+                    ),
             ),
           ),
           membersState.when<Widget>(
             loading: () =>
                 const SliverToBoxAdapter(child: _RosterLoadingState()),
-            error: (_, __) => const SliverToBoxAdapter(
+            error: (_, __) => SliverToBoxAdapter(
               child: GBTEmptyState(
                 icon: Icons.sync_problem_outlined,
-                title: '멤버 기록을 불러오지 못했어요',
-                subtitle: '잠시 후 다시 확인해 주세요.',
+                title: context.l10n(
+                  ko: '멤버 기록을 불러오지 못했어요',
+                  en: 'Could not load member records.',
+                  ja: 'メンバー記録を読み込めませんでした',
+                ),
+                subtitle: context.l10n(
+                  ko: '잠시 후 다시 확인해 주세요.',
+                  en: 'Please try again later.',
+                  ja: 'しばらくしてからもう一度お試しください。',
+                ),
               ),
             ),
             data: (members) {
               if (members.isEmpty) {
-                return const SliverToBoxAdapter(
+                return SliverToBoxAdapter(
                   child: GBTEmptyState(
                     icon: Icons.groups_outlined,
-                    title: '아직 등록된 멤버가 없어요',
-                    subtitle: '멤버 정보가 추가되면 이 명부에 표시됩니다.',
+                    title: context.l10n(
+                      ko: '아직 등록된 멤버가 없어요',
+                      en: 'No members registered yet',
+                      ja: 'まだメンバーが登録されていません',
+                    ),
+                    subtitle: context.l10n(
+                      ko: '멤버 정보가 추가되면 이 명부에 표시됩니다.',
+                      en: 'Members will appear here once added.',
+                      ja: 'メンバー情報が追加されるとここに表示されます。',
+                    ),
                   ),
                 );
               }
@@ -146,12 +178,16 @@ class UnitDossierView extends StatelessWidget {
   }
 }
 
-String _unitMetadata(Unit unit) {
+String _unitMetadata(BuildContext context, Unit unit) {
   final values = <String>[
     if (unit.code.trim().isNotEmpty) unit.code.trim(),
     if (unit.status?.trim().isNotEmpty == true) unit.status!.trim(),
     if (unit.debutDate?.trim().isNotEmpty == true)
-      '데뷔 ${unit.debutDate!.trim()}',
+      context.l10n(
+        ko: '데뷔 ${unit.debutDate!.trim()}',
+        en: 'Debuted ${unit.debutDate!.trim()}',
+        ja: 'デビュー${unit.debutDate!.trim()}',
+      ),
   ];
   return values.join('  ·  ');
 }
@@ -402,7 +438,17 @@ class _MemberIndexRow extends StatelessWidget {
                       if (birthdayDays != null && birthdayDays <= 7) ...[
                         const SizedBox(height: GBTSpacing.xs),
                         Text(
-                          birthdayDays == 0 ? '오늘 생일' : '생일까지 $birthdayDays일',
+                          birthdayDays == 0
+                              ? context.l10n(
+                                  ko: '오늘 생일',
+                                  en: 'Birthday today',
+                                  ja: '今日誕生日',
+                                )
+                              : context.l10n(
+                                  ko: '생일까지 $birthdayDays일',
+                                  en: '$birthdayDays days to birthday',
+                                  ja: '誕生日まで$birthdayDays日',
+                                ),
                           style: theme.textTheme.labelMedium?.copyWith(
                             color: colors.primary,
                             fontWeight: FontWeight.w700,
