@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:oshi_log/features/feed/presentation/widgets/post_compose_components.dart';
@@ -94,6 +95,13 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
+          locale: const Locale('ko'),
+          supportedLocales: const [Locale('ko'), Locale('en'), Locale('ja')],
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
           builder: (context, child) {
             final mediaQuery = MediaQuery.of(context);
             return MediaQuery(
@@ -146,6 +154,13 @@ void main() {
 
         await tester.pumpWidget(
           MaterialApp(
+            locale: const Locale('ko'),
+            supportedLocales: const [Locale('ko'), Locale('en'), Locale('ja')],
+            localizationsDelegates: const [
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
             builder: (context, child) {
               final mediaQuery = MediaQuery.of(context);
               return MediaQuery(

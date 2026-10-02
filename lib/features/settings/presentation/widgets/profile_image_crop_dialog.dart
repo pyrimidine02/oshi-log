@@ -7,6 +7,7 @@ import 'dart:typed_data';
 import 'package:crop_your_image/crop_your_image.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../core/localization/locale_text.dart';
 import '../../../../core/theme/gbt_colors.dart';
 import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';
@@ -72,7 +73,9 @@ class _ProfileImageCropDialogState extends State<ProfileImageCropDialog> {
                     onPressed: _isCropping
                         ? null
                         : () => Navigator.of(context).pop(),
-                    child: const Text('취소'),
+                    child: Text(
+                      context.l10n(ko: '취소', en: 'Cancel', ja: 'キャンセル'),
+                    ),
                   ),
                   Expanded(
                     child: Text(
@@ -92,7 +95,7 @@ class _ProfileImageCropDialogState extends State<ProfileImageCropDialog> {
                             height: 16,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Text('적용'),
+                        : Text(context.l10n(ko: '적용', en: 'Apply', ja: '適用する')),
                   ),
                 ],
               ),

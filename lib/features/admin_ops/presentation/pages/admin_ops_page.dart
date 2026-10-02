@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/localization/locale_text.dart';
 import '../../../../core/theme/gbt_colors.dart';
 import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';
@@ -46,14 +47,29 @@ class _AdminOpsPageState extends ConsumerState<AdminOpsPage> {
     return DefaultTabController(
       length: 4,
       child: Scaffold(
-        appBar: gbtStandardAppBar(context, title: '관리자 도구'),
+        appBar: gbtStandardAppBar(
+          context,
+          title: context.l10n(ko: '관리자 도구', en: 'Admin tools', ja: '管理者ツール'),
+        ),
         body: profileState.when(
-          loading: () => const Center(child: GBTLoading(message: '권한 확인 중...')),
+          loading: () => Center(
+            child: GBTLoading(
+              message: context.l10n(
+                ko: '권한 확인 중...',
+                en: 'Checking permissions...',
+                ja: '権限を確認しています...',
+              ),
+            ),
+          ),
           error: (error, _) => Center(
             child: Padding(
               padding: GBTSpacing.paddingPage,
               child: GBTErrorState(
-                message: '권한 정보를 확인하지 못했어요',
+                message: context.l10n(
+                  ko: '권한 정보를 확인하지 못했어요',
+                  en: 'Failed to check permissions.',
+                  ja: '権限情報を確認できませんでした。',
+                ),
                 onRetry: () => ref
                     .read(userProfileControllerProvider.notifier)
                     .load(forceRefresh: true),
@@ -105,24 +121,40 @@ class AdminOpsSectionNavigation extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       container: true,
-      label: '운영 업무 영역',
-      child: const SizedBox(
+      label: context.l10n(ko: '운영 업무 영역', en: 'Operations area', ja: '運営業務エリア'),
+      child: SizedBox(
         height: 56,
         child: GBTSegmentedTabBar(
           height: 56,
           isScrollable: true,
-          margin: EdgeInsets.fromLTRB(
+          margin: const EdgeInsets.fromLTRB(
             GBTSpacing.md,
             GBTSpacing.xs,
             GBTSpacing.md,
             GBTSpacing.xs,
           ),
-          labelPadding: EdgeInsets.symmetric(horizontal: GBTSpacing.md),
+          labelPadding: const EdgeInsets.symmetric(horizontal: GBTSpacing.md),
           tabs: [
-            Tab(text: '개요'),
-            Tab(text: '신고 관리'),
-            Tab(text: '권한 요청'),
-            Tab(text: '미디어 삭제'),
+            Tab(
+              text: context.l10n(ko: '개요', en: 'Overview', ja: '概要'),
+            ),
+            Tab(
+              text: context.l10n(ko: '신고 관리', en: 'Reports', ja: '通報管理'),
+            ),
+            Tab(
+              text: context.l10n(
+                ko: '권한 요청',
+                en: 'Permission requests',
+                ja: '権限リクエスト',
+              ),
+            ),
+            Tab(
+              text: context.l10n(
+                ko: '미디어 삭제',
+                en: 'Media deletions',
+                ja: 'メディア削除',
+              ),
+            ),
           ],
         ),
       ),
@@ -135,10 +167,18 @@ class _AccessDeniedView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const GBTEmptyState(
+    return GBTEmptyState(
       icon: Icons.lock_outline,
-      title: '접근 권한이 없습니다',
-      subtitle: '운영 권한이 확인된 계정만 접근할 수 있습니다.',
+      title: context.l10n(
+        ko: '접근 권한이 없습니다',
+        en: 'Access denied',
+        ja: 'アクセス権限がありません',
+      ),
+      subtitle: context.l10n(
+        ko: '운영 권한이 확인된 계정만 접근할 수 있습니다.',
+        en: 'Only accounts with verified operations permission can access this.',
+        ja: '運営権限が確認されたアカウントのみアクセスできます。',
+      ),
     );
   }
 }
@@ -153,9 +193,15 @@ class _OverviewTab extends ConsumerWidget {
     return state.when(
       loading: () => ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        children: const [
-          SizedBox(height: 120),
-          GBTLoading(message: '운영 지표를 불러오는 중...'),
+        children: [
+          const SizedBox(height: 120),
+          GBTLoading(
+            message: context.l10n(
+              ko: '운영 지표를 불러오는 중...',
+              en: 'Loading operations metrics...',
+              ja: '運営指標を読み込んでいます...',
+            ),
+          ),
         ],
       ),
       error: (error, _) => RefreshIndicator(
@@ -168,7 +214,11 @@ class _OverviewTab extends ConsumerWidget {
           children: [
             const SizedBox(height: 80),
             GBTErrorState(
-              message: '운영 지표를 불러오지 못했어요',
+              message: context.l10n(
+                ko: '운영 지표를 불러오지 못했어요',
+                en: 'Failed to load operations metrics.',
+                ja: '運営指標を読み込めませんでした。',
+              ),
               onRetry: () => ref
                   .read(adminDashboardControllerProvider.notifier)
                   .load(forceRefresh: true),
@@ -210,10 +260,18 @@ class AdminOpsSummaryLedger extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const GBTPageHeader(
+        GBTPageHeader(
           eyebrow: 'OPERATIONS LOG',
-          title: '운영 대기 원장',
-          description: '신고, 권한, 검증, 미디어 요청을 처리 순서대로 확인하세요.',
+          title: context.l10n(
+            ko: '운영 대기 원장',
+            en: 'Operations ledger',
+            ja: '運営待ち原簿',
+          ),
+          description: context.l10n(
+            ko: '신고, 권한, 검증, 미디어 요청을 처리 순서대로 확인하세요.',
+            en: 'Review reports, permissions, verification, and media requests in order.',
+            ja: '通報・権限・認証・メディアのリクエストを順番に確認してください。',
+          ),
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(
@@ -230,7 +288,11 @@ class AdminOpsSummaryLedger extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '현재 대기',
+                      context.l10n(
+                        ko: '현재 대기',
+                        en: 'Currently pending',
+                        ja: '現在の待ち件数',
+                      ),
                       style: GBTTypography.labelMedium.copyWith(
                         color: colors.primary,
                         fontWeight: FontWeight.w800,
@@ -239,7 +301,11 @@ class AdminOpsSummaryLedger extends StatelessWidget {
                     ),
                     const SizedBox(height: GBTSpacing.xs),
                     Text(
-                      '${summary.totalPendingItems}건',
+                      context.l10n(
+                        ko: '${summary.totalPendingItems}건',
+                        en: '${summary.totalPendingItems} items',
+                        ja: '${summary.totalPendingItems}件',
+                      ),
                       style: GBTTypography.displaySmall.copyWith(
                         color: colors.onSurface,
                         fontWeight: FontWeight.w800,
@@ -248,8 +314,16 @@ class AdminOpsSummaryLedger extends StatelessWidget {
                     const SizedBox(height: GBTSpacing.xs),
                     Text(
                       hasUrgent
-                          ? '신규 신고 ${summary.openReports}건을 먼저 확인해야 합니다.'
-                          : '신규로 접수된 신고는 없습니다.',
+                          ? context.l10n(
+                              ko: '신규 신고 ${summary.openReports}건을 먼저 확인해야 합니다.',
+                              en: 'Please review ${summary.openReports} new reports first.',
+                              ja: '新規通報${summary.openReports}件を先に確認してください。',
+                            )
+                          : context.l10n(
+                              ko: '신규로 접수된 신고는 없습니다.',
+                              en: 'No new reports.',
+                              ja: '新規の通報はありません。',
+                            ),
                       style: GBTTypography.bodySmall.copyWith(
                         color: hasUrgent
                             ? colors.error
@@ -297,37 +371,53 @@ class _StatGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final cards = <_StatCardData>[
       _StatCardData(
-        label: '신규 신고',
+        label: context.l10n(ko: '신규 신고', en: 'New reports', ja: '新規通報'),
         value: summary.openReports,
         color: GBTColors.error,
         icon: Icons.flag,
       ),
       _StatCardData(
-        label: '검토 중 신고',
+        label: context.l10n(
+          ko: '검토 중 신고',
+          en: 'In-review reports',
+          ja: '確認中の通報',
+        ),
         value: summary.inReviewReports,
         color: GBTColors.primary,
         icon: Icons.rule,
       ),
       _StatCardData(
-        label: '권한 변경 요청',
+        label: context.l10n(
+          ko: '권한 변경 요청',
+          en: 'Permission change requests',
+          ja: '権限変更リクエスト',
+        ),
         value: summary.pendingAccessGrantRequests,
         color: GBTColors.primary,
         icon: Icons.manage_accounts,
       ),
       _StatCardData(
-        label: '인증 이의제기',
+        label: context.l10n(
+          ko: '인증 이의제기',
+          en: 'Verification appeals',
+          ja: '認証異議申し立て',
+        ),
         value: summary.pendingVerificationAppeals,
         color: GBTColors.secondary,
         icon: Icons.gavel,
       ),
       _StatCardData(
-        label: '삭제 요청',
+        label: context.l10n(
+          ko: '삭제 요청',
+          en: 'Deletion requests',
+          ja: '削除リクエスト',
+        ),
         value: summary.pendingMediaDeletionRequests,
         color: GBTColors.error,
         icon: Icons.photo_library_outlined,
       ),
       _StatCardData(
-        label: '활성 제재',
+        label: context.l10n(ko: '활성 제재', en: 'Active sanctions', ja: '有効な制裁'),
         value: summary.activeSanctions,
         color: GBTColors.secondary,
         icon: Icons.policy,
@@ -440,7 +530,7 @@ class _ExtraMetricsSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '보조 지표',
+          context.l10n(ko: '보조 지표', en: 'Secondary metrics', ja: '補助指標'),
           style: GBTTypography.labelMedium.copyWith(
             color: colors.primary,
             fontWeight: FontWeight.w800,
@@ -523,29 +613,55 @@ class _ReportsTab extends ConsumerWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: GBTSpacing.paddingPage,
           children: [
-            const _AdminOpsTabHeader(
+            _AdminOpsTabHeader(
               eyebrow: 'COMMUNITY MODERATION',
-              title: '신고 처리 원장',
-              description: '접수 순서와 담당 상태를 기준으로 처리합니다.',
+              title: context.l10n(
+                ko: '신고 처리 원장',
+                en: 'Report ledger',
+                ja: '通報処理原簿',
+              ),
+              description: context.l10n(
+                ko: '접수 순서와 담당 상태를 기준으로 처리합니다.',
+                en: 'Process reports in order of receipt and assignment status.',
+                ja: '受付順と担当状況に基づいて処理します。',
+              ),
             ),
             _ReportFilterRow(selected: state.filter),
             const SizedBox(height: GBTSpacing.xl),
-            const GBTLoading(message: '신고 목록을 불러오는 중...'),
+            GBTLoading(
+              message: context.l10n(
+                ko: '신고 목록을 불러오는 중...',
+                en: 'Loading reports...',
+                ja: '通報リストを読み込んでいます...',
+              ),
+            ),
           ],
         ),
         error: (error, _) => ListView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: GBTSpacing.paddingPage,
           children: [
-            const _AdminOpsTabHeader(
+            _AdminOpsTabHeader(
               eyebrow: 'COMMUNITY MODERATION',
-              title: '신고 처리 원장',
-              description: '접수 순서와 담당 상태를 기준으로 처리합니다.',
+              title: context.l10n(
+                ko: '신고 처리 원장',
+                en: 'Report ledger',
+                ja: '通報処理原簿',
+              ),
+              description: context.l10n(
+                ko: '접수 순서와 담당 상태를 기준으로 처리합니다.',
+                en: 'Process reports in order of receipt and assignment status.',
+                ja: '受付順と担当状況に基づいて処理します。',
+              ),
             ),
             _ReportFilterRow(selected: state.filter),
             const SizedBox(height: GBTSpacing.xl),
             GBTErrorState(
-              message: '신고 목록을 불러오지 못했어요',
+              message: context.l10n(
+                ko: '신고 목록을 불러오지 못했어요',
+                en: 'Failed to load reports.',
+                ja: '通報リストを読み込めませんでした。',
+              ),
               onRetry: () => ref
                   .read(adminReportsControllerProvider.notifier)
                   .load(forceRefresh: true),
@@ -556,17 +672,31 @@ class _ReportsTab extends ConsumerWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: GBTSpacing.paddingPage,
           children: [
-            const _AdminOpsTabHeader(
+            _AdminOpsTabHeader(
               eyebrow: 'COMMUNITY MODERATION',
-              title: '신고 처리 원장',
-              description: '접수 순서와 담당 상태를 기준으로 처리합니다.',
+              title: context.l10n(
+                ko: '신고 처리 원장',
+                en: 'Report ledger',
+                ja: '通報処理原簿',
+              ),
+              description: context.l10n(
+                ko: '접수 순서와 담당 상태를 기준으로 처리합니다.',
+                en: 'Process reports in order of receipt and assignment status.',
+                ja: '受付順と担当状況に基づいて処理します。',
+              ),
             ),
             _ReportFilterRow(selected: state.filter),
             const SizedBox(height: GBTSpacing.sm),
             if (reports.isEmpty)
-              const Padding(
-                padding: EdgeInsets.only(top: 96),
-                child: GBTEmptyState(message: '현재 처리할 신고가 없습니다'),
+              Padding(
+                padding: const EdgeInsets.only(top: 96),
+                child: GBTEmptyState(
+                  message: context.l10n(
+                    ko: '현재 처리할 신고가 없습니다',
+                    en: 'No reports to process right now.',
+                    ja: '現在処理対象の通報はありません。',
+                  ),
+                ),
               )
             else
               ...reports.map(
@@ -597,29 +727,55 @@ class _RoleRequestsTab extends ConsumerWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: GBTSpacing.paddingPage,
           children: [
-            const _AdminOpsTabHeader(
+            _AdminOpsTabHeader(
               eyebrow: 'ACCESS DESK',
-              title: '권한 요청 원장',
-              description: '프로젝트 역할과 사유를 확인한 후 승인하세요.',
+              title: context.l10n(
+                ko: '권한 요청 원장',
+                en: 'Permission request ledger',
+                ja: '権限リクエスト原簿',
+              ),
+              description: context.l10n(
+                ko: '프로젝트 역할과 사유를 확인한 후 승인하세요.',
+                en: 'Check the project role and reason, then approve.',
+                ja: 'プロジェクトの役割と理由を確認してから承認してください。',
+              ),
             ),
             _RoleRequestFilterRow(selected: state.filter),
             const SizedBox(height: GBTSpacing.xl),
-            const GBTLoading(message: '권한 요청 목록을 불러오는 중...'),
+            GBTLoading(
+              message: context.l10n(
+                ko: '권한 요청 목록을 불러오는 중...',
+                en: 'Loading permission requests...',
+                ja: '権限リクエストリストを読み込んでいます...',
+              ),
+            ),
           ],
         ),
         error: (error, _) => ListView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: GBTSpacing.paddingPage,
           children: [
-            const _AdminOpsTabHeader(
+            _AdminOpsTabHeader(
               eyebrow: 'ACCESS DESK',
-              title: '권한 요청 원장',
-              description: '프로젝트 역할과 사유를 확인한 후 승인하세요.',
+              title: context.l10n(
+                ko: '권한 요청 원장',
+                en: 'Permission request ledger',
+                ja: '権限リクエスト原簿',
+              ),
+              description: context.l10n(
+                ko: '프로젝트 역할과 사유를 확인한 후 승인하세요.',
+                en: 'Check the project role and reason, then approve.',
+                ja: 'プロジェクトの役割と理由を確認してから承認してください。',
+              ),
             ),
             _RoleRequestFilterRow(selected: state.filter),
             const SizedBox(height: GBTSpacing.xl),
             GBTErrorState(
-              message: '권한 요청 목록을 불러오지 못했어요',
+              message: context.l10n(
+                ko: '권한 요청 목록을 불러오지 못했어요',
+                en: 'Failed to load permission requests.',
+                ja: '権限リクエストリストを読み込めませんでした。',
+              ),
               onRetry: () => ref
                   .read(adminRoleRequestsControllerProvider.notifier)
                   .load(forceRefresh: true),
@@ -630,17 +786,31 @@ class _RoleRequestsTab extends ConsumerWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: GBTSpacing.paddingPage,
           children: [
-            const _AdminOpsTabHeader(
+            _AdminOpsTabHeader(
               eyebrow: 'ACCESS DESK',
-              title: '권한 요청 원장',
-              description: '프로젝트 역할과 사유를 확인한 후 승인하세요.',
+              title: context.l10n(
+                ko: '권한 요청 원장',
+                en: 'Permission request ledger',
+                ja: '権限リクエスト原簿',
+              ),
+              description: context.l10n(
+                ko: '프로젝트 역할과 사유를 확인한 후 승인하세요.',
+                en: 'Check the project role and reason, then approve.',
+                ja: 'プロジェクトの役割と理由を確認してから承認してください。',
+              ),
             ),
             _RoleRequestFilterRow(selected: state.filter),
             const SizedBox(height: GBTSpacing.sm),
             if (requests.isEmpty)
-              const Padding(
-                padding: EdgeInsets.only(top: 96),
-                child: GBTEmptyState(message: '현재 처리할 권한 요청이 없습니다'),
+              Padding(
+                padding: const EdgeInsets.only(top: 96),
+                child: GBTEmptyState(
+                  message: context.l10n(
+                    ko: '현재 처리할 권한 요청이 없습니다',
+                    en: 'No permission requests to process right now.',
+                    ja: '現在処理対象の権限リクエストはありません。',
+                  ),
+                ),
               )
             else
               ...requests.map(
@@ -672,28 +842,54 @@ class _MediaDeletionsTab extends ConsumerWidget {
         loading: () => ListView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: GBTSpacing.paddingPage,
-          children: const [
+          children: [
             _AdminOpsTabHeader(
               eyebrow: 'MEDIA CONTROL',
-              title: '미디어 삭제 원장',
-              description: '연결된 콘텐츠 범위를 확인한 뒤 삭제를 진행하세요.',
+              title: context.l10n(
+                ko: '미디어 삭제 원장',
+                en: 'Media deletion ledger',
+                ja: 'メディア削除原簿',
+              ),
+              description: context.l10n(
+                ko: '연결된 콘텐츠 범위를 확인한 뒤 삭제를 진행하세요.',
+                en: 'Check the scope of linked content before deleting.',
+                ja: '関連コンテンツの範囲を確認してから削除してください。',
+              ),
             ),
-            SizedBox(height: GBTSpacing.xl),
-            GBTLoading(message: '미디어 삭제 요청 목록을 불러오는 중...'),
+            const SizedBox(height: GBTSpacing.xl),
+            GBTLoading(
+              message: context.l10n(
+                ko: '미디어 삭제 요청 목록을 불러오는 중...',
+                en: 'Loading media deletion requests...',
+                ja: 'メディア削除リクエストリストを読み込んでいます...',
+              ),
+            ),
           ],
         ),
         error: (error, _) => ListView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: GBTSpacing.paddingPage,
           children: [
-            const _AdminOpsTabHeader(
+            _AdminOpsTabHeader(
               eyebrow: 'MEDIA CONTROL',
-              title: '미디어 삭제 원장',
-              description: '연결된 콘텐츠 범위를 확인한 뒤 삭제를 진행하세요.',
+              title: context.l10n(
+                ko: '미디어 삭제 원장',
+                en: 'Media deletion ledger',
+                ja: 'メディア削除原簿',
+              ),
+              description: context.l10n(
+                ko: '연결된 콘텐츠 범위를 확인한 뒤 삭제를 진행하세요.',
+                en: 'Check the scope of linked content before deleting.',
+                ja: '関連コンテンツの範囲を確認してから削除してください。',
+              ),
             ),
             const SizedBox(height: GBTSpacing.xl),
             GBTErrorState(
-              message: '미디어 삭제 요청 목록을 불러오지 못했어요',
+              message: context.l10n(
+                ko: '미디어 삭제 요청 목록을 불러오지 못했어요',
+                en: 'Failed to load media deletion requests.',
+                ja: 'メディア削除リクエストリストを読み込めませんでした。',
+              ),
               onRetry: () => ref
                   .read(adminMediaDeletionsControllerProvider.notifier)
                   .load(forceRefresh: true),
@@ -704,15 +900,29 @@ class _MediaDeletionsTab extends ConsumerWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: GBTSpacing.paddingPage,
           children: [
-            const _AdminOpsTabHeader(
+            _AdminOpsTabHeader(
               eyebrow: 'MEDIA CONTROL',
-              title: '미디어 삭제 원장',
-              description: '연결된 콘텐츠 범위를 확인한 뒤 삭제를 진행하세요.',
+              title: context.l10n(
+                ko: '미디어 삭제 원장',
+                en: 'Media deletion ledger',
+                ja: 'メディア削除原簿',
+              ),
+              description: context.l10n(
+                ko: '연결된 콘텐츠 범위를 확인한 뒤 삭제를 진행하세요.',
+                en: 'Check the scope of linked content before deleting.',
+                ja: '関連コンテンツの範囲を確認してから削除してください。',
+              ),
             ),
             if (requests.isEmpty)
-              const Padding(
-                padding: EdgeInsets.only(top: 96),
-                child: GBTEmptyState(message: '현재 처리할 미디어 삭제 요청이 없습니다'),
+              Padding(
+                padding: const EdgeInsets.only(top: 96),
+                child: GBTEmptyState(
+                  message: context.l10n(
+                    ko: '현재 처리할 미디어 삭제 요청이 없습니다',
+                    en: 'No media deletion requests to process right now.',
+                    ja: '現在処理対象のメディア削除リクエストはありません。',
+                  ),
+                ),
               )
             else
               ...requests.map(
@@ -931,7 +1141,9 @@ class _RoleRequestCard extends ConsumerWidget {
                                   ref,
                                   decision: AdminRoleRequestDecision.reject,
                                 ),
-                          child: const Text('거절'),
+                          child: Text(
+                            context.l10n(ko: '거절', en: 'Reject', ja: '却下する'),
+                          ),
                         ),
                       ),
                     ),
@@ -947,7 +1159,9 @@ class _RoleRequestCard extends ConsumerWidget {
                                   ref,
                                   decision: AdminRoleRequestDecision.approve,
                                 ),
-                          child: const Text('승인'),
+                          child: Text(
+                            context.l10n(ko: '승인', en: 'Approve', ja: '承認する'),
+                          ),
                         ),
                       ),
                     ),
@@ -983,8 +1197,18 @@ class _RoleRequestCard extends ConsumerWidget {
       return;
     }
     final message = result is Success<void>
-        ? '요청을 ${decision.label}했습니다'
-        : (result is Err<void> ? result.failure.userMessage : '처리에 실패했습니다');
+        ? context.l10n(
+            ko: '요청을 ${decision.label}했습니다',
+            en: 'Request ${_decisionLabel(context, decision)}.',
+            ja: 'リクエストを${_decisionLabel(context, decision)}しました。',
+          )
+        : (result is Err<void>
+              ? result.failure.userMessage
+              : context.l10n(
+                  ko: '처리에 실패했습니다',
+                  en: 'Failed to process the request.',
+                  ja: '処理に失敗しました。',
+                ));
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(message)));
@@ -999,27 +1223,41 @@ class _RoleRequestCard extends ConsumerWidget {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: Text('요청 ${decision.label}'),
+          title: Text(
+            context.l10n(
+              ko: '요청 ${decision.label}',
+              en: '${_decisionLabel(context, decision)} request',
+              ja: 'リクエストを${_decisionLabel(context, decision)}',
+            ),
+          ),
           content: TextField(
             controller: controller,
             minLines: 2,
             maxLines: 4,
-            decoration: const InputDecoration(
-              labelText: '메모 (선택)',
-              hintText: '운영 메모를 입력하세요',
+            decoration: InputDecoration(
+              labelText: context.l10n(
+                ko: '메모 (선택)',
+                en: 'Memo (optional)',
+                ja: 'メモ（任意）',
+              ),
+              hintText: context.l10n(
+                ko: '운영 메모를 입력하세요',
+                en: 'Enter an operations memo',
+                ja: '運営メモを入力してください',
+              ),
             ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('취소'),
+              child: Text(context.l10n(ko: '취소', en: 'Cancel', ja: 'キャンセル')),
             ),
             FilledButton(
               style: decision == AdminRoleRequestDecision.reject
                   ? FilledButton.styleFrom(backgroundColor: GBTColors.error)
                   : null,
               onPressed: () => Navigator.of(dialogContext).pop(controller.text),
-              child: Text(decision.label),
+              child: Text(_decisionLabel(dialogContext, decision)),
             ),
           ],
         );
@@ -1113,7 +1351,11 @@ class _MediaDeletionRequestCard extends ConsumerWidget {
               ),
               const SizedBox(height: GBTSpacing.sm),
               Text(
-                '요청자 · ${request.requestedBy}',
+                context.l10n(
+                  ko: '요청자 · ${request.requestedBy}',
+                  en: 'Requested by · ${request.requestedBy}',
+                  ja: 'リクエスト者 · ${request.requestedBy}',
+                ),
                 style: GBTTypography.bodySmall.copyWith(
                   color: colors.onSurfaceVariant,
                 ),
@@ -1147,7 +1389,13 @@ class _MediaDeletionRequestCard extends ConsumerWidget {
                       ? null
                       : () =>
                             _approve(context, ref, deleteLinkedContents: false),
-                  child: const Text('미디어만 삭제'),
+                  child: Text(
+                    context.l10n(
+                      ko: '미디어만 삭제',
+                      en: 'Delete media only',
+                      ja: 'メディアのみ削除する',
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: GBTSpacing.sm),
@@ -1162,7 +1410,13 @@ class _MediaDeletionRequestCard extends ConsumerWidget {
                       ? null
                       : () =>
                             _approve(context, ref, deleteLinkedContents: true),
-                  child: const Text('연관 콘텐츠도 삭제'),
+                  child: Text(
+                    context.l10n(
+                      ko: '연관 콘텐츠도 삭제',
+                      en: 'Delete linked content too',
+                      ja: '関連コンテンツも削除する',
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: GBTSpacing.xs),
@@ -1173,7 +1427,7 @@ class _MediaDeletionRequestCard extends ConsumerWidget {
                     minimumSize: const Size(0, GBTSpacing.touchTarget),
                   ),
                   onPressed: isMutating ? null : () => _reject(context, ref),
-                  child: const Text('반려'),
+                  child: Text(context.l10n(ko: '반려', en: 'Reject', ja: '却下する')),
                 ),
               ),
             ],
@@ -1192,21 +1446,35 @@ class _MediaDeletionRequestCard extends ConsumerWidget {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('삭제 요청 승인'),
+          title: Text(
+            context.l10n(
+              ko: '삭제 요청 승인',
+              en: 'Approve deletion request',
+              ja: '削除リクエストを承認',
+            ),
+          ),
           content: Text(
             deleteLinkedContents
-                ? '해당 미디어와 연관 게시글/장소후기를 함께 삭제합니다. 진행할까요?'
-                : '해당 미디어만 삭제합니다. 진행할까요?',
+                ? context.l10n(
+                    ko: '해당 미디어와 연관 게시글/장소후기를 함께 삭제합니다. 진행할까요?',
+                    en: 'This will delete the media and its linked posts/place reviews. Continue?',
+                    ja: 'このメディアと関連する投稿・場所レビューも削除します。続けますか？',
+                  )
+                : context.l10n(
+                    ko: '해당 미디어만 삭제합니다. 진행할까요?',
+                    en: 'This will delete only the media. Continue?',
+                    ja: 'このメディアのみ削除します。続けますか？',
+                  ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('취소'),
+              child: Text(context.l10n(ko: '취소', en: 'Cancel', ja: 'キャンセル')),
             ),
             FilledButton(
               style: FilledButton.styleFrom(backgroundColor: GBTColors.error),
               onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('승인'),
+              child: Text(context.l10n(ko: '승인', en: 'Approve', ja: '承認する')),
             ),
           ],
         );
@@ -1226,8 +1494,18 @@ class _MediaDeletionRequestCard extends ConsumerWidget {
       return;
     }
     final message = result is Success<void>
-        ? '삭제 요청을 승인했습니다'
-        : (result is Err<void> ? result.failure.userMessage : '처리에 실패했습니다');
+        ? context.l10n(
+            ko: '삭제 요청을 승인했습니다',
+            en: 'Deletion request approved.',
+            ja: '削除リクエストを承認しました。',
+          )
+        : (result is Err<void>
+              ? result.failure.userMessage
+              : context.l10n(
+                  ko: '처리에 실패했습니다',
+                  en: 'Failed to process the request.',
+                  ja: '処理に失敗しました。',
+                ));
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(message)));
@@ -1241,8 +1519,18 @@ class _MediaDeletionRequestCard extends ConsumerWidget {
       return;
     }
     final message = result is Success<void>
-        ? '삭제 요청을 반려했습니다'
-        : (result is Err<void> ? result.failure.userMessage : '처리에 실패했습니다');
+        ? context.l10n(
+            ko: '삭제 요청을 반려했습니다',
+            en: 'Deletion request rejected.',
+            ja: '削除リクエストを却下しました。',
+          )
+        : (result is Err<void>
+              ? result.failure.userMessage
+              : context.l10n(
+                  ko: '처리에 실패했습니다',
+                  en: 'Failed to process the request.',
+                  ja: '処理に失敗しました。',
+                ));
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(message)));
@@ -1360,14 +1648,22 @@ class _ReportCard extends ConsumerWidget {
                         ),
                       const SizedBox(height: GBTSpacing.sm),
                       Text(
-                        '접수 · ${DateFormat('yyyy.MM.dd HH:mm').format(report.createdAt)}',
+                        context.l10n(
+                          ko: '접수 · ${DateFormat('yyyy.MM.dd HH:mm').format(report.createdAt)}',
+                          en: 'Received · ${DateFormat('yyyy.MM.dd HH:mm').format(report.createdAt)}',
+                          ja: '受付 · ${DateFormat('yyyy.MM.dd HH:mm').format(report.createdAt)}',
+                        ),
                         style: GBTTypography.labelSmall.copyWith(
                           color: colors.onSurfaceVariant,
                           fontFeatures: const [FontFeature.tabularFigures()],
                         ),
                       ),
                       Text(
-                        '담당 · ${report.assigneeName ?? '미할당'}',
+                        context.l10n(
+                          ko: '담당 · ${report.assigneeName ?? '미할당'}',
+                          en: 'Assignee · ${report.assigneeName ?? 'Unassigned'}',
+                          ja: '担当 · ${report.assigneeName ?? '未割当'}',
+                        ),
                         style: GBTTypography.labelSmall.copyWith(
                           color: colors.onSurfaceVariant,
                         ),
@@ -1404,7 +1700,14 @@ class _ReportCard extends ConsumerWidget {
       case _ReportAction.assignToMe:
         final userId = profile?.id;
         if (userId == null || userId.isEmpty) {
-          _showSnackBar(context, '담당자 할당을 위해 사용자 정보가 필요해요');
+          _showSnackBar(
+            context,
+            context.l10n(
+              ko: '담당자 할당을 위해 사용자 정보가 필요해요',
+              en: 'User information is required to assign an assignee.',
+              ja: '担当者を割り当てるにはユーザー情報が必要です。',
+            ),
+          );
           return;
         }
         result = await notifier.assignToUser(
@@ -1433,7 +1736,14 @@ class _ReportCard extends ConsumerWidget {
     }
 
     if (result is Success<void>) {
-      _showSnackBar(context, '요청이 반영되었습니다');
+      _showSnackBar(
+        context,
+        context.l10n(
+          ko: '요청이 반영되었습니다',
+          en: 'Request applied.',
+          ja: 'リクエストを反映しました。',
+        ),
+      );
       return;
     }
 
@@ -1497,7 +1807,7 @@ class _ReportActionSheet extends StatelessWidget {
                   ),
                   const SizedBox(height: GBTSpacing.xs),
                   Text(
-                    '신고 처리',
+                    context.l10n(ko: '신고 처리', en: 'Handle report', ja: '通報処理'),
                     style: GBTTypography.titleLarge.copyWith(
                       color: colors.onSurface,
                       fontWeight: FontWeight.w800,
@@ -1519,28 +1829,46 @@ class _ReportActionSheet extends StatelessWidget {
             _ActionSheetItem(
               icon: Icons.person_add_alt_1,
               iconColor: colors.primary,
-              title: '나에게 할당',
-              subtitle: report.assigneeName ?? '현재 미할당',
+              title: context.l10n(
+                ko: '나에게 할당',
+                en: 'Assign to me',
+                ja: '自分に割り当てる',
+              ),
+              subtitle:
+                  report.assigneeName ??
+                  context.l10n(
+                    ko: '현재 미할당',
+                    en: 'Currently unassigned',
+                    ja: '現在未割当',
+                  ),
               onTap: () => Navigator.of(context).pop(_ReportAction.assignToMe),
             ),
             _ActionSheetItem(
               icon: Icons.rule_outlined,
               iconColor: colors.primary,
-              title: '검토 중으로 변경',
+              title: context.l10n(
+                ko: '검토 중으로 변경',
+                en: 'Mark as in review',
+                ja: '確認中に変更',
+              ),
               onTap: () =>
                   Navigator.of(context).pop(_ReportAction.markInReview),
             ),
             _ActionSheetItem(
               icon: Icons.check_circle_outline,
               iconColor: colors.secondary,
-              title: '조치 완료로 변경',
+              title: context.l10n(
+                ko: '조치 완료로 변경',
+                en: 'Mark as resolved',
+                ja: '対応完了に変更',
+              ),
               onTap: () =>
                   Navigator.of(context).pop(_ReportAction.markResolved),
             ),
             _ActionSheetItem(
               icon: Icons.block_outlined,
               iconColor: colors.error,
-              title: '반려 처리',
+              title: context.l10n(ko: '반려 처리', en: 'Reject', ja: '却下処理'),
               onTap: () => Navigator.of(context).pop(_ReportAction.reject),
             ),
             const SizedBox(height: GBTSpacing.sm),
@@ -1641,6 +1969,15 @@ class AdminReportStatusPalette {
 
   final Color foreground;
   final Color background;
+}
+
+String _decisionLabel(BuildContext context, AdminRoleRequestDecision decision) {
+  switch (decision) {
+    case AdminRoleRequestDecision.approve:
+      return context.l10n(ko: '승인', en: 'approved', ja: '承認');
+    case AdminRoleRequestDecision.reject:
+      return context.l10n(ko: '거절', en: 'rejected', ja: '却下');
+  }
 }
 
 AdminReportStatusPalette _paletteFor(AdminReportStatus status) {

@@ -3212,18 +3212,20 @@ class _TimelineActionButton extends StatelessWidget {
 }
 
 String _compactCountLabel(BuildContext context, int count) {
-  if (count >= 10000)
+  if (count >= 10000) {
     return context.l10n(
       ko: '${(count / 10000).toStringAsFixed(1)}만',
       en: '${(count / 10000).toStringAsFixed(1)}0K',
       ja: '${(count / 10000).toStringAsFixed(1)}万',
     );
-  if (count >= 1000)
+  }
+  if (count >= 1000) {
     return context.l10n(
       ko: '${(count / 1000).toStringAsFixed(1)}천',
       en: '${(count / 1000).toStringAsFixed(1)}K',
       ja: '${(count / 1000).toStringAsFixed(1)}千',
     );
+  }
   return count.toString();
 }
 

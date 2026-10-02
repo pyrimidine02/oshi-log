@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:oshi_log/core/theme/gbt_theme.dart';
@@ -15,6 +16,13 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: GBTTheme.light,
+        locale: const Locale('ko'),
+        supportedLocales: const [Locale('ko')],
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
         home: const MediaQuery(
           data: MediaQueryData(
             size: Size(320, 720),
@@ -57,6 +65,13 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: GBTTheme.light,
+        locale: const Locale('ko'),
+        supportedLocales: const [Locale('ko')],
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
         home: const MediaQuery(
           data: MediaQueryData(
             size: Size(320, 760),

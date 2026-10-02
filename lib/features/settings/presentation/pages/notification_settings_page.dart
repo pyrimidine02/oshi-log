@@ -46,11 +46,21 @@ class NotificationSettingsPage extends ConsumerWidget {
         title: context.l10n(ko: '알림 설정', en: 'Notifications', ja: '通知設定'),
       ),
       body: state.when(
-        loading: () => const GBTLoading(message: '알림 설정을 불러오는 중...'),
+        loading: () => GBTLoading(
+          message: context.l10n(
+            ko: '알림 설정을 불러오는 중...',
+            en: 'Loading notification settings...',
+            ja: '通知設定を読み込んでいます...',
+          ),
+        ),
         error: (error, _) {
           final message = error is Failure
               ? error.userMessage
-              : '알림 설정을 불러오지 못했어요';
+              : context.l10n(
+                  ko: '알림 설정을 불러오지 못했어요',
+                  en: 'Failed to load notification settings.',
+                  ja: '通知設定を読み込めませんでした。',
+                );
           return GBTErrorState(
             message: message,
             onRetry: () => ref
@@ -66,9 +76,17 @@ class NotificationSettingsPage extends ConsumerWidget {
                 .updateSettings(updated);
             if (result is Err<NotificationSettings>) {
               if (context.mounted) {
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(const SnackBar(content: Text('설정을 저장하지 못했어요')));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      context.l10n(
+                        ko: '설정을 저장하지 못했어요',
+                        en: 'Failed to save settings.',
+                        ja: '設定を保存できませんでした。',
+                      ),
+                    ),
+                  ),
+                );
               }
             }
           },
@@ -106,26 +124,50 @@ class _NotificationSettingsView extends StatelessWidget {
         // EN: Channel group — push/email
         // KO: 채널 그룹 — 푸시/이메일
         _NotifGroupCard(
-          title: '수신 채널',
+          title: context.l10n(ko: '수신 채널', en: 'Channels', ja: '受信チャネル'),
           isDark: isDark,
           children: [
             _NotifToggleRow(
               icon: Icons.notifications_active_rounded,
               iconColor: GBTColors.warning,
-              title: '푸시 알림',
-              subtitle: '앱 푸시 알림 수신',
+              title: context.l10n(
+                ko: '푸시 알림',
+                en: 'Push notifications',
+                ja: 'プッシュ通知',
+              ),
+              subtitle: context.l10n(
+                ko: '앱 푸시 알림 수신',
+                en: 'Receive app push notifications',
+                ja: 'アプリのプッシュ通知を受け取ります',
+              ),
               value: settings.pushEnabled,
-              semanticLabel: '푸시 알림 ${settings.pushEnabled ? "켜짐" : "꺼짐"}',
+              semanticLabel: context.l10n(
+                ko: '푸시 알림 ${settings.pushEnabled ? "켜짐" : "꺼짐"}',
+                en: 'Push notifications ${settings.pushEnabled ? "on" : "off"}',
+                ja: 'プッシュ通知${settings.pushEnabled ? "オン" : "オフ"}',
+              ),
               onChanged: (v) => onChanged(settings.copyWith(pushEnabled: v)),
               isDark: isDark,
             ),
             _NotifToggleRow(
               icon: Icons.email_rounded,
               iconColor: GBTColors.accentBlue,
-              title: '이메일 알림',
-              subtitle: '이메일로 알림 수신',
+              title: context.l10n(
+                ko: '이메일 알림',
+                en: 'Email notifications',
+                ja: 'メール通知',
+              ),
+              subtitle: context.l10n(
+                ko: '이메일로 알림 수신',
+                en: 'Receive notifications by email',
+                ja: 'メールで通知を受け取ります',
+              ),
               value: settings.emailEnabled,
-              semanticLabel: '이메일 알림 ${settings.emailEnabled ? "켜짐" : "꺼짐"}',
+              semanticLabel: context.l10n(
+                ko: '이메일 알림 ${settings.emailEnabled ? "켜짐" : "꺼짐"}',
+                en: 'Email notifications ${settings.emailEnabled ? "on" : "off"}',
+                ja: 'メール通知${settings.emailEnabled ? "オン" : "オフ"}',
+              ),
               onChanged: (v) => onChanged(settings.copyWith(emailEnabled: v)),
               isDark: isDark,
               isLast: true,
@@ -137,17 +179,28 @@ class _NotificationSettingsView extends StatelessWidget {
         // EN: Content group — live/favorites/comments/following posts
         // KO: 콘텐츠 그룹 — 라이브/즐겨찾기/댓글/팔로잉 글
         _NotifGroupCard(
-          title: '콘텐츠 알림',
+          title: context.l10n(
+            ko: '콘텐츠 알림',
+            en: 'Content notifications',
+            ja: 'コンテンツ通知',
+          ),
           isDark: isDark,
           children: [
             _NotifToggleRow(
               icon: Icons.event_rounded,
               iconColor: GBTColors.secondary,
-              title: '이벤트',
-              subtitle: '다가오는 공연 소식',
+              title: context.l10n(ko: '이벤트', en: 'Events', ja: 'イベント'),
+              subtitle: context.l10n(
+                ko: '다가오는 공연 소식',
+                en: 'Upcoming event updates',
+                ja: '開催予定のイベント情報',
+              ),
               value: settings.liveEventsEnabled,
-              semanticLabel:
-                  '이벤트 알림 ${settings.liveEventsEnabled ? "켜짐" : "꺼짐"}',
+              semanticLabel: context.l10n(
+                ko: '이벤트 알림 ${settings.liveEventsEnabled ? "켜짐" : "꺼짐"}',
+                en: 'Event notifications ${settings.liveEventsEnabled ? "on" : "off"}',
+                ja: 'イベント通知${settings.liveEventsEnabled ? "オン" : "オフ"}',
+              ),
               onChanged: (v) =>
                   onChanged(settings.copyWith(liveEventsEnabled: v)),
               isDark: isDark,
@@ -156,11 +209,18 @@ class _NotificationSettingsView extends StatelessWidget {
             _NotifToggleRow(
               icon: Icons.favorite_rounded,
               iconColor: GBTColors.favorite,
-              title: '즐겨찾기',
-              subtitle: '즐겨찾기한 장소/콘텐츠 소식',
+              title: context.l10n(ko: '즐겨찾기', en: 'Favorites', ja: 'お気に入り'),
+              subtitle: context.l10n(
+                ko: '즐겨찾기한 장소/콘텐츠 소식',
+                en: 'Updates on favorited places and content',
+                ja: 'お気に入りの場所・コンテンツ情報',
+              ),
               value: settings.favoritesEnabled,
-              semanticLabel:
-                  '즐겨찾기 알림 ${settings.favoritesEnabled ? "켜짐" : "꺼짐"}',
+              semanticLabel: context.l10n(
+                ko: '즐겨찾기 알림 ${settings.favoritesEnabled ? "켜짐" : "꺼짐"}',
+                en: 'Favorites notifications ${settings.favoritesEnabled ? "on" : "off"}',
+                ja: 'お気に入り通知${settings.favoritesEnabled ? "オン" : "オフ"}',
+              ),
               onChanged: (v) =>
                   onChanged(settings.copyWith(favoritesEnabled: v)),
               isDark: isDark,
@@ -169,10 +229,18 @@ class _NotificationSettingsView extends StatelessWidget {
             _NotifToggleRow(
               icon: Icons.chat_bubble_rounded,
               iconColor: GBTColors.accent,
-              title: '댓글',
-              subtitle: '댓글/후기 알림',
+              title: context.l10n(ko: '댓글', en: 'Comments', ja: 'コメント'),
+              subtitle: context.l10n(
+                ko: '댓글/후기 알림',
+                en: 'Comment and review notifications',
+                ja: 'コメント・レビュー通知',
+              ),
               value: settings.commentsEnabled,
-              semanticLabel: '댓글 알림 ${settings.commentsEnabled ? "켜짐" : "꺼짐"}',
+              semanticLabel: context.l10n(
+                ko: '댓글 알림 ${settings.commentsEnabled ? "켜짐" : "꺼짐"}',
+                en: 'Comment notifications ${settings.commentsEnabled ? "on" : "off"}',
+                ja: 'コメント通知${settings.commentsEnabled ? "オン" : "オフ"}',
+              ),
               onChanged: (v) =>
                   onChanged(settings.copyWith(commentsEnabled: v)),
               isDark: isDark,
@@ -181,11 +249,22 @@ class _NotificationSettingsView extends StatelessWidget {
             _NotifToggleRow(
               icon: Icons.people_alt_rounded,
               iconColor: GBTColors.success,
-              title: '팔로잉 글',
-              subtitle: '팔로우한 사용자의 새 글 알림',
+              title: context.l10n(
+                ko: '팔로잉 글',
+                en: 'Following posts',
+                ja: 'フォロー中の投稿',
+              ),
+              subtitle: context.l10n(
+                ko: '팔로우한 사용자의 새 글 알림',
+                en: 'New posts from users you follow',
+                ja: 'フォロー中のユーザーの新しい投稿通知',
+              ),
               value: settings.followingPostsEnabled,
-              semanticLabel:
-                  '팔로잉 글 알림 ${settings.followingPostsEnabled ? "켜짐" : "꺼짐"}',
+              semanticLabel: context.l10n(
+                ko: '팔로잉 글 알림 ${settings.followingPostsEnabled ? "켜짐" : "꺼짐"}',
+                en: 'Following posts notifications ${settings.followingPostsEnabled ? "on" : "off"}',
+                ja: 'フォロー中の投稿通知${settings.followingPostsEnabled ? "オン" : "オフ"}',
+              ),
               onChanged: (v) =>
                   onChanged(settings.copyWith(followingPostsEnabled: v)),
               isDark: isDark,
@@ -229,8 +308,16 @@ class _SummaryHeader extends StatelessWidget {
 
     return FieldSettingsIntro(
       eyebrow: 'NOTIFICATION ROUTING',
-      title: '활성화된 알림 $enabledCount개',
-      description: '원하는 채널과 콘텐츠 알림만 선택하세요.',
+      title: context.l10n(
+        ko: '활성화된 알림 $enabledCount개',
+        en: '$enabledCount notifications enabled',
+        ja: '有効な通知$enabledCount件',
+      ),
+      description: context.l10n(
+        ko: '원하는 채널과 콘텐츠 알림만 선택하세요.',
+        en: 'Choose only the channels and content you want notifications for.',
+        ja: '必要なチャネルとコンテンツ通知だけを選択してください。',
+      ),
       icon: Icons.notifications_outlined,
     );
   }
@@ -388,24 +475,45 @@ class _LoginRequired extends StatelessWidget {
               Icons.lock_outline,
               size: GBTSpacing.touchTarget,
               color: textTertiary,
-              semanticLabel: '잠금 아이콘',
+              semanticLabel: context.l10n(
+                ko: '잠금 아이콘',
+                en: 'Lock icon',
+                ja: 'ロックアイコン',
+              ),
             ),
             const SizedBox(height: GBTSpacing.md),
             Text(
-              '로그인이 필요합니다',
+              context.l10n(
+                ko: '로그인이 필요합니다',
+                en: 'Sign-in required',
+                ja: 'ログインが必要です',
+              ),
               style: GBTTypography.titleSmall.copyWith(color: textPrimary),
             ),
             const SizedBox(height: GBTSpacing.sm),
             Text(
-              '알림 설정을 변경하려면 로그인해주세요.',
+              context.l10n(
+                ko: '알림 설정을 변경하려면 로그인해주세요.',
+                en: 'Please sign in to change notification settings.',
+                ja: '通知設定を変更するにはログインしてください。',
+              ),
               style: GBTTypography.bodySmall.copyWith(color: textSecondary),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: GBTSpacing.lg),
             Semantics(
               button: true,
-              label: '로그인 페이지로 이동',
-              child: FilledButton(onPressed: onLogin, child: const Text('로그인')),
+              label: context.l10n(
+                ko: '로그인 페이지로 이동',
+                en: 'Go to sign-in page',
+                ja: 'ログインページへ移動',
+              ),
+              child: FilledButton(
+                onPressed: onLogin,
+                child: Text(
+                  context.l10n(ko: '로그인', en: 'Sign in', ja: 'ログインする'),
+                ),
+              ),
             ),
           ],
         ),

@@ -113,7 +113,7 @@ class _AccountToolsPageState extends ConsumerState<AccountToolsPage>
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
-            tooltip: '새로고침',
+            tooltip: context.l10n(ko: '새로고침', en: 'Refresh', ja: '更新する'),
             onPressed: _refreshCurrentTab,
           ),
         ],
@@ -132,10 +132,20 @@ class _AccountToolsPageState extends ConsumerState<AccountToolsPage>
             child: GBTSegmentedTabBar(
               controller: _tabController,
               height: GBTSpacing.touchTarget,
-              tabs: const [
-                Tab(text: '차단'),
-                Tab(text: '권한 요청'),
-                Tab(text: '이의제기'),
+              tabs: [
+                Tab(
+                  text: context.l10n(ko: '차단', en: 'Blocks', ja: 'ブロック'),
+                ),
+                Tab(
+                  text: context.l10n(
+                    ko: '권한 요청',
+                    en: 'Permission requests',
+                    ja: '権限リクエスト',
+                  ),
+                ),
+                Tab(
+                  text: context.l10n(ko: '이의제기', en: 'Appeals', ja: '異議申し立て'),
+                ),
               ],
             ),
           ),
@@ -154,7 +164,14 @@ class _AccountToolsPageState extends ConsumerState<AccountToolsPage>
                     _showErrorSnackBar(context, result.failure.userMessage);
                     return;
                   }
-                  _showInfoSnackBar(context, '차단을 해제했습니다');
+                  _showInfoSnackBar(
+                    context,
+                    context.l10n(
+                      ko: '차단을 해제했습니다',
+                      en: 'Block removed.',
+                      ja: 'ブロックを解除しました。',
+                    ),
+                  );
                 },
               ),
               _AccountToolsTab.accessLevel => _AccessLevelTab(
@@ -203,7 +220,14 @@ class _AccountToolsPageState extends ConsumerState<AccountToolsPage>
                 onSubmit: () async {
                   final targetId = _selectedAppealTargetId;
                   if (targetId == null || targetId.isEmpty) {
-                    _showErrorSnackBar(context, '대상 인증 기록을 선택해주세요');
+                    _showErrorSnackBar(
+                      context,
+                      context.l10n(
+                        ko: '대상 인증 기록을 선택해주세요',
+                        en: 'Please select a target verification record.',
+                        ja: '対象の認証記録を選択してください。',
+                      ),
+                    );
                     return;
                   }
                   final result = await ref
@@ -224,7 +248,14 @@ class _AccountToolsPageState extends ConsumerState<AccountToolsPage>
                     _selectedAppealTargetLabel = null;
                   });
                   _appealDescriptionController.clear();
-                  _showInfoSnackBar(context, '이의제기를 접수했습니다');
+                  _showInfoSnackBar(
+                    context,
+                    context.l10n(
+                      ko: '이의제기를 접수했습니다',
+                      en: 'Appeal submitted.',
+                      ja: '異議申し立てを受け付けました。',
+                    ),
+                  );
                 },
                 onRefresh: _refreshCurrentTab,
               ),
@@ -261,15 +292,25 @@ class _BlocksTab extends StatelessWidget {
       child: state.when(
         loading: () => ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          children: const [
-            SizedBox(height: 80),
-            GBTLoading(message: '차단 목록을 불러오는 중...'),
+          children: [
+            const SizedBox(height: 80),
+            GBTLoading(
+              message: context.l10n(
+                ko: '차단 목록을 불러오는 중...',
+                en: 'Loading blocked users...',
+                ja: 'ブロックリストを読み込んでいます...',
+              ),
+            ),
           ],
         ),
         error: (error, _) {
           final message = error is Failure
               ? error.userMessage
-              : '차단 목록을 불러오지 못했어요';
+              : context.l10n(
+                  ko: '차단 목록을 불러오지 못했어요',
+                  en: 'Failed to load blocked users.',
+                  ja: 'ブロックリストを読み込めませんでした。',
+                );
           return ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             children: [
@@ -282,9 +323,15 @@ class _BlocksTab extends StatelessWidget {
           if (items.isEmpty) {
             return ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              children: const [
-                SizedBox(height: 80),
-                GBTEmptyState(message: '차단한 사용자가 없습니다'),
+              children: [
+                const SizedBox(height: 80),
+                GBTEmptyState(
+                  message: context.l10n(
+                    ko: '차단한 사용자가 없습니다',
+                    en: 'No blocked users.',
+                    ja: 'ブロックしたユーザーはいません。',
+                  ),
+                ),
               ],
             );
           }
@@ -401,7 +448,7 @@ class _BlockItemRow extends StatelessWidget {
               side: BorderSide(color: GBTColors.error.withValues(alpha: 0.4)),
               foregroundColor: GBTColors.error,
             ),
-            child: const Text('해제'),
+            child: Text(context.l10n(ko: '해제', en: 'Unblock', ja: '解除する')),
           ),
         ],
       ),
@@ -457,19 +504,35 @@ class _AccessLevelTab extends StatelessWidget {
         ),
         children: [
           profileState.when(
-            loading: () => const Padding(
-              padding: EdgeInsets.symmetric(vertical: GBTSpacing.lg),
-              child: GBTLoading(message: '권한 요청 정보를 불러오는 중...'),
+            loading: () => Padding(
+              padding: const EdgeInsets.symmetric(vertical: GBTSpacing.lg),
+              child: GBTLoading(
+                message: context.l10n(
+                  ko: '권한 요청 정보를 불러오는 중...',
+                  en: 'Loading permission request info...',
+                  ja: '権限リクエスト情報を読み込んでいます...',
+                ),
+              ),
             ),
             error: (error, _) {
               final message = error is Failure
                   ? error.userMessage
-                  : '권한 요청 정보를 불러오지 못했어요';
+                  : context.l10n(
+                      ko: '권한 요청 정보를 불러오지 못했어요',
+                      en: 'Failed to load permission request info.',
+                      ja: '権限リクエスト情報を読み込めませんでした。',
+                    );
               return GBTErrorState(message: message, onRetry: onRefresh);
             },
             data: (profile) {
               if (profile == null) {
-                return const GBTEmptyState(message: '로그인이 필요합니다');
+                return GBTEmptyState(
+                  message: context.l10n(
+                    ko: '로그인이 필요합니다',
+                    en: 'Sign-in required',
+                    ja: 'ログインが必要です',
+                  ),
+                );
               }
               final resolvedLevel = UserAccessLevelX.resolve(
                 effectiveAccessLevel: profile.effectiveAccessLevel,
@@ -496,7 +559,11 @@ class _AccessLevelTab extends StatelessWidget {
                         ),
                         const SizedBox(width: GBTSpacing.sm),
                         Text(
-                          '권한 요청',
+                          context.l10n(
+                            ko: '권한 요청',
+                            en: 'Permission requests',
+                            ja: '権限リクエスト',
+                          ),
                           style: GBTTypography.titleSmall.copyWith(
                             fontWeight: FontWeight.w700,
                             color: textPrimary,
@@ -506,7 +573,15 @@ class _AccessLevelTab extends StatelessWidget {
                     ),
                     const SizedBox(height: GBTSpacing.md),
                     Text(
-                      '내부 권한 레벨 상세는 노출하지 않고 필요한 권한 요청만 제공합니다.',
+                      context.l10n(
+                        ko: context.l10n(
+                          ko: '내부 권한 레벨 상세는 노출하지 않고 필요한 권한 요청만 제공합니다.',
+                          en: 'Internal permission level details are hidden; only the requests you need are shown.',
+                          ja: '内部の権限レベル詳細は表示せず、必要な権限リクエストのみを提供します。',
+                        ),
+                        en: 'Internal permission level details are hidden; only the requests you need are shown.',
+                        ja: '内部の権限レベル詳細は表示せず、必要な権限リクエストのみを提供します。',
+                      ),
                       style: GBTTypography.bodySmall.copyWith(
                         color: textSecondary,
                         height: 1.4,
@@ -514,23 +589,47 @@ class _AccessLevelTab extends StatelessWidget {
                     ),
                     const SizedBox(height: GBTSpacing.md),
                     _PermissionRequestCard(
-                      title: '수정권한 요청',
-                      description: '장소/라이브/뉴스 등 콘텐츠 정보 편집 권한 요청',
+                      title: context.l10n(
+                        ko: '수정권한 요청',
+                        en: 'Editor permission request',
+                        ja: '編集権限リクエスト',
+                      ),
+                      description: context.l10n(
+                        ko: '장소/라이브/뉴스 등 콘텐츠 정보 편집 권한 요청',
+                        en: 'Request edit permission for places, live events, and news content',
+                        ja: '場所・ライブ・ニュースなどのコンテンツ編集権限をリクエストします',
+                      ),
                       isRequestable: canRequestEditor,
                       onRequest: () => _showPermissionRequestDialog(
                         context,
-                        title: '수정권한 요청',
+                        title: context.l10n(
+                          ko: '수정권한 요청',
+                          en: 'Editor permission request',
+                          ja: '編集権限リクエスト',
+                        ),
                         requestedRole: 'PLACE_EDITOR',
                       ),
                     ),
                     const SizedBox(height: GBTSpacing.sm),
                     _PermissionRequestCard(
-                      title: '관리권한 요청',
-                      description: '신고/제재 등 커뮤니티 운영 권한 요청',
+                      title: context.l10n(
+                        ko: '관리권한 요청',
+                        en: 'Moderator permission request',
+                        ja: '管理権限リクエスト',
+                      ),
+                      description: context.l10n(
+                        ko: '신고/제재 등 커뮤니티 운영 권한 요청',
+                        en: 'Request community moderation permission for reports and sanctions',
+                        ja: '通報・制裁などのコミュニティ運営権限をリクエストします',
+                      ),
                       isRequestable: canRequestModerator,
                       onRequest: () => _showPermissionRequestDialog(
                         context,
-                        title: '관리권한 요청',
+                        title: context.l10n(
+                          ko: '관리권한 요청',
+                          en: 'Moderator permission request',
+                          ja: '管理権限リクエスト',
+                        ),
                         requestedRole: 'COMMUNITY_MODERATOR',
                       ),
                     ),
@@ -546,7 +645,15 @@ class _AccessLevelTab extends StatelessWidget {
                           ),
                         ),
                         child: Text(
-                          '현재 계정은 이미 요청 가능한 권한 이상을 보유하고 있습니다.',
+                          context.l10n(
+                            ko: context.l10n(
+                              ko: '현재 계정은 이미 요청 가능한 권한 이상을 보유하고 있습니다.',
+                              en: 'This account already holds permissions beyond what can be requested.',
+                              ja: '現在のアカウントはリクエスト可能な権限以上をすでに保有しています。',
+                            ),
+                            en: 'This account already holds permissions beyond what can be requested.',
+                            ja: '現在のアカウントはリクエスト可能な権限以上をすでに保有しています。',
+                          ),
                           style: GBTTypography.bodySmall.copyWith(
                             color: GBTColors.success,
                             fontWeight: FontWeight.w600,
@@ -556,7 +663,15 @@ class _AccessLevelTab extends StatelessWidget {
                     ],
                     const SizedBox(height: GBTSpacing.sm),
                     Text(
-                      '요청을 제출하면 운영자가 검토 후 승인/거절합니다.',
+                      context.l10n(
+                        ko: context.l10n(
+                          ko: '요청을 제출하면 운영자가 검토 후 승인/거절합니다.',
+                          en: 'After you submit, an operator will review and approve or reject the request.',
+                          ja: '送信すると運営者が確認のうえ承認または却下します。',
+                        ),
+                        en: 'After you submit, an operator will review and approve or reject the request.',
+                        ja: '送信すると運営者が確認のうえ承認または却下します。',
+                      ),
                       style: GBTTypography.bodySmall.copyWith(
                         color: textSecondary,
                         height: 1.4,
@@ -569,7 +684,11 @@ class _AccessLevelTab extends StatelessWidget {
           ),
           const SizedBox(height: GBTSpacing.sm),
           Text(
-            '내 권한 요청 내역',
+            context.l10n(
+              ko: '내 권한 요청 내역',
+              en: 'My permission requests',
+              ja: '自分の権限リクエスト履歴',
+            ),
             style: GBTTypography.labelMedium.copyWith(
               color: textSecondary,
               fontWeight: FontWeight.w700,
@@ -577,19 +696,35 @@ class _AccessLevelTab extends StatelessWidget {
           ),
           const SizedBox(height: GBTSpacing.xs),
           roleRequestsState.when(
-            loading: () => const Padding(
-              padding: EdgeInsets.symmetric(vertical: GBTSpacing.lg),
-              child: GBTLoading(message: '요청 내역을 불러오는 중...'),
+            loading: () => Padding(
+              padding: const EdgeInsets.symmetric(vertical: GBTSpacing.lg),
+              child: GBTLoading(
+                message: context.l10n(
+                  ko: '요청 내역을 불러오는 중...',
+                  en: 'Loading request history...',
+                  ja: 'リクエスト履歴を読み込んでいます...',
+                ),
+              ),
             ),
             error: (error, _) {
               final message = error is Failure
                   ? error.userMessage
-                  : '요청 내역을 불러오지 못했어요';
+                  : context.l10n(
+                      ko: '요청 내역을 불러오지 못했어요',
+                      en: 'Failed to load request history.',
+                      ja: 'リクエスト履歴を読み込めませんでした。',
+                    );
               return GBTErrorState(message: message, onRetry: onRefresh);
             },
             data: (items) {
               if (items.isEmpty) {
-                return const GBTEmptyState(message: '아직 제출한 권한 요청이 없습니다');
+                return GBTEmptyState(
+                  message: context.l10n(
+                    ko: '아직 제출한 권한 요청이 없습니다',
+                    en: 'No permission requests submitted yet.',
+                    ja: 'まだ権限リクエストを送信していません。',
+                  ),
+                );
               }
               return Column(
                 children: items
@@ -629,15 +764,30 @@ class _AccessLevelTab extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('요청 사유를 20자 이상 작성해주세요.', style: GBTTypography.bodySmall),
+              Text(
+                context.l10n(
+                  ko: '요청 사유를 20자 이상 작성해주세요.',
+                  en: 'Please write a reason of at least 20 characters.',
+                  ja: '理由を20文字以上入力してください。',
+                ),
+                style: GBTTypography.bodySmall,
+              ),
               const SizedBox(height: GBTSpacing.sm),
               TextField(
                 controller: reasonController,
                 minLines: 2,
                 maxLines: 4,
-                decoration: const InputDecoration(
-                  labelText: '요청 사유',
-                  hintText: '예: 운영 참여를 위해 권한이 필요합니다.',
+                decoration: InputDecoration(
+                  labelText: context.l10n(
+                    ko: '요청 사유',
+                    en: 'Reason',
+                    ja: 'リクエスト理由',
+                  ),
+                  hintText: context.l10n(
+                    ko: '예: 운영 참여를 위해 권한이 필요합니다.',
+                    en: 'e.g. I need this permission to help with moderation.',
+                    ja: '例：運営業務に参加するため権限が必要です。',
+                  ),
                 ),
               ),
             ],
@@ -645,7 +795,7 @@ class _AccessLevelTab extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('취소'),
+              child: Text(context.l10n(ko: '취소', en: 'Cancel', ja: 'キャンセル')),
             ),
             FilledButton(
               onPressed: () async {
@@ -658,14 +808,27 @@ class _AccessLevelTab extends StatelessWidget {
                 }
                 Navigator.of(dialogContext).pop();
                 if (result is Success<ProjectRoleRequest>) {
-                  _showSnackBar(context, '권한 요청을 제출했습니다');
+                  _showSnackBar(
+                    context,
+                    context.l10n(
+                      ko: '권한 요청을 제출했습니다',
+                      en: 'Permission request submitted.',
+                      ja: '権限リクエストを送信しました。',
+                    ),
+                  );
                   return;
                 }
                 if (result is Err<ProjectRoleRequest>) {
                   _showSnackBar(context, result.failure.userMessage);
                 }
               },
-              child: const Text('요청 제출'),
+              child: Text(
+                context.l10n(
+                  ko: '요청 제출',
+                  en: 'Submit request',
+                  ja: 'リクエストを送信する',
+                ),
+              ),
             ),
           ],
         );
@@ -678,7 +841,14 @@ class _AccessLevelTab extends StatelessWidget {
     final result = await onCancelRequest(requestId);
     if (!context.mounted) return;
     if (result is Success<void>) {
-      _showSnackBar(context, '요청을 취소했습니다');
+      _showSnackBar(
+        context,
+        context.l10n(
+          ko: '요청을 취소했습니다',
+          en: 'Request canceled.',
+          ja: 'リクエストをキャンセルしました。',
+        ),
+      );
       return;
     }
     if (result is Err<void>) {
@@ -740,7 +910,9 @@ class _PermissionRequestCard extends StatelessWidget {
             child: isRequestable
                 ? FilledButton.tonal(
                     onPressed: onRequest,
-                    child: const Text('요청하기'),
+                    child: Text(
+                      context.l10n(ko: '요청하기', en: 'Request', ja: 'リクエストする'),
+                    ),
                   )
                 : Container(
                     padding: const EdgeInsets.symmetric(
@@ -754,7 +926,7 @@ class _PermissionRequestCard extends StatelessWidget {
                       ),
                     ),
                     child: Text(
-                      '보유중',
+                      context.l10n(ko: '보유중', en: 'Granted', ja: '保有中'),
                       style: GBTTypography.labelSmall.copyWith(
                         color: GBTColors.success,
                         fontWeight: FontWeight.w700,
@@ -864,7 +1036,13 @@ class _ProjectRoleRequestCard extends StatelessWidget {
                       horizontal: GBTSpacing.sm,
                     ),
                   ),
-                  child: const Text('요청 취소'),
+                  child: Text(
+                    context.l10n(
+                      ko: '요청 취소',
+                      en: 'Cancel request',
+                      ja: 'リクエストを取り消す',
+                    ),
+                  ),
                 ),
             ],
           ),
@@ -938,17 +1116,41 @@ class _AppealsTab extends StatelessWidget {
     final textSecondary = isDark
         ? GBTColors.darkTextSecondary
         : GBTColors.textSecondary;
-    const targetTypeOptions = <_SelectionOption>[
-      _SelectionOption(value: 'PLACE_VISIT', label: '장소 방문 인증'),
-      _SelectionOption(value: 'LIVE_EVENT', label: '이벤트 출석 인증'),
+    final targetTypeOptions = <_SelectionOption>[
+      _SelectionOption(
+        value: 'PLACE_VISIT',
+        label: _appealTargetTypeLabel(context, 'PLACE_VISIT'),
+      ),
+      _SelectionOption(
+        value: 'LIVE_EVENT',
+        label: _appealTargetTypeLabel(context, 'LIVE_EVENT'),
+      ),
     ];
-    const reasonOptions = <_SelectionOption>[
-      _SelectionOption(value: 'FALSE_REJECTION', label: '오탐 거절'),
-      _SelectionOption(value: 'GPS_INACCURACY', label: 'GPS 오차'),
-      _SelectionOption(value: 'NETWORK_ISSUE', label: '네트워크 문제'),
-      _SelectionOption(value: 'DEVICE_ISSUE', label: '기기 문제'),
-      _SelectionOption(value: 'LOCATION_ERROR', label: '위치 오류'),
-      _SelectionOption(value: 'OTHER', label: '기타'),
+    final reasonOptions = <_SelectionOption>[
+      _SelectionOption(
+        value: 'FALSE_REJECTION',
+        label: _appealReasonLabel(context, 'FALSE_REJECTION'),
+      ),
+      _SelectionOption(
+        value: 'GPS_INACCURACY',
+        label: _appealReasonLabel(context, 'GPS_INACCURACY'),
+      ),
+      _SelectionOption(
+        value: 'NETWORK_ISSUE',
+        label: _appealReasonLabel(context, 'NETWORK_ISSUE'),
+      ),
+      _SelectionOption(
+        value: 'DEVICE_ISSUE',
+        label: _appealReasonLabel(context, 'DEVICE_ISSUE'),
+      ),
+      _SelectionOption(
+        value: 'LOCATION_ERROR',
+        label: _appealReasonLabel(context, 'LOCATION_ERROR'),
+      ),
+      _SelectionOption(
+        value: 'OTHER',
+        label: context.l10n(ko: '기타', en: 'Other', ja: 'その他'),
+      ),
     ];
 
     return RefreshIndicator(
@@ -977,7 +1179,11 @@ class _AppealsTab extends StatelessWidget {
                     ),
                     const SizedBox(width: GBTSpacing.sm),
                     Text(
-                      '인증 이의제기 제출',
+                      context.l10n(
+                        ko: '인증 이의제기 제출',
+                        en: 'Submit verification appeal',
+                        ja: '認証の異議申し立てを送信',
+                      ),
                       style: GBTTypography.titleSmall.copyWith(
                         fontWeight: FontWeight.w700,
                         color: textPrimary,
@@ -987,14 +1193,26 @@ class _AppealsTab extends StatelessWidget {
                 ),
                 const SizedBox(height: GBTSpacing.md),
                 _SelectionField(
-                  label: '대상 유형',
+                  label: context.l10n(
+                    ko: '대상 유형',
+                    en: 'Target type',
+                    ja: '対象種別',
+                  ),
                   isDark: isDark,
-                  valueText: _appealTargetTypeLabel(targetType),
-                  placeholder: '대상 유형 선택',
+                  valueText: _appealTargetTypeLabel(context, targetType),
+                  placeholder: context.l10n(
+                    ko: '대상 유형 선택',
+                    en: 'Select target type',
+                    ja: '対象種別を選択',
+                  ),
                   onTap: () async {
                     final selected = await _showSelectionPicker(
                       context,
-                      title: '대상 유형 선택',
+                      title: context.l10n(
+                        ko: '대상 유형 선택',
+                        en: 'Select target type',
+                        ja: '対象種別を選択',
+                      ),
                       options: targetTypeOptions,
                       selectedValue: targetType,
                     );
@@ -1024,14 +1242,22 @@ class _AppealsTab extends StatelessWidget {
                 ),
                 const SizedBox(height: GBTSpacing.sm),
                 _SelectionField(
-                  label: '사유',
+                  label: context.l10n(ko: '사유', en: 'Reason', ja: '理由'),
                   isDark: isDark,
-                  valueText: _appealReasonLabel(reason),
-                  placeholder: '사유 선택',
+                  valueText: _appealReasonLabel(context, reason),
+                  placeholder: context.l10n(
+                    ko: '사유 선택',
+                    en: 'Select reason',
+                    ja: '理由を選択',
+                  ),
                   onTap: () async {
                     final selected = await _showSelectionPicker(
                       context,
-                      title: '사유 선택',
+                      title: context.l10n(
+                        ko: '사유 선택',
+                        en: 'Select reason',
+                        ja: '理由を選択',
+                      ),
                       options: reasonOptions,
                       selectedValue: reason,
                     );
@@ -1045,7 +1271,13 @@ class _AppealsTab extends StatelessWidget {
                   controller: descriptionController,
                   minLines: 2,
                   maxLines: 4,
-                  decoration: const InputDecoration(labelText: '상세 설명 (선택)'),
+                  decoration: InputDecoration(
+                    labelText: context.l10n(
+                      ko: '상세 설명 (선택)',
+                      en: 'Details (optional)',
+                      ja: '詳細説明（任意）',
+                    ),
+                  ),
                 ),
                 const SizedBox(height: GBTSpacing.md),
                 Align(
@@ -1053,7 +1285,13 @@ class _AppealsTab extends StatelessWidget {
                   child: FilledButton.icon(
                     onPressed: onSubmit,
                     icon: const Icon(Icons.send_rounded, size: 16),
-                    label: const Text('이의제기 제출'),
+                    label: Text(
+                      context.l10n(
+                        ko: '이의제기 제출',
+                        en: 'Submit appeal',
+                        ja: '異議申し立てを送信する',
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -1069,7 +1307,11 @@ class _AppealsTab extends StatelessWidget {
               bottom: GBTSpacing.xs,
             ),
             child: Text(
-              '내 이의제기 내역',
+              context.l10n(
+                ko: '내 이의제기 내역',
+                en: 'My appeals',
+                ja: '自分の異議申し立て履歴',
+              ),
               style: GBTTypography.labelSmall.copyWith(
                 color: textSecondary,
                 fontWeight: FontWeight.w600,
@@ -1078,19 +1320,35 @@ class _AppealsTab extends StatelessWidget {
             ),
           ),
           state.when(
-            loading: () => const Padding(
-              padding: EdgeInsets.symmetric(vertical: GBTSpacing.lg),
-              child: GBTLoading(message: '이의제기 내역을 불러오는 중...'),
+            loading: () => Padding(
+              padding: const EdgeInsets.symmetric(vertical: GBTSpacing.lg),
+              child: GBTLoading(
+                message: context.l10n(
+                  ko: '이의제기 내역을 불러오는 중...',
+                  en: 'Loading appeal history...',
+                  ja: '異議申し立て履歴を読み込んでいます...',
+                ),
+              ),
             ),
             error: (error, _) {
               final message = error is Failure
                   ? error.userMessage
-                  : '이의제기 내역을 불러오지 못했어요';
+                  : context.l10n(
+                      ko: '이의제기 내역을 불러오지 못했어요',
+                      en: 'Failed to load appeal history.',
+                      ja: '異議申し立て履歴を読み込めませんでした。',
+                    );
               return GBTErrorState(message: message, onRetry: onRefresh);
             },
             data: (items) {
               if (items.isEmpty) {
-                return const GBTEmptyState(message: '등록된 이의제기가 없습니다');
+                return GBTEmptyState(
+                  message: context.l10n(
+                    ko: '등록된 이의제기가 없습니다',
+                    en: 'No appeals submitted.',
+                    ja: '登録された異議申し立てはありません。',
+                  ),
+                );
               }
               return Column(
                 children: items
@@ -1129,8 +1387,8 @@ class _AppealItemRow extends StatelessWidget {
         ? GBTColors.darkTextTertiary
         : GBTColors.textTertiary;
 
-    final targetTypeLabel = _appealTargetTypeLabel(item.targetType);
-    final reasonLabel = _appealReasonLabel(item.reason);
+    final targetTypeLabel = _appealTargetTypeLabel(context, item.targetType);
+    final reasonLabel = _appealReasonLabel(context, item.reason);
 
     return Container(
       padding: const EdgeInsets.all(GBTSpacing.md),
@@ -1190,10 +1448,10 @@ class _StatusBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final normalized = status.toUpperCase();
     final text = switch (normalized) {
-      'PENDING' => '대기',
-      'IN_REVIEW' => '검토중',
-      'APPROVED' => '승인',
-      'REJECTED' => '반려',
+      'PENDING' => context.l10n(ko: '대기', en: 'Pending', ja: '待ち'),
+      'IN_REVIEW' => context.l10n(ko: '검토중', en: 'In review', ja: '確認中'),
+      'APPROVED' => context.l10n(ko: '승인', en: 'Approved', ja: '承認'),
+      'REJECTED' => context.l10n(ko: '반려', en: 'Rejected', ja: '却下'),
       _ => status,
     };
 
@@ -1408,19 +1666,45 @@ class _SelectionPickerSheet extends StatelessWidget {
   }
 }
 
-String _appealTargetTypeLabel(String value) => switch (value.toUpperCase()) {
-  'PLACE_VISIT' => '장소 방문 인증',
-  'LIVE_EVENT' => '이벤트 출석 인증',
-  _ => value,
-};
+String _appealTargetTypeLabel(BuildContext context, String value) =>
+    switch (value.toUpperCase()) {
+      'PLACE_VISIT' => context.l10n(
+        ko: '장소 방문 인증',
+        en: 'Place visit verification',
+        ja: '場所訪問認証',
+      ),
+      'LIVE_EVENT' => context.l10n(
+        ko: '이벤트 출석 인증',
+        en: 'Event attendance verification',
+        ja: 'イベント出席認証',
+      ),
+      _ => value,
+    };
 
-String _appealReasonLabel(String value) => switch (value.toUpperCase()) {
-  'FALSE_REJECTION' => '오탐 거절',
-  'GPS_INACCURACY' => 'GPS 오차',
-  'NETWORK_ISSUE' => '네트워크 문제',
-  'DEVICE_ISSUE' => '기기 문제',
-  'LOCATION_ERROR' => '위치 오류',
-  _ => '기타',
+String _appealReasonLabel(BuildContext context, String value) => switch (value
+    .toUpperCase()) {
+  'FALSE_REJECTION' => context.l10n(
+    ko: '오탐 거절',
+    en: 'False rejection',
+    ja: '誤検知による却下',
+  ),
+  'GPS_INACCURACY' => context.l10n(
+    ko: 'GPS 오차',
+    en: 'GPS inaccuracy',
+    ja: 'GPS誤差',
+  ),
+  'NETWORK_ISSUE' => context.l10n(
+    ko: '네트워크 문제',
+    en: 'Network issue',
+    ja: 'ネットワークの問題',
+  ),
+  'DEVICE_ISSUE' => context.l10n(ko: '기기 문제', en: 'Device issue', ja: '端末の問題'),
+  'LOCATION_ERROR' => context.l10n(
+    ko: '위치 오류',
+    en: 'Location error',
+    ja: '位置情報エラー',
+  ),
+  _ => context.l10n(ko: '기타', en: 'Other', ja: 'その他'),
 };
 
 // ========================================
@@ -1444,13 +1728,25 @@ class _TargetSelectorRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final label = targetType == 'PLACE_VISIT'
-        ? '실패한 방문 인증 기록'
-        : '실패한 이벤트 출석 기록';
+        ? context.l10n(
+            ko: '실패한 방문 인증 기록',
+            en: 'Failed visit verification records',
+            ja: '失敗した訪問認証記録',
+          )
+        : context.l10n(
+            ko: '실패한 이벤트 출석 기록',
+            en: 'Failed event attendance records',
+            ja: '失敗したイベント出席記録',
+          );
 
     return _SelectionField(
       label: label,
       valueText: selectedLabel,
-      placeholder: '탭하여 선택',
+      placeholder: context.l10n(
+        ko: '탭하여 선택',
+        en: 'Tap to select',
+        ja: 'タップして選択',
+      ),
       isDark: isDark,
       onTap: onTap,
     );
@@ -1519,7 +1815,17 @@ class _TargetPickerSheetState extends ConsumerState<_TargetPickerSheet> {
             child: Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                isPlaceVisit ? '실패한 방문 인증 기록 선택' : '실패한 이벤트 출석 기록 선택',
+                isPlaceVisit
+                    ? context.l10n(
+                        ko: '실패한 방문 인증 기록 선택',
+                        en: 'Select failed visit verification record',
+                        ja: '失敗した訪問認証記録を選択',
+                      )
+                    : context.l10n(
+                        ko: '실패한 이벤트 출석 기록 선택',
+                        en: 'Select failed event attendance record',
+                        ja: '失敗したイベント出席記録を選択',
+                      ),
                 style: GBTTypography.titleMedium,
               ),
             ),
@@ -1538,7 +1844,17 @@ class _TargetPickerSheetState extends ConsumerState<_TargetPickerSheet> {
               controller: _searchCtrl,
               onChanged: (v) => setState(() => _query = v.toLowerCase()),
               decoration: InputDecoration(
-                hintText: isPlaceVisit ? '장소 이름으로 검색' : '이벤트 이름으로 검색',
+                hintText: isPlaceVisit
+                    ? context.l10n(
+                        ko: '장소 이름으로 검색',
+                        en: 'Search by place name',
+                        ja: '場所の名前で検索',
+                      )
+                    : context.l10n(
+                        ko: '이벤트 이름으로 검색',
+                        en: 'Search by event name',
+                        ja: 'イベント名で検索',
+                      ),
                 prefixIcon: const Icon(Icons.search_rounded, size: 20),
                 isDense: true,
               ),
@@ -1567,8 +1883,24 @@ class _TargetPickerSheetState extends ConsumerState<_TargetPickerSheet> {
         : GBTColors.textTertiary;
 
     return attemptsAsync.when(
-      loading: () => const Center(child: GBTLoading(message: '기록을 불러오는 중...')),
-      error: (_, __) => Center(child: GBTErrorState(message: '기록을 불러오지 못했어요')),
+      loading: () => Center(
+        child: GBTLoading(
+          message: context.l10n(
+            ko: '기록을 불러오는 중...',
+            en: 'Loading records...',
+            ja: '記録を読み込んでいます...',
+          ),
+        ),
+      ),
+      error: (_, __) => Center(
+        child: GBTErrorState(
+          message: context.l10n(
+            ko: '기록을 불러오지 못했어요',
+            en: 'Failed to load records.',
+            ja: '記録を読み込めませんでした。',
+          ),
+        ),
+      ),
       data: (all) {
         // EN: Filter by targetType then apply search query.
         // KO: targetType으로 필터 후 검색어 적용.
@@ -1596,7 +1928,15 @@ class _TargetPickerSheetState extends ConsumerState<_TargetPickerSheet> {
                   Icon(Icons.verified_outlined, size: 48, color: textTertiary),
                   const SizedBox(height: GBTSpacing.md),
                   Text(
-                    '최근 30일 내 실패한 인증 기록이 없습니다',
+                    context.l10n(
+                      ko: context.l10n(
+                        ko: '최근 30일 내 실패한 인증 기록이 없습니다',
+                        en: 'No failed verification records in the last 30 days.',
+                        ja: '直近30日以内に失敗した認証記録はありません。',
+                      ),
+                      en: 'No failed verification records in the last 30 days.',
+                      ja: '直近30日以内に失敗した認証記録はありません。',
+                    ),
                     textAlign: TextAlign.center,
                     style: GBTTypography.bodyMedium.copyWith(
                       color: isDark
@@ -1611,10 +1951,14 @@ class _TargetPickerSheetState extends ConsumerState<_TargetPickerSheet> {
         }
 
         if (filtered.isEmpty) {
-          return const Center(
+          return Center(
             child: GBTEmptyState(
               icon: Icons.search_off_rounded,
-              message: '검색 결과가 없습니다',
+              message: context.l10n(
+                ko: '검색 결과가 없습니다',
+                en: 'No search results.',
+                ja: '検索結果がありません。',
+              ),
             ),
           );
         }
@@ -1666,13 +2010,37 @@ class _TargetPickerSheetState extends ConsumerState<_TargetPickerSheet> {
   /// EN: Translate server/local failure codes to Korean labels.
   /// KO: 서버/로컬 실패 코드를 한국어 레이블로 변환합니다.
   String _translateFailureCode(String code) => switch (code.toUpperCase()) {
-    'LOCATION_TOO_FAR' => '위치 거리 초과',
-    'TIME_WINDOW_EXPIRED' => '인증 시간 만료',
-    'GPS_INACCURACY' || 'LOCATION_INACCURATE' => 'GPS 오차',
-    'INVALID_TOKEN' || 'JWS_INVALID' => '토큰 오류',
-    'NETWORK_ERROR' || 'TIMEOUT' => '네트워크 오류',
-    'ALREADY_VERIFIED' => '이미 인증됨',
-    _ => '인증 실패',
+    'LOCATION_TOO_FAR' => context.l10n(
+      ko: '위치 거리 초과',
+      en: 'Location too far',
+      ja: '位置の距離超過',
+    ),
+    'TIME_WINDOW_EXPIRED' => context.l10n(
+      ko: '인증 시간 만료',
+      en: 'Verification time expired',
+      ja: '認証時間の期限切れ',
+    ),
+    'GPS_INACCURACY' || 'LOCATION_INACCURATE' => context.l10n(
+      ko: 'GPS 오차',
+      en: 'GPS inaccuracy',
+      ja: 'GPS誤差',
+    ),
+    'INVALID_TOKEN' || 'JWS_INVALID' => context.l10n(
+      ko: '토큰 오류',
+      en: 'Token error',
+      ja: 'トークンエラー',
+    ),
+    'NETWORK_ERROR' || 'TIMEOUT' => context.l10n(
+      ko: '네트워크 오류',
+      en: 'Network error',
+      ja: 'ネットワークエラー',
+    ),
+    'ALREADY_VERIFIED' => context.l10n(
+      ko: '이미 인증됨',
+      en: 'Already verified',
+      ja: '認証済み',
+    ),
+    _ => context.l10n(ko: '인증 실패', en: 'Verification failed', ja: '認証失敗'),
   };
 }
 

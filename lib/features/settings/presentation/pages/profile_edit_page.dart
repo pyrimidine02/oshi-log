@@ -137,10 +137,18 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
     if (!_hasPendingChanges) return true;
     final shouldDiscard = await showGBTAdaptiveConfirmDialog(
       context: context,
-      title: '저장하지 않고 나갈까요?',
-      message: '프로필 변경 사항이 사라집니다.',
-      confirmLabel: '나가기',
-      cancelLabel: '계속 수정',
+      title: context.l10n(
+        ko: '저장하지 않고 나갈까요?',
+        en: 'Leave without saving?',
+        ja: '保存せずに終了しますか？',
+      ),
+      message: context.l10n(
+        ko: '프로필 변경 사항이 사라집니다.',
+        en: 'Your profile changes will be lost.',
+        ja: 'プロフィールの変更内容が失われます。',
+      ),
+      confirmLabel: context.l10n(ko: '나가기', en: 'Leave', ja: '終了する'),
+      cancelLabel: context.l10n(ko: '계속 수정', en: 'Keep editing', ja: '編集を続ける'),
     );
     return shouldDiscard ?? false;
   }
@@ -149,11 +157,23 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
     final displayName = _displayNameController.text.trim();
     final bio = _normalizeOptional(_bioController.text);
     if (displayName.isEmpty) {
-      _showMessage('표시 이름을 입력해주세요');
+      _showMessage(
+        context.l10n(
+          ko: '표시 이름을 입력해주세요',
+          en: 'Please enter a display name.',
+          ja: '表示名を入力してください。',
+        ),
+      );
       return;
     }
     if (!_hasPendingChanges) {
-      _showMessage('변경된 내용이 없어요');
+      _showMessage(
+        context.l10n(
+          ko: '변경된 내용이 없어요',
+          en: 'No changes to save.',
+          ja: '変更内容がありません。',
+        ),
+      );
       return;
     }
     setState(() => _isSaving = true);
@@ -170,11 +190,23 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
     setState(() => _isSaving = false);
     if (result case Success<UserProfile>(:final data)) {
       _hydrateFromProfile(data);
-      _showMessage('프로필이 저장되었습니다');
+      _showMessage(
+        context.l10n(
+          ko: '프로필이 저장되었습니다',
+          en: 'Profile saved.',
+          ja: 'プロフィールを保存しました。',
+        ),
+      );
       context.pop();
       return;
     }
-    _showMessage('프로필 저장에 실패했습니다');
+    _showMessage(
+      context.l10n(
+        ko: '프로필 저장에 실패했습니다',
+        en: 'Failed to save profile.',
+        ja: 'プロフィールの保存に失敗しました。',
+      ),
+    );
   }
 
   @override
@@ -215,14 +247,22 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
             actions: [
               Semantics(
                 button: true,
-                label: _isSaving ? '저장 중' : '프로필 저장',
+                label: _isSaving
+                    ? context.l10n(ko: '저장 중', en: 'Saving', ja: '保存中')
+                    : context.l10n(
+                        ko: '프로필 저장',
+                        en: 'Save profile',
+                        ja: 'プロフィールを保存する',
+                      ),
                 enabled: _canSaveProfile,
                 child: Padding(
                   padding: const EdgeInsets.only(right: GBTSpacing.xs),
                   child: TextButton(
                     onPressed: _canSaveProfile ? _saveProfile : null,
                     child: Text(
-                      _isSaving ? '저장 중' : '저장',
+                      _isSaving
+                          ? context.l10n(ko: '저장 중', en: 'Saving', ja: '保存中')
+                          : context.l10n(ko: '저장', en: 'Save', ja: '保存する'),
                       style: GBTTypography.bodyMedium.copyWith(
                         fontWeight: FontWeight.w700,
                         color: _canSaveProfile
@@ -242,18 +282,44 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
           body: GBTLoadingOverlay(
             isLoading: _isBusy,
             message: _isSaving
-                ? '프로필 저장 중...'
+                ? context.l10n(
+                    ko: '프로필 저장 중...',
+                    en: 'Saving profile...',
+                    ja: 'プロフィールを保存しています...',
+                  )
                 : _isChangingAvatar
-                ? '프로필 사진 선택 중...'
+                ? context.l10n(
+                    ko: '프로필 사진 선택 중...',
+                    en: 'Choosing profile photo...',
+                    ja: 'プロフィール写真を選択しています...',
+                  )
                 : _isChangingCover
-                ? '배경 이미지 선택 중...'
+                ? context.l10n(
+                    ko: '배경 이미지 선택 중...',
+                    en: 'Choosing cover image...',
+                    ja: '背景画像を選択しています...',
+                  )
                 : _isUploadingAvatar
-                ? '프로필 사진 업로드 중...'
+                ? context.l10n(
+                    ko: '프로필 사진 업로드 중...',
+                    en: 'Uploading profile photo...',
+                    ja: 'プロフィール写真をアップロードしています...',
+                  )
                 : _isUploadingCover
-                ? '배경 이미지 업로드 중...'
+                ? context.l10n(
+                    ko: '배경 이미지 업로드 중...',
+                    en: 'Uploading cover image...',
+                    ja: '背景画像をアップロードしています...',
+                  )
                 : null,
             child: state.when(
-              loading: () => const GBTLoading(message: '프로필을 불러오는 중...'),
+              loading: () => GBTLoading(
+                message: context.l10n(
+                  ko: '프로필을 불러오는 중...',
+                  en: 'Loading profile...',
+                  ja: 'プロフィールを読み込んでいます...',
+                ),
+              ),
               error: (error, _) => _ProfileLoadError(
                 onRetry: () => ref
                     .read(userProfileControllerProvider.notifier)
@@ -324,8 +390,15 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
   }) async {
     try {
       final sourceBytes = await File(sourcePath).readAsBytes();
+      if (!mounted) return null;
       if (sourceBytes.isEmpty) {
-        _showMessage('사진을 불러오지 못했습니다.');
+        _showMessage(
+          context.l10n(
+            ko: '사진을 불러오지 못했습니다.',
+            en: 'Failed to load the photo.',
+            ja: '写真を読み込めませんでした。',
+          ),
+        );
         return null;
       }
       if (!mounted) return null;
@@ -340,8 +413,15 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
         ),
       );
       if (croppedBytes == null) return null;
+      if (!mounted) return null;
       if (croppedBytes.isEmpty) {
-        _showMessage('사진 편집에 실패했습니다.');
+        _showMessage(
+          context.l10n(
+            ko: '사진 편집에 실패했습니다.',
+            en: 'Failed to edit the photo.',
+            ja: '写真の編集に失敗しました。',
+          ),
+        );
         return null;
       }
 
@@ -352,7 +432,14 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
       await file.writeAsBytes(croppedBytes, flush: true);
       return file.path;
     } catch (_) {
-      _showMessage('사진 편집에 실패했습니다.');
+      if (!mounted) return null;
+      _showMessage(
+        context.l10n(
+          ko: '사진 편집에 실패했습니다.',
+          en: 'Failed to edit the photo.',
+          ja: '写真の編集に失敗しました。',
+        ),
+      );
       return null;
     }
   }
@@ -388,7 +475,14 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
       );
       return cropped?.path;
     } catch (_) {
-      _showMessage('사진 편집에 실패했습니다.');
+      if (!mounted) return null;
+      _showMessage(
+        context.l10n(
+          ko: '사진 편집에 실패했습니다.',
+          en: 'Failed to edit the photo.',
+          ja: '写真の編集に失敗しました。',
+        ),
+      );
       return null;
     }
   }
@@ -409,10 +503,15 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
         return;
       }
       if (picked == null) return;
+      if (!mounted) return;
 
       final uploadSourcePath = await _cropImageForUpload(
         sourcePath: picked.path,
-        title: '프로필 사진 자르기',
+        title: context.l10n(
+          ko: '프로필 사진 자르기',
+          en: 'Crop profile photo',
+          ja: 'プロフィール写真をトリミング',
+        ),
         ratioX: 1,
         ratioY: 1,
         maxWidth: 1024,
@@ -445,17 +544,36 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
           Success(:final data) => data,
           Err(:final failure) => throw failure,
         };
+        if (!mounted) return;
         if (upload.url.isEmpty) {
-          _showMessage('업로드 정보를 가져오지 못했습니다.');
+          _showMessage(
+            context.l10n(
+              ko: '업로드 정보를 가져오지 못했습니다.',
+              en: 'Failed to get upload information.',
+              ja: 'アップロード情報を取得できませんでした。',
+            ),
+          );
           return;
         }
-        if (!mounted) return;
         setState(() => _pendingAvatarUrl = upload.url);
-        _showMessage('사진이 업로드되었습니다. 저장을 눌러 반영하세요.');
+        _showMessage(
+          context.l10n(
+            ko: '사진이 업로드되었습니다. 저장을 눌러 반영하세요.',
+            en: 'Photo uploaded. Tap save to apply it.',
+            ja: '写真をアップロードしました。保存を押して反映してください。',
+          ),
+        );
       } on Failure catch (failure) {
         _handleUploadFailure(failure);
       } catch (_) {
-        _showMessage('사진 업로드에 실패했습니다.');
+        if (!mounted) return;
+        _showMessage(
+          context.l10n(
+            ko: '사진 업로드에 실패했습니다.',
+            en: 'Failed to upload the photo.',
+            ja: '写真のアップロードに失敗しました。',
+          ),
+        );
       } finally {
         if (mounted) setState(() => _isUploadingAvatar = false);
       }
@@ -480,10 +598,15 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
         return;
       }
       if (picked == null) return;
+      if (!mounted) return;
 
       final uploadSourcePath = await _cropImageForUpload(
         sourcePath: picked.path,
-        title: '배경 이미지 자르기',
+        title: context.l10n(
+          ko: '배경 이미지 자르기',
+          en: 'Crop cover image',
+          ja: '背景画像をトリミング',
+        ),
         ratioX: profileCoverCropRatioX,
         ratioY: profileCoverCropRatioY,
         maxWidth: profileCoverMaxWidth,
@@ -516,17 +639,36 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
           Success(:final data) => data,
           Err(:final failure) => throw failure,
         };
+        if (!mounted) return;
         if (upload.url.isEmpty) {
-          _showMessage('업로드 정보를 가져오지 못했습니다.');
+          _showMessage(
+            context.l10n(
+              ko: '업로드 정보를 가져오지 못했습니다.',
+              en: 'Failed to get upload information.',
+              ja: 'アップロード情報を取得できませんでした。',
+            ),
+          );
           return;
         }
-        if (!mounted) return;
         setState(() => _pendingCoverUrl = upload.url);
-        _showMessage('배경 이미지가 업로드되었습니다. 저장을 눌러 반영하세요.');
+        _showMessage(
+          context.l10n(
+            ko: '배경 이미지가 업로드되었습니다. 저장을 눌러 반영하세요.',
+            en: 'Cover image uploaded. Tap save to apply it.',
+            ja: '背景画像をアップロードしました。保存を押して反映してください。',
+          ),
+        );
       } on Failure catch (failure) {
         _handleUploadFailure(failure);
       } catch (_) {
-        _showMessage('배경 이미지 업로드에 실패했습니다.');
+        if (!mounted) return;
+        _showMessage(
+          context.l10n(
+            ko: '배경 이미지 업로드에 실패했습니다.',
+            en: 'Failed to upload the cover image.',
+            ja: '背景画像のアップロードに失敗しました。',
+          ),
+        );
       } finally {
         if (mounted) setState(() => _isUploadingCover = false);
       }
@@ -538,7 +680,11 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
   void _handleUploadFailure(Failure failure) {
     if (!mounted) return;
     final message = failure is AuthFailure && failure.code == '403'
-        ? '아직 준비중입니다.'
+        ? context.l10n(
+            ko: '아직 준비중입니다.',
+            en: 'This feature is not available yet.',
+            ja: 'この機能は準備中です。',
+          )
         : failure.userMessage;
     _showMessage(message);
   }
@@ -639,11 +785,19 @@ class _ProfileLoadError extends StatelessWidget {
               Icons.error_outline_rounded,
               size: GBTSpacing.xxl,
               color: GBTColors.error,
-              semanticLabel: '오류 아이콘',
+              semanticLabel: context.l10n(
+                ko: '오류 아이콘',
+                en: 'Error icon',
+                ja: 'エラーアイコン',
+              ),
             ),
             const SizedBox(height: GBTSpacing.md),
             Text(
-              '프로필 정보를 불러오지 못했어요',
+              context.l10n(
+                ko: '프로필 정보를 불러오지 못했어요',
+                en: 'Failed to load profile information.',
+                ja: 'プロフィール情報を読み込めませんでした。',
+              ),
               style: GBTTypography.titleSmall.copyWith(
                 color: isDark
                     ? GBTColors.darkTextPrimary
@@ -652,7 +806,11 @@ class _ProfileLoadError extends StatelessWidget {
             ),
             const SizedBox(height: GBTSpacing.sm),
             Text(
-              '잠시 후 다시 시도해주세요',
+              context.l10n(
+                ko: '잠시 후 다시 시도해주세요',
+                en: 'Please try again in a moment.',
+                ja: 'しばらくしてからもう一度お試しください。',
+              ),
               style: GBTTypography.bodySmall.copyWith(
                 color: isDark
                     ? GBTColors.darkTextSecondary
@@ -662,10 +820,16 @@ class _ProfileLoadError extends StatelessWidget {
             const SizedBox(height: GBTSpacing.lg),
             Semantics(
               button: true,
-              label: '프로필 정보 다시 불러오기',
+              label: context.l10n(
+                ko: '프로필 정보 다시 불러오기',
+                en: 'Reload profile information',
+                ja: 'プロフィール情報を再読み込み',
+              ),
               child: FilledButton(
                 onPressed: onRetry,
-                child: const Text('다시 시도'),
+                child: Text(
+                  context.l10n(ko: '다시 시도', en: 'Retry', ja: '再試行する'),
+                ),
               ),
             ),
           ],
@@ -699,11 +863,19 @@ class _LoginRequired extends StatelessWidget {
               color: isDark
                   ? GBTColors.darkTextTertiary
                   : GBTColors.textTertiary,
-              semanticLabel: '잠금 아이콘',
+              semanticLabel: context.l10n(
+                ko: '잠금 아이콘',
+                en: 'Lock icon',
+                ja: 'ロックアイコン',
+              ),
             ),
             const SizedBox(height: GBTSpacing.md),
             Text(
-              '로그인이 필요합니다',
+              context.l10n(
+                ko: '로그인이 필요합니다',
+                en: 'Sign-in required',
+                ja: 'ログインが必要です',
+              ),
               style: GBTTypography.titleSmall.copyWith(
                 color: isDark
                     ? GBTColors.darkTextPrimary
@@ -712,7 +884,11 @@ class _LoginRequired extends StatelessWidget {
             ),
             const SizedBox(height: GBTSpacing.sm),
             Text(
-              '프로필을 수정하려면 로그인해주세요.',
+              context.l10n(
+                ko: '프로필을 수정하려면 로그인해주세요.',
+                en: 'Please sign in to edit your profile.',
+                ja: 'プロフィールを編集するにはログインしてください。',
+              ),
               style: GBTTypography.bodySmall.copyWith(
                 color: isDark
                     ? GBTColors.darkTextSecondary
@@ -723,8 +899,17 @@ class _LoginRequired extends StatelessWidget {
             const SizedBox(height: GBTSpacing.lg),
             Semantics(
               button: true,
-              label: '로그인 페이지로 이동',
-              child: FilledButton(onPressed: onLogin, child: const Text('로그인')),
+              label: context.l10n(
+                ko: '로그인 페이지로 이동',
+                en: 'Go to sign-in page',
+                ja: 'ログインページへ移動',
+              ),
+              child: FilledButton(
+                onPressed: onLogin,
+                child: Text(
+                  context.l10n(ko: '로그인', en: 'Sign in', ja: 'ログインする'),
+                ),
+              ),
             ),
           ],
         ),
