@@ -7,9 +7,6 @@ import 'dart:convert';
 
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
-import '../../features/notifications/domain/entities/notification_entities.dart';
-import '../../features/notifications/domain/entities/notification_navigation.dart';
-
 /// EN: Structured tap payload from local notification click.
 /// KO: 로컬 알림 클릭 시 전달되는 구조화 페이로드입니다.
 class LocalNotificationTapEvent {
@@ -167,9 +164,22 @@ class LocalNotificationsService {
     return grantedValues.any((value) => value);
   }
 
-  /// EN: Show a local alert for a newly arrived notification item.
-  /// KO: 새로 도착한 알림 항목에 대해 로컬 알림을 표시합니다.
-  Future<void> showNotificationItem(NotificationItem item) async {
+  /// EN: Show a local alert from raw notification envelope fields. Platform
+  ///     layer receives only raw strings; feature-typed conversion happens in
+  ///     `features/notifications/application/notification_delivery.dart`.
+  /// KO: 원시 알림 envelope 필드로 로컬 알림을 표시합니다. 플랫폼 레이어는
+  ///     원시 문자열만 받으며, 업무 타입 변환은
+  ///     `features/notifications/application/notification_delivery.dart`에서 처리합니다.
+  Future<void> showNotification({
+    required String id,
+    required String title,
+    required String body,
+    String? type,
+    String? deeplink,
+    String? actionUrl,
+    String? entityId,
+    String? projectCode,
+  }) async {
     await initialize();
 
     final androidDetails = AndroidNotificationDetails(
@@ -194,11 +204,18 @@ class LocalNotificationsService {
     );
 
     await _plugin.show(
-      _stableNotificationId(item.id),
-      item.title,
-      item.body,
+      _stableNotificationId(id),
+      title,
+      body,
       details,
-      payload: _encodePayload(item),
+      payload: _encodePayload(
+        id: id,
+        type: type,
+        deeplink: deeplink,
+        actionUrl: actionUrl,
+        entityId: entityId,
+        projectCode: projectCode,
+      ),
     );
   }
 
@@ -230,27 +247,38 @@ class LocalNotificationsService {
     _tapEventsController.add(tapEvent);
   }
 
-  String _encodePayload(NotificationItem item) {
-    final normalizedType = normalizeNotificationType(item.type);
+  /// EN: Encode a raw notification envelope into a tap payload. [type] is
+  ///     expected to already be normalized by the caller (notification
+  ///     delivery adapter); this layer does no business normalization.
+  /// KO: 원시 알림 envelope을 탭 payload로 인코딩합니다. [type]은 호출자
+  ///     (notification delivery adapter)에서 이미 정규화된 값이어야 하며,
+  ///     이 레이어는 업무 정규화를 수행하지 않습니다.
+  String _encodePayload({
+    required String id,
+    String? type,
+    String? deeplink,
+    String? actionUrl,
+    String? entityId,
+    String? projectCode,
+  }) {
     return jsonEncode({
-      'notificationId': item.id,
-      if (normalizedType.isNotEmpty) ...{
-        'type': normalizedType,
-        'notificationType': normalizedType,
+      'notificationId': id,
+      if (type != null && type.isNotEmpty) ...{
+        'type': type,
+        'notificationType': type,
       },
-      if (item.deeplink != null && item.deeplink!.isNotEmpty) ...{
-        'deeplink': item.deeplink,
-        'deepLink': item.deeplink,
+      if (deeplink != null && deeplink.isNotEmpty) ...{
+        'deeplink': deeplink,
+        'deepLink': deeplink,
       },
-      if (item.actionUrl != null && item.actionUrl!.isNotEmpty)
-        'actionUrl': item.actionUrl,
-      if (item.entityId != null && item.entityId!.isNotEmpty) ...{
-        'entityId': item.entityId,
-        'targetId': item.entityId,
+      if (actionUrl != null && actionUrl.isNotEmpty) 'actionUrl': actionUrl,
+      if (entityId != null && entityId.isNotEmpty) ...{
+        'entityId': entityId,
+        'targetId': entityId,
       },
-      if (item.projectCode != null && item.projectCode!.isNotEmpty) ...{
-        'projectCode': item.projectCode,
-        'projectId': item.projectCode,
+      if (projectCode != null && projectCode.isNotEmpty) ...{
+        'projectCode': projectCode,
+        'projectId': projectCode,
       },
     });
   }

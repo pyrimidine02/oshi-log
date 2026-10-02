@@ -46,8 +46,12 @@ Set<String> findDependencyViolations(Map<String, String> sources) {
       }
       if (targetFeature != null &&
           (source.startsWith('lib/core/') ||
-              source.startsWith('lib/shared/'))) {
+              source.startsWith('lib/shared/') ||
+              source.startsWith('lib/platform/'))) {
         violations.add('$source -> $target : R4');
+      }
+      if (sourceFeature != null && target.startsWith('lib/app/')) {
+        violations.add('$source -> $target : R3');
       }
     }
   }
@@ -199,7 +203,7 @@ Iterable<String> _tokens(String source) sync* {
 List<String> compareDependencyAllowlist(Set<String> actual, String allowlist) {
   final expected = <String>{};
   final entryPattern = RegExp(
-    r'^lib/[\w./-]+\.dart -> (lib/[\w./-]+\.dart|package:[\w./-]+) : R[1245]$',
+    r'^lib/[\w./-]+\.dart -> (lib/[\w./-]+\.dart|package:[\w./-]+) : R[12345]$',
   );
   for (final line in allowlist.split('\n')) {
     final entry = line.trim();

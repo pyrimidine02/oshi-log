@@ -11,7 +11,7 @@ import '../../../core/error/failure.dart';
 import '../../../core/logging/app_logger.dart';
 import '../../../core/providers/core_providers.dart';
 import '../../projects/application/project_context.dart';
-import '../../../app/shell/navigation_state.dart';
+import '../../../core/router/navigation_state.dart';
 import '../../auth/application/session_state.dart';
 import '../../../core/utils/result.dart';
 import '../../projects/application/projects_controller.dart';

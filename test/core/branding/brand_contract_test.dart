@@ -64,8 +64,8 @@ void main() {
     test('presentation source carries no legacy branding literals', () {
       const sources = <String>[
         'lib/app.dart',
-        'lib/core/notifications/local_notifications_service.dart',
-        'lib/core/notifications/remote_push_service.dart',
+        'lib/platform/notifications/local_notifications_service.dart',
+        'lib/platform/notifications/remote_push_service.dart',
         'lib/features/auth/presentation/pages/login_page.dart',
         'lib/features/feed/presentation/field_community/field_community_page.dart',
         'lib/features/home/presentation/field_home/field_home_page.dart',
@@ -138,11 +138,11 @@ void main() {
 
     test('FCM channel id gbt_notifications_high is unchanged', () {
       expect(
-        read('lib/core/notifications/remote_push_service.dart'),
+        read('lib/platform/notifications/remote_push_service.dart'),
         contains('gbt_notifications_high'),
       );
       expect(
-        read('lib/core/notifications/local_notifications_service.dart'),
+        read('lib/platform/notifications/local_notifications_service.dart'),
         contains('gbt_notifications_high'),
       );
       expect(

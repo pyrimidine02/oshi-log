@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:oshi_log/features/projects/application/project_context.dart';
-import 'package:oshi_log/app/shell/navigation_state.dart';
+import 'package:oshi_log/core/router/navigation_state.dart';
 import 'package:oshi_log/features/auth/application/session_state.dart';
 import 'package:oshi_log/core/error/failure.dart';
 import 'package:oshi_log/core/utils/result.dart';

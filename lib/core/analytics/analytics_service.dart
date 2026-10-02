@@ -5,7 +5,7 @@ library;
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_core/firebase_core.dart';
 import '../logging/app_logger.dart';
-import '../notifications/firebase_runtime_options.dart';
+import '../../platform/notifications/firebase_runtime_options.dart';
 
 /// EN: Analytics service singleton.
 /// KO: 분석 서비스 싱글톤.

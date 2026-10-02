@@ -6,11 +6,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:oshi_log/core/config/app_config.dart';
 import 'package:oshi_log/core/constants/api_constants.dart';
 import 'package:oshi_log/core/network/api_client.dart';
-import 'package:oshi_log/core/notifications/local_notifications_service.dart';
-import 'package:oshi_log/core/notifications/remote_push_service.dart';
 import 'package:oshi_log/core/security/secure_storage.dart';
 import 'package:oshi_log/core/storage/local_storage.dart';
 import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/features/notifications/data/notification_device_registration.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -19,7 +18,7 @@ void main() {
     AppConfig.instance.init();
   });
 
-  group('RemotePushService helpers', () {
+  group('NotificationDeviceRegistration helpers', () {
     test('computeNotificationDeviceHash uses SHA-256 with fixed salt', () {
       final hash = computeNotificationDeviceHash('android-raw-1');
 
@@ -98,7 +97,7 @@ void main() {
     );
   });
 
-  group('RemotePushService.trackNotificationOpen', () {
+  group('NotificationDeviceRegistration.trackNotificationOpen', () {
     setUp(() {
       SharedPreferences.setMockInitialValues(<String, Object>{});
       FlutterSecureStorage.setMockInitialValues(<String, String>{});
@@ -117,11 +116,10 @@ void main() {
         });
         final storage = await LocalStorage.create();
         final apiClient = _FakeApiClient();
-        final service = RemotePushService(
+        final service = NotificationDeviceRegistration(
           apiClient: apiClient,
           secureStorage: SecureStorage(),
           localStorageFuture: Future<LocalStorage>.value(storage),
-          localNotificationsService: LocalNotificationsService(),
         );
 
         await service.trackNotificationOpen('noti-1');
@@ -141,11 +139,10 @@ void main() {
       });
       final storage = await LocalStorage.create();
       final apiClient = _FakeApiClient();
-      final service = RemotePushService(
+      final service = NotificationDeviceRegistration(
         apiClient: apiClient,
         secureStorage: SecureStorage(),
         localStorageFuture: Future<LocalStorage>.value(storage),
-        localNotificationsService: LocalNotificationsService(),
       );
 
       await service.trackNotificationOpen('noti-2');
@@ -168,11 +165,10 @@ void main() {
     test('skips request when notificationId is blank', () async {
       final storage = await LocalStorage.create();
       final apiClient = _FakeApiClient();
-      final service = RemotePushService(
+      final service = NotificationDeviceRegistration(
         apiClient: apiClient,
         secureStorage: SecureStorage(),
         localStorageFuture: Future<LocalStorage>.value(storage),
-        localNotificationsService: LocalNotificationsService(),
       );
 
       await service.trackNotificationOpen('   ');
@@ -195,11 +191,10 @@ void main() {
         final apiClient = _FakeApiClient();
         apiClient.deleteResult = const Result.success(<String, dynamic>{});
         final secureStorage = SecureStorage();
-        final service = RemotePushService(
+        final service = NotificationDeviceRegistration(
           apiClient: apiClient,
           secureStorage: secureStorage,
           localStorageFuture: Future<LocalStorage>.value(storage),
-          localNotificationsService: LocalNotificationsService(),
         );
 
         await service.deactivateCurrentDevice();

@@ -8,10 +8,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/notifications/in_app_notification_queue.dart';
 import '../../../core/theme/gbt_colors.dart';
 import '../../../core/theme/gbt_spacing.dart';
 import '../../../core/theme/gbt_typography.dart';
+import '../../../features/notifications/application/in_app_notification_queue.dart';
 import '../../../features/notifications/domain/entities/notification_navigation.dart';
 
 /// EN: Full-screen overlay that renders in-app notification banners above

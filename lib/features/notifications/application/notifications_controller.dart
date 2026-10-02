@@ -11,7 +11,6 @@ import 'package:http/http.dart' as http;
 import '../../../core/constants/api_constants.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/logging/app_logger.dart';
-import '../../../core/notifications/in_app_notification_queue.dart';
 import '../../../core/providers/core_providers.dart';
 import '../../auth/application/session_state.dart';
 import '../../../core/realtime/sse_client.dart';
@@ -22,6 +21,8 @@ import '../data/repositories/notifications_repository_impl.dart';
 import '../domain/entities/notification_entities.dart';
 import '../domain/entities/notification_navigation.dart';
 import '../domain/repositories/notifications_repository.dart';
+import 'in_app_notification_queue.dart';
+import 'notification_delivery.dart';
 
 class _NotificationNavigationHint {
   const _NotificationNavigationHint({
@@ -674,7 +675,7 @@ class NotificationsController
 
     final localNotifier = _ref.read(localNotificationsServiceProvider);
     for (final item in newlyArrivedUnread.take(3)) {
-      await localNotifier.showNotificationItem(item);
+      await showLocalNotificationItem(localNotifier, item);
     }
   }
 

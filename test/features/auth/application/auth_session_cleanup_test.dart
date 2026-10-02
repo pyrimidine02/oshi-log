@@ -10,8 +10,6 @@ import 'package:oshi_log/core/analytics/analytics_service.dart';
 import 'package:oshi_log/core/cache/cache_manager.dart';
 import 'package:oshi_log/core/config/app_config.dart';
 import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/notifications/local_notifications_service.dart';
-import 'package:oshi_log/core/notifications/remote_push_service.dart';
 import 'package:oshi_log/core/providers/core_providers.dart';
 import 'package:oshi_log/features/auth/application/session_state.dart';
 import 'package:oshi_log/core/security/secure_storage.dart';
@@ -22,6 +20,8 @@ import 'package:oshi_log/features/auth/application/native_social_login_service.d
 import 'package:oshi_log/features/auth/application/oauth_service.dart';
 import 'package:oshi_log/features/auth/domain/entities/auth_tokens.dart';
 import 'package:oshi_log/features/auth/domain/repositories/auth_repository.dart';
+import 'package:oshi_log/platform/notifications/local_notifications_service.dart';
+import 'package:oshi_log/platform/notifications/remote_push_service.dart';
 
 const _fixtureCredential = 'local-fixture-value';
 

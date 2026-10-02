@@ -108,6 +108,37 @@ void main() {
     );
   });
 
+  test('R4 treats platform like core and shared', () {
+    expect(
+      findDependencyViolations({
+        'lib/platform/notifications/service.dart':
+            "import '../../features/a/domain/model.dart';",
+        'lib/features/a/domain/model.dart': '',
+      }),
+      {
+        'lib/platform/notifications/service.dart -> '
+            'lib/features/a/domain/model.dart : R4',
+      },
+    );
+  });
+
+  test('R3 rejects a feature importing app, but permits sibling imports', () {
+    expect(
+      findDependencyViolations({
+        'lib/features/a/application/provider.dart': '''
+          import '../../../app/compositions/thing.dart';
+          import '../domain/model.dart';
+        ''',
+        'lib/app/compositions/thing.dart': '',
+        'lib/features/a/domain/model.dart': '',
+      }),
+      {
+        'lib/features/a/application/provider.dart -> '
+            'lib/app/compositions/thing.dart : R3',
+      },
+    );
+  });
+
   test('follows nested exports and terminates on barrel cycles', () {
     final violations = findDependencyViolations({
       'lib/features/a/presentation/page.dart': "import '../../b/b.dart';",

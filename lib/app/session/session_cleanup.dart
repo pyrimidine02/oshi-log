@@ -16,7 +16,7 @@ import '../../features/feed/application/reaction_controller.dart';
 import '../../features/live_events/application/live_events_controller.dart';
 import '../../features/projects/application/project_context.dart';
 import '../../features/settings/application/settings_controller.dart';
-import '../shell/navigation_state.dart';
+import '../../core/router/navigation_state.dart';
 
 /// EN: Reset project/tab selection and invalidate user-scoped feature
 ///     providers on logout/session reset.

@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:oshi_log/features/projects/application/project_context.dart';
-import 'package:oshi_log/app/shell/navigation_state.dart';
+import 'package:oshi_log/core/router/navigation_state.dart';
 import 'package:oshi_log/core/utils/result.dart';
 import 'package:oshi_log/features/feed/application/feed_repository_provider.dart';
 import 'package:oshi_log/features/feed/application/news_controller.dart';

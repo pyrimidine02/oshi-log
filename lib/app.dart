@@ -15,21 +15,22 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'app/bootstrap/push_auth_sync.dart';
+import 'app/compositions/notifications/in_app_notification_banner.dart';
+import 'app/compositions/notifications/notification_coordinator.dart';
 import 'core/connectivity/connectivity_service.dart';
 import 'core/localization/locale_resolution.dart';
 import 'core/localization/locale_text.dart';
-import 'core/notifications/local_notifications_service.dart';
 import 'core/providers/core_providers.dart';
 import 'core/telemetry/telemetry_event_types.dart';
 import 'core/telemetry/telemetry_service.dart';
-import 'core/notifications/in_app_notification_queue.dart';
-import 'core/widgets/overlays/in_app_notification_banner.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/gbt_colors.dart';
 import 'core/theme/gbt_spacing.dart';
 import 'core/theme/gbt_typography.dart';
 import 'core/theme/gbt_theme.dart';
 import 'features/auth/application/session_state.dart';
+import 'features/notifications/application/in_app_notification_queue.dart';
+import 'features/notifications/application/notification_delivery.dart';
 import 'features/notifications/application/notifications_controller.dart';
 import 'features/notifications/domain/entities/notification_entities.dart';
 import 'features/notifications/domain/entities/notification_navigation.dart';
@@ -40,10 +41,9 @@ import 'features/live_events/application/live_events_controller.dart';
 import 'features/settings/application/mandatory_consent_controller.dart';
 import 'features/settings/application/settings_controller.dart';
 import 'features/auth/application/oauth_service.dart';
+import 'platform/notifications/local_notifications_service.dart';
 
 String? _lastTrackedScreenPath;
-
-enum _NotificationTapSource { localNotification, remotePush }
 
 /// EN: Main application widget
 /// KO: 메인 앱 위젯
@@ -77,11 +77,11 @@ class GBTApp extends ConsumerWidget {
       localNotificationTapEventsProvider,
       (_, next) {
         next.whenData(
-          (tapEvent) => _handleLocalNotificationTap(
+          (tapEvent) => handleNotificationTap(
             ref: ref,
             router: router,
             tapEvent: tapEvent,
-            source: _NotificationTapSource.localNotification,
+            source: NotificationTapSource.localNotification,
           ),
         );
       },
@@ -90,18 +90,22 @@ class GBTApp extends ConsumerWidget {
       remotePushTapEventsProvider,
       (_, next) {
         next.whenData(
-          (tapEvent) => _handleLocalNotificationTap(
+          (tapEvent) => handleNotificationTap(
             ref: ref,
             router: router,
             tapEvent: tapEvent,
-            source: _NotificationTapSource.remotePush,
+            source: NotificationTapSource.remotePush,
           ),
         );
       },
     );
 
-    // EN: Forward foreground FCM messages to the in-app banner queue.
-    // KO: 포그라운드 FCM 메시지를 인앱 배너 큐로 전달합니다.
+    // EN: Forward foreground FCM messages to the in-app banner queue, and as
+    //     a system-notification fallback on Android (foreground banner is
+    //     only visible while the app is rendered).
+    // KO: 포그라운드 FCM 메시지를 인앱 배너 큐로 전달하고, Android에서는
+    //     시스템 알림으로도 fallback 표시합니다(인앱 배너는 앱이 렌더링
+    //     중일 때만 보임).
     ref.listen<AsyncValue<NotificationItem>>(
       remotePushForegroundMessagesProvider,
       (_, next) {
@@ -127,6 +131,14 @@ class GBTApp extends ConsumerWidget {
                     projectCode: item.projectCode,
                   ),
                 );
+          }
+          if (defaultTargetPlatform == TargetPlatform.android) {
+            unawaited(
+              showLocalNotificationItem(
+                ref.read(localNotificationsServiceProvider),
+                item,
+              ),
+            );
           }
           // EN: Invalidate title caches immediately when a TITLE_EARNED
           //     notification arrives so the title picker always shows
@@ -314,54 +326,6 @@ class GBTApp extends ConsumerWidget {
 
   bool _isNumericLike(String value) {
     return RegExp(r'^\d+$').hasMatch(value);
-  }
-
-  void _handleLocalNotificationTap({
-    required WidgetRef ref,
-    required GoRouter router,
-    required LocalNotificationTapEvent tapEvent,
-    required _NotificationTapSource source,
-  }) {
-    final notifier = ref.read(notificationsControllerProvider.notifier);
-    if (tapEvent.notificationId.isNotEmpty) {
-      unawaited(notifier.markAsRead(tapEvent.notificationId, refresh: false));
-      if (source == _NotificationTapSource.localNotification) {
-        unawaited(
-          ref
-              .read(remotePushServiceProvider)
-              .trackNotificationOpen(tapEvent.notificationId),
-        );
-      }
-    }
-
-    final normalizedType = normalizeNotificationType(tapEvent.type);
-    // EN: Ensure title caches are fresh before navigating so the title picker
-    //     reflects earned titles granted since the last cache population.
-    // KO: 탭 후 이동 전 칭호 캐시를 무효화하여 마지막 캐시 이후 부여된
-    //     칭호가 칭호 피커에 반영되도록 합니다.
-    if (normalizedType == notificationTypeTitleEarned) {
-      unawaited(
-        ref.read(titlesRepositoryProvider.future).then((repo) async {
-          await repo.invalidateTitleCaches();
-          unawaited(ref.read(activeTitleProvider.notifier).refresh());
-        }),
-      );
-    }
-
-    final targetPath =
-        resolveNotificationNavigationPath(
-          type: tapEvent.type,
-          deeplink: tapEvent.deeplink,
-          actionUrl: tapEvent.actionUrl,
-          entityId: tapEvent.entityId,
-        ) ??
-        '/notifications';
-
-    final currentPath = router.routeInformationProvider.value.uri.path;
-    if (currentPath != targetPath) {
-      router.go(targetPath);
-    }
-    unawaited(notifier.refreshInBackground(minInterval: Duration.zero));
   }
 }
 

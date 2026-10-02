@@ -14,13 +14,12 @@ import '../config/app_config.dart';
 import '../network/api_client.dart';
 import '../analytics/analytics_service.dart';
 import '../location/location_service.dart';
-import '../notifications/local_notifications_service.dart';
-import '../notifications/remote_push_service.dart';
-import '../telemetry/telemetry_service.dart';
-import '../../features/notifications/domain/entities/notification_entities.dart';
+import '../../platform/notifications/local_notifications_service.dart';
+import '../../platform/notifications/remote_push_service.dart';
 import '../realtime/sse_client.dart';
 import '../security/secure_storage.dart';
 import '../storage/local_storage.dart';
+import '../telemetry/telemetry_service.dart';
 
 // ========================================
 // EN: Storage Providers
@@ -134,40 +133,81 @@ final localNotificationTapEventsProvider =
       return service.tapEvents;
     });
 
-/// EN: Remote push service provider.
-/// KO: 원격 푸시 서비스 프로바이더입니다.
+/// EN: Called to register/refresh this device's push token with the backend.
+///     Default is a no-op; app bootstrap wires this to the notifications
+///     feature's device registration so that core/platform never imports it.
+/// KO: 이 디바이스의 푸시 토큰을 백엔드에 등록/갱신할 때 호출됩니다.
+///     기본값은 아무 작업도 하지 않으며, core/platform이 import하지 않도록
+///     app bootstrap에서 notifications feature의 디바이스 등록에 연결합니다.
+typedef NotificationUpsertDeviceRegistration =
+    Future<void> Function(
+      String pushToken, {
+      required String provider,
+      required bool forceRegister,
+    });
+
+/// EN: Called to deactivate this device's backend push registration.
+/// KO: 이 디바이스의 백엔드 푸시 등록을 비활성화할 때 호출됩니다.
+typedef NotificationDeactivateCurrentDevice = Future<void> Function();
+
+/// EN: Called to record a notification-open event.
+/// KO: 알림 오픈 이벤트를 기록할 때 호출됩니다.
+typedef NotificationTrackNotificationOpen =
+    Future<void> Function(String notificationId, {String? deviceId});
+
+/// EN: Default no-op; overridden in `lib/app/bootstrap/session_overrides.dart`.
+/// KO: 기본값은 아무 작업도 하지 않으며
+///     `lib/app/bootstrap/session_overrides.dart`에서 override 됩니다.
+final notificationUpsertDeviceRegistrationProvider =
+    Provider<NotificationUpsertDeviceRegistration>((ref) {
+      return (pushToken, {required provider, required forceRegister}) async {};
+    });
+
+/// EN: Default no-op; overridden in `lib/app/bootstrap/session_overrides.dart`.
+/// KO: 기본값은 아무 작업도 하지 않으며
+///     `lib/app/bootstrap/session_overrides.dart`에서 override 됩니다.
+final notificationDeactivateCurrentDeviceProvider =
+    Provider<NotificationDeactivateCurrentDevice>((ref) {
+      return () async {};
+    });
+
+/// EN: Default no-op; overridden in `lib/app/bootstrap/session_overrides.dart`.
+/// KO: 기본값은 아무 작업도 하지 않으며
+///     `lib/app/bootstrap/session_overrides.dart`에서 override 됩니다.
+final notificationTrackNotificationOpenProvider =
+    Provider<NotificationTrackNotificationOpen>((ref) {
+      return (notificationId, {deviceId}) async {};
+    });
+
+/// EN: Remote push service provider. Device-registration persistence is
+///     injected via the callback providers above, overridden by app
+///     bootstrap with the notifications feature's implementation.
+/// KO: 원격 푸시 서비스 프로바이더입니다. 디바이스 등록 영속화는 위 콜백
+///     프로바이더를 통해 주입되며, app bootstrap이 notifications feature
+///     구현으로 override합니다.
 final remotePushServiceProvider = Provider<RemotePushService>((ref) {
-  final apiClient = ref.watch(apiClientProvider);
-  final secureStorage = ref.watch(secureStorageProvider);
   final localStorageFuture = ref.watch(localStorageProvider.future);
-  final localNotificationsService = ref.watch(
-    localNotificationsServiceProvider,
-  );
   final service = RemotePushService(
-    apiClient: apiClient,
-    secureStorage: secureStorage,
     localStorageFuture: localStorageFuture,
-    localNotificationsService: localNotificationsService,
+    upsertDeviceRegistration:
+        (pushToken, {required provider, required forceRegister}) {
+          return ref.read(notificationUpsertDeviceRegistrationProvider)(
+            pushToken,
+            provider: provider,
+            forceRegister: forceRegister,
+          );
+        },
+    deactivateCurrentDevice: () =>
+        ref.read(notificationDeactivateCurrentDeviceProvider)(),
+    trackNotificationOpen: (notificationId, {deviceId}) {
+      return ref.read(notificationTrackNotificationOpenProvider)(
+        notificationId,
+        deviceId: deviceId,
+      );
+    },
   );
   ref.onDispose(service.dispose);
   return service;
-});
-
-/// EN: Stream provider for foreground FCM messages — feeds the in-app banner queue.
-/// KO: 인앱 배너 큐에 공급하기 위한 포그라운드 FCM 메시지 스트림 프로바이더입니다.
-final remotePushForegroundMessagesProvider = StreamProvider<NotificationItem>((
-  ref,
-) {
-  return ref.watch(remotePushServiceProvider).foregroundMessages;
-});
-
-/// EN: Stream provider for remote-push open tap events.
-/// KO: 원격 푸시 오픈 탭 이벤트 스트림 프로바이더입니다.
-final remotePushTapEventsProvider = StreamProvider<LocalNotificationTapEvent>((
-  ref,
-) {
-  final service = ref.watch(remotePushServiceProvider);
-  return service.tapEvents;
 });
 
 /// EN: Analytics service provider.
@@ -251,8 +291,8 @@ final appVersionProvider = FutureProvider<String>((ref) async {
 // KO: 프로젝트/유닛 선택 상태는
 //     `lib/features/projects/application/project_context.dart`로 이동했습니다.
 
-// EN: Tab state moved to `lib/app/shell/navigation_state.dart`.
-// KO: 탭 상태는 `lib/app/shell/navigation_state.dart`로 이동했습니다.
+// EN: Tab state moved to `lib/core/router/navigation_state.dart`.
+// KO: 탭 상태는 `lib/core/router/navigation_state.dart`로 이동했습니다.
 
 // EN: Auth state/refresh tick moved to
 //     `lib/features/auth/application/session_state.dart`.
