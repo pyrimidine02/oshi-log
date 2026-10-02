@@ -12,8 +12,8 @@ import 'package:oshi_log/core/theme/gbt_colors.dart';
 import 'package:oshi_log/core/theme/gbt_spacing.dart';
 import 'package:oshi_log/core/theme/gbt_typography.dart';
 import 'package:oshi_log/core/widgets/common/gbt_image.dart';
-import 'package:oshi_log/features/places/application/places_controller.dart';
-import 'package:oshi_log/features/places/domain/entities/place_entities.dart';
+import 'package:oshi_log/features/place/places/application/places_controller.dart';
+import 'package:oshi_log/features/place/places/domain/entities/place_entities.dart';
 
 class TravelReviewPlacePickerSheet extends ConsumerStatefulWidget {
   const TravelReviewPlacePickerSheet({

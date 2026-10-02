@@ -7,14 +7,14 @@ library;
 import 'package:go_router/go_router.dart';
 
 import '../../../core/router/app_router.dart' show AppRoutes;
-import '../../../features/auth/presentation/pages/email_verification_args.dart';
-import '../../../features/auth/presentation/pages/email_verification_pending_page.dart';
-import '../../../features/auth/presentation/pages/email_verified_page.dart';
-import '../../../features/auth/presentation/pages/login_page.dart';
-import '../../../features/auth/presentation/pages/oauth_callback_page.dart';
-import '../../../features/auth/presentation/pages/oauth_conflict_page.dart';
-import '../../../features/auth/presentation/pages/oauth_merge_existing_page.dart';
-import '../../../features/auth/presentation/pages/register_page.dart';
+import 'package:oshi_log/features/identity/auth/presentation/pages/email_verification_args.dart';
+import 'package:oshi_log/features/identity/auth/presentation/pages/email_verification_pending_page.dart';
+import 'package:oshi_log/features/identity/auth/presentation/pages/email_verified_page.dart';
+import 'package:oshi_log/features/identity/auth/presentation/pages/login_page.dart';
+import 'package:oshi_log/features/identity/auth/presentation/pages/oauth_callback_page.dart';
+import 'package:oshi_log/features/identity/auth/presentation/pages/oauth_conflict_page.dart';
+import 'package:oshi_log/features/identity/auth/presentation/pages/oauth_merge_existing_page.dart';
+import 'package:oshi_log/features/identity/auth/presentation/pages/register_page.dart';
 
 List<RouteBase> buildAuthRoutes() => [
   GoRoute(

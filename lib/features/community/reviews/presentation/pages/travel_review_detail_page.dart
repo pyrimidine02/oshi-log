@@ -17,7 +17,7 @@ import 'package:oshi_log/core/widgets/common/gbt_image.dart';
 import 'package:oshi_log/core/widgets/layout/gbt_page_header.dart';
 import 'package:oshi_log/core/widgets/layout/gbt_field_primitives.dart';
 import 'package:oshi_log/core/widgets/navigation/gbt_standard_app_bar.dart';
-import 'package:oshi_log/features/settings/application/settings_controller.dart';
+import 'package:oshi_log/features/identity/account/application/settings_controller.dart';
 import 'package:oshi_log/features/community/reviews/application/travel_reviews_controller.dart';
 import 'package:oshi_log/features/community/reviews/domain/entities/travel_review.dart';
 import 'package:oshi_log/features/community/reviews/presentation/widgets/travel_review_edit_sheet.dart';

@@ -9,7 +9,7 @@ import 'package:oshi_log/core/widgets/sheets/gbt_bottom_sheet.dart';
 import 'package:oshi_log/features/community/moderation/domain/entities/community_moderation.dart';
 import 'package:oshi_log/features/community/moderation/presentation/widgets/community_report_sheet.dart';
 import 'package:oshi_log/features/community/posts/presentation/pages/post_detail_page.dart';
-import 'package:oshi_log/features/titles/presentation/widgets/active_title_badge.dart';
+import 'package:oshi_log/features/identity/progression/presentation/widgets/active_title_badge.dart';
 
 class PostDetailRoute extends StatelessWidget {
   const PostDetailRoute({

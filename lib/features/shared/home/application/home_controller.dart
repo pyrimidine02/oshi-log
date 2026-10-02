@@ -9,7 +9,7 @@ import '../../../../core/logging/app_logger.dart';
 import '../../../../core/providers/core_providers.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
 import '../../../../core/router/navigation_state.dart';
-import '../../../auth/application/session_state.dart';
+import 'package:oshi_log/features/identity/auth/application/session_state.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/utils/result.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/projects_controller.dart';

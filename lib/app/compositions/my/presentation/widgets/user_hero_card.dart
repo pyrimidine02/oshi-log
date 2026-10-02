@@ -15,12 +15,12 @@ import '../../../../../core/theme/gbt_typography.dart';
 import '../../../../../core/widgets/common/gbt_icon_chip.dart';
 import '../../../../../core/widgets/common/gbt_image.dart';
 import '../../../../../core/widgets/feedback/gbt_loading.dart';
-import '../../../../../features/fan_level/application/fan_level_controller.dart';
-import '../../../../../features/fan_level/domain/entities/fan_level.dart';
-import '../../../../../features/settings/application/settings_controller.dart';
-import '../../../../../features/titles/application/titles_controller.dart';
-import '../../../../../features/titles/domain/entities/title_entities.dart';
-import '../../../../../features/titles/presentation/widgets/active_title_badge.dart';
+import 'package:oshi_log/features/identity/progression/application/fan_level_controller.dart';
+import 'package:oshi_log/features/identity/progression/domain/entities/fan_level.dart';
+import 'package:oshi_log/features/identity/account/application/settings_controller.dart';
+import 'package:oshi_log/features/identity/progression/application/titles_controller.dart';
+import 'package:oshi_log/features/identity/progression/domain/entities/title_entities.dart';
+import 'package:oshi_log/features/identity/progression/presentation/widgets/active_title_badge.dart';
 import './xp_ring_painter.dart';
 
 // EN: Format XP with thousands separators.

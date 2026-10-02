@@ -66,11 +66,11 @@ void main() {
         'lib/app.dart',
         'lib/platform/notifications/local_notifications_service.dart',
         'lib/platform/notifications/remote_push_service.dart',
-        'lib/features/auth/presentation/pages/login_page.dart',
+        'lib/features/identity/auth/presentation/pages/login_page.dart',
         'lib/app/compositions/community/presentation/field_community/field_community_page.dart',
         'lib/app/compositions/home/presentation/field_home/field_home_page.dart',
         'lib/app/compositions/my/presentation/travel_passport/passport_document.dart',
-        'lib/features/settings/presentation/pages/settings_page.dart',
+        'lib/features/identity/account/presentation/pages/settings_page.dart',
       ];
       for (final source in sources) {
         final content = read(source);

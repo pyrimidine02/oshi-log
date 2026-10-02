@@ -10,8 +10,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/domain/entities/project_entities.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/presentation/widgets/band_filter_sheet.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/presentation/widgets/field_project_picker_sheet.dart';
-import 'package:oshi_log/features/places/presentation/pages/places_map_page.dart';
-import 'package:oshi_log/features/visits/application/visits_controller.dart';
+import 'package:oshi_log/features/place/places/presentation/pages/places_map_page.dart';
+import 'package:oshi_log/features/place/visits/application/visits_controller.dart';
 
 /// EN: Hosts PlacesMapPage with visited-place IDs and catalog picker
 ///     callbacks supplied from the app composition layer.

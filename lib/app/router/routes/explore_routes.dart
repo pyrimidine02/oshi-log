@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/router/app_router.dart' show AppRoutes;
 import '../../compositions/explore/presentation/field_explore/field_explore_page.dart';
-import '../../../features/live_events/presentation/field_events/field_live_event_detail_page.dart';
+import 'package:oshi_log/features/oshikatsu/live/presentation/field_events/field_live_event_detail_page.dart';
 import '../../compositions/places/place_verification_flow.dart';
 import '../route_helpers.dart';
 

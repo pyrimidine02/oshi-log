@@ -13,7 +13,7 @@ import '../../../../../core/theme/gbt_colors.dart';
 import '../../../../../core/theme/gbt_spacing.dart';
 import '../../../../../core/theme/gbt_typography.dart';
 import '../../../../../core/widgets/common/gbt_icon_chip.dart';
-import '../../../../../features/settings/application/settings_controller.dart';
+import 'package:oshi_log/features/identity/account/application/settings_controller.dart';
 
 /// EN: Bento stat grid — big visits tile (left) + stacked stamps/posts
 /// tiles (right).

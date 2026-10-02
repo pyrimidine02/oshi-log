@@ -15,10 +15,10 @@ import 'package:oshi_log/core/widgets/feedback/gbt_loading.dart';
 import 'package:oshi_log/core/widgets/layout/gbt_page_header.dart';
 import 'package:oshi_log/core/widgets/navigation/gbt_app_bar_icon_button.dart';
 import 'package:oshi_log/core/widgets/navigation/gbt_standard_app_bar.dart';
-import 'package:oshi_log/features/places/domain/entities/place_entities.dart';
-import 'package:oshi_log/features/visits/application/visits_controller.dart';
+import 'package:oshi_log/features/place/places/domain/entities/place_entities.dart';
+import 'package:oshi_log/features/place/visits/application/visits_controller.dart';
 import 'package:oshi_log/app/compositions/visits/application/visit_place_context.dart';
-import 'package:oshi_log/features/visits/domain/entities/visit_entities.dart';
+import 'package:oshi_log/features/place/visits/domain/entities/visit_entities.dart';
 
 /// EN: Shows accumulated visit records as a readable travel ledger.
 /// KO: 누적 방문 기록을 읽기 쉬운 여행 장부로 표시합니다.

@@ -9,7 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oshi_log/core/error/failure.dart';
 import 'package:oshi_log/core/utils/result.dart';
 import 'package:oshi_log/features/community/posts/domain/entities/feed_entities.dart';
-import 'package:oshi_log/features/community/posts/application/feed_repository_provider.dart';
+import 'feed_repository_provider.dart';
 
 String normalizeTranslationLanguageCode(String? rawCode) {
   final normalized = rawCode?.trim().toLowerCase() ?? '';

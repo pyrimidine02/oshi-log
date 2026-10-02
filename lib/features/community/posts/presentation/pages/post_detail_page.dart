@@ -14,7 +14,7 @@ import 'package:go_router/go_router.dart';
 import 'package:oshi_log/core/error/failure.dart';
 import 'package:oshi_log/core/localization/locale_text.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
-import 'package:oshi_log/features/auth/application/session_state.dart';
+import 'package:oshi_log/features/identity/auth/application/session_state.dart';
 import 'package:oshi_log/core/security/user_access_level.dart';
 import 'package:oshi_log/core/router/app_router.dart';
 import 'package:oshi_log/core/utils/result.dart';
@@ -31,7 +31,7 @@ import 'package:oshi_log/core/widgets/dialogs/gbt_adaptive_dialog.dart';
 import 'package:oshi_log/core/widgets/feedback/gbt_loading.dart';
 import 'package:oshi_log/core/widgets/navigation/gbt_standard_app_bar.dart';
 import 'package:oshi_log/core/widgets/sheets/gbt_bottom_sheet.dart';
-import 'package:oshi_log/features/settings/application/settings_controller.dart';
+import 'package:oshi_log/features/identity/account/application/settings_controller.dart';
 import 'package:oshi_log/features/community/moderation/application/community_repository_provider.dart';
 import 'package:oshi_log/features/community/posts/application/feed_controller.dart';
 import 'package:oshi_log/features/community/posts/application/local_post_bookmarks_controller.dart';
@@ -42,8 +42,8 @@ import 'package:oshi_log/features/identity/social/domain/entities/social_entitie
 import 'package:oshi_log/features/community/moderation/domain/entities/community_moderation.dart';
 import 'package:oshi_log/features/community/posts/domain/entities/feed_entities.dart';
 import 'package:oshi_log/features/community/posts/presentation/widgets/community_translation_panel.dart';
-import 'package:oshi_log/features/titles/application/titles_controller.dart';
-import 'package:oshi_log/features/titles/domain/entities/title_entities.dart';
+import 'package:oshi_log/features/identity/progression/application/titles_controller.dart';
+import 'package:oshi_log/features/identity/progression/domain/entities/title_entities.dart';
 
 /// EN: Post detail page widget.
 /// KO: 게시글 상세 페이지 위젯.

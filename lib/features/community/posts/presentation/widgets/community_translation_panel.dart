@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:oshi_log/core/localization/locale_text.dart';
-import 'package:oshi_log/features/auth/application/session_state.dart';
+import 'package:oshi_log/features/identity/auth/application/session_state.dart';
 import 'package:oshi_log/core/theme/gbt_colors.dart';
 import 'package:oshi_log/core/theme/gbt_spacing.dart';
 import 'package:oshi_log/core/theme/gbt_typography.dart';

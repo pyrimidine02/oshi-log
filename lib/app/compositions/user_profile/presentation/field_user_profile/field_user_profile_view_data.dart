@@ -4,7 +4,7 @@ library;
 
 import 'package:intl/intl.dart';
 
-import 'package:oshi_log/features/settings/domain/entities/user_profile.dart';
+import 'package:oshi_log/features/identity/account/domain/entities/user_profile.dart';
 
 enum FieldProfileMetricKind {
   xp,

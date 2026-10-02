@@ -19,10 +19,10 @@ import 'package:oshi_log/core/theme/theme.dart';
 import 'package:oshi_log/core/widgets/common/gbt_image.dart';
 import 'package:oshi_log/core/widgets/feedback/gbt_loading.dart';
 import 'package:oshi_log/core/widgets/navigation/gbt_standard_app_bar.dart';
-import 'package:oshi_log/features/places/domain/entities/place_entities.dart';
-import 'package:oshi_log/features/visits/application/visits_controller.dart';
+import 'package:oshi_log/features/place/places/domain/entities/place_entities.dart';
+import 'package:oshi_log/features/place/visits/application/visits_controller.dart';
 import 'package:oshi_log/app/compositions/visits/application/visit_place_context.dart';
-import 'package:oshi_log/features/visits/domain/entities/visit_entities.dart';
+import 'package:oshi_log/features/place/visits/domain/entities/visit_entities.dart';
 
 /// EN: Shows one immutable visit record and its supporting evidence.
 /// KO: 하나의 불변 방문 기록과 그 근거 정보를 표시합니다.

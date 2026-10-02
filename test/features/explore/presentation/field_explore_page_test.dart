@@ -6,8 +6,8 @@ import 'package:oshi_log/app/compositions/explore/presentation/field_explore/fie
 import 'package:oshi_log/app/compositions/explore/presentation/field_explore/field_explore_page.dart';
 import 'package:oshi_log/app/compositions/places/places_map_host.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/projects_controller.dart';
-import 'package:oshi_log/features/settings/application/settings_controller.dart';
-import 'package:oshi_log/features/visits/application/visits_controller.dart';
+import 'package:oshi_log/features/identity/account/application/settings_controller.dart';
+import 'package:oshi_log/features/place/visits/application/visits_controller.dart';
 
 void main() {
   testWidgets('FieldExplorePage follows an updated initial tab index', (

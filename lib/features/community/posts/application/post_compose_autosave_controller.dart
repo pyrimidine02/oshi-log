@@ -7,7 +7,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
-import 'package:oshi_log/features/community/posts/application/post_compose_draft_store.dart';
+import 'post_compose_draft_store.dart';
 
 /// EN: Configuration for a compose autosave session.
 /// KO: 작성 오토세이브 세션 설정값입니다.

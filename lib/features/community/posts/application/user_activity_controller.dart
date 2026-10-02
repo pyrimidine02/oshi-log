@@ -8,7 +8,7 @@ import 'package:oshi_log/core/error/failure.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
 import 'package:oshi_log/core/utils/result.dart';
 import 'package:oshi_log/features/community/posts/domain/entities/feed_entities.dart';
-import 'package:oshi_log/features/community/posts/application/feed_controller.dart';
+import 'feed_controller.dart';
 
 class UserActivity {
   const UserActivity({required this.posts, required this.comments});

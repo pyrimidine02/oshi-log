@@ -5,18 +5,18 @@ library;
 import 'package:go_router/go_router.dart';
 
 import '../../../core/router/app_router.dart' show AppRoutes;
-import '../../../features/admin_ops/presentation/pages/admin_ops_page.dart';
-import '../../../features/auth/presentation/pages/change_password_page.dart';
-import '../../../features/auth/presentation/pages/forgot_password_page.dart';
-import '../../../features/auth/presentation/pages/reset_password_page.dart';
+import 'package:oshi_log/features/community/moderation/presentation/pages/admin_ops_page.dart';
+import 'package:oshi_log/features/identity/auth/presentation/pages/change_password_page.dart';
+import 'package:oshi_log/features/identity/auth/presentation/pages/forgot_password_page.dart';
+import 'package:oshi_log/features/identity/auth/presentation/pages/reset_password_page.dart';
 import '../../compositions/account/presentation/pages/account_tools_page.dart';
-import '../../../features/settings/presentation/pages/community_settings_page.dart';
-import '../../../features/settings/presentation/pages/consent_history_page.dart';
-import '../../../features/settings/presentation/pages/linked_accounts_page.dart';
-import '../../../features/settings/presentation/pages/notification_settings_page.dart';
-import '../../../features/settings/presentation/pages/privacy_rights_page.dart';
-import '../../../features/settings/presentation/pages/profile_edit_page.dart';
-import '../../../features/settings/presentation/pages/settings_page.dart';
+import 'package:oshi_log/features/identity/account/presentation/pages/community_settings_page.dart';
+import 'package:oshi_log/features/identity/account/presentation/pages/consent_history_page.dart';
+import 'package:oshi_log/features/identity/account/presentation/pages/linked_accounts_page.dart';
+import 'package:oshi_log/features/identity/account/presentation/pages/notification_settings_page.dart';
+import 'package:oshi_log/features/identity/account/presentation/pages/privacy_rights_page.dart';
+import 'package:oshi_log/features/identity/account/presentation/pages/profile_edit_page.dart';
+import 'package:oshi_log/features/identity/account/presentation/pages/settings_page.dart';
 import '../route_helpers.dart';
 
 List<RouteBase> buildSettingsRoutes() => [

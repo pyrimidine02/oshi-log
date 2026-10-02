@@ -11,8 +11,8 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/gbt_colors.dart';
 import '../../../core/theme/gbt_spacing.dart';
 import '../../../core/theme/gbt_typography.dart';
-import '../../../features/notifications/application/in_app_notification_queue.dart';
-import '../../../features/notifications/domain/entities/notification_navigation.dart';
+import 'package:oshi_log/features/shared/notifications/application/in_app_notification_queue.dart';
+import 'package:oshi_log/features/shared/notifications/domain/entities/notification_navigation.dart';
 
 /// EN: Full-screen overlay that renders in-app notification banners above
 /// all other content, consuming entries from [inAppNotificationQueueProvider].

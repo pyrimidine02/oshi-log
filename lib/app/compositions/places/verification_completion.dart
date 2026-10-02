@@ -10,8 +10,8 @@ import 'dart:async' show unawaited;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../features/titles/application/titles_controller.dart';
-import '../../../features/visits/application/visits_controller.dart';
+import 'package:oshi_log/features/identity/progression/application/titles_controller.dart';
+import 'package:oshi_log/features/place/visits/application/visits_controller.dart';
 
 /// EN: Refreshes visit-related state after a successful place verification.
 /// KO: 장소 인증 성공 후 방문 관련 상태를 새로고침합니다.

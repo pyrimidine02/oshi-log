@@ -7,7 +7,7 @@ import 'package:flutter/services.dart';
 
 import '../../../../../core/localization/locale_text.dart';
 import '../../../../../core/theme/theme.dart';
-import '../../../../../features/live_events/presentation/field_events/field_live_events_page.dart';
+import 'package:oshi_log/app/compositions/live/live_host.dart';
 import 'package:oshi_log/app/compositions/visits/presentation/field_visit_ledger/field_visit_ledger_page.dart';
 import 'package:oshi_log/app/compositions/collections/collections_host.dart';
 import 'package:oshi_log/app/compositions/places/places_map_host.dart';
@@ -107,7 +107,7 @@ class _FieldExplorePageState extends State<FieldExplorePage>
                   child: Padding(
                     key: const ValueKey('field-explore-safe-content-1'),
                     padding: EdgeInsets.only(bottom: modeContentClearance),
-                    child: const FieldLiveEventsPage(embedded: true),
+                    child: buildFieldLiveEventsPage(embedded: true),
                   ),
                 ),
                 SafeArea(

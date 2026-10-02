@@ -10,12 +10,12 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../features/favorites/application/favorites_controller.dart';
+import 'package:oshi_log/features/shared/favorites/application/favorites_controller.dart';
 import 'package:oshi_log/features/community/posts/application/local_post_bookmarks_controller.dart';
 import 'package:oshi_log/features/community/posts/application/reaction_controller.dart';
-import '../../features/live_events/application/live_events_controller.dart';
+import 'package:oshi_log/features/oshikatsu/live/application/live_events_controller.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
-import '../../features/settings/application/settings_controller.dart';
+import 'package:oshi_log/features/identity/account/application/settings_controller.dart';
 import '../../core/router/navigation_state.dart';
 
 /// EN: Reset project/tab selection and invalidate user-scoped feature

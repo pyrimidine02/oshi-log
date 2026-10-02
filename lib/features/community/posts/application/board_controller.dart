@@ -14,11 +14,11 @@ import 'package:oshi_log/core/logging/app_logger.dart';
 import 'package:oshi_log/core/providers/core_providers.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
 import 'package:oshi_log/core/router/navigation_state.dart';
-import 'package:oshi_log/features/auth/application/session_state.dart';
+import 'package:oshi_log/features/identity/auth/application/session_state.dart';
 import 'package:oshi_log/core/realtime/sse_client.dart';
 import 'package:oshi_log/core/utils/result.dart';
 import 'package:oshi_log/features/community/posts/domain/entities/feed_entities.dart';
-import 'package:oshi_log/features/community/posts/application/feed_repository_provider.dart';
+import 'feed_repository_provider.dart';
 
 const int _kBoardNavIndex = 4;
 

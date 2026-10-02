@@ -9,8 +9,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
 import 'package:oshi_log/core/utils/result.dart';
 import 'package:oshi_log/features/community/posts/domain/entities/feed_entities.dart';
-import 'package:oshi_log/features/community/posts/application/board_controller.dart';
-import 'package:oshi_log/features/community/posts/application/feed_repository_provider.dart';
+import 'board_controller.dart';
+import 'feed_repository_provider.dart';
 
 /// EN: State for the new posts indicator — buffered posts and pill visibility.
 /// KO: 새 게시글 인디케이터 상태 — 버퍼된 게시글과 필 표시 여부.

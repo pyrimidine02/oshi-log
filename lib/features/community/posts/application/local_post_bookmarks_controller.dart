@@ -5,7 +5,7 @@ library;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:oshi_log/core/providers/core_providers.dart';
-import 'package:oshi_log/features/auth/application/session_state.dart';
+import 'package:oshi_log/features/identity/auth/application/session_state.dart';
 
 /// EN: Lightweight model for a locally cached bookmarked post.
 /// KO: 로컬 캐시에 저장된 북마크 게시글의 경량 모델.

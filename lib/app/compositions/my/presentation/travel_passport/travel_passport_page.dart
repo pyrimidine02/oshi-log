@@ -8,10 +8,10 @@ import 'package:go_router/go_router.dart';
 
 import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
 import '../../../../../core/router/app_router.dart';
-import '../../../../../features/calendar/application/calendar_controller.dart';
-import '../../../../../features/calendar/domain/entities/calendar_event.dart';
-import '../../../../../features/fan_level/application/fan_level_controller.dart';
-import '../../../../../features/settings/application/settings_controller.dart';
+import 'package:oshi_log/features/oshikatsu/live/application/calendar_controller.dart';
+import 'package:oshi_log/features/oshikatsu/live/domain/entities/calendar_event.dart';
+import 'package:oshi_log/features/identity/progression/application/fan_level_controller.dart';
+import 'package:oshi_log/features/identity/account/application/settings_controller.dart';
 import './travel_passport_view.dart';
 import './travel_passport_view_data.dart';
 

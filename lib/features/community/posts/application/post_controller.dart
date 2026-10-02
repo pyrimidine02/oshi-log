@@ -10,7 +10,7 @@ import 'package:oshi_log/core/utils/result.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/projects_controller.dart';
 import 'package:oshi_log/features/community/posts/domain/entities/feed_entities.dart';
 import 'package:oshi_log/features/community/posts/domain/repositories/feed_repository.dart';
-import 'package:oshi_log/features/community/posts/application/feed_repository_provider.dart';
+import 'feed_repository_provider.dart';
 
 final RegExp _uuidPattern = RegExp(
   r'^[0-9a-fA-F]{8}-'

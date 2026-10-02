@@ -17,7 +17,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:oshi_log/core/storage/local_storage.dart';
-import 'package:oshi_log/features/auth/application/auth_controller.dart'
+import 'package:oshi_log/features/identity/auth/application/auth_controller.dart'
     show clearUserScopedLocalStorage, clearUserScopedMutations;
 
 void main() {

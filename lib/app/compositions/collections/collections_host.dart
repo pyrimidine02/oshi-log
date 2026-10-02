@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 
 import 'package:oshi_log/features/oshikatsu/catalog/domain/entities/project_entities.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/presentation/widgets/field_project_picker_sheet.dart';
-import 'package:oshi_log/features/zukan/presentation/field_archive/field_zukan_archive_page.dart';
+import 'package:oshi_log/features/place/collections/presentation/field_archive/field_zukan_archive_page.dart';
 
 /// EN: Hosts FieldZukanArchivePage with the catalog project picker supplied
 ///     from the app composition layer.

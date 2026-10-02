@@ -10,7 +10,7 @@ import '../../../../../core/theme/gbt_colors.dart';
 import '../../../../../core/theme/gbt_decorations.dart';
 import '../../../../../core/theme/gbt_spacing.dart';
 import '../../../../../core/theme/gbt_typography.dart';
-import '../../../../../features/fan_level/application/fan_level_controller.dart';
+import 'package:oshi_log/features/identity/progression/application/fan_level_controller.dart';
 
 /// EN: Full-width daily check-in button with loading state.
 /// KO: 로딩 상태를 포함한 전체 너비 일일 출석 체크 버튼.

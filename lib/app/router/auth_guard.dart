@@ -5,7 +5,7 @@ library;
 import 'package:go_router/go_router.dart';
 
 import '../../core/router/app_router.dart' show safeRedirectTarget;
-import '../../features/auth/application/session_state.dart';
+import 'package:oshi_log/features/identity/auth/application/session_state.dart';
 
 export '../../core/router/app_router.dart' show safeRedirectTarget;
 

@@ -5,14 +5,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
 import 'package:oshi_log/core/utils/result.dart';
-import 'package:oshi_log/features/calendar/application/calendar_controller.dart';
-import 'package:oshi_log/features/calendar/domain/entities/calendar_event.dart';
-import 'package:oshi_log/features/fan_level/application/fan_level_controller.dart';
-import 'package:oshi_log/features/fan_level/domain/entities/fan_level.dart';
-import 'package:oshi_log/features/fan_level/domain/repositories/fan_level_repository.dart';
+import 'package:oshi_log/features/oshikatsu/live/application/calendar_controller.dart';
+import 'package:oshi_log/features/oshikatsu/live/domain/entities/calendar_event.dart';
+import 'package:oshi_log/features/identity/progression/application/fan_level_controller.dart';
+import 'package:oshi_log/features/identity/progression/domain/entities/fan_level.dart';
+import 'package:oshi_log/features/identity/progression/domain/repositories/fan_level_repository.dart';
 import 'package:oshi_log/app/compositions/my/presentation/travel_passport/travel_passport_page.dart';
-import 'package:oshi_log/features/settings/application/settings_controller.dart';
-import 'package:oshi_log/features/settings/domain/entities/user_profile.dart';
+import 'package:oshi_log/features/identity/account/application/settings_controller.dart';
+import 'package:oshi_log/features/identity/account/domain/entities/user_profile.dart';
 
 void main() {
   testWidgets('refresh stays active until both calendar months finish', (

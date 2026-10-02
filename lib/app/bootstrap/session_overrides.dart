@@ -7,10 +7,10 @@ library;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/providers/core_providers.dart';
-import '../../features/auth/application/auth_controller.dart';
-import '../../features/auth/application/session_state.dart';
-import '../../features/notifications/application/notification_delivery.dart';
-import '../../features/verification/application/verification_controller.dart';
+import 'package:oshi_log/features/identity/auth/application/auth_controller.dart';
+import 'package:oshi_log/features/identity/auth/application/session_state.dart';
+import 'package:oshi_log/features/shared/notifications/application/notification_delivery.dart';
+import 'package:oshi_log/features/place/verification/application/verification_controller.dart';
 import '../compositions/places/verification_completion.dart';
 import '../session/session_cleanup.dart';
 

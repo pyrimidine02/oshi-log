@@ -8,8 +8,8 @@ import 'package:oshi_log/core/error/failure.dart';
 import 'package:oshi_log/core/localization/locale_text.dart';
 import 'package:oshi_log/core/theme/theme.dart';
 import 'package:oshi_log/core/widgets/layout/gbt_field_primitives.dart';
-import 'package:oshi_log/features/live_events/application/live_events_controller.dart';
-import 'package:oshi_log/features/live_events/domain/entities/live_event_entities.dart';
+import 'package:oshi_log/features/oshikatsu/live/application/live_events_controller.dart';
+import 'package:oshi_log/features/oshikatsu/live/domain/entities/live_event_entities.dart';
 import 'field_visit_ledger_common.dart';
 import 'field_visit_ledger_view_data.dart';
 

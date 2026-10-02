@@ -10,30 +10,30 @@ library;
 import 'package:go_router/go_router.dart';
 
 import '../../../core/router/app_router.dart' show AppRoutes;
-import '../../../features/calendar/presentation/field_calendar/field_calendar_page.dart';
-import '../../../features/cheer_guides/presentation/pages/cheer_guide_detail_page.dart';
-import '../../../features/cheer_guides/presentation/pages/cheer_guides_page.dart';
-import '../../../features/favorites/presentation/pages/favorites_page.dart';
-import '../../../features/fan_level/presentation/pages/fan_level_page.dart';
+import '../../compositions/live/live_host.dart';
+import 'package:oshi_log/features/oshikatsu/live/presentation/pages/cheer_guide_detail_page.dart';
+import 'package:oshi_log/features/oshikatsu/live/presentation/pages/cheer_guides_page.dart';
+import 'package:oshi_log/features/shared/favorites/presentation/pages/favorites_page.dart';
+import 'package:oshi_log/features/identity/progression/presentation/pages/fan_level_page.dart';
 import '../../compositions/user_profile/presentation/field_user_profile/field_user_profile_page.dart';
 import '../../../features/community/news/presentation/pages/news_detail_page.dart';
 import 'package:oshi_log/features/community/posts/presentation/pages/post_bookmarks_page.dart';
 import '../../compositions/posts/post_detail_route.dart';
 import 'package:oshi_log/features/identity/social/presentation/pages/user_connections_page.dart';
-import '../../../features/live_events/presentation/field_events/field_live_event_detail_page.dart';
-import '../../../features/music/presentation/pages/music_song_detail_page.dart';
-import '../../../features/notifications/presentation/pages/notifications_page.dart';
+import 'package:oshi_log/features/oshikatsu/live/presentation/field_events/field_live_event_detail_page.dart';
+import 'package:oshi_log/features/oshikatsu/music/presentation/pages/music_song_detail_page.dart';
+import 'package:oshi_log/features/shared/notifications/presentation/pages/notifications_page.dart';
 import '../../compositions/places/place_verification_flow.dart';
-import '../../../features/profile_banner/presentation/pages/banner_picker_page.dart';
+import 'package:oshi_log/features/identity/progression/presentation/pages/banner_picker_page.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/presentation/pages/fan_subject_detail_page.dart';
-import '../../../features/quotes/presentation/pages/quotes_page.dart';
+import 'package:oshi_log/features/oshikatsu/quotes/presentation/pages/quotes_page.dart';
 import '../../compositions/search/presentation/pages/search_page.dart';
-import '../../../features/titles/presentation/pages/title_catalog_page.dart';
+import 'package:oshi_log/features/identity/progression/presentation/pages/title_catalog_page.dart';
 import 'package:oshi_log/app/compositions/visits/presentation/field_visit_ledger/field_visit_ledger_common.dart';
 import 'package:oshi_log/app/compositions/visits/presentation/field_visit_ledger/field_visit_ledger_page.dart';
 import 'package:oshi_log/app/compositions/visits/presentation/pages/visit_detail_page.dart';
 import 'package:oshi_log/app/compositions/visits/presentation/pages/visit_stats_page.dart';
-import '../../../features/zukan/presentation/pages/zukan_detail_page.dart';
+import 'package:oshi_log/features/place/collections/presentation/pages/zukan_detail_page.dart';
 import '../../compositions/collections/collections_host.dart';
 import '../route_helpers.dart';
 
@@ -91,7 +91,7 @@ List<RouteBase> buildGlobalOverlayRoutes() => [
     name: AppRoutes.calendar,
     pageBuilder: (context, state) => buildAdaptiveOverlayPage(
       key: state.pageKey,
-      child: const FieldCalendarPage(),
+      child: buildFieldCalendarPage(),
     ),
   ),
   GoRoute(

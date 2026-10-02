@@ -9,7 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../features/auth/application/session_state.dart';
+import 'package:oshi_log/features/identity/auth/application/session_state.dart';
 import '../../core/widgets/feedback/gbt_navigation_error_view.dart';
 import '../shell/main_scaffold.dart';
 import 'auth_guard.dart';

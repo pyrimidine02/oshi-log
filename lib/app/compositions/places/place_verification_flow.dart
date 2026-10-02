@@ -8,10 +8,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/localization/locale_text.dart';
-import '../../../features/places/presentation/pages/place_detail_page.dart';
-import '../../../features/places/presentation/widgets/place_review_sheet.dart';
-import '../../../features/verification/application/verification_controller.dart';
-import '../../../features/verification/presentation/widgets/verification_sheet.dart';
+import 'package:oshi_log/features/place/places/presentation/pages/place_detail_page.dart';
+import 'package:oshi_log/features/place/places/presentation/widgets/place_review_sheet.dart';
+import 'package:oshi_log/features/place/verification/application/verification_controller.dart';
+import 'package:oshi_log/features/place/verification/presentation/widgets/verification_sheet.dart';
 
 class PlaceVerificationFlow extends StatelessWidget {
   const PlaceVerificationFlow({super.key, required this.placeId});

@@ -22,7 +22,7 @@ import '../../../../../core/widgets/navigation/gbt_profile_action.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/projects_controller.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/domain/entities/project_entities.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/presentation/widgets/field_project_lens.dart';
-import '../../../../../features/settings/application/settings_controller.dart';
+import 'package:oshi_log/features/identity/account/application/settings_controller.dart';
 import '../../../../../features/shared/home/application/home_controller.dart';
 import '../../../../../features/shared/home/domain/entities/home_summary.dart';
 import './field_home_view_data.dart';

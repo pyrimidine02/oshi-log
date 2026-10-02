@@ -6,9 +6,9 @@ import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 
-import '../../../../../features/calendar/domain/entities/calendar_event.dart';
-import '../../../../../features/fan_level/domain/entities/fan_level.dart';
-import '../../../../../features/settings/domain/entities/user_profile.dart';
+import 'package:oshi_log/features/oshikatsu/live/domain/entities/calendar_event.dart';
+import 'package:oshi_log/features/identity/progression/domain/entities/fan_level.dart';
+import 'package:oshi_log/features/identity/account/domain/entities/user_profile.dart';
 
 /// EN: Availability of authenticated profile-backed passport values.
 /// KO: 인증 프로필 기반 여권 값의 가용 상태입니다.

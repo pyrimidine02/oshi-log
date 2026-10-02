@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import '../../../../../core/localization/locale_text.dart';
 import '../../../../../core/theme/gbt_colors.dart';
 import '../../../../../core/theme/gbt_spacing.dart';
-import '../../../../../features/calendar/domain/entities/calendar_event.dart';
+import 'package:oshi_log/features/oshikatsu/live/domain/entities/calendar_event.dart';
 import './passport_schedule_labels.dart';
 import './travel_passport_view_data.dart';
 

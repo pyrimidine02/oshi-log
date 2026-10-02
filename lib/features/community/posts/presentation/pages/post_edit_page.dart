@@ -16,7 +16,7 @@ import 'package:oshi_log/core/error/failure.dart';
 import 'package:oshi_log/core/localization/locale_text.dart';
 import 'package:oshi_log/core/logging/app_logger.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
-import 'package:oshi_log/features/auth/application/session_state.dart';
+import 'package:oshi_log/features/identity/auth/application/session_state.dart';
 
 import 'package:oshi_log/core/theme/gbt_colors.dart';
 import 'package:oshi_log/core/theme/gbt_spacing.dart';
@@ -31,10 +31,10 @@ import 'package:oshi_log/core/widgets/layout/gbt_page_header.dart';
 import 'package:oshi_log/core/widgets/navigation/gbt_standard_app_bar.dart';
 import 'package:oshi_log/features/community/posts/application/feed_controller.dart';
 import 'package:oshi_log/features/community/posts/domain/entities/feed_entities.dart';
-import 'package:oshi_log/features/settings/application/settings_controller.dart';
-import 'package:oshi_log/features/uploads/application/uploads_controller.dart';
-import 'package:oshi_log/features/uploads/domain/entities/upload_entity.dart';
-import 'package:oshi_log/features/uploads/utils/webp_image_converter.dart';
+import 'package:oshi_log/features/identity/account/application/settings_controller.dart';
+import 'package:oshi_log/features/shared/uploads/application/uploads_controller.dart';
+import 'package:oshi_log/features/shared/uploads/domain/entities/upload_entity.dart';
+import 'package:oshi_log/features/shared/uploads/utils/webp_image_converter.dart';
 import 'package:oshi_log/core/widgets/compose/post_compose_document_editor.dart';
 import 'package:oshi_log/features/community/posts/presentation/widgets/post_compose_components.dart';
 

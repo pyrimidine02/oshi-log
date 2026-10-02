@@ -21,16 +21,16 @@ import 'package:go_router/go_router.dart';
 
 import 'package:oshi_log/core/error/failure.dart';
 import 'package:oshi_log/core/providers/core_providers.dart';
-import 'package:oshi_log/features/auth/application/session_state.dart';
+import 'package:oshi_log/features/identity/auth/application/session_state.dart';
 import 'package:oshi_log/app/router/app_router.dart';
 import 'package:oshi_log/core/security/secure_storage.dart';
 import 'package:oshi_log/core/utils/result.dart';
-import 'package:oshi_log/features/calendar/application/calendar_controller.dart';
-import 'package:oshi_log/features/calendar/domain/entities/calendar_event.dart';
-import 'package:oshi_log/features/calendar/domain/repositories/calendar_repository.dart';
-import 'package:oshi_log/features/fan_level/application/fan_level_controller.dart';
-import 'package:oshi_log/features/fan_level/domain/entities/fan_level.dart';
-import 'package:oshi_log/features/fan_level/domain/repositories/fan_level_repository.dart';
+import 'package:oshi_log/features/oshikatsu/live/application/calendar_controller.dart';
+import 'package:oshi_log/features/oshikatsu/live/domain/entities/calendar_event.dart';
+import 'package:oshi_log/features/oshikatsu/live/domain/repositories/calendar_repository.dart';
+import 'package:oshi_log/features/identity/progression/application/fan_level_controller.dart';
+import 'package:oshi_log/features/identity/progression/domain/entities/fan_level.dart';
+import 'package:oshi_log/features/identity/progression/domain/repositories/fan_level_repository.dart';
 
 /// EN: Fake repositories that resolve synchronously without touching the
 /// EN: real network, so destination pages that fetch data on build (e.g.

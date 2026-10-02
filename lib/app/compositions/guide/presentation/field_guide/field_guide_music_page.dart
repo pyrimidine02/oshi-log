@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 
 import 'package:oshi_log/core/localization/locale_text.dart';
 import 'package:oshi_log/core/widgets/navigation/gbt_standard_app_bar.dart';
-import 'package:oshi_log/features/music/presentation/widgets/music_catalog_tab.dart';
+import 'package:oshi_log/features/oshikatsu/music/presentation/widgets/music_catalog_tab.dart';
 
 class FieldGuideMusicPage extends StatelessWidget {
   const FieldGuideMusicPage({super.key});

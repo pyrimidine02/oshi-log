@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:oshi_log/features/calendar/domain/entities/calendar_event.dart';
-import 'package:oshi_log/features/fan_level/domain/entities/fan_level.dart';
+import 'package:oshi_log/features/oshikatsu/live/domain/entities/calendar_event.dart';
+import 'package:oshi_log/features/identity/progression/domain/entities/fan_level.dart';
 import 'package:oshi_log/app/compositions/my/presentation/travel_passport/travel_passport_view_data.dart';
-import 'package:oshi_log/features/settings/domain/entities/user_profile.dart';
+import 'package:oshi_log/features/identity/account/domain/entities/user_profile.dart';
 
 void main() {
   group('TravelPassportViewData', () {

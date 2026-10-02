@@ -12,9 +12,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/providers/core_providers.dart';
-import '../../../features/notifications/application/notifications_controller.dart';
-import '../../../features/notifications/domain/entities/notification_navigation.dart';
-import '../../../features/titles/application/titles_controller.dart';
+import 'package:oshi_log/features/shared/notifications/application/notifications_controller.dart';
+import 'package:oshi_log/features/shared/notifications/domain/entities/notification_navigation.dart';
+import 'package:oshi_log/features/identity/progression/application/titles_controller.dart';
 import '../../../platform/notifications/local_notifications_service.dart';
 
 /// EN: Origin of a notification tap — affects open-tracking behavior.

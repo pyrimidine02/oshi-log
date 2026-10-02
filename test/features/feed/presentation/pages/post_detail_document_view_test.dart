@@ -6,7 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oshi_log/core/theme/gbt_theme.dart';
 import 'package:oshi_log/features/community/posts/domain/entities/feed_entities.dart';
 import 'package:oshi_log/features/community/posts/presentation/pages/post_detail_page.dart';
-import 'package:oshi_log/features/titles/application/titles_controller.dart';
+import 'package:oshi_log/features/identity/progression/application/titles_controller.dart';
 
 void main() {
   testWidgets('post detail reads as one ordered field-note document', (

@@ -19,11 +19,11 @@ import 'package:oshi_log/core/widgets/common/gbt_image.dart';
 import 'package:oshi_log/core/widgets/feedback/gbt_loading.dart';
 import 'package:oshi_log/core/widgets/navigation/gbt_segmented_tab_bar.dart';
 import 'package:oshi_log/core/widgets/navigation/gbt_standard_app_bar.dart';
-import 'package:oshi_log/features/settings/application/settings_controller.dart';
-import 'package:oshi_log/features/settings/domain/entities/account_tools.dart';
-import 'package:oshi_log/features/settings/domain/entities/user_profile.dart';
-import 'package:oshi_log/features/verification/application/failed_attempt_service.dart';
-import 'package:oshi_log/features/verification/domain/entities/failed_verification_attempt.dart';
+import 'package:oshi_log/features/identity/account/application/settings_controller.dart';
+import 'package:oshi_log/features/identity/account/domain/entities/account_tools.dart';
+import 'package:oshi_log/features/identity/account/domain/entities/user_profile.dart';
+import 'package:oshi_log/features/place/verification/application/failed_attempt_service.dart';
+import 'package:oshi_log/features/place/verification/domain/entities/failed_verification_attempt.dart';
 
 enum _AccountToolsTab { blocks, accessLevel, appeals }
 

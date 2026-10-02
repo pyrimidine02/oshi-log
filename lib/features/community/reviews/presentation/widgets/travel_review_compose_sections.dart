@@ -9,8 +9,8 @@ import 'package:intl/intl.dart';
 import 'package:oshi_log/core/localization/locale_text.dart';
 import 'package:oshi_log/core/theme/gbt_spacing.dart';
 import 'package:oshi_log/core/theme/gbt_typography.dart';
-import 'package:oshi_log/features/live_events/application/live_events_controller.dart';
-import 'package:oshi_log/features/live_events/domain/entities/live_event_entities.dart';
+import 'package:oshi_log/features/oshikatsu/live/application/live_events_controller.dart';
+import 'package:oshi_log/features/oshikatsu/live/domain/entities/live_event_entities.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/fan_subjects_controller.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/domain/entities/fan_subject.dart';
 

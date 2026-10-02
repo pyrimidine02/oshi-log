@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:oshi_log/core/localization/locale_text.dart';
-import 'package:oshi_log/features/auth/application/session_state.dart';
+import 'package:oshi_log/features/identity/auth/application/session_state.dart';
 import 'package:oshi_log/core/theme/theme.dart';
 import 'package:oshi_log/core/utils/result.dart';
 import 'package:oshi_log/core/widgets/common/gbt_image.dart';
