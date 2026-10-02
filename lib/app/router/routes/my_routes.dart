@@ -5,7 +5,7 @@ library;
 import 'package:go_router/go_router.dart';
 
 import '../../../core/router/app_router.dart' show AppRoutes;
-import '../../../features/my/presentation/travel_passport/travel_passport_page.dart';
+import '../../compositions/my/presentation/travel_passport/travel_passport_page.dart';
 
 List<RouteBase> buildMyRoutes() => [
   GoRoute(

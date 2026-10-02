@@ -68,8 +68,8 @@ void main() {
         'lib/platform/notifications/remote_push_service.dart',
         'lib/features/auth/presentation/pages/login_page.dart',
         'lib/features/feed/presentation/field_community/field_community_page.dart',
-        'lib/features/home/presentation/field_home/field_home_page.dart',
-        'lib/features/my/presentation/travel_passport/passport_document.dart',
+        'lib/app/compositions/home/presentation/field_home/field_home_page.dart',
+        'lib/app/compositions/my/presentation/travel_passport/passport_document.dart',
         'lib/features/settings/presentation/pages/settings_page.dart',
       ];
       for (final source in sources) {

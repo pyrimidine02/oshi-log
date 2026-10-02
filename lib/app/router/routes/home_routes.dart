@@ -5,7 +5,7 @@ library;
 import 'package:go_router/go_router.dart';
 
 import '../../../core/router/app_router.dart' show AppRoutes;
-import '../../../features/home/presentation/field_home/field_home_page.dart';
+import '../../compositions/home/presentation/field_home/field_home_page.dart';
 
 List<RouteBase> buildHomeRoutes() => [
   GoRoute(

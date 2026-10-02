@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oshi_log/features/calendar/domain/entities/calendar_event.dart';
 import 'package:oshi_log/features/fan_level/domain/entities/fan_level.dart';
-import 'package:oshi_log/features/my/presentation/travel_passport/travel_passport_view_data.dart';
+import 'package:oshi_log/app/compositions/my/presentation/travel_passport/travel_passport_view_data.dart';
 import 'package:oshi_log/features/settings/domain/entities/user_profile.dart';
 
 void main() {

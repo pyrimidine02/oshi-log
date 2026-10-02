@@ -7,7 +7,7 @@ import 'package:golden_toolkit/golden_toolkit.dart';
 
 import 'package:oshi_log/core/theme/gbt_theme.dart';
 import 'package:oshi_log/core/widgets/layout/gbt_field_primitives.dart';
-import 'package:oshi_log/features/home/presentation/field_home/widgets/field_home_components.dart';
+import 'package:oshi_log/app/compositions/home/presentation/field_home/widgets/field_home_components.dart';
 import '../../../testing/tolerant_local_file_comparator.dart';
 
 void main() {

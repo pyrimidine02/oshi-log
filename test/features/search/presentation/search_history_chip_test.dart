@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:oshi_log/core/theme/gbt_theme.dart';
-import 'package:oshi_log/features/search/presentation/pages/search_page.dart';
+import 'package:oshi_log/app/compositions/search/presentation/pages/search_page.dart';
 
 void main() {
   testWidgets('search history actions remain 48dp at 200 percent text', (

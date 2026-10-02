@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:network_image_mock/network_image_mock.dart';
 
 import 'package:oshi_log/core/widgets/common/gbt_image.dart';
-import 'package:oshi_log/features/home/presentation/field_home/widgets/field_home_components.dart';
+import 'package:oshi_log/app/compositions/home/presentation/field_home/widgets/field_home_components.dart';
 
 void main() {
   for (final scale in [1.0, 2.0]) {

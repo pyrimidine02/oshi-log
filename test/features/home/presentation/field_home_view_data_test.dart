@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:oshi_log/features/home/domain/entities/home_summary.dart';
-import 'package:oshi_log/features/home/presentation/field_home/field_home_view_data.dart';
+import 'package:oshi_log/features/shared/home/domain/entities/home_summary.dart';
+import 'package:oshi_log/app/compositions/home/presentation/field_home/field_home_view_data.dart';
 
 void main() {
   group('resolveFieldHomeContentState', () {

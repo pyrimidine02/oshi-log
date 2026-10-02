@@ -8,9 +8,9 @@ import 'package:oshi_log/core/router/navigation_state.dart';
 import 'package:oshi_log/features/auth/application/session_state.dart';
 import 'package:oshi_log/core/error/failure.dart';
 import 'package:oshi_log/core/utils/result.dart';
-import 'package:oshi_log/features/home/application/home_controller.dart';
-import 'package:oshi_log/features/home/domain/entities/home_summary.dart';
-import 'package:oshi_log/features/home/domain/repositories/home_repository.dart';
+import 'package:oshi_log/features/shared/home/application/home_controller.dart';
+import 'package:oshi_log/features/shared/home/domain/entities/home_summary.dart';
+import 'package:oshi_log/features/shared/home/domain/repositories/home_repository.dart';
 import 'package:oshi_log/features/projects/application/projects_controller.dart';
 
 void main() {

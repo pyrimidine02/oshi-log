@@ -27,7 +27,7 @@ import '../../../features/places/presentation/pages/place_detail_page.dart';
 import '../../../features/profile_banner/presentation/pages/banner_picker_page.dart';
 import '../../../features/projects/presentation/pages/fan_subject_detail_page.dart';
 import '../../../features/quotes/presentation/pages/quotes_page.dart';
-import '../../../features/search/presentation/pages/search_page.dart';
+import '../../compositions/search/presentation/pages/search_page.dart';
 import '../../../features/titles/presentation/pages/title_catalog_page.dart';
 import '../../../features/visits/presentation/field_visit_ledger/field_visit_ledger_common.dart';
 import '../../../features/visits/presentation/field_visit_ledger/field_visit_ledger_page.dart';

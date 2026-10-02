@@ -11,7 +11,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/auth/application/session_state.dart';
 import '../../core/widgets/feedback/gbt_navigation_error_view.dart';
-import '../../shared/main_scaffold.dart';
+import '../shell/main_scaffold.dart';
 import 'auth_guard.dart';
 import 'routes/auth_routes.dart';
 import 'routes/community_routes.dart';

@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:oshi_log/features/search/data/dto/search_item_dto.dart';
-import 'package:oshi_log/features/search/data/mappers/search_entities_mappers.dart';
-import 'package:oshi_log/features/search/domain/entities/search_entities.dart';
+import 'package:oshi_log/features/shared/search/data/dto/search_item_dto.dart';
+import 'package:oshi_log/features/shared/search/data/mappers/search_entities_mappers.dart';
+import 'package:oshi_log/features/shared/search/domain/entities/search_entities.dart';
 
 void main() {
   test('maps a voice actor fan subject to its navigable source identity', () {

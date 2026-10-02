@@ -5,7 +5,7 @@ library;
 import 'package:go_router/go_router.dart';
 
 import '../../../core/router/app_router.dart' show AppRoutes;
-import '../../../features/explore/presentation/field_explore/field_explore_page.dart';
+import '../../compositions/explore/presentation/field_explore/field_explore_page.dart';
 import '../../../features/live_events/presentation/field_events/field_live_event_detail_page.dart';
 import '../../../features/places/presentation/pages/place_detail_page.dart';
 import '../route_helpers.dart';

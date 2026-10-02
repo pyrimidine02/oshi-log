@@ -3,9 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:oshi_log/features/projects/application/project_context.dart';
 import 'package:oshi_log/core/utils/result.dart';
-import 'package:oshi_log/features/search/application/search_controller.dart';
-import 'package:oshi_log/features/search/domain/entities/search_entities.dart';
-import 'package:oshi_log/features/search/domain/repositories/search_repository.dart';
+import 'package:oshi_log/features/shared/search/application/search_controller.dart';
+import 'package:oshi_log/features/shared/search/domain/entities/search_entities.dart';
+import 'package:oshi_log/features/shared/search/domain/repositories/search_repository.dart';
 
 void main() {
   test('forwards the active project and unit lens to the repository', () async {

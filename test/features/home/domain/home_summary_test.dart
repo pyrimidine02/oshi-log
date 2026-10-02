@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:oshi_log/features/home/data/dto/home_summary_dto.dart';
-import 'package:oshi_log/features/home/data/mappers/home_summary_mappers.dart';
+import 'package:oshi_log/features/shared/home/data/dto/home_summary_dto.dart';
+import 'package:oshi_log/features/shared/home/data/mappers/home_summary_mappers.dart';
 
 void main() {
   group('HomeSummary empty-state policy', () {

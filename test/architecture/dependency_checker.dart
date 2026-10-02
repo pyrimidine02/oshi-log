@@ -79,9 +79,13 @@ Set<String> findDependencyViolations(Map<String, String> sources) {
 
 String? _feature(String path) {
   final parts = path.split('/');
-  return parts.length >= 4 && parts[0] == 'lib' && parts[1] == 'features'
-      ? parts[2]
-      : null;
+  if (parts.length < 4 || parts[0] != 'lib' || parts[1] != 'features') {
+    return null;
+  }
+  if (parts[2] == 'shared') {
+    return parts.length >= 5 ? 'shared/${parts[3]}' : null;
+  }
+  return parts[2];
 }
 
 Set<String> _reachableFeatures(String source, Map<String, Set<String>> graph) {
