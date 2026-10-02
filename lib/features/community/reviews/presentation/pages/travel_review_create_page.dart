@@ -25,7 +25,7 @@ import 'package:oshi_log/features/visits/application/visits_controller.dart';
 import 'package:oshi_log/features/visits/domain/entities/visit_entities.dart';
 import 'package:oshi_log/features/community/reviews/application/travel_reviews_controller.dart';
 import 'package:oshi_log/features/community/reviews/domain/entities/travel_review.dart';
-import 'package:oshi_log/features/community/posts/presentation/widgets/post_compose_components.dart';
+import 'package:oshi_log/core/widgets/compose/post_compose_document_editor.dart';
 import 'package:oshi_log/features/community/reviews/presentation/widgets/travel_review_compose_sections.dart';
 import 'package:oshi_log/features/community/reviews/presentation/widgets/travel_review_place_picker_sheet.dart';
 

@@ -31,12 +31,14 @@ void main() {
 
         await tester.pumpWidget(
           harness.wrap(
-            const MediaQuery(
-              data: MediaQueryData(
+            MediaQuery(
+              data: const MediaQueryData(
                 size: Size(320, 720),
                 textScaler: TextScaler.linear(2),
               ),
-              child: PostCreatePage(),
+              child: PostCreatePage(
+                projectSelectorBuilder: (context) => const SizedBox.shrink(),
+              ),
             ),
           ),
         );
@@ -69,6 +71,7 @@ void main() {
                 textScaler: TextScaler.linear(2),
               ),
               child: PostEditPage(
+                projectSelectorBuilder: (context) => const SizedBox.shrink(),
                 post: PostDetail(
                   id: 'post-field-note',
                   projectId: '550e8400-e29b-41d4-a716-446655440001',
@@ -100,7 +103,13 @@ void main() {
       final harness = await _createHarness();
       addTearDown(harness.container.dispose);
 
-      await tester.pumpWidget(harness.wrap(const PostCreatePage()));
+      await tester.pumpWidget(
+        harness.wrap(
+          PostCreatePage(
+            projectSelectorBuilder: (context) => const SizedBox.shrink(),
+          ),
+        ),
+      );
       await tester.pumpAndSettle();
 
       final notifier = harness.container.read(
@@ -138,7 +147,13 @@ void main() {
         ),
       );
 
-      await tester.pumpWidget(harness.wrap(const PostCreatePage()));
+      await tester.pumpWidget(
+        harness.wrap(
+          PostCreatePage(
+            projectSelectorBuilder: (context) => const SizedBox.shrink(),
+          ),
+        ),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('임시 저장된 글이 있어요'), findsOneWidget);
@@ -176,6 +191,7 @@ void main() {
       await tester.pumpWidget(
         harness.wrap(
           PostEditPage(
+            projectSelectorBuilder: (context) => const SizedBox.shrink(),
             post: PostDetail(
               id: postId,
               projectId: '550e8400-e29b-41d4-a716-446655440001',

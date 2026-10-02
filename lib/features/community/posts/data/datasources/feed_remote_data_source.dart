@@ -7,7 +7,7 @@ import 'package:oshi_log/core/network/api_client.dart';
 import 'package:oshi_log/core/utils/result.dart';
 import 'package:oshi_log/features/community/posts/data/dto/community_translation_dto.dart';
 import 'package:oshi_log/features/community/posts/data/dto/post_comment_dto.dart';
-import 'package:oshi_log/features/community/posts/data/dto/post_dto.dart';
+import 'package:oshi_log/core/models/post_dto.dart';
 
 class FeedRemoteDataSource {
   FeedRemoteDataSource(this._apiClient);

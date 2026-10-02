@@ -12,7 +12,7 @@ import 'package:oshi_log/features/community/posts/domain/repositories/feed_repos
 import 'package:oshi_log/features/community/posts/data/datasources/feed_remote_data_source.dart';
 import 'package:oshi_log/features/community/posts/data/dto/community_translation_dto.dart';
 import 'package:oshi_log/features/community/posts/data/dto/post_comment_dto.dart';
-import 'package:oshi_log/features/community/posts/data/dto/post_dto.dart';
+import 'package:oshi_log/core/models/post_dto.dart';
 import 'package:oshi_log/features/community/posts/data/mappers/feed_entities_mappers.dart';
 
 class FeedRepositoryImpl implements FeedRepository {

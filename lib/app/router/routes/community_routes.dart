@@ -8,9 +8,9 @@ import 'package:go_router/go_router.dart';
 import '../../../core/router/app_router.dart' show AppRoutes;
 import 'package:oshi_log/features/community/posts/domain/entities/feed_entities.dart';
 import '../../compositions/community/presentation/field_community/field_community_page.dart';
-import 'package:oshi_log/features/community/posts/presentation/pages/post_create_page.dart';
-import 'package:oshi_log/features/community/posts/presentation/pages/post_detail_page.dart';
-import 'package:oshi_log/features/community/posts/presentation/pages/post_edit_page.dart';
+import '../../compositions/posts/post_create_route.dart';
+import '../../compositions/posts/post_detail_route.dart';
+import '../../compositions/posts/post_edit_route.dart';
 import '../../../features/community/reviews/presentation/pages/travel_review_create_page.dart';
 import '../../../features/community/reviews/presentation/pages/travel_review_detail_page.dart';
 import '../route_helpers.dart';
@@ -45,7 +45,7 @@ List<RouteBase> buildCommunityRoutes() => [
         name: AppRoutes.postCreate,
         pageBuilder: (context, state) => buildAdaptiveOverlayPage(
           key: state.pageKey,
-          child: const PostCreatePage(),
+          child: const PostCreateRoute(),
         ),
       ),
       GoRoute(
@@ -99,7 +99,7 @@ List<RouteBase> buildCommunityRoutes() => [
         builder: (context, state) {
           final postId = state.pathParameters['postId']!;
           final projectCodeHint = state.uri.queryParameters['projectCode'];
-          return PostDetailPage(
+          return PostDetailRoute(
             postId: postId,
             projectCodeHint: projectCodeHint,
           );
@@ -115,7 +115,7 @@ List<RouteBase> buildCommunityRoutes() => [
               message: '게시글 수정 경로 인자가 올바르지 않습니다.',
             );
           }
-          return PostEditPage(post: post);
+          return PostEditRoute(post: post);
         },
       ),
     ],

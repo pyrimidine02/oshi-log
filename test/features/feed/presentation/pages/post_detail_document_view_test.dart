@@ -237,6 +237,7 @@ Widget _buildSubject({
           onReplyToComment: (_) {},
           onCancelReply: () {},
           onRefresh: () async {},
+          titleBadgeBuilder: (context, item) => const SizedBox.shrink(),
         ),
       ),
     ),

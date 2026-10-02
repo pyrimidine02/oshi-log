@@ -3,9 +3,67 @@
 
 library;
 
+import 'package:oshi_log/core/models/post_dto.dart';
+import 'package:oshi_log/features/community/moderation/domain/entities/community_moderation.dart';
+import 'package:oshi_log/features/community/posts/domain/entities/feed_entities.dart';
 import 'package:oshi_log/features/community/reviews/data/dto/travel_review_dto.dart';
 import 'package:oshi_log/features/community/reviews/domain/entities/travel_review.dart';
-import 'package:oshi_log/features/community/posts/data/mappers/feed_entities_mappers.dart';
+
+/// EN: Local copy of the posts feature's DTO-to-domain mapping (kept in sync
+/// manually) so this feature avoids a cross-feature data-layer import.
+/// KO: feature 간 data 계층 import를 피하기 위해 posts 기능의 DTO->도메인
+/// 매핑을 이 기능 안에 그대로 복제해 둡니다(수동 동기화 필요).
+extension _PostSummaryDtoDomainMapper on PostSummaryDto {
+  PostSummary toDomain() {
+    final dto = this;
+
+    return PostSummary(
+      id: dto.id,
+      projectId: dto.projectId,
+      authorId: dto.authorId,
+      title: dto.title,
+      createdAt: dto.createdAt,
+      imageUrls: List.unmodifiable(dto.imageUrls),
+      tags: List.unmodifiable(dto.tags),
+      content: dto.content,
+      topic: dto.topic,
+      thumbnailUrl: dto.thumbnailUrl,
+      authorName: dto.authorName,
+      authorAvatarUrl: dto.authorAvatarUrl,
+      commentCount: dto.commentCount,
+      likeCount: dto.likeCount,
+      moderationStatus: ContentModerationStatusX.fromApiValue(
+        dto.moderationStatus,
+      ),
+    );
+  }
+}
+
+extension _PostDetailDtoDomainMapper on PostDetailDto {
+  PostDetail toDomain() {
+    final dto = this;
+
+    return PostDetail(
+      id: dto.id,
+      projectId: dto.projectId,
+      authorId: dto.authorId,
+      title: dto.title,
+      createdAt: dto.createdAt,
+      imageUrls: List.unmodifiable(dto.imageUrls),
+      tags: List.unmodifiable(dto.tags),
+      content: dto.content,
+      topic: dto.topic,
+      updatedAt: dto.updatedAt,
+      authorName: dto.authorName,
+      authorAvatarUrl: dto.authorAvatarUrl,
+      commentCount: dto.commentCount,
+      likeCount: dto.likeCount,
+      moderationStatus: ContentModerationStatusX.fromApiValue(
+        dto.moderationStatus,
+      ),
+    );
+  }
+}
 
 extension TravelReviewPlaceSummaryDtoDomainMapper
     on TravelReviewPlaceSummaryDto {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:oshi_log/core/widgets/compose/post_compose_document_editor.dart';
 import 'package:oshi_log/features/community/posts/presentation/widgets/post_compose_components.dart';
 
 void main() {

@@ -11,7 +11,7 @@ import 'package:oshi_log/core/theme/gbt_typography.dart';
 import 'package:oshi_log/core/utils/result.dart';
 import 'package:oshi_log/features/community/reviews/application/travel_reviews_controller.dart';
 import 'package:oshi_log/features/community/reviews/domain/entities/travel_review.dart';
-import 'package:oshi_log/features/community/posts/presentation/widgets/post_compose_components.dart';
+import 'package:oshi_log/core/widgets/compose/post_compose_document_editor.dart';
 
 class TravelReviewEditSheet extends ConsumerStatefulWidget {
   const TravelReviewEditSheet({

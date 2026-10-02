@@ -33,17 +33,23 @@ import 'package:oshi_log/core/widgets/layout/gbt_page_header.dart';
 import 'package:oshi_log/core/widgets/navigation/gbt_standard_app_bar.dart';
 import 'package:oshi_log/features/community/posts/application/feed_controller.dart';
 import 'package:oshi_log/features/community/posts/domain/entities/feed_entities.dart';
-import 'package:oshi_log/features/oshikatsu/catalog/presentation/widgets/project_selector.dart';
 import 'package:oshi_log/features/settings/application/settings_controller.dart';
 import 'package:oshi_log/features/uploads/application/uploads_controller.dart';
 import 'package:oshi_log/features/uploads/domain/entities/upload_entity.dart';
 import 'package:oshi_log/features/uploads/utils/webp_image_converter.dart';
+import 'package:oshi_log/core/widgets/compose/post_compose_document_editor.dart';
 import 'package:oshi_log/features/community/posts/presentation/widgets/post_compose_components.dart';
 
 /// EN: Community post creation page widget.
 /// KO: 커뮤니티 게시글 작성 페이지 위젯.
 class PostCreatePage extends ConsumerStatefulWidget {
-  const PostCreatePage({super.key});
+  const PostCreatePage({super.key, required this.projectSelectorBuilder});
+
+  /// EN: Builds the project/audience selector slot (owned by the catalog
+  /// feature) so this page avoids a cross-feature presentation import.
+  /// KO: 카탈로그 기능이 소유한 프로젝트/오디언스 선택기 슬롯을 빌드합니다.
+  /// 이를 통해 이 페이지는 feature 간 presentation import를 피합니다.
+  final WidgetBuilder projectSelectorBuilder;
 
   @override
   ConsumerState<PostCreatePage> createState() => _PostCreatePageState();
@@ -619,11 +625,13 @@ class _PostCreatePageState extends ConsumerState<PostCreatePage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const SizedBox(
+                              SizedBox(
                                 height: GBTSpacing.touchTarget,
                                 child: Align(
                                   alignment: Alignment.centerLeft,
-                                  child: ProjectAudienceSelectorCompact(),
+                                  child: Builder(
+                                    builder: widget.projectSelectorBuilder,
+                                  ),
                                 ),
                               ),
                               const SizedBox(height: GBTSpacing.xs),

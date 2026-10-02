@@ -42,9 +42,8 @@ import 'package:oshi_log/features/identity/social/domain/entities/social_entitie
 import 'package:oshi_log/features/community/moderation/domain/entities/community_moderation.dart';
 import 'package:oshi_log/features/community/posts/domain/entities/feed_entities.dart';
 import 'package:oshi_log/features/community/posts/presentation/widgets/community_translation_panel.dart';
-import 'package:oshi_log/features/community/moderation/presentation/widgets/community_report_sheet.dart';
 import 'package:oshi_log/features/titles/application/titles_controller.dart';
-import 'package:oshi_log/features/titles/presentation/widgets/active_title_badge.dart';
+import 'package:oshi_log/features/titles/domain/entities/title_entities.dart';
 
 /// EN: Post detail page widget.
 /// KO: 게시글 상세 페이지 위젯.
@@ -106,10 +105,32 @@ class _CommentThread {
 }
 
 class PostDetailPage extends ConsumerStatefulWidget {
-  const PostDetailPage({super.key, required this.postId, this.projectCodeHint});
+  const PostDetailPage({
+    super.key,
+    required this.postId,
+    this.projectCodeHint,
+    required this.reportSheetBuilder,
+    required this.titleBadgeBuilder,
+  });
 
   final String postId;
   final String? projectCodeHint;
+
+  /// EN: Shows the moderation feature's report sheet and returns the chosen
+  /// reason/description, or `null` if dismissed. Owned by a composition so
+  /// this page avoids a cross-feature presentation import.
+  /// KO: 모더레이션 기능의 신고 시트를 표시하고 선택한 사유/설명을 반환하며,
+  /// 닫으면 `null`을 반환합니다. composition이 소유하여 이 페이지는 feature
+  /// 간 presentation import를 피합니다.
+  final Future<(CommunityReportReason, String?)?> Function(BuildContext)
+  reportSheetBuilder;
+
+  /// EN: Builds the titles feature's active title badge for an author. Owned
+  /// by a composition so this page avoids a cross-feature presentation
+  /// import.
+  /// KO: 작성자용 titles 기능의 활성 칭호 배지를 빌드합니다. composition이
+  /// 소유하여 이 페이지는 feature 간 presentation import를 피합니다.
+  final Widget Function(BuildContext, ActiveTitleItem) titleBadgeBuilder;
 
   @override
   ConsumerState<PostDetailPage> createState() => _PostDetailPageState();
@@ -569,6 +590,7 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
                   }
                 },
           onRefresh: _onRefresh,
+          titleBadgeBuilder: widget.titleBadgeBuilder,
         ),
       ),
     );
@@ -976,20 +998,16 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
       return;
     }
 
-    final payload = await showGBTBottomSheet<CommunityReportPayload>(
-      context: context,
-      isScrollControlled: true,
-      title: context.l10n(ko: '신고', en: 'Report', ja: '通報'),
-      child: const CommunityReportSheet(),
-    );
+    final payload = await widget.reportSheetBuilder(context);
     if (payload == null) return;
+    final (reportReason, reportDescription) = payload;
 
     if (!context.mounted) return;
     final confirmed = await showGBTAdaptiveConfirmDialog(
       context: context,
       title: context.l10n(ko: '신고 접수', en: 'Submit report', ja: '通報を送信する'),
       message:
-          '${targetType.label}을(를) "${payload.reason.label}" 사유로 신고합니다.\n접수하시겠어요?',
+          '${targetType.label}을(를) "${reportReason.label}" 사유로 신고합니다.\n접수하시겠어요?',
       cancelLabel: context.l10n(ko: '취소', en: 'Cancel', ja: 'キャンセル'),
       confirmLabel: context.l10n(
         ko: '신고 접수',
@@ -1003,8 +1021,8 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
     final result = await repository.createReport(
       targetType: targetType,
       targetId: targetId,
-      reason: payload.reason,
-      description: payload.description,
+      reason: reportReason,
+      description: reportDescription,
     );
 
     if (result is Err<void> && context.mounted) {
@@ -1213,6 +1231,7 @@ class PostDetailDocumentView extends ConsumerWidget {
     required this.onReplyToComment,
     required this.onCancelReply,
     required this.onRefresh,
+    required this.titleBadgeBuilder,
   });
 
   final PostDetail post;
@@ -1243,6 +1262,7 @@ class PostDetailDocumentView extends ConsumerWidget {
   final ValueChanged<PostComment> onReplyToComment;
   final VoidCallback onCancelReply;
   final Future<void> Function() onRefresh;
+  final Widget Function(BuildContext, ActiveTitleItem) titleBadgeBuilder;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -1364,7 +1384,8 @@ class PostDetailDocumentView extends ConsumerWidget {
                                       ),
                                     ),
                                     if (authorTitleItem?.hasTitle == true)
-                                      ActiveTitleBadge.fromActiveItem(
+                                      titleBadgeBuilder(
+                                        context,
                                         authorTitleItem!,
                                       ),
                                   ],
@@ -1663,6 +1684,7 @@ class PostDetailDocumentView extends ConsumerWidget {
                   onReportComment: onReportComment,
                   onOpenCommentThread: onOpenCommentThread,
                   onReplyToComment: onReplyToComment,
+                  titleBadgeBuilder: titleBadgeBuilder,
                 ),
               ],
             ),
@@ -1732,6 +1754,7 @@ class _PostCommentsSection extends StatefulWidget {
     required this.onReportComment,
     required this.onOpenCommentThread,
     required this.onReplyToComment,
+    required this.titleBadgeBuilder,
   });
 
   final AsyncValue<List<PostComment>> state;
@@ -1745,6 +1768,7 @@ class _PostCommentsSection extends StatefulWidget {
   final ValueChanged<PostComment> onReportComment;
   final ValueChanged<PostComment> onOpenCommentThread;
   final ValueChanged<PostComment> onReplyToComment;
+  final Widget Function(BuildContext, ActiveTitleItem) titleBadgeBuilder;
 
   @override
   State<_PostCommentsSection> createState() => _PostCommentsSectionState();
@@ -2026,6 +2050,7 @@ class _PostCommentsSectionState extends State<_PostCommentsSection> {
                         onDelete: widget.onDeleteComment,
                         onReport: widget.onReportComment,
                         onReply: widget.onReplyToComment,
+                        titleBadgeBuilder: widget.titleBadgeBuilder,
                       ),
                     if (i < threads.length - 1)
                       Divider(height: 1, thickness: 1, color: borderColor),
@@ -2200,6 +2225,7 @@ class _CommentItem extends ConsumerStatefulWidget {
     required this.onDelete,
     required this.onReport,
     required this.onReply,
+    required this.titleBadgeBuilder,
   });
 
   final PostComment comment;
@@ -2215,6 +2241,7 @@ class _CommentItem extends ConsumerStatefulWidget {
   final ValueChanged<PostComment> onDelete;
   final ValueChanged<PostComment> onReport;
   final ValueChanged<PostComment> onReply;
+  final Widget Function(BuildContext, ActiveTitleItem) titleBadgeBuilder;
 
   @override
   ConsumerState<_CommentItem> createState() => _CommentItemState();
@@ -2318,7 +2345,8 @@ class _CommentItemState extends ConsumerState<_CommentItem> {
                                 ),
                               ),
                               if (commentAuthorTitleItem?.hasTitle == true)
-                                ActiveTitleBadge.fromActiveItem(
+                                widget.titleBadgeBuilder(
+                                  context,
                                   commentAuthorTitleItem!,
                                 ),
                               if (isPostAuthor)

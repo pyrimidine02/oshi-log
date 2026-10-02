@@ -5,7 +5,7 @@ library;
 
 import 'package:oshi_log/features/community/posts/data/dto/community_translation_dto.dart';
 import 'package:oshi_log/features/community/posts/data/dto/post_comment_dto.dart';
-import 'package:oshi_log/features/community/posts/data/dto/post_dto.dart';
+import 'package:oshi_log/core/models/post_dto.dart';
 import 'package:oshi_log/features/community/moderation/domain/entities/community_moderation.dart';
 import 'package:oshi_log/features/community/posts/domain/entities/feed_entities.dart';
 

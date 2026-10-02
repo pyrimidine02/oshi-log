@@ -2,7 +2,7 @@
 /// KO: 프로젝트 범위 성지순례 여행 후기 애그리거트 DTO입니다.
 library;
 
-import 'package:oshi_log/features/community/posts/data/dto/post_dto.dart';
+import 'package:oshi_log/core/models/post_dto.dart';
 
 class TravelReviewStopRequestDto {
   const TravelReviewStopRequestDto({
