@@ -6,7 +6,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../projects/application/project_context.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
 import 'post_compose_draft_store.dart';
 
 /// EN: Configuration for a compose autosave session.

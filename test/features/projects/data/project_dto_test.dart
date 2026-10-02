@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:oshi_log/features/projects/data/dto/project_dto.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/data/dto/project_dto.dart';
 
 void main() {
   test('ProjectDto parses flexible keys', () {

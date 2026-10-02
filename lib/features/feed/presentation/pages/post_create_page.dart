@@ -17,7 +17,7 @@ import '../../../../core/error/failure.dart';
 import '../../../../core/localization/locale_text.dart';
 import '../../../../core/logging/app_logger.dart';
 import '../../../../core/providers/core_providers.dart';
-import '../../../projects/application/project_context.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
 import '../../../auth/application/session_state.dart';
 import '../../../../core/router/app_router.dart';
 
@@ -33,7 +33,7 @@ import '../../../../core/widgets/layout/gbt_page_header.dart';
 import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
 import '../../application/feed_controller.dart';
 import '../../domain/entities/feed_entities.dart';
-import '../../../projects/presentation/widgets/project_selector.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/presentation/widgets/project_selector.dart';
 import '../../../settings/application/settings_controller.dart';
 import '../../../uploads/application/uploads_controller.dart';
 import '../../../uploads/domain/entities/upload_entity.dart';

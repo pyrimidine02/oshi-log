@@ -4,9 +4,9 @@ import 'package:mocktail/mocktail.dart';
 import 'package:oshi_log/core/constants/api_constants.dart';
 import 'package:oshi_log/core/network/api_client.dart';
 import 'package:oshi_log/core/utils/result.dart';
-import 'package:oshi_log/features/projects/data/datasources/fan_subjects_remote_data_source.dart';
-import 'package:oshi_log/features/projects/data/dto/fan_subject_dto.dart';
-import 'package:oshi_log/features/projects/domain/entities/fan_subject.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/data/datasources/fan_subjects_remote_data_source.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/data/dto/fan_subject_dto.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/domain/entities/fan_subject.dart';
 
 void main() {
   late _MockApiClient apiClient;

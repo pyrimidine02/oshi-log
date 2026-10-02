@@ -16,7 +16,7 @@ import '../../../features/cheer_guides/presentation/pages/cheer_guides_page.dart
 import '../../../features/favorites/presentation/pages/favorites_page.dart';
 import '../../../features/fan_level/presentation/pages/fan_level_page.dart';
 import '../../../features/feed/presentation/field_user_profile/field_user_profile_page.dart';
-import '../../../features/feed/presentation/pages/news_detail_page.dart';
+import '../../../features/community/news/presentation/pages/news_detail_page.dart';
 import '../../../features/feed/presentation/pages/post_bookmarks_page.dart';
 import '../../../features/feed/presentation/pages/post_detail_page.dart';
 import '../../../features/feed/presentation/pages/user_connections_page.dart';
@@ -25,7 +25,7 @@ import '../../../features/music/presentation/pages/music_song_detail_page.dart';
 import '../../../features/notifications/presentation/pages/notifications_page.dart';
 import '../../../features/places/presentation/pages/place_detail_page.dart';
 import '../../../features/profile_banner/presentation/pages/banner_picker_page.dart';
-import '../../../features/projects/presentation/pages/fan_subject_detail_page.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/presentation/pages/fan_subject_detail_page.dart';
 import '../../../features/quotes/presentation/pages/quotes_page.dart';
 import '../../compositions/search/presentation/pages/search_page.dart';
 import '../../../features/titles/presentation/pages/title_catalog_page.dart';

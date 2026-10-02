@@ -2,7 +2,7 @@
 /// KO: 방문 원장 항목을 위한 프로젝트 안전 내비게이션 조정입니다.
 library;
 
-import '../../../projects/domain/entities/project_entities.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/domain/entities/project_entities.dart';
 import 'field_visit_ledger_view_data.dart';
 
 enum FieldVisitNavigationResult { opened, missingProjectContext }

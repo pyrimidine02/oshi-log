@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:oshi_log/core/theme/gbt_theme.dart';
-import 'package:oshi_log/features/feed/domain/entities/feed_entities.dart';
-import 'package:oshi_log/features/feed/presentation/pages/news_detail_page.dart';
+import 'package:oshi_log/features/community/news/domain/entities/news_entities.dart';
+import 'package:oshi_log/features/community/news/presentation/pages/news_detail_page.dart';
 
 void main() {
   testWidgets('news article uses a compact document hierarchy', (tester) async {

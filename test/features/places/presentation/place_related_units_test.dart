@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oshi_log/features/places/domain/entities/place_entities.dart';
 import 'package:oshi_log/features/places/presentation/utils/place_related_units.dart';
-import 'package:oshi_log/features/projects/domain/entities/project_entities.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/domain/entities/project_entities.dart';
 
 void main() {
   const projectUnits = [

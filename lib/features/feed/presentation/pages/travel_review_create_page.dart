@@ -9,7 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:apple_maps_flutter/apple_maps_flutter.dart' as amaps;
 import 'package:google_maps_flutter/google_maps_flutter.dart' as gmaps;
 
-import '../../../projects/application/project_context.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
 import '../../../../core/theme/gbt_map_styles.dart';
 import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';
@@ -20,7 +20,7 @@ import '../../../../core/utils/result.dart';
 import '../../../live_events/application/live_events_controller.dart';
 import '../../../live_events/domain/entities/live_event_entities.dart';
 import '../../../places/domain/entities/place_entities.dart';
-import '../../../projects/domain/entities/fan_subject.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/domain/entities/fan_subject.dart';
 import '../../../visits/application/visits_controller.dart';
 import '../../../visits/domain/entities/visit_entities.dart';
 import '../../application/travel_reviews_controller.dart';

@@ -9,10 +9,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/failure.dart';
 import '../../../core/providers/core_providers.dart';
-import '../../projects/application/project_context.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
 import '../../auth/application/session_state.dart';
 import '../../../core/utils/result.dart';
-import '../../projects/application/projects_controller.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/application/projects_controller.dart';
 import '../domain/entities/feed_entities.dart';
 import '../domain/repositories/feed_repository.dart';
 import 'feed_repository_provider.dart';

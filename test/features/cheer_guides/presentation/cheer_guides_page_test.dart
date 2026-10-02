@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:oshi_log/features/projects/application/project_context.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
 import 'package:oshi_log/features/cheer_guides/application/cheer_guides_controller.dart';
 import 'package:oshi_log/features/cheer_guides/domain/entities/cheer_guide.dart';
 import 'package:oshi_log/features/cheer_guides/presentation/pages/cheer_guides_page.dart';

@@ -15,8 +15,8 @@ import 'package:oshi_log/features/music/application/music_controller.dart';
 import 'package:oshi_log/features/music/domain/entities/music_entities.dart';
 import 'package:oshi_log/features/music/domain/repositories/music_repository.dart';
 import 'package:oshi_log/features/music/presentation/widgets/music_catalog_tab.dart';
-import 'package:oshi_log/features/projects/application/projects_controller.dart';
-import 'package:oshi_log/features/projects/domain/entities/project_entities.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/application/projects_controller.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/domain/entities/project_entities.dart';
 
 class _ProjectSelection extends ProjectSelectionController {
   _ProjectSelection(super.ref) {

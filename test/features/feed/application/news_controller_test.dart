@@ -4,15 +4,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-import 'package:oshi_log/features/projects/application/project_context.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
 import 'package:oshi_log/core/router/navigation_state.dart';
 import 'package:oshi_log/core/utils/result.dart';
-import 'package:oshi_log/features/feed/application/feed_repository_provider.dart';
-import 'package:oshi_log/features/feed/application/news_controller.dart';
-import 'package:oshi_log/features/feed/domain/entities/feed_entities.dart';
-import 'package:oshi_log/features/feed/domain/repositories/feed_repository.dart';
+import 'package:oshi_log/features/community/news/application/news_controller.dart';
+import 'package:oshi_log/features/community/news/application/news_repository_provider.dart';
+import 'package:oshi_log/features/community/news/domain/entities/news_entities.dart';
+import 'package:oshi_log/features/community/news/domain/repositories/news_repository.dart';
 
-class _MockFeedRepository extends Mock implements FeedRepository {}
+class _MockFeedRepository extends Mock implements NewsRepository {}
 
 void main() {
   group('News controllers dispose safety', () {
@@ -38,7 +38,7 @@ void main() {
           overrides: [
             selectedProjectKeyProvider.overrideWith((ref) => 'project-1'),
             currentNavIndexProvider.overrideWith((ref) => 2),
-            feedRepositoryProvider.overrideWith((ref) async => repository),
+            newsRepositoryProvider.overrideWith((ref) async => repository),
           ],
         );
 
@@ -89,7 +89,7 @@ void main() {
         final container = ProviderContainer(
           overrides: [
             selectedProjectKeyProvider.overrideWith((ref) => 'project-1'),
-            feedRepositoryProvider.overrideWith((ref) async => repository),
+            newsRepositoryProvider.overrideWith((ref) async => repository),
           ],
         );
 

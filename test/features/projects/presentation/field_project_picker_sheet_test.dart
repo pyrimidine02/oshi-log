@@ -7,8 +7,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:oshi_log/core/theme/gbt_theme.dart';
 import 'package:oshi_log/core/theme/gbt_colors.dart';
-import 'package:oshi_log/features/projects/domain/entities/project_entities.dart';
-import 'package:oshi_log/features/projects/presentation/widgets/field_project_picker_sheet.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/domain/entities/project_entities.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/presentation/widgets/field_project_picker_sheet.dart';
 
 import '../../../testing/tolerant_local_file_comparator.dart';
 

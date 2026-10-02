@@ -2,7 +2,7 @@
 /// KO: 장소에 명시적으로 연결된 밴드를 찾는 헬퍼입니다.
 library;
 
-import '../../../projects/domain/entities/project_entities.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/domain/entities/project_entities.dart';
 import '../../domain/entities/place_entities.dart';
 
 /// EN: Returns only loaded project units referenced by the place contract.

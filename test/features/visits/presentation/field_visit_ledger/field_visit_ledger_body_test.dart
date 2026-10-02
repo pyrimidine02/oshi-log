@@ -9,7 +9,7 @@ import 'package:oshi_log/core/theme/gbt_theme.dart';
 import 'package:oshi_log/features/live_events/application/live_events_controller.dart';
 import 'package:oshi_log/features/live_events/domain/entities/live_event_entities.dart';
 import 'package:oshi_log/features/places/domain/entities/place_entities.dart';
-import 'package:oshi_log/features/projects/domain/entities/project_entities.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/domain/entities/project_entities.dart';
 import 'package:oshi_log/features/visits/domain/entities/visit_entities.dart';
 import 'package:oshi_log/features/visits/presentation/field_visit_ledger/field_visit_ledger_body.dart';
 import 'package:oshi_log/features/visits/presentation/field_visit_ledger/field_visit_ledger_view_data.dart';

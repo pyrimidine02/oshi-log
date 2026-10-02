@@ -6,14 +6,14 @@ library;
 import 'package:go_router/go_router.dart';
 
 import '../../../core/router/app_router.dart' show AppRoutes;
-import '../../../features/feed/presentation/field_guide/field_guide_page.dart';
-import '../../../features/feed/presentation/pages/member_detail_page.dart';
-import '../../../features/feed/presentation/pages/news_detail_page.dart';
-import '../../../features/feed/presentation/pages/unit_detail_page.dart';
-import '../../../features/feed/presentation/pages/voice_actor_detail_page.dart';
+import '../../../features/community/news/presentation/pages/news_detail_page.dart';
 import '../../../features/music/presentation/pages/music_song_detail_page.dart';
-import '../../../features/projects/domain/entities/project_entities.dart'
+import '../../../features/oshikatsu/catalog/domain/entities/project_entities.dart'
     show Unit, UnitMember;
+import '../../../features/oshikatsu/catalog/presentation/pages/member_detail_page.dart';
+import '../../../features/oshikatsu/catalog/presentation/pages/unit_detail_page.dart';
+import '../../../features/oshikatsu/catalog/presentation/pages/voice_actor_detail_page.dart';
+import '../../compositions/guide/presentation/field_guide/field_guide_page.dart';
 import '../route_helpers.dart';
 
 List<RouteBase> buildInfoRoutes() => [

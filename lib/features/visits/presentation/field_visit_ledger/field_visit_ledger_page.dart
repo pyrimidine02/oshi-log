@@ -7,11 +7,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/localization/locale_text.dart';
-import '../../../projects/application/project_context.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
 import '../../../live_events/application/live_events_controller.dart';
-import '../../../projects/application/projects_controller.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/application/projects_controller.dart';
 import '../../application/visits_controller.dart';
 import 'field_visit_ledger_body.dart';
 import 'field_visit_ledger_navigation.dart';

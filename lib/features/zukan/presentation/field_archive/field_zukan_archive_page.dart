@@ -7,13 +7,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/localization/locale_text.dart';
-import '../../../projects/application/project_context.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/theme.dart';
 import '../../../../core/widgets/feedback/gbt_loading.dart';
 import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
-import '../../../projects/application/projects_controller.dart';
-import '../../../projects/presentation/widgets/field_project_picker_sheet.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/application/projects_controller.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/presentation/widgets/field_project_picker_sheet.dart';
 import '../../application/zukan_controller.dart';
 import '../../domain/entities/zukan_collection.dart';
 import 'field_zukan_archive_sections.dart';

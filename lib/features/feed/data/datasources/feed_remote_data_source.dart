@@ -6,7 +6,6 @@ import '../../../../core/constants/api_constants.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/utils/result.dart';
 import '../dto/community_translation_dto.dart';
-import '../dto/news_dto.dart';
 import '../dto/post_comment_dto.dart';
 import '../dto/post_dto.dart';
 
@@ -38,30 +37,6 @@ class FeedRemoteDataSource {
     required String sort,
   }) {
     return {'page': page, 'size': size, 'sort': sort};
-  }
-
-  /// EN: Fetch paginated news for a project.
-  /// KO: 프로젝트의 페이지네이션된 뉴스를 조회합니다.
-  Future<Result<List<NewsSummaryDto>>> fetchNews({
-    required String projectId,
-    int page = ApiPagination.defaultPage,
-    int size = ApiPagination.defaultSize,
-  }) {
-    return _apiClient.get<List<NewsSummaryDto>>(
-      ApiEndpoints.news(projectId),
-      queryParameters: _pageableQuery(page: page, size: size),
-      fromJson: (json) => _decodeList(json, NewsSummaryDto.fromJson),
-    );
-  }
-
-  Future<Result<NewsDetailDto>> fetchNewsDetail({
-    required String projectId,
-    required String newsId,
-  }) {
-    return _apiClient.get<NewsDetailDto>(
-      ApiEndpoints.newsDetail(projectId, newsId),
-      fromJson: (json) => NewsDetailDto.fromJson(json as Map<String, dynamic>),
-    );
   }
 
   /// EN: Fetch paginated community posts for a project.

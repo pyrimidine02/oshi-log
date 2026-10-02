@@ -5,10 +5,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oshi_log/features/auth/application/session_state.dart';
 import 'package:oshi_log/core/theme/gbt_theme.dart';
 import 'package:oshi_log/core/utils/result.dart';
-import 'package:oshi_log/features/projects/application/fan_subjects_controller.dart';
-import 'package:oshi_log/features/projects/domain/entities/fan_subject.dart';
-import 'package:oshi_log/features/projects/domain/repositories/fan_subjects_repository.dart';
-import 'package:oshi_log/features/projects/presentation/widgets/fan_subject_preference_sheet.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/application/fan_subjects_controller.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/domain/entities/fan_subject.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/domain/repositories/fan_subjects_repository.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/presentation/widgets/fan_subject_preference_sheet.dart';
 
 void main() {
   testWidgets('keeps mobile filters scoped to current girls-band subjects', (

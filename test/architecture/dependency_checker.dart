@@ -12,6 +12,9 @@ Set<String> findDependencyViolations(Map<String, String> sources) {
   final violations = <String>{};
 
   for (final source in sources.keys) {
+    if (isFeatureGroupRootFile(source)) {
+      violations.add('$source -> $source : R2');
+    }
     final targets = <String>{};
     final pending = [for (final edge in directives[source]!) edge.target];
     while (pending.isNotEmpty) {
@@ -77,15 +80,40 @@ Set<String> findDependencyViolations(Map<String, String> sources) {
   return violations;
 }
 
+/// EN: Groups that have migrated to the new `<group>/<sub>` ownership scheme.
+/// KO: 새로운 `<group>/<sub>` 소유 체계로 이행된 그룹입니다.
+const _migratedGroups = {
+  'oshikatsu',
+  'place',
+  'community',
+  'identity',
+  'shared',
+};
+
 String? _feature(String path) {
   final parts = path.split('/');
   if (parts.length < 4 || parts[0] != 'lib' || parts[1] != 'features') {
     return null;
   }
-  if (parts[2] == 'shared') {
-    return parts.length >= 5 ? 'shared/${parts[3]}' : null;
+  final group = parts[2];
+  if (_migratedGroups.contains(group)) {
+    // EN: A file directly under the group dir has no sub-feature owner.
+    // KO: 그룹 디렉터리 바로 아래 파일은 소유 하위 feature가 없습니다.
+    return parts.length >= 5 ? '$group/${parts[3]}' : null;
   }
-  return parts[2];
+  return 'legacy/$group';
+}
+
+/// EN: True for business files placed directly under a migrated group dir
+/// (no `<sub>` owner), which the checker cannot assign and must fail.
+/// KO: 이행된 그룹 디렉터리 바로 아래(소유 하위 feature 없음)에 놓인 업무
+/// 파일이면 참이며, 검사기가 소유자를 배정할 수 없으므로 실패해야 합니다.
+bool isFeatureGroupRootFile(String path) {
+  final parts = path.split('/');
+  return parts.length == 4 &&
+      parts[0] == 'lib' &&
+      parts[1] == 'features' &&
+      _migratedGroups.contains(parts[2]);
 }
 
 Set<String> _reachableFeatures(String source, Map<String, Set<String>> graph) {

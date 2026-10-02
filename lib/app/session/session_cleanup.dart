@@ -14,7 +14,7 @@ import '../../features/favorites/application/favorites_controller.dart';
 import '../../features/feed/application/local_post_bookmarks_controller.dart';
 import '../../features/feed/application/reaction_controller.dart';
 import '../../features/live_events/application/live_events_controller.dart';
-import '../../features/projects/application/project_context.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
 import '../../features/settings/application/settings_controller.dart';
 import '../../core/router/navigation_state.dart';
 

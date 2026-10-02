@@ -18,7 +18,7 @@ import 'package:oshi_log/core/security/secure_storage.dart';
 import 'package:oshi_log/core/storage/local_storage.dart';
 import 'package:oshi_log/core/utils/result.dart';
 import 'package:oshi_log/features/auth/application/auth_controller.dart';
-import 'package:oshi_log/features/projects/application/project_context.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
 import 'package:oshi_log/features/auth/application/native_social_login_service.dart';
 import 'package:oshi_log/features/auth/application/oauth_service.dart';
 import 'package:oshi_log/features/auth/domain/entities/auth_tokens.dart';

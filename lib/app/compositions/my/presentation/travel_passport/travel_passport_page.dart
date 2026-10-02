@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../../features/projects/application/project_context.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
 import '../../../../../core/router/app_router.dart';
 import '../../../../../features/calendar/application/calendar_controller.dart';
 import '../../../../../features/calendar/domain/entities/calendar_event.dart';

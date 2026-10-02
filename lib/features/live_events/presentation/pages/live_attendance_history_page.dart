@@ -14,7 +14,7 @@ import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';
 import '../../../../core/widgets/common/gbt_image.dart';
 import '../../../../core/widgets/feedback/gbt_loading.dart';
-import '../../../projects/application/projects_controller.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/application/projects_controller.dart';
 import '../../application/live_events_controller.dart';
 import '../../domain/entities/live_event_entities.dart';
 

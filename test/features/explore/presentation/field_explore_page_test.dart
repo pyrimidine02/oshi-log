@@ -5,7 +5,7 @@ import 'package:oshi_log/core/router/navigation_state.dart';
 import 'package:oshi_log/app/compositions/explore/presentation/field_explore/field_explore_mode_dock.dart';
 import 'package:oshi_log/app/compositions/explore/presentation/field_explore/field_explore_page.dart';
 import 'package:oshi_log/features/places/presentation/pages/places_map_page.dart';
-import 'package:oshi_log/features/projects/application/projects_controller.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/application/projects_controller.dart';
 import 'package:oshi_log/features/settings/application/settings_controller.dart';
 import 'package:oshi_log/features/visits/application/visits_controller.dart';
 

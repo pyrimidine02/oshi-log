@@ -3,45 +3,11 @@
 
 library;
 
-import '../dto/news_dto.dart';
 import '../dto/community_translation_dto.dart';
 import '../dto/post_comment_dto.dart';
 import '../dto/post_dto.dart';
 import '../../domain/entities/community_moderation.dart';
 import '../../domain/entities/feed_entities.dart';
-
-extension NewsSummaryDtoDomainMapper on NewsSummaryDto {
-  NewsSummary toDomain() {
-    final dto = this;
-
-    return NewsSummary(
-      id: dto.id,
-      title: dto.title,
-      publishedAt: dto.publishedAt,
-      thumbnailUrl: dto.thumbnailUrl,
-    );
-  }
-}
-
-extension NewsDetailDtoDomainMapper on NewsDetailDto {
-  NewsDetail toDomain() {
-    final dto = this;
-
-    final images = dto.images.map((image) => image.url).toList();
-    final cover =
-        dto.coverImage?.url ?? (images.isNotEmpty ? images.first : null);
-
-    return NewsDetail(
-      id: dto.id,
-      title: dto.title,
-      body: dto.body,
-      status: dto.status,
-      publishedAt: dto.publishedAt,
-      coverImageUrl: cover,
-      imageUrls: List.unmodifiable(images),
-    );
-  }
-}
 
 extension PostSummaryDtoDomainMapper on PostSummaryDto {
   PostSummary toDomain() {

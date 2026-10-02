@@ -15,7 +15,7 @@ import '../../../../core/widgets/common/gbt_image.dart';
 import '../../../../core/widgets/layout/gbt_page_header.dart';
 import '../../application/music_controller.dart';
 import '../../domain/entities/music_entities.dart';
-import '../../../projects/application/projects_controller.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/application/projects_controller.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // EN: Harbor teal marks audio metadata within the shared field-notes system.

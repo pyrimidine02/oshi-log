@@ -6,12 +6,12 @@ import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:oshi_log/core/providers/core_providers.dart';
-import 'package:oshi_log/features/projects/application/project_context.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
 import 'package:oshi_log/core/storage/local_storage.dart';
 import 'package:oshi_log/core/utils/result.dart';
-import 'package:oshi_log/features/projects/application/projects_controller.dart';
-import 'package:oshi_log/features/projects/domain/entities/project_entities.dart';
-import 'package:oshi_log/features/projects/domain/repositories/projects_repository.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/application/projects_controller.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/domain/entities/project_entities.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/domain/repositories/projects_repository.dart';
 
 void main() {
   const projects = <Project>[

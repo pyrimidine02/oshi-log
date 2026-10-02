@@ -11,8 +11,8 @@ import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';
 import '../../../live_events/application/live_events_controller.dart';
 import '../../../live_events/domain/entities/live_event_entities.dart';
-import '../../../projects/application/fan_subjects_controller.dart';
-import '../../../projects/domain/entities/fan_subject.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/application/fan_subjects_controller.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/domain/entities/fan_subject.dart';
 
 class TravelReviewComposeMetadata extends StatelessWidget {
   const TravelReviewComposeMetadata({

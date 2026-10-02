@@ -12,7 +12,7 @@ import '../../../core/constants/api_constants.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/logging/app_logger.dart';
 import '../../../core/providers/core_providers.dart';
-import '../../projects/application/project_context.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
 import '../../../core/router/navigation_state.dart';
 import '../../auth/application/session_state.dart';
 import '../../../core/realtime/sse_client.dart';

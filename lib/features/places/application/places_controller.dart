@@ -8,11 +8,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/failure.dart';
 import '../../../core/providers/core_providers.dart';
-import '../../projects/application/project_context.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
 import '../../../core/router/navigation_state.dart';
 import '../../../core/utils/result.dart';
-import '../../projects/application/projects_controller.dart';
-import '../../projects/domain/entities/project_entities.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/application/projects_controller.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/domain/entities/project_entities.dart';
 import '../data/datasources/places_remote_data_source.dart';
 import '../data/repositories/places_repository_impl.dart';
 import '../domain/entities/place_comment_entities.dart';

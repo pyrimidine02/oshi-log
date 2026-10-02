@@ -23,7 +23,7 @@ import '../../../../../core/widgets/navigation/gbt_segmented_tab_bar.dart';
 import '../../../../../core/widgets/navigation/gbt_search_app_bar.dart';
 import '../../../../../features/shared/search/application/search_controller.dart';
 import '../../../../../features/shared/search/domain/entities/search_entities.dart';
-import '../../../../../features/projects/application/projects_controller.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/application/projects_controller.dart';
 
 /// EN: Search page widget.
 /// KO: 검색 페이지 위젯.

@@ -5,11 +5,11 @@ library;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/providers/core_providers.dart';
-import '../../projects/application/project_context.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
 import '../../../core/utils/result.dart';
 import '../../places/application/places_controller.dart';
 import '../../places/domain/entities/place_entities.dart';
-import '../../projects/application/projects_controller.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/application/projects_controller.dart';
 import '../data/datasources/visits_remote_data_source.dart';
 import '../data/repositories/visits_repository_impl.dart';
 import '../domain/entities/visit_entities.dart';

@@ -6,48 +6,6 @@ import 'package:intl/intl.dart';
 
 import 'community_moderation.dart';
 
-class NewsSummary {
-  const NewsSummary({
-    required this.id,
-    required this.title,
-    required this.publishedAt,
-    this.thumbnailUrl,
-  });
-
-  final String id;
-  final String title;
-  final DateTime publishedAt;
-  final String? thumbnailUrl;
-
-  String get dateLabel {
-    return DateFormat('yyyy.MM.dd').format(publishedAt.toLocal());
-  }
-}
-
-class NewsDetail {
-  const NewsDetail({
-    required this.id,
-    required this.title,
-    required this.body,
-    required this.status,
-    required this.publishedAt,
-    this.coverImageUrl,
-    this.imageUrls = const [],
-  });
-
-  final String id;
-  final String title;
-  final String body;
-  final String status;
-  final DateTime publishedAt;
-  final String? coverImageUrl;
-  final List<String> imageUrls;
-
-  String get dateLabel {
-    return DateFormat('yyyy.MM.dd').format(publishedAt.toLocal());
-  }
-}
-
 class PostSummary {
   const PostSummary({
     required this.id,

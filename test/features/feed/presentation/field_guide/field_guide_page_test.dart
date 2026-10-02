@@ -3,10 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:oshi_log/core/theme/gbt_theme.dart';
-import 'package:oshi_log/features/feed/domain/entities/feed_entities.dart';
-import 'package:oshi_log/features/feed/presentation/field_guide/field_guide_page.dart';
-import 'package:oshi_log/features/feed/presentation/field_guide/field_guide_providers.dart';
-import 'package:oshi_log/features/projects/domain/entities/project_entities.dart';
+import 'package:oshi_log/features/community/news/domain/entities/news_entities.dart';
+import 'package:oshi_log/app/compositions/guide/presentation/field_guide/field_guide_page.dart';
+import 'package:oshi_log/features/community/news/application/field_guide_updates_provider.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/application/field_guide_artists_provider.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/domain/entities/project_entities.dart';
 
 void main() {
   final updates = <NewsSummary>[

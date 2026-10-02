@@ -8,7 +8,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/error/failure.dart';
 import '../../../../core/localization/locale_text.dart';
-import '../../../projects/application/project_context.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/theme.dart';
 import '../../../../core/widgets/common/gbt_image.dart';
@@ -17,7 +17,7 @@ import '../../../../core/widgets/feedback/gbt_loading.dart' hide GBTEmptyState;
 import '../../../../core/widgets/layout/gbt_field_primitives.dart';
 import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
 import '../../../live_events/presentation/field_events/live_schedule_status_badge.dart';
-import '../../../projects/presentation/widgets/field_project_lens.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/presentation/widgets/field_project_lens.dart';
 import '../../application/calendar_controller.dart';
 import '../../domain/entities/calendar_event.dart';
 import 'calendar_view_data.dart';

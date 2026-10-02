@@ -7,7 +7,7 @@ import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:oshi_log/core/theme/gbt_theme.dart';
 import 'package:oshi_log/features/feed/application/board_controller.dart';
 import 'package:oshi_log/features/feed/presentation/field_community/widgets/field_community_mode_bar.dart';
-import 'package:oshi_log/features/feed/presentation/field_guide/widgets/field_guide_section_switcher.dart';
+import 'package:oshi_log/app/compositions/guide/presentation/field_guide/widgets/field_guide_section_switcher.dart';
 
 import '../../../../testing/tolerant_local_file_comparator.dart';
 

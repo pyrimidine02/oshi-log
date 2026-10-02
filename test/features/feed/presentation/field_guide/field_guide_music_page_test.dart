@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:oshi_log/core/theme/gbt_theme.dart';
 import 'package:oshi_log/core/widgets/layout/gbt_page_header.dart';
-import 'package:oshi_log/features/feed/presentation/field_guide/field_guide_music_page.dart';
+import 'package:oshi_log/app/compositions/guide/presentation/field_guide/field_guide_music_page.dart';
 
 void main() {
   testWidgets('music archive uses standard chrome at 320dp and 200 percent', (

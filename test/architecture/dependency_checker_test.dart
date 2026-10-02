@@ -3,6 +3,36 @@ import 'package:flutter_test/flutter_test.dart';
 import 'dependency_checker.dart';
 
 void main() {
+  test('migrated groups own <group>/<sub>; others are legacy/<feature>', () {
+    expect(
+      findDependencyViolations({
+        'lib/features/oshikatsu/catalog/data/dto/unit_dto.dart': '',
+        'lib/features/oshikatsu/music/data/song_repository.dart':
+            "import '../../catalog/data/dto/unit_dto.dart';",
+        'lib/features/feed/data/post_repository.dart':
+            "import '../../oshikatsu/catalog/data/dto/unit_dto.dart';",
+      }),
+      {
+        'lib/features/oshikatsu/music/data/song_repository.dart -> '
+            'lib/features/oshikatsu/catalog/data/dto/unit_dto.dart : R2',
+        'lib/features/feed/data/post_repository.dart -> '
+            'lib/features/oshikatsu/catalog/data/dto/unit_dto.dart : R2',
+      },
+    );
+  });
+
+  test('a business file directly under a migrated group dir fails', () {
+    expect(
+      findDependencyViolations({
+        'lib/features/oshikatsu/stray_controller.dart': '',
+      }),
+      {
+        'lib/features/oshikatsu/stray_controller.dart -> '
+            'lib/features/oshikatsu/stray_controller.dart : R2',
+      },
+    );
+  });
+
   test('normalizes relative and package URIs to one file dependency', () {
     expect(
       findDependencyViolations({

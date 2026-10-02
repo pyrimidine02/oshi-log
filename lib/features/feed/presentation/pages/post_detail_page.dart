@@ -13,7 +13,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/error/failure.dart';
 import '../../../../core/localization/locale_text.dart';
-import '../../../projects/application/project_context.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
 import '../../../auth/application/session_state.dart';
 import '../../../../core/security/user_access_level.dart';
 import '../../../../core/router/app_router.dart';

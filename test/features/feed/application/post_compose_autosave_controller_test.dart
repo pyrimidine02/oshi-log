@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:oshi_log/features/projects/application/project_context.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
 import 'package:oshi_log/core/storage/local_storage.dart';
 import 'package:oshi_log/features/feed/application/post_compose_autosave_controller.dart';
 import 'package:oshi_log/features/feed/application/post_compose_draft_store.dart';
