@@ -315,6 +315,23 @@ class MusicRepositoryImpl implements MusicRepository {
   }
 
   @override
+  Future<Result<List<MusicSongPerformance>>> getSongPerformances({
+    required String projectId,
+    required String songId,
+    String? lang,
+  }) async {
+    return _mapSingle(
+      _remoteDataSource.fetchSongPerformances(
+        projectId: projectId,
+        songId: songId,
+        lang: lang,
+      ),
+      (dtos) => dtos.map((dto) => dto.toDomain()).toList()..sort(_newestFirst),
+      fallbackCode: 'song_performances',
+    );
+  }
+
+  @override
   Future<Result<MusicLiveSetlist>> getLiveSetlist({
     required String projectId,
     required String liveEventId,
@@ -358,4 +375,15 @@ Result<T> _unknownFailure<T>(String code) {
   return Result.failure(
     UnknownFailure('Unknown $code result', code: 'unknown_$code'),
   );
+}
+
+/// EN: Orders performances newest first; unknown start times sink last.
+/// KO: 공연을 최신순으로 정렬하고 시작 시각을 모르면 뒤로 보냅니다.
+int _newestFirst(MusicSongPerformance a, MusicSongPerformance b) {
+  final aTime = a.startTime;
+  final bTime = b.startTime;
+  if (aTime == null || bTime == null) {
+    return (aTime == null ? 1 : 0) - (bTime == null ? 1 : 0);
+  }
+  return bTime.compareTo(aTime);
 }

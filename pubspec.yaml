@@ -37,6 +37,7 @@ dependencies:
   go_router: ^14.3.0
   cached_network_image: ^3.3.1
   url_launcher: ^6.3.0
+  flutter_markdown_plus: ^1.0.12
   
   # State Management
   flutter_riverpod: ^2.5.1

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:oshi_log/core/error/failure.dart';
 import 'package:oshi_log/core/router/app_router.dart';
 import 'package:oshi_log/core/theme/gbt_theme.dart';
 import 'package:oshi_log/features/music/application/music_controller.dart';
@@ -266,6 +267,95 @@ void main() {
       expect(find.text('null'), findsNothing);
     },
   );
+
+  group('performances section', () {
+    Future<void> openRecordTab(
+      WidgetTester tester,
+      Future<List<MusicSongPerformance>> Function() performances,
+    ) async {
+      await tester.pumpWidget(
+        _testApp(
+          lyrics: const MusicLyricsPayload(
+            songId: songId,
+            version: 'FULL',
+            lines: <MusicLyricLine>[],
+          ),
+          emptyParts: emptyParts,
+          emptyCallGuide: emptyCallGuide,
+          performances: performances,
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+      await tester.tap(find.byType(Tab).at(2));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text('Lives featuring this song'),
+        180,
+        scrollable: find
+            .descendant(
+              of: find.byType(TabBarView),
+              matching: find.byType(Scrollable),
+            )
+            .last,
+      );
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('lists performances with order, encore and upcoming', (
+      tester,
+    ) async {
+      await openRecordTab(
+        tester,
+        () async => [
+          MusicSongPerformance(
+            eventId: 'event-new',
+            title: 'Future Live',
+            startTime: DateTime(2026, 12, 24, 18),
+            isUpcoming: true,
+            order: 3,
+            isEncore: true,
+          ),
+          MusicSongPerformance(
+            eventId: 'event-old',
+            title: 'Past Live',
+            startTime: DateTime(2025, 3, 1, 18),
+            isUpcoming: false,
+            order: 7,
+            isEncore: false,
+          ),
+        ],
+      );
+
+      expect(find.text('Future Live'), findsOneWidget);
+      expect(find.text('Past Live'), findsOneWidget);
+      expect(find.text('2026.12.24 · Song #3'), findsOneWidget);
+      expect(find.text('2025.03.01 · Song #7'), findsOneWidget);
+      expect(find.text('Encore'), findsOneWidget);
+      expect(find.text('Upcoming'), findsOneWidget);
+      expect(
+        tester.getTopLeft(find.text('Future Live')).dy,
+        lessThan(tester.getTopLeft(find.text('Past Live')).dy),
+      );
+    });
+
+    testWidgets('shows empty state', (tester) async {
+      await openRecordTab(tester, () async => const []);
+
+      expect(find.text('No performances yet.'), findsOneWidget);
+    });
+
+    testWidgets('error stays inline and keeps other sections', (tester) async {
+      await openRecordTab(
+        tester,
+        () => Future.error(const NotFoundFailure('not deployed')),
+      );
+
+      expect(find.text('요청하신 정보를 찾을 수 없습니다'), findsOneWidget);
+      expect(find.text('Versions'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  });
 
   testWidgets('remains usable at 300 percent text scale', (tester) async {
     tester.view.physicalSize = const Size(320, 640);
@@ -563,6 +653,7 @@ Widget _testApp({
   required MusicCallGuidePayload emptyCallGuide,
   TextScaler? textScaler,
   double topInset = 0,
+  Future<List<MusicSongPerformance>> Function()? performances,
 }) {
   final page = router == null
       ? const MusicSongDetailPage(projectId: 'project', songId: 'song')
@@ -614,6 +705,9 @@ Widget _testApp({
       ),
       musicSongCreditsProvider.overrideWith(
         (ref, key) async => const <MusicCreditGroup>[],
+      ),
+      musicSongPerformancesProvider.overrideWith(
+        (ref, key) => performances?.call() ?? Future.value(const []),
       ),
       musicSongAvailabilityProvider.overrideWith(
         (ref, key) async => const MusicAvailability(

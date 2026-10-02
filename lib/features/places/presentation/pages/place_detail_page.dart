@@ -33,6 +33,7 @@ import '../utils/place_directions_launcher.dart';
 import '../utils/place_related_units.dart';
 import '../../../../core/widgets/common/registrant_credit_widget.dart';
 import '../widgets/place_review_sheet.dart';
+import '../widgets/place_description_body.dart';
 
 /// EN: Place detail page widget
 /// KO: 장소 상세 페이지 위젯
@@ -304,17 +305,7 @@ class PlaceDetailPage extends ConsumerWidget {
                     title: context.l10n(ko: '소개', en: 'About', ja: '紹介'),
                   ),
                   const SizedBox(height: GBTSpacing.sm),
-                  Text(
-                    place.description ??
-                        context.l10n(
-                          ko: '소개 정보가 없습니다.',
-                          en: 'No description available.',
-                          ja: '紹介情報がありません。',
-                        ),
-                    style: GBTTypography.bodyMedium.copyWith(
-                      color: secondaryColor,
-                    ),
-                  ),
+                  PlaceDescriptionBody(description: place.description),
                   const SizedBox(height: GBTSpacing.xl),
                   _RecordSectionHeader(
                     indexLabel: '02',

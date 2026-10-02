@@ -10,6 +10,7 @@ import '../../../../core/theme/theme.dart';
 import '../../../../core/widgets/common/gbt_image.dart';
 import '../../../../core/widgets/layout/gbt_field_primitives.dart';
 import '../../domain/entities/live_event_entities.dart';
+import 'live_schedule_status_badge.dart';
 
 /// EN: One event rendered as a dated railway-agenda row, not a card carousel.
 /// KO: 카드 캐러셀이 아닌 날짜 기반 철도 아젠다 행으로 표시하는 이벤트입니다.
@@ -34,6 +35,10 @@ class FieldEventAgendaRow extends StatelessWidget {
     final attendanceLabel = attended
         ? context.l10n(ko: '방문 완료', en: 'Visited', ja: '訪問済み')
         : null;
+    final scheduleLabel = liveScheduleStatusLabel(
+      context,
+      event.scheduleStatus,
+    );
     return Semantics(
       button: true,
       label: context.l10n(
@@ -41,18 +46,21 @@ class FieldEventAgendaRow extends StatelessWidget {
           event.title,
           DateFormat.yMMMMd(locale).format(local),
           event.status,
+          scheduleLabel,
           attendanceLabel,
         ].whereType<String>().join(', '),
         en: [
           event.title,
           DateFormat.yMMMMd(locale).format(local),
           event.status,
+          scheduleLabel,
           attendanceLabel,
         ].whereType<String>().join(', '),
         ja: [
           event.title,
           DateFormat.yMMMMd(locale).format(local),
           event.status,
+          scheduleLabel,
           attendanceLabel,
         ].whereType<String>().join(', '),
       ),
@@ -121,6 +129,10 @@ class FieldEventAgendaRow extends StatelessWidget {
                               label: event.status.toUpperCase(),
                               color: colors.primary,
                             ),
+                            if (scheduleLabel != null)
+                              LiveScheduleStatusBadge(
+                                status: event.scheduleStatus,
+                              ),
                             if (attended)
                               GBTFieldBadge(
                                 label: attendanceLabel!,
@@ -325,6 +337,8 @@ class _FieldEventFeatureDocument extends StatelessWidget {
                   ),
                 ),
               ),
+              LiveScheduleStatusBadge(status: event.scheduleStatus),
+              const SizedBox(width: GBTSpacing.xs),
               GBTFieldBadge(
                 label: event.status.toUpperCase(),
                 color: colors.primary,
