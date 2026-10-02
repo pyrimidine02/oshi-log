@@ -23,8 +23,6 @@ import '../../../favorites/domain/entities/favorite_entities.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/projects_controller.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/domain/entities/project_entities.dart';
 import '../../../settings/application/settings_controller.dart';
-import '../../../verification/application/verification_controller.dart';
-import '../../../verification/presentation/widgets/verification_sheet.dart';
 import '../../application/places_controller.dart';
 import '../../domain/entities/place_comment_entities.dart';
 import '../../domain/entities/place_entities.dart';
@@ -33,15 +31,32 @@ import '../../domain/utils/place_type_search.dart';
 import '../utils/place_directions_launcher.dart';
 import '../utils/place_related_units.dart';
 import '../../../../core/widgets/common/registrant_credit_widget.dart';
-import '../widgets/place_review_sheet.dart';
 import '../widgets/place_description_body.dart';
 
 /// EN: Place detail page widget
 /// KO: 장소 상세 페이지 위젯
+/// EN: Signature for opening the visit verification sheet — implemented by
+///     the app composition root so this page does not depend on the
+///     verification feature directly.
+/// KO: 방문 인증 바텀시트를 여는 콜백 시그니처 — 이 페이지가 verification
+///     feature에 직접 의존하지 않도록 app composition root가 구현합니다.
+typedef PlaceVerifyCallback =
+    void Function(
+      BuildContext context,
+      WidgetRef ref,
+      String placeId, {
+      String? placeName,
+    });
+
 class PlaceDetailPage extends ConsumerWidget {
-  const PlaceDetailPage({super.key, required this.placeId});
+  const PlaceDetailPage({
+    super.key,
+    required this.placeId,
+    required this.onVerify,
+  });
 
   final String placeId;
+  final PlaceVerifyCallback onVerify;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -77,7 +92,7 @@ class PlaceDetailPage extends ConsumerWidget {
             ),
             child: FilledButton.icon(
               onPressed: state.hasValue
-                  ? () => _showVerificationSheet(
+                  ? () => onVerify(
                       context,
                       ref,
                       placeId,
@@ -1470,37 +1485,4 @@ bool _isForbidden(Object error) {
 
 String _formatPlaceType(String type) {
   return placeTypeLabel(type);
-}
-
-void _showVerificationSheet(
-  BuildContext context,
-  WidgetRef ref,
-  String placeId, {
-  String? placeName,
-}) {
-  ref.read(verificationControllerProvider.notifier).reset();
-  showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
-    builder: (context) => VerificationSheet(
-      title: context.l10n(ko: '방문 인증', en: 'Visit verification', ja: '訪問認証'),
-      description: context.l10n(
-        ko: '현재 위치를 확인해 방문 인증을 진행합니다.',
-        en: 'Verify your current location to complete visit verification.',
-        ja: '現在地を確認して訪問認証を進めます。',
-      ),
-      onVerify: () => ref
-          .read(verificationControllerProvider.notifier)
-          .verifyPlace(placeId, targetName: placeName),
-      onWriteReview: () => _showReviewSheet(context, placeId),
-    ),
-  );
-}
-
-void _showReviewSheet(BuildContext context, String placeId) {
-  showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
-    builder: (context) => PlaceReviewSheet(placeId: placeId),
-  );
 }

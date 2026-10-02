@@ -10,6 +10,8 @@ import '../../core/providers/core_providers.dart';
 import '../../features/auth/application/auth_controller.dart';
 import '../../features/auth/application/session_state.dart';
 import '../../features/notifications/application/notification_delivery.dart';
+import '../../features/verification/application/verification_controller.dart';
+import '../compositions/places/verification_completion.dart';
 import '../session/session_cleanup.dart';
 
 /// EN: Overrides to add to the root `ProviderScope` in `main.dart`/`app.dart`.
@@ -61,4 +63,11 @@ final List<Override> sessionOverrides = [
         .watch(notificationDeviceRegistrationProvider)
         .trackNotificationOpen;
   }),
+  // EN: Wire the post-verification visit/ranking/title refresh into the
+  //     verification feature's success hook.
+  // KO: 인증 후 방문/랭킹/칭호 새로고침을 verification feature의 성공 훅에
+  //     연결합니다.
+  verificationCompletionHookProvider.overrideWithValue(
+    refreshVisitDataAfterVerification,
+  ),
 ];

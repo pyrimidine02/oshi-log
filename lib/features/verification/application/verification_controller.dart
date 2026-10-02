@@ -2,8 +2,6 @@
 /// KO: 장소/라이브 인증 컨트롤러.
 library;
 
-import 'dart:async' show unawaited;
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/error_handler.dart';
@@ -13,8 +11,6 @@ import '../../../core/providers/core_providers.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
 import '../../auth/application/session_state.dart';
 import '../../../core/utils/result.dart';
-import '../../titles/application/titles_controller.dart';
-import '../../visits/application/visits_controller.dart';
 import '../data/datasources/verification_remote_data_source.dart';
 import '../data/repositories/verification_repository_impl.dart';
 import '../domain/entities/failed_verification_attempt.dart';
@@ -261,20 +257,7 @@ class VerificationController
 
   Future<void> _refreshVisitData(String? placeId) async {
     try {
-      await _ref
-          .read(userVisitsControllerProvider.notifier)
-          .load(forceRefresh: true);
-      if (placeId != null && placeId.isNotEmpty) {
-        _ref.invalidate(visitSummaryProvider(placeId));
-      }
-      _ref.invalidate(userRankingProvider);
-      // EN: Invalidate title caches so the next title-picker open reflects
-      //     any titles auto-granted by the backend after verification.
-      // KO: 칭호 캐시를 무효화하여 인증 후 백엔드에서 자동 부여된 칭호를
-      //     다음 칭호 피커 열기 시 반영합니다.
-      final titlesRepo = await _ref.read(titlesRepositoryProvider.future);
-      await titlesRepo.invalidateTitleCaches();
-      unawaited(_ref.read(activeTitleProvider.notifier).refresh());
+      await _ref.read(verificationCompletionHookProvider)(_ref, placeId);
     } catch (e, stackTrace) {
       AppLogger.warning(
         'Visit data refresh failed after verification',
@@ -323,6 +306,18 @@ class VerificationController
     }
   }
 }
+
+/// EN: Success hook invoked after a place verification completes, so
+///     app-level composition can refresh cross-feature visit/title/ranking
+///     state without this controller depending on those features directly.
+///     Defaults to a no-op; the app composition root overrides it.
+/// KO: 장소 인증 성공 후 호출되는 훅입니다. 이 컨트롤러가 다른 feature에
+///     직접 의존하지 않고도 앱 조합 루트가 방문/칭호/랭킹 상태를 새로고침할
+///     수 있게 합니다. 기본값은 no-op이며 앱 조합 루트가 override합니다.
+final verificationCompletionHookProvider =
+    Provider<Future<void> Function(Ref ref, String? placeId)>(
+      (ref) => (ref, placeId) async {},
+    );
 
 /// EN: Verification repository provider.
 /// KO: 인증 리포지토리 프로바이더.

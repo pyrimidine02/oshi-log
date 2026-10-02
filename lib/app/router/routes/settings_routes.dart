@@ -9,7 +9,7 @@ import '../../../features/admin_ops/presentation/pages/admin_ops_page.dart';
 import '../../../features/auth/presentation/pages/change_password_page.dart';
 import '../../../features/auth/presentation/pages/forgot_password_page.dart';
 import '../../../features/auth/presentation/pages/reset_password_page.dart';
-import '../../../features/settings/presentation/pages/account_tools_page.dart';
+import '../../compositions/account/presentation/pages/account_tools_page.dart';
 import '../../../features/settings/presentation/pages/community_settings_page.dart';
 import '../../../features/settings/presentation/pages/consent_history_page.dart';
 import '../../../features/settings/presentation/pages/linked_accounts_page.dart';

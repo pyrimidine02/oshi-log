@@ -23,7 +23,7 @@ import 'package:oshi_log/features/identity/social/presentation/pages/user_connec
 import '../../../features/live_events/presentation/field_events/field_live_event_detail_page.dart';
 import '../../../features/music/presentation/pages/music_song_detail_page.dart';
 import '../../../features/notifications/presentation/pages/notifications_page.dart';
-import '../../../features/places/presentation/pages/place_detail_page.dart';
+import '../../compositions/places/place_verification_flow.dart';
 import '../../../features/profile_banner/presentation/pages/banner_picker_page.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/presentation/pages/fan_subject_detail_page.dart';
 import '../../../features/quotes/presentation/pages/quotes_page.dart';
@@ -188,7 +188,7 @@ List<RouteBase> buildGlobalOverlayRoutes() => [
       final placeId = state.pathParameters['placeId']!;
       return buildAdaptiveDetailPage(
         key: state.pageKey,
-        child: PlaceDetailPage(placeId: placeId),
+        child: PlaceVerificationFlow(placeId: placeId),
       );
     },
   ),

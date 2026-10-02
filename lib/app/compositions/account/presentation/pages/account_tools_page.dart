@@ -7,23 +7,23 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/error/failure.dart';
-import '../../../../core/localization/locale_text.dart';
-import '../../../../core/security/user_access_level.dart';
-import '../../../../core/theme/gbt_colors.dart';
-import '../../../../core/theme/gbt_spacing.dart';
-import '../../../../core/theme/gbt_typography.dart';
-import '../../../../core/utils/result.dart';
-import '../../../../core/widgets/common/gbt_icon_chip.dart';
-import '../../../../core/widgets/common/gbt_image.dart';
-import '../../../../core/widgets/feedback/gbt_loading.dart';
-import '../../../../core/widgets/navigation/gbt_segmented_tab_bar.dart';
-import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
-import '../../../settings/application/settings_controller.dart';
-import '../../../settings/domain/entities/account_tools.dart';
-import '../../../settings/domain/entities/user_profile.dart';
-import '../../../verification/application/failed_attempt_service.dart';
-import '../../../verification/domain/entities/failed_verification_attempt.dart';
+import 'package:oshi_log/core/error/failure.dart';
+import 'package:oshi_log/core/localization/locale_text.dart';
+import 'package:oshi_log/core/security/user_access_level.dart';
+import 'package:oshi_log/core/theme/gbt_colors.dart';
+import 'package:oshi_log/core/theme/gbt_spacing.dart';
+import 'package:oshi_log/core/theme/gbt_typography.dart';
+import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/core/widgets/common/gbt_icon_chip.dart';
+import 'package:oshi_log/core/widgets/common/gbt_image.dart';
+import 'package:oshi_log/core/widgets/feedback/gbt_loading.dart';
+import 'package:oshi_log/core/widgets/navigation/gbt_segmented_tab_bar.dart';
+import 'package:oshi_log/core/widgets/navigation/gbt_standard_app_bar.dart';
+import 'package:oshi_log/features/settings/application/settings_controller.dart';
+import 'package:oshi_log/features/settings/domain/entities/account_tools.dart';
+import 'package:oshi_log/features/settings/domain/entities/user_profile.dart';
+import 'package:oshi_log/features/verification/application/failed_attempt_service.dart';
+import 'package:oshi_log/features/verification/domain/entities/failed_verification_attempt.dart';
 
 enum _AccountToolsTab { blocks, accessLevel, appeals }
 
