@@ -170,9 +170,12 @@ class GBTBottomSheet extends StatelessWidget {
               ),
             ),
 
-          // EN: Content
-          // KO: 콘텐츠
-          Flexible(child: child),
+          // EN: Content wrapped in Material so ListTile/ink effects paint
+          // correctly instead of being hidden by this Container's
+          // background DecoratedBox.
+          // KO: ListTile/잉크 효과가 이 Container의 배경 DecoratedBox에 가려지지
+          // 않도록 Material로 감싼 콘텐츠.
+          Flexible(child: Material(color: Colors.transparent, child: child)),
         ],
       ),
     );
