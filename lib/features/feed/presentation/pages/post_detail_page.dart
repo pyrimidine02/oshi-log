@@ -13,7 +13,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/error/failure.dart';
 import '../../../../core/localization/locale_text.dart';
-import '../../../../core/providers/core_providers.dart';
+import '../../../projects/application/project_context.dart';
+import '../../../auth/application/session_state.dart';
 import '../../../../core/security/user_access_level.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/utils/result.dart';

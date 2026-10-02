@@ -9,7 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/error/failure.dart';
 import '../../../../core/localization/locale_text.dart';
-import '../../../../core/providers/core_providers.dart';
+import '../../../projects/application/project_context.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/theme.dart';
 import '../../../../core/widgets/common/gbt_image.dart';

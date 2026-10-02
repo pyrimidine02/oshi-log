@@ -10,6 +10,8 @@ import '../../../core/error/error_handler.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/logging/app_logger.dart';
 import '../../../core/providers/core_providers.dart';
+import '../../projects/application/project_context.dart';
+import '../../auth/application/session_state.dart';
 import '../../../core/utils/result.dart';
 import '../../titles/application/titles_controller.dart';
 import '../../visits/application/visits_controller.dart';

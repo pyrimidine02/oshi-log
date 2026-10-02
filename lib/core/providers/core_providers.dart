@@ -4,25 +4,19 @@ library;
 
 import 'dart:async';
 
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../logging/app_logger.dart';
 import '../connectivity/connectivity_service.dart';
 import '../cache/cache_manager.dart';
-import '../constants/legal_policy_constants.dart';
 import '../config/app_config.dart';
-import '../error/failure.dart';
 import '../network/api_client.dart';
 import '../analytics/analytics_service.dart';
 import '../location/location_service.dart';
 import '../notifications/local_notifications_service.dart';
 import '../notifications/remote_push_service.dart';
 import '../telemetry/telemetry_service.dart';
-import '../utils/result.dart';
-import '../../features/auth/data/datasources/auth_remote_data_source.dart';
 import '../../features/notifications/domain/entities/notification_entities.dart';
 import '../realtime/sse_client.dart';
 import '../security/secure_storage.dart';
@@ -61,19 +55,44 @@ final cacheManagerProvider = FutureProvider<CacheManager>((ref) async {
 // KO: 네트워크 프로바이더
 // ========================================
 
+/// EN: Called when the API client receives an unauthorized (401) response
+///     that could not be refreshed. Default is a no-op; app bootstrap wires
+///     this to the auth feature so that core/platform never imports auth.
+/// KO: API 클라이언트가 갱신할 수 없는 unauthorized(401) 응답을 받았을 때
+///     호출됩니다. 기본값은 아무 작업도 하지 않으며, core/platform이 auth를
+///     import하지 않도록 app bootstrap에서 auth feature에 연결합니다.
+typedef ApiUnauthorizedCallback = void Function();
+
+/// EN: Called when the API client successfully refreshes the access token.
+/// KO: API 클라이언트가 액세스 토큰 갱신에 성공했을 때 호출됩니다.
+typedef ApiTokenRefreshedCallback = void Function();
+
+/// EN: Default no-op; overridden in `lib/app/bootstrap/session_overrides.dart`.
+/// KO: 기본값은 아무 작업도 하지 않으며
+///     `lib/app/bootstrap/session_overrides.dart`에서 override 됩니다.
+final apiUnauthorizedCallbackProvider = Provider<ApiUnauthorizedCallback>((
+  ref,
+) {
+  return () {};
+});
+
+/// EN: Default no-op; overridden in `lib/app/bootstrap/session_overrides.dart`.
+/// KO: 기본값은 아무 작업도 하지 않으며
+///     `lib/app/bootstrap/session_overrides.dart`에서 override 됩니다.
+final apiTokenRefreshedCallbackProvider = Provider<ApiTokenRefreshedCallback>((
+  ref,
+) {
+  return () {};
+});
+
 /// EN: API client provider
 /// KO: API 클라이언트 프로바이더
 final apiClientProvider = Provider<ApiClient>((ref) {
   final secureStorage = ref.watch(secureStorageProvider);
   return ApiClient(
     secureStorage: secureStorage,
-    onUnauthorized: () {
-      ref.read(authStateProvider.notifier).setUnauthenticated();
-    },
-    onTokenRefreshed: () {
-      final notifier = ref.read(authTokenRefreshTickProvider.notifier);
-      notifier.state = notifier.state + 1;
-    },
+    onUnauthorized: () => ref.read(apiUnauthorizedCallbackProvider)(),
+    onTokenRefreshed: () => ref.read(apiTokenRefreshedCallbackProvider)(),
   );
 });
 
@@ -151,28 +170,6 @@ final remotePushTapEventsProvider = StreamProvider<LocalNotificationTapEvent>((
   return service.tapEvents;
 });
 
-/// EN: Global bootstrap provider for remote push setup + auth-bound sync.
-/// KO: 원격 푸시 초기화 + 인증 상태 동기화를 위한 전역 부트스트랩 프로바이더입니다.
-final remotePushBootstrapProvider = Provider<void>((ref) {
-  final service = ref.watch(remotePushServiceProvider);
-  unawaited(service.initialize());
-
-  ref.listen<AuthState>(authStateProvider, (_, next) {
-    switch (next) {
-      case AuthState.authenticated:
-        unawaited(service.setAuthenticated(true));
-      case AuthState.unauthenticated:
-        unawaited(service.setAuthenticated(false));
-      case AuthState.initial:
-        break;
-    }
-  });
-
-  if (ref.read(isAuthenticatedProvider)) {
-    unawaited(service.setAuthenticated(true));
-  }
-});
-
 /// EN: Analytics service provider.
 /// KO: 분석 서비스 프로바이더.
 final analyticsServiceProvider = Provider<AnalyticsService>((ref) {
@@ -244,215 +241,25 @@ final appVersionProvider = FutureProvider<String>((ref) async {
   return _fallbackAppVersion;
 });
 
-// ========================================
-// EN: App State Providers
-// KO: 앱 상태 프로바이더
-// ========================================
+// EN: Theme/locale preferences moved to
+//     `lib/features/settings/application/app_preferences.dart`.
+// KO: 테마/로케일 설정은
+//     `lib/features/settings/application/app_preferences.dart`로 이동했습니다.
 
-/// EN: Theme mode provider (light/dark/system)
-/// KO: 테마 모드 프로바이더 (라이트/다크/시스템)
-final themeModeProvider = StateProvider<String>((ref) {
-  return 'system';
-});
+// EN: Project/unit selection state moved to
+//     `lib/features/projects/application/project_context.dart`.
+// KO: 프로젝트/유닛 선택 상태는
+//     `lib/features/projects/application/project_context.dart`로 이동했습니다.
 
-/// EN: Locale state notifier.
-/// KO: 로케일 상태 노티파이어.
-class LocaleNotifier extends StateNotifier<Locale?> {
-  LocaleNotifier(this._ref) : super(null) {
-    unawaited(_loadPersistedLocale());
-  }
+// EN: Tab state moved to `lib/app/shell/navigation_state.dart`.
+// KO: 탭 상태는 `lib/app/shell/navigation_state.dart`로 이동했습니다.
 
-  final Ref _ref;
+// EN: Auth state/refresh tick moved to
+//     `lib/features/auth/application/session_state.dart`.
+// KO: 인증 상태/refresh tick은
+//     `lib/features/auth/application/session_state.dart`로 이동했습니다.
 
-  Future<void> _loadPersistedLocale() async {
-    final storage = await _ref.read(localStorageProvider.future);
-    final stored = storage.getLocale();
-    final locale = _parseStoredLocale(stored);
-    state = locale;
-    Intl.defaultLocale = _intlLocaleTag(locale);
-  }
-
-  /// EN: Set locale and persist user preference.
-  /// KO: 로케일을 설정하고 사용자 선호도를 저장합니다.
-  Future<void> setLocale(Locale? locale) async {
-    state = locale;
-    Intl.defaultLocale = _intlLocaleTag(locale);
-    final storage = await _ref.read(localStorageProvider.future);
-    final value = locale == null ? 'system' : locale.languageCode;
-    await storage.setLocale(value);
-  }
-
-  /// EN: Set locale by language code (`ko`, `en`, `ja`), or `system`.
-  /// KO: 언어 코드(`ko`, `en`, `ja`) 또는 `system`으로 로케일을 설정합니다.
-  Future<void> setLocaleByCode(String code) async {
-    final normalized = code.trim().toLowerCase();
-    final locale = _parseStoredLocale(normalized);
-    await setLocale(locale);
-  }
-
-  Locale? _parseStoredLocale(String? raw) {
-    switch (raw?.toLowerCase()) {
-      case 'ko':
-        return const Locale('ko', 'KR');
-      case 'en':
-        return const Locale('en', 'US');
-      case 'ja':
-        return const Locale('ja', 'JP');
-      default:
-        return null;
-    }
-  }
-
-  String _intlLocaleTag(Locale? locale) {
-    if (locale == null) {
-      return Intl.systemLocale;
-    }
-    final effective = locale;
-    final country = effective.countryCode;
-    if (country == null || country.isEmpty) {
-      return effective.languageCode;
-    }
-    return '${effective.languageCode}_$country';
-  }
-}
-
-/// EN: App locale provider (null means follow system locale).
-/// KO: 앱 로케일 프로바이더 (null이면 시스템 로케일을 따릅니다).
-final localeProvider = StateNotifierProvider<LocaleNotifier, Locale?>((ref) {
-  return LocaleNotifier(ref);
-});
-
-/// EN: Selected project key provider (slug/code)
-/// KO: 선택된 프로젝트 키 프로바이더 (slug/code)
-final selectedProjectKeyProvider = StateProvider<String?>((ref) {
-  return null;
-});
-
-/// EN: Selected project ID provider (UUID when available).
-/// KO: 선택된 프로젝트 ID 프로바이더 (가능하면 UUID).
-final selectedProjectIdProvider = StateProvider<String?>((ref) {
-  return null;
-});
-
-/// EN: Selected unit IDs provider
-/// KO: 선택된 유닛 ID 목록 프로바이더
-final selectedUnitIdsProvider = StateProvider<List<String>>((ref) {
-  return [];
-});
-
-/// EN: Current bottom navigation index.
-/// KO: 현재 하단 네비게이션 인덱스.
-final currentNavIndexProvider = StateProvider<int>((ref) {
-  return 0;
-});
-
-// ========================================
-// EN: Auth State Providers
-// KO: 인증 상태 프로바이더
-// ========================================
-
-/// EN: Auth state enumeration
-/// KO: 인증 상태 열거형
-enum AuthState { initial, authenticated, unauthenticated }
-
-/// EN: Auth state notifier for managing authentication
-/// KO: 인증 관리를 위한 인증 상태 노티파이어
-class AuthStateNotifier extends StateNotifier<AuthState> {
-  AuthStateNotifier(this._secureStorage) : super(AuthState.initial);
-
-  final SecureStorage _secureStorage;
-
-  /// EN: Check authentication status on app start.
-  /// EN: Presence of both tokens is sufficient — the API interceptor handles
-  /// EN: access-token refresh on 401/403 transparently. Gating on the stored
-  /// EN: access-token expiry timestamp would incorrectly log the user out
-  /// EN: whenever the short-lived access token expires while the refresh token
-  /// EN: is still valid (which is the normal idle state between app launches).
-  /// KO: 앱 시작 시 인증 상태 확인.
-  /// KO: 두 토큰이 모두 존재하면 인증됨으로 처리합니다. API 인터셉터가
-  /// KO: 401/403 응답 시 액세스 토큰을 투명하게 갱신합니다.
-  /// KO: 저장된 액세스 토큰 만료 시간을 기준으로 판단하면 리프레시 토큰이
-  /// KO: 유효한 상태에서도 세션이 조기 종료되는 문제가 발생합니다.
-  Future<void> checkAuthStatus() async {
-    final hasTokens = await _secureStorage.hasValidTokens();
-    state = hasTokens ? AuthState.authenticated : AuthState.unauthenticated;
-  }
-
-  /// EN: Set authenticated state
-  /// KO: 인증됨 상태 설정
-  void setAuthenticated() {
-    state = AuthState.authenticated;
-  }
-
-  /// EN: Set unauthenticated state
-  /// KO: 인증되지 않음 상태 설정
-  void setUnauthenticated() {
-    state = AuthState.unauthenticated;
-  }
-
-  /// EN: Logout - clear tokens and set unauthenticated
-  /// KO: 로그아웃 - 토큰 삭제 및 인증되지 않음 설정
-  Future<void> logout() async {
-    await _secureStorage.clearTokens();
-    state = AuthState.unauthenticated;
-  }
-}
-
-// ========================================
-// EN: Legal Policy Providers
-// KO: 법률 정책 프로바이더
-// ========================================
-
-/// EN: Fetches the latest legal policy list from the public server endpoint.
-///     Fails instead of falling back to bundled constants: a consent recorded
-///     against a stale local version makes the server demand re-consent right
-///     after signup. Display surfaces may still fall back through
-///     [resolveLegalPolicy]; consent submission must await this provider.
-/// KO: 공개 서버 엔드포인트에서 최신 법률 정책 목록을 가져옵니다.
-///     내장 상수로 폴백하지 않고 실패합니다 — 오래된 로컬 버전으로 동의를
-///     기록하면 가입 직후 서버가 재동의를 요구하기 때문입니다. 화면 표시는
-///     [resolveLegalPolicy]로 폴백할 수 있지만, 동의 제출은 이 프로바이더를
-///     반드시 await 해야 합니다.
-final legalPoliciesProvider = FutureProvider<List<LegalPolicyInfo>>((
-  ref,
-) async {
-  final apiClient = ref.read(apiClientProvider);
-  final result = await AuthRemoteDataSource(apiClient).fetchLegalPolicies();
-  if (result is Success<List<Map<String, dynamic>>>) {
-    final parsed = result.data
-        .map(LegalPolicyInfo.fromJson)
-        .whereType<LegalPolicyInfo>()
-        .toList(growable: false);
-    final hasAll = {
-      LegalPolicyType.termsOfService,
-      LegalPolicyType.privacyPolicy,
-      LegalPolicyType.locationTerms,
-    }.every((t) => parsed.any((p) => p.type == t));
-    if (hasAll) return parsed;
-  }
-  throw const ServerFailure(
-    'Legal policies unavailable',
-    code: 'LEGAL_POLICIES_UNAVAILABLE',
-  );
-});
-
-/// EN: Auth state notifier provider
-/// KO: 인증 상태 노티파이어 프로바이더
-final authStateProvider = StateNotifierProvider<AuthStateNotifier, AuthState>((
-  ref,
-) {
-  final secureStorage = ref.watch(secureStorageProvider);
-  return AuthStateNotifier(secureStorage);
-});
-
-/// EN: Check if user is authenticated
-/// KO: 사용자 인증 여부 확인
-final isAuthenticatedProvider = Provider<bool>((ref) {
-  return ref.watch(authStateProvider) == AuthState.authenticated;
-});
-
-/// EN: Monotonic tick incremented when access token is refreshed.
-/// KO: 액세스 토큰 갱신 성공 시 증가하는 단조 증가 tick 값입니다.
-final authTokenRefreshTickProvider = StateProvider<int>((ref) {
-  return 0;
-});
+// EN: Legal policy provider moved to
+//     `lib/features/auth/application/legal_policies_provider.dart`.
+// KO: 법률 정책 프로바이더는
+//     `lib/features/auth/application/legal_policies_provider.dart`로 이동했습니다.

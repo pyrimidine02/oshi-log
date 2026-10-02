@@ -4,7 +4,8 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/providers/core_providers.dart';
+import '../../projects/application/project_context.dart';
+import '../../../app/shell/navigation_state.dart';
 import '../../../core/utils/result.dart';
 import '../domain/entities/feed_entities.dart';
 import 'feed_repository_provider.dart';

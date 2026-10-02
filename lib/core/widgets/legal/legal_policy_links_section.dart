@@ -3,38 +3,43 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../constants/legal_policy_constants.dart';
 import '../../localization/locale_text.dart';
-import '../../providers/core_providers.dart';
 import '../../theme/gbt_colors.dart';
 import '../../theme/gbt_spacing.dart';
 import '../../theme/gbt_typography.dart';
 
-class LegalPolicyLinksSection extends ConsumerWidget {
+/// EN: Pure presentation widget — the caller resolves [policies] (e.g. from
+///     `legalPoliciesProvider` in the auth feature) and passes a display
+///     value in. This keeps core/widgets free of feature provider imports.
+/// KO: 순수 표시 위젯입니다 — 호출자가 [policies]를 해석해(예: auth feature의
+///     `legalPoliciesProvider`) 표시값으로 전달합니다. core/widgets가 feature
+///     프로바이더를 import하지 않도록 유지합니다.
+class LegalPolicyLinksSection extends StatelessWidget {
   const LegalPolicyLinksSection({
     super.key,
     this.title,
     this.showContainer = true,
-  });
+    List<LegalPolicyInfo>? policies,
+  }) : _policies = policies;
 
   final String? title;
   final bool showContainer;
+  final List<LegalPolicyInfo>? _policies;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final header =
         title ??
         context.l10n(ko: '약관 및 정책', en: 'Terms and policies', ja: '規約とポリシー');
 
-    // EN: Use server-fetched policies; fall back to constants while loading or on error.
-    // KO: 서버에서 가져온 정책을 사용하며, 로딩 중이거나 오류 시 상수로 폴백합니다.
-    final policies =
-        ref.watch(legalPoliciesProvider).valueOrNull ??
-        LegalPolicyConstants.policies;
+    // EN: Fall back to bundled constants when the caller has none yet
+    //     (loading/error in the caller's fetch).
+    // KO: 호출자가 아직 값을 전달하지 못한 경우(로딩/오류) 내장 상수로 폴백합니다.
+    final policies = _policies ?? LegalPolicyConstants.policies;
 
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,

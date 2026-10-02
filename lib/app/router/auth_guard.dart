@@ -4,7 +4,7 @@ library;
 
 import 'package:go_router/go_router.dart';
 
-import '../../core/providers/core_providers.dart';
+import '../../features/auth/application/session_state.dart';
 
 /// EN: Validates a post-login `redirect` query value, rejecting anything
 /// EN: that isn't a safe relative in-app path (open-redirect guard).

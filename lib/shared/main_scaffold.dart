@@ -11,7 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/localization/locale_text.dart';
-import '../core/providers/core_providers.dart';
+import '../app/shell/navigation_state.dart';
 import '../core/theme/gbt_colors.dart';
 import '../core/theme/gbt_spacing.dart';
 import '../core/widgets/navigation/gbt_bottom_nav.dart';

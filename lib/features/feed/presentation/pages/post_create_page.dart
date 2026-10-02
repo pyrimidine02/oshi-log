@@ -17,6 +17,8 @@ import '../../../../core/error/failure.dart';
 import '../../../../core/localization/locale_text.dart';
 import '../../../../core/logging/app_logger.dart';
 import '../../../../core/providers/core_providers.dart';
+import '../../../projects/application/project_context.dart';
+import '../../../auth/application/session_state.dart';
 import '../../../../core/router/app_router.dart';
 
 import '../../../../core/theme/gbt_colors.dart';

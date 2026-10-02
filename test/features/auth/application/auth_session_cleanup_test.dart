@@ -13,6 +13,7 @@ import 'package:oshi_log/core/error/failure.dart';
 import 'package:oshi_log/core/notifications/local_notifications_service.dart';
 import 'package:oshi_log/core/notifications/remote_push_service.dart';
 import 'package:oshi_log/core/providers/core_providers.dart';
+import 'package:oshi_log/features/auth/application/session_state.dart';
 import 'package:oshi_log/core/security/secure_storage.dart';
 import 'package:oshi_log/core/storage/local_storage.dart';
 import 'package:oshi_log/core/utils/result.dart';
@@ -79,6 +80,27 @@ void main() {
         harness.container.read(authStateProvider),
         AuthState.unauthenticated,
       );
+    },
+  );
+
+  test(
+    'logout invokes the app-injected sessionCleanupProvider override',
+    () async {
+      final repository = _FakeAuthRepository();
+      var cleanupCalls = 0;
+      final harness = await _AuthHarness.create(
+        repository,
+        extraOverrides: [
+          sessionCleanupProvider.overrideWithValue((ref) => cleanupCalls += 1),
+        ],
+      );
+      addTearDown(harness.dispose);
+      harness.authStateNotifier.setAuthenticated();
+      repository.logoutHandler = () async => const Result.success(null);
+
+      await harness.controller.logout();
+
+      expect(cleanupCalls, 1);
     },
   );
 
@@ -488,6 +510,7 @@ class _AuthHarness {
     _FakeAuthRepository repository, {
     _LocalStorageRemovalFailure? localStorageFailure,
     AuthOAuthService Function(String namespace)? oauthServiceFactory,
+    List<Override> extraOverrides = const [],
   }) async {
     final config = AppConfig.instance;
     config.init(
@@ -558,6 +581,7 @@ class _AuthHarness {
           localNotificationsService,
         ),
         analyticsServiceProvider.overrideWithValue(analyticsService),
+        ...extraOverrides,
       ],
     );
 

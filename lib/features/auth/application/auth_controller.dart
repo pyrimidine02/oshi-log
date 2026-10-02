@@ -13,11 +13,6 @@ import '../../../core/providers/core_providers.dart';
 import '../../../core/security/secure_storage.dart';
 import '../../../core/storage/local_storage.dart';
 import '../../../core/utils/result.dart';
-import '../../settings/application/settings_controller.dart';
-import '../../favorites/application/favorites_controller.dart';
-import '../../feed/application/local_post_bookmarks_controller.dart';
-import '../../feed/application/reaction_controller.dart';
-import '../../live_events/application/live_events_controller.dart';
 import '../data/datasources/auth_remote_data_source.dart';
 import '../data/repositories/auth_repository_impl.dart';
 import '../domain/entities/auth_tokens.dart';
@@ -27,6 +22,25 @@ import '../domain/entities/register_result.dart';
 import '../domain/repositories/auth_repository.dart';
 import 'native_social_login_service.dart';
 import 'oauth_service.dart';
+import 'session_state.dart';
+
+/// EN: Callback that clears user-scoped provider state on logout/session
+///     reset. auth does not know about app/feature composition — the app
+///     layer overrides this with the real cleanup (see
+///     `lib/app/session/session_cleanup.dart` and
+///     `lib/app/bootstrap/session_overrides.dart`).
+/// KO: 로그아웃/세션 초기화 시 사용자 범위 프로바이더 상태를 정리하는 콜백.
+///     auth는 app/feature 조합을 알지 못합니다 — app 계층이 실제 정리
+///     로직으로 이 프로바이더를 override 합니다
+///     (`lib/app/session/session_cleanup.dart`,
+///     `lib/app/bootstrap/session_overrides.dart` 참고).
+typedef SessionCleanupCallback = void Function(Ref ref);
+
+/// EN: Default no-op cleanup; app bootstrap overrides this.
+/// KO: 기본값은 아무 작업도 하지 않습니다 — app bootstrap에서 override 합니다.
+final sessionCleanupProvider = Provider<SessionCleanupCallback>((ref) {
+  return (Ref ref) {};
+});
 
 const String _kPostComposeCreateDraftKeyPrefix = 'feed_post_create_draft_';
 const String _kPostComposeEditDraftKeyPrefix = 'feed_post_edit_draft_';
@@ -1361,30 +1375,17 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
     await Future.wait(draftKeys.map(localStorage.remove));
   }
 
-  /// EN: Invalidate Riverpod providers that hold user-specific data.
-  /// KO: 사용자별 데이터를 보유한 Riverpod 프로바이더를 초기화합니다.
+  /// EN: Invalidate Riverpod providers that hold user-specific data. The
+  ///     actual provider set is owned by app/feature composition and
+  ///     injected via [sessionCleanupProvider] (see
+  ///     `lib/app/session/session_cleanup.dart`).
+  /// KO: 사용자별 데이터를 보유한 Riverpod 프로바이더를 초기화합니다. 실제
+  ///     프로바이더 목록은 app/feature 조합이 소유하며
+  ///     [sessionCleanupProvider]를 통해 주입됩니다
+  ///     (`lib/app/session/session_cleanup.dart` 참고).
   void _invalidateUserProviders() {
     try {
-      // EN: Reset project/unit selection state.
-      // KO: 프로젝트/유닛 선택 상태 초기화.
-      _ref.read(selectedProjectKeyProvider.notifier).state = null;
-      _ref.read(selectedProjectIdProvider.notifier).state = null;
-      _ref.read(selectedUnitIdsProvider.notifier).state = [];
-      _ref.read(currentNavIndexProvider.notifier).state = 0;
-
-      // EN: Invalidate user profile providers.
-      // KO: 사용자 프로필 프로바이더 초기화.
-      _ref.invalidate(userProfileControllerProvider);
-      _ref.invalidate(notificationSettingsControllerProvider);
-
-      // EN: Dispose user mutation queues and local bookmarks so callbacks
-      //     from the previous session cannot observe the next one.
-      // KO: 이전 세션의 콜백이 다음 세션을 관찰하지 못하도록 사용자 변경
-      //     대기열과 로컬 북마크 프로바이더를 해제합니다.
-      _ref.invalidate(favoritesControllerProvider);
-      _ref.invalidate(postReactionOutboxControllerProvider);
-      _ref.invalidate(liveAttendanceOutboxControllerProvider);
-      _ref.invalidate(localPostBookmarksControllerProvider);
+      _ref.read(sessionCleanupProvider)(_ref);
     } catch (e, stackTrace) {
       AppLogger.error(
         'Failed to invalidate providers on logout',

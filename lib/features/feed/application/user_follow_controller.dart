@@ -5,7 +5,7 @@ library;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/failure.dart';
-import '../../../core/providers/core_providers.dart';
+import '../../auth/application/session_state.dart';
 import '../../../core/utils/result.dart';
 import '../domain/entities/community_moderation.dart';
 import 'community_moderation_controller.dart';

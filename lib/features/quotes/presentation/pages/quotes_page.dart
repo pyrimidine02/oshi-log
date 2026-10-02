@@ -10,7 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gal/gal.dart';
 
 import '../../../../core/localization/locale_text.dart';
-import '../../../../core/providers/core_providers.dart';
+import '../../../projects/application/project_context.dart';
 import '../../../../core/theme/gbt_colors.dart';
 import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';

@@ -3,7 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:oshi_log/core/providers/core_providers.dart';
+import 'package:oshi_log/features/projects/application/project_context.dart';
 import 'package:oshi_log/core/utils/result.dart';
 import 'package:oshi_log/features/feed/application/travel_reviews_controller.dart';
 import 'package:oshi_log/features/feed/domain/entities/feed_entities.dart';

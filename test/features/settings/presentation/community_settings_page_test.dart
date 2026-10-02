@@ -3,7 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:oshi_log/core/providers/core_providers.dart';
+import 'package:oshi_log/features/auth/application/session_state.dart';
 import 'package:oshi_log/core/theme/gbt_theme.dart';
 import 'package:oshi_log/features/settings/application/settings_controller.dart';
 import 'package:oshi_log/features/settings/domain/entities/user_profile.dart';

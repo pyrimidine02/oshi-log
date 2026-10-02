@@ -7,7 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/localization/locale_text.dart';
-import '../../../../core/providers/core_providers.dart';
+import '../../../projects/application/project_context.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
 import '../../../live_events/application/live_events_controller.dart';

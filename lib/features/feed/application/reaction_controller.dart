@@ -9,6 +9,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/failure.dart';
 import '../../../core/providers/core_providers.dart';
+import '../../projects/application/project_context.dart';
+import '../../auth/application/session_state.dart';
 import '../../../core/utils/result.dart';
 import '../../projects/application/projects_controller.dart';
 import '../domain/entities/feed_entities.dart';

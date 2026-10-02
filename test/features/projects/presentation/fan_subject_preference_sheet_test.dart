@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:oshi_log/core/providers/core_providers.dart';
+import 'package:oshi_log/features/auth/application/session_state.dart';
 import 'package:oshi_log/core/theme/gbt_theme.dart';
 import 'package:oshi_log/core/utils/result.dart';
 import 'package:oshi_log/features/projects/application/fan_subjects_controller.dart';

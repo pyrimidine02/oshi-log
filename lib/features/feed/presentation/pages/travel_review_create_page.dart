@@ -9,7 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:apple_maps_flutter/apple_maps_flutter.dart' as amaps;
 import 'package:google_maps_flutter/google_maps_flutter.dart' as gmaps;
 
-import '../../../../core/providers/core_providers.dart';
+import '../../../projects/application/project_context.dart';
 import '../../../../core/theme/gbt_map_styles.dart';
 import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';

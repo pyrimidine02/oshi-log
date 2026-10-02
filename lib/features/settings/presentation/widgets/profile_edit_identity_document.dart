@@ -3,12 +3,14 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/localization/locale_text.dart';
 import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';
 import '../../../../core/widgets/common/gbt_image.dart';
 import '../../../../core/widgets/legal/legal_policy_links_section.dart';
+import '../../../auth/application/legal_policies_provider.dart';
 
 /// EN: Keeps profile media, editable identity, and account provenance in one folio.
 /// KO: 프로필 미디어, 편집 가능한 신원 정보, 계정 출처를 하나의 문서로 묶습니다.
@@ -124,8 +126,14 @@ class ProfileEditIdentityDocument extends StatelessWidget {
             ),
           ),
           const SizedBox(height: GBTSpacing.sm),
-          const _RuledSheet(
-            child: LegalPolicyLinksSection(showContainer: false, title: ''),
+          _RuledSheet(
+            child: Consumer(
+              builder: (context, ref, _) => LegalPolicyLinksSection(
+                showContainer: false,
+                title: '',
+                policies: ref.watch(legalPoliciesProvider).valueOrNull,
+              ),
+            ),
           ),
         ],
       ),

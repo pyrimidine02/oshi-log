@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/localization/locale_text.dart';
-import '../../../../core/providers/core_providers.dart';
+import '../../../auth/application/session_state.dart';
 import '../../../../core/theme/theme.dart';
 import '../../../../core/utils/result.dart';
 import '../../../../core/widgets/common/gbt_image.dart';

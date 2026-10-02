@@ -6,7 +6,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/providers/core_providers.dart';
+import '../../projects/application/project_context.dart';
 import '../../../core/utils/result.dart';
 import '../domain/entities/feed_entities.dart';
 import 'board_controller.dart';

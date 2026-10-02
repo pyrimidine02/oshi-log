@@ -3,7 +3,8 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:oshi_log/core/providers/core_providers.dart';
+import 'package:oshi_log/features/projects/application/project_context.dart';
+import 'package:oshi_log/app/shell/navigation_state.dart';
 import 'package:oshi_log/core/utils/result.dart';
 import 'package:oshi_log/features/places/application/places_controller.dart';
 import 'package:oshi_log/features/places/domain/entities/place_entities.dart';

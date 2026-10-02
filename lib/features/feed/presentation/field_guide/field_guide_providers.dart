@@ -4,7 +4,7 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/providers/core_providers.dart';
+import '../../../projects/application/project_context.dart';
 import '../../../projects/application/projects_controller.dart';
 import '../../../projects/domain/entities/project_entities.dart';
 import '../../application/news_controller.dart';

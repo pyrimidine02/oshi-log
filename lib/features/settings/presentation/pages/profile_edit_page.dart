@@ -15,7 +15,7 @@ import 'package:path/path.dart' as p;
 import '../../../../core/constants/profile_media_constants.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/localization/locale_text.dart';
-import '../../../../core/providers/core_providers.dart';
+import '../../../auth/application/session_state.dart';
 import '../../../../core/theme/gbt_colors.dart';
 import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';

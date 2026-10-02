@@ -5,6 +5,7 @@ library;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/providers/core_providers.dart';
+import '../../auth/application/session_state.dart';
 import '../../../core/utils/result.dart';
 import 'dart:async';
 import '../data/datasources/banner_remote_data_source.dart';

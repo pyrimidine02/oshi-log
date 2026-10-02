@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/failure.dart';
 import '../../../core/providers/core_providers.dart';
+import '../../auth/application/session_state.dart';
 import '../../../core/utils/result.dart';
 import '../data/datasources/community_remote_data_source.dart';
 import '../data/repositories/community_repository_impl.dart';

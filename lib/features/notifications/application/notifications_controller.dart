@@ -13,6 +13,7 @@ import '../../../core/error/failure.dart';
 import '../../../core/logging/app_logger.dart';
 import '../../../core/notifications/in_app_notification_queue.dart';
 import '../../../core/providers/core_providers.dart';
+import '../../auth/application/session_state.dart';
 import '../../../core/realtime/sse_client.dart';
 import '../../../core/storage/local_storage.dart';
 import '../../../core/utils/result.dart';

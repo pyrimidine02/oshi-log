@@ -12,7 +12,7 @@ import '../../../../core/localization/locale_text.dart';
 import '../../../../core/constants/legal_policy_constants.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/location/location_notice_consent.dart';
-import '../../../../core/providers/core_providers.dart';
+import '../../../auth/application/legal_policies_provider.dart';
 import '../../../../core/theme/theme.dart';
 import '../../../../core/utils/result.dart';
 import '../../../../core/widgets/common/gbt_stamp_badge.dart';

@@ -13,6 +13,8 @@ import 'package:google_maps_flutter/google_maps_flutter.dart' as gmaps;
 import '../../../../core/error/failure.dart';
 import '../../../../core/localization/locale_text.dart';
 import '../../../../core/providers/core_providers.dart';
+import '../../../projects/application/project_context.dart';
+import '../../../../app/shell/navigation_state.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/gbt_colors.dart';
 import '../../../../core/theme/gbt_map_styles.dart';

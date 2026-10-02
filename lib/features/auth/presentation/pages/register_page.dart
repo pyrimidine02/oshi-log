@@ -12,6 +12,7 @@ import '../../../../core/error/failure.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/localization/locale_text.dart';
 import '../../../../core/providers/core_providers.dart';
+import '../../application/legal_policies_provider.dart';
 import '../../../../core/storage/local_storage.dart';
 import '../../../../core/theme/gbt_colors.dart';
 import '../../../../core/theme/gbt_spacing.dart';
@@ -374,7 +375,10 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                   },
                 ),
                 const SizedBox(height: GBTSpacing.md),
-                const LegalPolicyLinksSection(showContainer: false),
+                LegalPolicyLinksSection(
+                  showContainer: false,
+                  policies: ref.watch(legalPoliciesProvider).valueOrNull,
+                ),
                 const SizedBox(height: GBTSpacing.lg),
                 GBTButton(
                   label: context.l10n(ko: '회원가입', en: 'Sign up', ja: '会員登録'),

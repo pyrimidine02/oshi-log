@@ -7,6 +7,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:oshi_log/core/error/failure.dart';
 import 'package:oshi_log/core/providers/core_providers.dart';
+import 'package:oshi_log/features/projects/application/project_context.dart';
+import 'package:oshi_log/features/auth/application/session_state.dart';
 import 'package:oshi_log/core/security/secure_storage.dart';
 import 'package:oshi_log/core/storage/local_storage.dart';
 import 'package:oshi_log/core/utils/result.dart';

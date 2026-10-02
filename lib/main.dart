@@ -13,7 +13,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
 import 'app.dart';
+import 'app/bootstrap/session_overrides.dart';
 import 'core/config/app_config.dart';
+import 'features/auth/application/session_state.dart';
 import 'core/logging/app_logger.dart';
 import 'core/notifications/firebase_runtime_options.dart';
 import 'core/notifications/remote_push_service.dart';
@@ -99,7 +101,7 @@ Future<void> main() async {
 
   // EN: Create provider container for pre-initialization
   // KO: 사전 초기화를 위한 프로바이더 컨테이너 생성
-  final container = ProviderContainer();
+  final container = ProviderContainer(overrides: sessionOverrides);
 
   // EN: Register Firebase Messaging background handler before runApp.
   // KO: runApp 이전에 Firebase Messaging 백그라운드 핸들러를 등록합니다.
