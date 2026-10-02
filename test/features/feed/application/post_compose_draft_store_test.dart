@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:oshi_log/features/feed/application/post_compose_draft_store.dart';
+import 'package:oshi_log/features/community/posts/application/post_compose_draft_store.dart';
 import 'package:oshi_log/core/storage/local_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

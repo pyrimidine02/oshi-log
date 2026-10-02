@@ -10,11 +10,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/gbt_colors.dart';
-import '../../application/board_controller.dart';
-import '../widgets/community_fab_layout.dart';
-import 'field_community_providers.dart';
-import 'sections/field_community_timeline_section.dart';
-import 'sections/field_community_travel_section.dart';
+import 'package:oshi_log/features/community/posts/application/board_controller.dart';
+import 'package:oshi_log/features/community/posts/presentation/widgets/community_fab_layout.dart';
+import 'package:oshi_log/features/community/posts/presentation/field_community/field_community_providers.dart';
+import 'package:oshi_log/features/community/posts/presentation/field_community/sections/field_community_timeline_section.dart';
+import 'package:oshi_log/features/community/reviews/presentation/sections/field_community_travel_section.dart';
 import 'widgets/field_community_masthead.dart';
 import 'widgets/field_community_mode_bar.dart';
 

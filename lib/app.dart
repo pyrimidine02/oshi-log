@@ -34,7 +34,7 @@ import 'features/notifications/application/notification_delivery.dart';
 import 'features/notifications/application/notifications_controller.dart';
 import 'features/notifications/domain/entities/notification_entities.dart';
 import 'features/notifications/domain/entities/notification_navigation.dart';
-import 'features/feed/application/reaction_controller.dart';
+import 'package:oshi_log/features/community/posts/application/reaction_controller.dart';
 import 'features/settings/application/app_preferences.dart';
 import 'features/titles/application/titles_controller.dart';
 import 'features/live_events/application/live_events_controller.dart';

@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:oshi_log/features/feed/application/community_translation_controller.dart';
+import 'package:oshi_log/features/community/posts/application/community_translation_controller.dart';
 
 void main() {
   group('normalizeTranslationLanguageCode', () {

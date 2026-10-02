@@ -26,7 +26,7 @@ import '../../../titles/presentation/widgets/active_title_badge.dart';
 import '../../../visits/application/visits_controller.dart';
 import '../../application/community_moderation_controller.dart';
 import '../../application/report_rate_limiter.dart';
-import '../../application/user_activity_controller.dart';
+import 'package:oshi_log/features/community/posts/application/user_activity_controller.dart';
 import '../../application/user_follow_controller.dart';
 import '../../application/user_follow_list_controller.dart';
 import '../../domain/entities/community_moderation.dart';

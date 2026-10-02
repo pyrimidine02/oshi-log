@@ -6,13 +6,13 @@ library;
 import 'package:go_router/go_router.dart';
 
 import '../../../core/router/app_router.dart' show AppRoutes;
-import '../../../features/feed/domain/entities/feed_entities.dart';
+import 'package:oshi_log/features/community/posts/domain/entities/feed_entities.dart';
 import '../../../features/feed/presentation/field_community/field_community_page.dart';
-import '../../../features/feed/presentation/pages/post_create_page.dart';
-import '../../../features/feed/presentation/pages/post_detail_page.dart';
-import '../../../features/feed/presentation/pages/post_edit_page.dart';
-import '../../../features/feed/presentation/pages/travel_review_create_page.dart';
-import '../../../features/feed/presentation/pages/travel_review_detail_page.dart';
+import 'package:oshi_log/features/community/posts/presentation/pages/post_create_page.dart';
+import 'package:oshi_log/features/community/posts/presentation/pages/post_detail_page.dart';
+import 'package:oshi_log/features/community/posts/presentation/pages/post_edit_page.dart';
+import '../../../features/community/reviews/presentation/pages/travel_review_create_page.dart';
+import '../../../features/community/reviews/presentation/pages/travel_review_detail_page.dart';
 import '../route_helpers.dart';
 
 List<RouteBase> buildCommunityRoutes() => [

@@ -5,9 +5,9 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:oshi_log/core/theme/gbt_theme.dart';
 import 'package:oshi_log/features/feed/application/user_follow_list_controller.dart';
-import 'package:oshi_log/features/feed/application/local_post_bookmarks_controller.dart';
+import 'package:oshi_log/features/community/posts/application/local_post_bookmarks_controller.dart';
 import 'package:oshi_log/features/feed/domain/entities/community_moderation.dart';
-import 'package:oshi_log/features/feed/presentation/pages/post_bookmarks_page.dart';
+import 'package:oshi_log/features/community/posts/presentation/pages/post_bookmarks_page.dart';
 import 'package:oshi_log/features/feed/presentation/pages/user_connections_page.dart';
 
 void main() {

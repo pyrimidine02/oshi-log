@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:oshi_log/features/feed/presentation/widgets/community_fab_layout.dart';
+import 'package:oshi_log/features/community/posts/presentation/widgets/community_fab_layout.dart';
 
 void main() {
   group('resolveCommunityFabBottomPadding', () {

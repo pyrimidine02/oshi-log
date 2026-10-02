@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../../core/localization/locale_text.dart';
 import '../../../../../core/theme/gbt_spacing.dart';
-import '../../../application/board_controller.dart';
+import 'package:oshi_log/features/community/posts/application/board_controller.dart';
 
 /// EN: Selects feed mode while section navigation stays in the bottom bar.
 /// KO: 섹션 이동은 하단바에 맡기고 피드 모드를 전환합니다.

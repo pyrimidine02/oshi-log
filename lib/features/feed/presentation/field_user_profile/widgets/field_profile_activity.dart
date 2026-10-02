@@ -10,7 +10,7 @@ import '../../../../../core/theme/gbt_spacing.dart';
 import '../../../../../core/theme/gbt_typography.dart';
 import '../../../../../core/widgets/common/gbt_linkified_text.dart';
 import '../../../../../core/widgets/feedback/gbt_loading.dart';
-import '../../../domain/entities/feed_entities.dart';
+import 'package:oshi_log/features/community/posts/domain/entities/feed_entities.dart';
 
 typedef FieldOpenPost = void Function(String postId, String projectCode);
 

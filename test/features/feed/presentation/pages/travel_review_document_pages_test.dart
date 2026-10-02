@@ -5,14 +5,14 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
 import 'package:oshi_log/core/utils/result.dart';
-import 'package:oshi_log/features/feed/application/travel_reviews_controller.dart';
-import 'package:oshi_log/features/feed/domain/entities/feed_entities.dart';
-import 'package:oshi_log/features/feed/domain/entities/travel_review.dart';
-import 'package:oshi_log/features/feed/domain/repositories/travel_reviews_repository.dart';
-import 'package:oshi_log/features/feed/presentation/pages/travel_review_create_page.dart';
-import 'package:oshi_log/features/feed/presentation/pages/travel_review_detail_page.dart';
-import 'package:oshi_log/features/feed/presentation/widgets/travel_review_compose_sections.dart';
-import 'package:oshi_log/features/feed/presentation/widgets/travel_review_edit_sheet.dart';
+import 'package:oshi_log/features/community/reviews/application/travel_reviews_controller.dart';
+import 'package:oshi_log/features/community/posts/domain/entities/feed_entities.dart';
+import 'package:oshi_log/features/community/reviews/domain/entities/travel_review.dart';
+import 'package:oshi_log/features/community/reviews/domain/repositories/travel_reviews_repository.dart';
+import 'package:oshi_log/features/community/reviews/presentation/pages/travel_review_create_page.dart';
+import 'package:oshi_log/features/community/reviews/presentation/pages/travel_review_detail_page.dart';
+import 'package:oshi_log/features/community/reviews/presentation/widgets/travel_review_compose_sections.dart';
+import 'package:oshi_log/features/community/reviews/presentation/widgets/travel_review_edit_sheet.dart';
 
 void main() {
   test('travel review reorder keeps legacy Flutter index semantics', () {

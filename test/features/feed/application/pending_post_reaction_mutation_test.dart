@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:oshi_log/features/feed/application/pending_post_reaction_mutation.dart';
+import 'package:oshi_log/features/community/posts/application/pending_post_reaction_mutation.dart';
 
 void main() {
   test('PendingPostReactionMutation parses like mutation json', () {

@@ -11,8 +11,8 @@ library;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/favorites/application/favorites_controller.dart';
-import '../../features/feed/application/local_post_bookmarks_controller.dart';
-import '../../features/feed/application/reaction_controller.dart';
+import 'package:oshi_log/features/community/posts/application/local_post_bookmarks_controller.dart';
+import 'package:oshi_log/features/community/posts/application/reaction_controller.dart';
 import '../../features/live_events/application/live_events_controller.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
 import '../../features/settings/application/settings_controller.dart';

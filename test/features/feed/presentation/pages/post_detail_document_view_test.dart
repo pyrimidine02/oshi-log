@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:oshi_log/core/theme/gbt_theme.dart';
-import 'package:oshi_log/features/feed/domain/entities/feed_entities.dart';
-import 'package:oshi_log/features/feed/presentation/pages/post_detail_page.dart';
+import 'package:oshi_log/features/community/posts/domain/entities/feed_entities.dart';
+import 'package:oshi_log/features/community/posts/presentation/pages/post_detail_page.dart';
 import 'package:oshi_log/features/titles/application/titles_controller.dart';
 
 void main() {

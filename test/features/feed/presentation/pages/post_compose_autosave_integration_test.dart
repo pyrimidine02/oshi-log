@@ -10,11 +10,11 @@ import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.
 import 'package:oshi_log/features/auth/application/session_state.dart';
 import 'package:oshi_log/core/storage/local_storage.dart';
 import 'package:oshi_log/core/utils/result.dart';
-import 'package:oshi_log/features/feed/application/post_compose_autosave_controller.dart';
-import 'package:oshi_log/features/feed/application/post_compose_draft_store.dart';
-import 'package:oshi_log/features/feed/domain/entities/feed_entities.dart';
-import 'package:oshi_log/features/feed/presentation/pages/post_create_page.dart';
-import 'package:oshi_log/features/feed/presentation/pages/post_edit_page.dart';
+import 'package:oshi_log/features/community/posts/application/post_compose_autosave_controller.dart';
+import 'package:oshi_log/features/community/posts/application/post_compose_draft_store.dart';
+import 'package:oshi_log/features/community/posts/domain/entities/feed_entities.dart';
+import 'package:oshi_log/features/community/posts/presentation/pages/post_create_page.dart';
+import 'package:oshi_log/features/community/posts/presentation/pages/post_edit_page.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/projects_controller.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/domain/entities/project_entities.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/domain/repositories/projects_repository.dart';
