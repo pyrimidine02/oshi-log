@@ -7,6 +7,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/localization/locale_text.dart';
 import '../../../../core/theme/gbt_colors.dart';
 import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';
@@ -23,12 +24,21 @@ import '../../domain/entities/title_entities.dart';
 
 /// EN: Returns the Korean display label for [category].
 /// KO: [category]에 해당하는 한국어 표시 레이블을 반환합니다.
-String _categoryLabel(TitleCategory category) => switch (category) {
-  TitleCategory.activity => '활동',
-  TitleCategory.commemorative => '기념',
-  TitleCategory.event => '이벤트',
-  TitleCategory.admin => '특별',
-};
+String _categoryLabel(BuildContext context, TitleCategory category) =>
+    switch (category) {
+      TitleCategory.activity => context.l10n(
+        ko: '활동',
+        en: 'Activity',
+        ja: '活動',
+      ),
+      TitleCategory.commemorative => context.l10n(
+        ko: '기념',
+        en: 'Commemorative',
+        ja: '記念',
+      ),
+      TitleCategory.event => context.l10n(ko: '이벤트', en: 'Event', ja: 'イベント'),
+      TitleCategory.admin => context.l10n(ko: '특별', en: 'Special', ja: '特別'),
+    };
 
 /// EN: Returns the accent color associated with [category], drawn from the
 /// Journey Ticket palette: mint (activity) → gold (commemorative) → violet
@@ -124,14 +134,24 @@ class _TitleCatalogPageState extends ConsumerState<TitleCatalogPage> {
     if (!isEarned) {
       final description = item.description?.isNotEmpty == true
           ? item.description!
-          : '이 칭호를 획득하려면 조건을 달성하세요';
+          : context.l10n(
+              ko: '이 칭호를 획득하려면 조건을 달성하세요',
+              en: 'Meet the conditions to earn this title',
+              ja: 'この称号を獲得する条件を達成してください',
+            );
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('아직 획득하지 못한 칭호예요'),
+              Text(
+                context.l10n(
+                  ko: '아직 획득하지 못한 칭호예요',
+                  en: 'You haven\'t earned this title yet',
+                  ja: 'まだ獲得していない称号です',
+                ),
+              ),
               if (item.description?.isNotEmpty == true) ...[
                 const SizedBox(height: 2),
                 Text(
@@ -160,8 +180,14 @@ class _TitleCatalogPageState extends ConsumerState<TitleCatalogPage> {
       await ref.read(titleCatalogProvider.notifier).applyTitle(selectedId);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('칭호가 적용되었어요'),
+        SnackBar(
+          content: Text(
+            context.l10n(
+              ko: '칭호가 적용되었어요',
+              en: 'Title applied',
+              ja: '称号を適用しました',
+            ),
+          ),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -170,7 +196,13 @@ class _TitleCatalogPageState extends ConsumerState<TitleCatalogPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('칭호 적용에 실패했어요: ${e.toString()}'),
+          content: Text(
+            context.l10n(
+              ko: '칭호 적용에 실패했어요: ${e.toString()}',
+              en: 'Failed to apply title: ${e.toString()}',
+              ja: '称号の適用に失敗しました: ${e.toString()}',
+            ),
+          ),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -185,8 +217,14 @@ class _TitleCatalogPageState extends ConsumerState<TitleCatalogPage> {
       if (!mounted) return;
       setState(() => _selectedId = null);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('칭호가 해제되었어요'),
+        SnackBar(
+          content: Text(
+            context.l10n(
+              ko: '칭호가 해제되었어요',
+              en: 'Title cleared',
+              ja: '称号を解除しました',
+            ),
+          ),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -194,7 +232,13 @@ class _TitleCatalogPageState extends ConsumerState<TitleCatalogPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('칭호 해제에 실패했어요: ${e.toString()}'),
+          content: Text(
+            context.l10n(
+              ko: '칭호 해제에 실패했어요: ${e.toString()}',
+              en: 'Failed to clear title: ${e.toString()}',
+              ja: '称号の解除に失敗しました: ${e.toString()}',
+            ),
+          ),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -237,10 +281,10 @@ class _TitleCatalogPageState extends ConsumerState<TitleCatalogPage> {
       backgroundColor: scaffoldBg,
       appBar: gbtStandardAppBar(
         context,
-        title: '칭호 관리',
+        title: context.l10n(ko: '칭호 관리', en: 'Manage Titles', ja: '称号の管理'),
         leading: IconButton(
           icon: const Icon(Icons.close),
-          tooltip: '닫기',
+          tooltip: context.l10n(ko: '닫기', en: 'Close', ja: '閉じる'),
           onPressed: () => Navigator.of(context).pop(),
         ),
         // EN: Show the clear-active action in the app bar when a title is active.
@@ -250,7 +294,7 @@ class _TitleCatalogPageState extends ConsumerState<TitleCatalogPage> {
             TextButton(
               onPressed: _onClearActive,
               child: Text(
-                '칭호 해제',
+                context.l10n(ko: '칭호 해제', en: 'Clear Title', ja: '称号を解除'),
                 style: GBTTypography.bodyMedium.copyWith(
                   color: isDark
                       ? GBTColors.darkTextSecondary
@@ -336,7 +380,11 @@ class _TitleDocumentHeader extends StatelessWidget {
               ),
               const SizedBox(height: GBTSpacing.xs),
               Text(
-                '나의 여정을 나타내는 칭호',
+                context.l10n(
+                  ko: '나의 여정을 나타내는 칭호',
+                  en: 'Titles that show your journey',
+                  ja: 'あなたの旅を示す称号',
+                ),
                 style: GBTTypography.titleLarge.copyWith(
                   color: isDark
                       ? GBTColors.darkTextPrimary
@@ -346,7 +394,11 @@ class _TitleDocumentHeader extends StatelessWidget {
               ),
               const SizedBox(height: GBTSpacing.xs),
               Text(
-                '활동과 이벤트 달성으로 획득한 칭호를 골라 프로필에 표시하세요.',
+                context.l10n(
+                  ko: '활동과 이벤트 달성으로 획득한 칭호를 골라 프로필에 표시하세요.',
+                  en: 'Pick a title earned from activities and events to show on your profile.',
+                  ja: '活動やイベントの達成で獲得した称号を選んでプロフィールに表示しましょう。',
+                ),
                 style: GBTTypography.bodySmall.copyWith(
                   color: isDark
                       ? GBTColors.darkTextSecondary
@@ -389,7 +441,11 @@ class _TitleCatalogList extends ConsumerWidget {
     if (items.isEmpty) {
       return Center(
         child: Text(
-          '표시할 칭호가 없습니다',
+          context.l10n(
+            ko: '표시할 칭호가 없습니다',
+            en: 'No titles to show',
+            ja: '表示できる称号がありません',
+          ),
           style: GBTTypography.bodyMedium.copyWith(
             color: GBTColors.textSecondary,
           ),
@@ -430,7 +486,7 @@ class _TitleCatalogList extends ConsumerWidget {
       final projectKey = orderedKeys[pi];
       final projectItems = buckets[projectKey]!;
       final projectName = projectKey == _commonKey
-          ? '공통'
+          ? context.l10n(ko: '공통', en: 'Common', ja: '共通')
           : (projectNameOf[projectKey] ?? projectKey);
 
       listChildren.add(_ProjectSectionHeader(projectName: projectName));
@@ -560,7 +616,7 @@ class _CategorySectionHeader extends StatelessWidget {
           ),
           const SizedBox(width: GBTSpacing.xs),
           Text(
-            _categoryLabel(category),
+            _categoryLabel(context, category),
             style: GBTTypography.labelMedium.copyWith(
               color: isDark
                   ? GBTColors.darkTextSecondary
@@ -633,28 +689,38 @@ class _TitleTile extends StatelessWidget {
         Icons.check_circle_rounded,
         color: primaryColor,
         size: GBTSpacing.iconSm,
-        semanticLabel: '현재 적용 중',
+        semanticLabel: context.l10n(
+          ko: '현재 적용 중',
+          en: 'Currently applied',
+          ja: '現在適用中',
+        ),
       );
     } else if (isSelected && isEarned) {
       trailingIcon = Icon(
         Icons.check_rounded,
         color: primaryColor,
         size: GBTSpacing.iconSm,
-        semanticLabel: '선택됨',
+        semanticLabel: context.l10n(ko: '선택됨', en: 'Selected', ja: '選択中'),
       );
     } else if (!isEarned) {
       trailingIcon = Icon(
         Icons.lock_rounded,
         color: isDark ? GBTColors.darkTextTertiary : GBTColors.textTertiary,
         size: GBTSpacing.iconSm,
-        semanticLabel: '잠김',
+        semanticLabel: context.l10n(ko: '잠김', en: 'Locked', ja: 'ロック中'),
       );
     }
 
+    final statusLabel = isActive
+        ? context.l10n(ko: '현재 적용 중', en: 'currently applied', ja: '現在適用中')
+        : (isEarned
+              ? context.l10n(ko: '획득함', en: 'earned', ja: '獲得済み')
+              : context.l10n(ko: '미획득', en: 'not earned', ja: '未獲得'));
+
     return Semantics(
       label:
-          '${item.name}, ${_categoryLabel(item.category)}, '
-          '${isActive ? "현재 적용 중" : (isEarned ? "획득함" : "미획득")}',
+          '${item.name}, ${_categoryLabel(context, item.category)}, '
+          '$statusLabel',
       button: true,
       selected: isSelected,
       child: InkWell(
@@ -771,7 +837,11 @@ class _TitleListShimmer extends StatelessWidget {
         : GBTColors.surfaceVariant;
 
     return Semantics(
-      label: '칭호 목록 로딩 중',
+      label: context.l10n(
+        ko: '칭호 목록 로딩 중',
+        en: 'Loading titles',
+        ja: '称号リストを読み込み中',
+      ),
       excludeSemantics: true,
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(
@@ -825,7 +895,11 @@ class _TitleErrorState extends StatelessWidget {
           ),
           const SizedBox(height: GBTSpacing.md),
           Text(
-            '칭호 목록을 불러오지 못했어요',
+            context.l10n(
+              ko: '칭호 목록을 불러오지 못했어요',
+              en: 'Failed to load titles',
+              ja: '称号リストの読み込みに失敗しました',
+            ),
             style: GBTTypography.bodyMedium.copyWith(
               color: isDark
                   ? GBTColors.darkTextSecondary
@@ -833,7 +907,10 @@ class _TitleErrorState extends StatelessWidget {
             ),
           ),
           const SizedBox(height: GBTSpacing.lg),
-          TextButton(onPressed: onRetry, child: const Text('다시 시도')),
+          TextButton(
+            onPressed: onRetry,
+            child: Text(context.l10n(ko: '다시 시도', en: 'Retry', ja: '再試行')),
+          ),
         ],
       ),
     );
@@ -904,7 +981,13 @@ class _ApplyBar extends StatelessWidget {
                       color: onButtonColor,
                     ),
                   )
-                : const Text('이 칭호 적용'),
+                : Text(
+                    context.l10n(
+                      ko: '이 칭호 적용',
+                      en: 'Apply This Title',
+                      ja: 'この称号を適用する',
+                    ),
+                  ),
           ),
         ),
       ),

@@ -7,6 +7,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/localization/locale_text.dart';
 import '../../../../core/theme/gbt_colors.dart';
 import '../../../../core/theme/gbt_spacing.dart';
 import '../../../../core/theme/gbt_typography.dart';
@@ -33,12 +34,16 @@ Color _rarityBorderColor(BannerRarity rarity) {
   };
 }
 
-String _rarityLabel(BannerRarity rarity) {
+String _rarityLabel(BuildContext context, BannerRarity rarity) {
   return switch (rarity) {
-    BannerRarity.common => '일반',
-    BannerRarity.rare => '레어',
-    BannerRarity.epic => '에픽',
-    BannerRarity.legendary => '레전더리',
+    BannerRarity.common => context.l10n(ko: '일반', en: 'Common', ja: '通常'),
+    BannerRarity.rare => context.l10n(ko: '레어', en: 'Rare', ja: 'レア'),
+    BannerRarity.epic => context.l10n(ko: '에픽', en: 'Epic', ja: 'エピック'),
+    BannerRarity.legendary => context.l10n(
+      ko: '레전더리',
+      en: 'Legendary',
+      ja: 'レジェンダリー',
+    ),
   };
 }
 
@@ -95,7 +100,11 @@ class _BannerPickerPageState extends ConsumerState<BannerPickerPage> {
     if (!item.isUnlocked) {
       final description = item.unlockDescription?.isNotEmpty == true
           ? item.unlockDescription!
-          : '이 배너를 해금하려면 조건을 달성하세요';
+          : context.l10n(
+              ko: '이 배너를 해금하려면 조건을 달성하세요',
+              en: 'Meet the conditions to unlock this banner',
+              ja: 'このバナーを解除する条件を達成してください',
+            );
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(description),
@@ -115,8 +124,14 @@ class _BannerPickerPageState extends ConsumerState<BannerPickerPage> {
       if (!mounted) return;
       setState(() => _selectedId = null);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('배너가 해제되었어요'),
+        SnackBar(
+          content: Text(
+            context.l10n(
+              ko: '배너가 해제되었어요',
+              en: 'Banner removed',
+              ja: 'バナーを解除しました',
+            ),
+          ),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -125,7 +140,13 @@ class _BannerPickerPageState extends ConsumerState<BannerPickerPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('배너 해제에 실패했어요: ${e.toString()}'),
+          content: Text(
+            context.l10n(
+              ko: '배너 해제에 실패했어요: ${e.toString()}',
+              en: 'Failed to remove banner: ${e.toString()}',
+              ja: 'バナーの解除に失敗しました: ${e.toString()}',
+            ),
+          ),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -143,8 +164,14 @@ class _BannerPickerPageState extends ConsumerState<BannerPickerPage> {
       await ref.read(bannerCatalogProvider.notifier).applyBanner(selectedId);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('배너가 적용되었어요'),
+        SnackBar(
+          content: Text(
+            context.l10n(
+              ko: '배너가 적용되었어요',
+              en: 'Banner applied',
+              ja: 'バナーを適用しました',
+            ),
+          ),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -153,7 +180,13 @@ class _BannerPickerPageState extends ConsumerState<BannerPickerPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('배너 적용에 실패했어요: ${e.toString()}'),
+          content: Text(
+            context.l10n(
+              ko: '배너 적용에 실패했어요: ${e.toString()}',
+              en: 'Failed to apply banner: ${e.toString()}',
+              ja: 'バナーの適用に失敗しました: ${e.toString()}',
+            ),
+          ),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -196,19 +229,31 @@ class _BannerPickerPageState extends ConsumerState<BannerPickerPage> {
         context,
         leading: IconButton(
           icon: const Icon(Icons.close),
-          tooltip: '닫기',
+          tooltip: context.l10n(ko: '닫기', en: 'Close', ja: '閉じる'),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: '배너 꾸미기',
+        title: context.l10n(
+          ko: '배너 꾸미기',
+          en: 'Customize Banner',
+          ja: 'バナーをカスタマイズ',
+        ),
         centerTitle: false,
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const GBTPageHeader(
+          GBTPageHeader(
             eyebrow: 'PROFILE BANNER',
-            title: '여행 여권의 표지를 고르세요',
-            description: '칭호와 티어를 달성하면 새로운 배너가 열려요.',
+            title: context.l10n(
+              ko: '여행 여권의 표지를 고르세요',
+              en: 'Choose your travel passport cover',
+              ja: '旅のパスポートの表紙を選びましょう',
+            ),
+            description: context.l10n(
+              ko: '칭호와 티어를 달성하면 새로운 배너가 열려요.',
+              en: 'Earn titles and tiers to unlock new banners.',
+              ja: '称号やティアを達成すると新しいバナーが解除されます。',
+            ),
           ),
 
           // EN: Catalog grid (expands to fill available space)
@@ -264,10 +309,18 @@ class _BannerGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (items.isEmpty) {
-      return const GBTEmptyState(
+      return GBTEmptyState(
         icon: Icons.panorama_outlined,
-        title: '아직 표시할 배너가 없어요',
-        subtitle: '칭호와 티어를 확장하면 이곳에 추가됩니다.',
+        title: context.l10n(
+          ko: '아직 표시할 배너가 없어요',
+          en: 'No banners to show yet',
+          ja: 'まだ表示できるバナーがありません',
+        ),
+        subtitle: context.l10n(
+          ko: '칭호와 티어를 확장하면 이곳에 추가됩니다.',
+          en: 'Expand your titles and tiers to add more here.',
+          ja: '称号やティアを増やすとここに追加されます。',
+        ),
       );
     }
 
@@ -326,10 +379,13 @@ class _BannerCell extends StatelessWidget {
         : _rarityBorderColor(item.rarity);
     final borderWidth = isSelected ? 2.5 : 1.5;
 
+    final unlockLabel = item.isUnlocked
+        ? context.l10n(ko: '해금됨', en: 'unlocked', ja: '解除済み')
+        : context.l10n(ko: '잠김', en: 'locked', ja: 'ロック中');
     return Semantics(
       label:
-          '${item.name}, ${_rarityLabel(item.rarity)},'
-          ' ${item.isUnlocked ? "해금됨" : "잠김"}',
+          '${item.name}, ${_rarityLabel(context, item.rarity)},'
+          ' $unlockLabel',
       button: true,
       selected: isSelected,
       child: GestureDetector(
@@ -459,7 +515,7 @@ class _BannerCell extends StatelessWidget {
                         vertical: 2,
                       ),
                       child: Text(
-                        _rarityLabel(item.rarity),
+                        _rarityLabel(context, item.rarity),
                         style: GBTTypography.caption.copyWith(
                           color: GBTColorValidator.getContrastingTextColor(
                             _rarityBorderColor(item.rarity),
@@ -555,7 +611,11 @@ class _BannerErrorState extends StatelessWidget {
           ),
           const SizedBox(height: GBTSpacing.md),
           Text(
-            '배너 목록을 불러오지 못했어요',
+            context.l10n(
+              ko: '배너 목록을 불러오지 못했어요',
+              en: 'Failed to load banners',
+              ja: 'バナーリストの読み込みに失敗しました',
+            ),
             style: GBTTypography.bodyMedium.copyWith(
               color: isDark
                   ? GBTColors.darkTextSecondary
@@ -563,7 +623,10 @@ class _BannerErrorState extends StatelessWidget {
             ),
           ),
           const SizedBox(height: GBTSpacing.lg),
-          TextButton(onPressed: onRetry, child: const Text('다시 시도')),
+          TextButton(
+            onPressed: onRetry,
+            child: Text(context.l10n(ko: '다시 시도', en: 'Retry', ja: '再試行')),
+          ),
         ],
       ),
     );
@@ -653,7 +716,13 @@ class _ApplyBar extends StatelessWidget {
                           color: GBTColors.textInverse,
                         ),
                       )
-                    : const Text('이 배너 적용'),
+                    : Text(
+                        context.l10n(
+                          ko: '이 배너 적용',
+                          en: 'Apply This Banner',
+                          ja: 'このバナーを適用する',
+                        ),
+                      ),
               ),
             ),
 
@@ -684,7 +753,13 @@ class _ApplyBar extends StatelessWidget {
                                 : GBTColors.textSecondary,
                           ),
                         )
-                      : const Text('배너 해제'),
+                      : Text(
+                          context.l10n(
+                            ko: '배너 해제',
+                            en: 'Remove Banner',
+                            ja: 'バナーを解除',
+                          ),
+                        ),
                 ),
               ),
             ],

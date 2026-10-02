@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/accessibility/a11y_wrapper.dart';
+import '../../../../core/localization/locale_text.dart';
 import '../../../../core/constants/legal_policy_constants.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/location/location_notice_consent.dart';
@@ -131,11 +132,21 @@ class _VerificationSheetState extends ConsumerState<VerificationSheet> {
             ),
           const SizedBox(height: GBTSpacing.lg),
           state.when(
-            loading: () => const GBTLoading(message: '인증 처리 중...'),
+            loading: () => GBTLoading(
+              message: context.l10n(
+                ko: '인증 처리 중...',
+                en: 'Verifying...',
+                ja: '認証処理中...',
+              ),
+            ),
             error: (error, _) {
               final message = error is Failure
-                  ? _buildVerificationErrorMessage(error)
-                  : '인증에 실패했습니다';
+                  ? _buildVerificationErrorMessage(context, error)
+                  : context.l10n(
+                      ko: '인증에 실패했습니다',
+                      en: 'Verification failed',
+                      ja: '認証に失敗しました',
+                    );
 
               // EN: Announce error to screen reader
               // KO: 스크린 리더에 에러 공지
@@ -156,7 +167,7 @@ class _VerificationSheetState extends ConsumerState<VerificationSheet> {
                   ),
                   const SizedBox(height: GBTSpacing.md),
                   _PrimaryButton(
-                    label: '다시 시도',
+                    label: context.l10n(ko: '다시 시도', en: 'Retry', ja: '再試行'),
                     onPressed: _handleStartVerification,
                   ),
                 ],
@@ -168,7 +179,14 @@ class _VerificationSheetState extends ConsumerState<VerificationSheet> {
                 // KO: 스크린 리더에 성공 공지
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   if (mounted) {
-                    A11yAnnouncer.announceSuccess(context, '장소 인증이 완료되었습니다');
+                    A11yAnnouncer.announceSuccess(
+                      context,
+                      context.l10n(
+                        ko: '장소 인증이 완료되었습니다',
+                        en: 'Place verification complete',
+                        ja: 'スポット認証が完了しました',
+                      ),
+                    );
                   }
                 });
 
@@ -195,7 +213,7 @@ class _VerificationSheetState extends ConsumerState<VerificationSheet> {
                     ),
                     const SizedBox(height: GBTSpacing.md),
                     Text(
-                      '인증 완료!',
+                      context.l10n(ko: '인증 완료!', en: 'Verified!', ja: '認証完了！'),
                       style: GBTTypography.titleLarge.copyWith(
                         fontWeight: FontWeight.w800,
                         color: mint,
@@ -214,7 +232,11 @@ class _VerificationSheetState extends ConsumerState<VerificationSheet> {
                     const SizedBox(height: GBTSpacing.md),
                     if (widget.onWriteReview != null) ...[
                       _PrimaryButton(
-                        label: '후기 작성',
+                        label: context.l10n(
+                          ko: '후기 작성',
+                          en: 'Write a Review',
+                          ja: 'レビューを書く',
+                        ),
                         onPressed: () {
                           Navigator.of(context).pop();
                           widget.onWriteReview?.call();
@@ -225,12 +247,14 @@ class _VerificationSheetState extends ConsumerState<VerificationSheet> {
                         width: double.infinity,
                         child: TextButton(
                           onPressed: () => Navigator.of(context).pop(),
-                          child: const Text('건너뛰기'),
+                          child: Text(
+                            context.l10n(ko: '건너뛰기', en: 'Skip', ja: 'スキップ'),
+                          ),
                         ),
                       ),
                     ] else
                       _PrimaryButton(
-                        label: '확인',
+                        label: context.l10n(ko: '확인', en: 'OK', ja: '確認'),
                         onPressed: () => Navigator.of(context).pop(),
                       ),
                   ],
@@ -238,7 +262,17 @@ class _VerificationSheetState extends ConsumerState<VerificationSheet> {
               }
 
               return _PrimaryButton(
-                label: _agreedLocationNotice ? '동의하고 인증 시작' : '사전 고지 동의 필요',
+                label: _agreedLocationNotice
+                    ? context.l10n(
+                        ko: '동의하고 인증 시작',
+                        en: 'Agree & Start Verification',
+                        ja: '同意して認証を開始する',
+                      )
+                    : context.l10n(
+                        ko: '사전 고지 동의 필요',
+                        en: 'Agreement required',
+                        ja: '事前告知への同意が必要です',
+                      ),
                 onPressed: _agreedLocationNotice
                     ? _handleStartVerification
                     : _showConsentRequired,
@@ -267,7 +301,15 @@ class _VerificationSheetState extends ConsumerState<VerificationSheet> {
 
   void _showConsentRequired() {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('위치 수집 사전 고지에 동의해야 인증을 시작할 수 있어요')),
+      SnackBar(
+        content: Text(
+          context.l10n(
+            ko: '위치 수집 사전 고지에 동의해야 인증을 시작할 수 있어요',
+            en: 'Agree to the location notice to start verification',
+            ja: '位置情報の収集に関する事前告知に同意すると認証を開始できます',
+          ),
+        ),
+      ),
     );
   }
 }
@@ -302,7 +344,11 @@ class _LocationNoticeCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '위치 수집 사전 고지',
+            context.l10n(
+              ko: '위치 수집 사전 고지',
+              en: 'Location Collection Notice',
+              ja: '位置情報収集に関する事前告知',
+            ),
             style: GBTTypography.bodySmall.copyWith(
               fontWeight: FontWeight.w700,
               color: isDark ? GBTColors.darkTextPrimary : GBTColors.textPrimary,
@@ -310,7 +356,11 @@ class _LocationNoticeCard extends StatelessWidget {
           ),
           const SizedBox(height: GBTSpacing.xxs),
           Text(
-            '목적: 방문 인증\n보유기간: 관련 법령 및 운영정책 범위 내\n철회: 설정 > 약관/정책에서 확인 후 철회 요청',
+            context.l10n(
+              ko: '목적: 방문 인증\n보유기간: 관련 법령 및 운영정책 범위 내\n철회: 설정 > 약관/정책에서 확인 후 철회 요청',
+              en: 'Purpose: Visit verification\nRetention: Within applicable laws and policy\nWithdrawal: Settings > Terms/Policy for withdrawal requests',
+              ja: '目的: 訪問認証\n保有期間: 関連法令および運営ポリシーの範囲内\n撤回: 設定＞規約・ポリシーで確認後、撤回を申請できます',
+            ),
             style: GBTTypography.labelSmall.copyWith(
               color: isDark
                   ? GBTColors.darkTextSecondary
@@ -320,7 +370,11 @@ class _LocationNoticeCard extends StatelessWidget {
           ),
           const SizedBox(height: GBTSpacing.xxs),
           Text(
-            '위치정보 이용약관 $versionLabel',
+            context.l10n(
+              ko: '위치정보 이용약관 $versionLabel',
+              en: 'Location Terms $versionLabel',
+              ja: '位置情報利用規約 $versionLabel',
+            ),
             style: GBTTypography.labelSmall.copyWith(
               color: isDark
                   ? GBTColors.darkTextTertiary
@@ -339,7 +393,11 @@ class _LocationNoticeCard extends StatelessWidget {
                 ),
                 Expanded(
                   child: Text(
-                    '위치 수집/이용 고지 내용을 확인했고 동의합니다 (필수)',
+                    context.l10n(
+                      ko: '위치 수집/이용 고지 내용을 확인했고 동의합니다 (필수)',
+                      en: 'I have read and agree to the location notice (required)',
+                      ja: '位置情報の収集・利用に関する告知内容を確認し、同意します（必須）',
+                    ),
                     style: GBTTypography.labelSmall,
                   ),
                 ),
@@ -352,31 +410,79 @@ class _LocationNoticeCard extends StatelessWidget {
   }
 }
 
-// EN: Maps server error codes to user-facing Korean messages.
-// KO: 서버 에러 코드를 사용자 표시용 한국어 메시지로 매핑합니다.
-const _verificationErrorMessages = <String, String>{
-  'out_of_verification_radius': '인증 반경 밖입니다. 장소/공연장 근처에서 다시 시도해주세요.',
-  'location_token_invalid': '위치 인증 토큰이 유효하지 않습니다. 앱을 재시작한 뒤 다시 시도해주세요.',
-  'location_token_expired': '위치 인증 토큰이 만료되었습니다. 다시 시도해주세요.',
-  'visit_cooldown_active': '짧은 시간 내 중복 인증은 제한됩니다. 잠시 후 다시 시도해주세요.',
-  'daily_visit_limit_reached': '오늘 이 장소의 인증 가능 횟수를 초과했습니다.',
-  'duplicate_verification_request': '중복 인증 요청입니다.',
-  'simulated_location_not_allowed': '모의 위치는 허용되지 않습니다.',
-  'suspicious_movement_detected': '비정상 이동 패턴이 감지되어 인증이 거부되었습니다.',
-  'rapid_traversal_detected': '짧은 시간 내 과도한 장소 인증 패턴이 감지되었습니다.',
-  'gps_accuracy_invalid': 'GPS 정확도가 비정상으로 감지되었습니다.',
-  'gps_accuracy_too_low': 'GPS 정확도가 낮아 인증할 수 없습니다.',
+// EN: Maps server error codes to user-facing localized messages.
+// KO: 서버 에러 코드를 사용자 표시용 다국어 메시지로 매핑합니다.
+const _verificationErrorMessages = <String, (String ko, String en, String ja)>{
+  'out_of_verification_radius': (
+    '인증 반경 밖입니다. 장소/공연장 근처에서 다시 시도해주세요.',
+    'You are outside the verification radius. Try again near the venue.',
+    '認証範囲外です。スポット・会場の近くで再度お試しください。',
+  ),
+  'location_token_invalid': (
+    '위치 인증 토큰이 유효하지 않습니다. 앱을 재시작한 뒤 다시 시도해주세요.',
+    'The location verification token is invalid. Restart the app and try again.',
+    '位置認証トークンが無効です。アプリを再起動してから再度お試しください。',
+  ),
+  'location_token_expired': (
+    '위치 인증 토큰이 만료되었습니다. 다시 시도해주세요.',
+    'The location verification token has expired. Try again.',
+    '位置認証トークンの有効期限が切れました。再度お試しください。',
+  ),
+  'visit_cooldown_active': (
+    '짧은 시간 내 중복 인증은 제한됩니다. 잠시 후 다시 시도해주세요.',
+    'Repeated verification in a short time is limited. Try again later.',
+    '短時間での重複認証は制限されています。しばらくしてから再度お試しください。',
+  ),
+  'daily_visit_limit_reached': (
+    '오늘 이 장소의 인증 가능 횟수를 초과했습니다.',
+    'You have reached today\'s verification limit for this place.',
+    '本日この場所の認証可能回数を超えました。',
+  ),
+  'duplicate_verification_request': (
+    '중복 인증 요청입니다.',
+    'This is a duplicate verification request.',
+    '重複した認証リクエストです。',
+  ),
+  'simulated_location_not_allowed': (
+    '모의 위치는 허용되지 않습니다.',
+    'Mock locations are not allowed.',
+    '模擬位置情報は許可されていません。',
+  ),
+  'suspicious_movement_detected': (
+    '비정상 이동 패턴이 감지되어 인증이 거부되었습니다.',
+    'Verification was denied due to an unusual movement pattern.',
+    '異常な移動パターンが検出されたため、認証が拒否されました。',
+  ),
+  'rapid_traversal_detected': (
+    '짧은 시간 내 과도한 장소 인증 패턴이 감지되었습니다.',
+    'An excessive place-verification pattern was detected in a short time.',
+    '短時間で過度な場所認証パターンが検出されました。',
+  ),
+  'gps_accuracy_invalid': (
+    'GPS 정확도가 비정상으로 감지되었습니다.',
+    'GPS accuracy was detected as abnormal.',
+    'GPSの精度が異常として検出されました。',
+  ),
+  'gps_accuracy_too_low': (
+    'GPS 정확도가 낮아 인증할 수 없습니다.',
+    'Verification is not possible due to low GPS accuracy.',
+    'GPSの精度が低いため認証できません。',
+  ),
 };
 
-const _verificationFallbackMessage = '인증에 실패했습니다. 위치와 GPS 상태를 확인하고 다시 시도해주세요.';
-
-String _buildVerificationErrorMessage(Failure error) {
+String _buildVerificationErrorMessage(BuildContext context, Failure error) {
   final codeLower = error.code?.toLowerCase();
   if (codeLower != null) {
     final mapped = _verificationErrorMessages[codeLower];
-    if (mapped != null) return mapped;
+    if (mapped != null) {
+      return context.l10n(ko: mapped.$1, en: mapped.$2, ja: mapped.$3);
+    }
   }
-  return _verificationFallbackMessage;
+  return context.l10n(
+    ko: '인증에 실패했습니다. 위치와 GPS 상태를 확인하고 다시 시도해주세요.',
+    en: 'Verification failed. Check your location and GPS status and try again.',
+    ja: '認証に失敗しました。位置情報とGPSの状態を確認して再度お試しください。',
+  );
 }
 
 class _PrimaryButton extends StatelessWidget {
