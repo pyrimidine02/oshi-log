@@ -1,14 +1,36 @@
-/// EN: Feature-free route contracts: names, indices, and the assembled
-/// EN: router. Assembly, guards, and feature-typed navigation helpers live
-/// EN: in `lib/app/router/` and are re-exported here so existing importers
-/// EN: do not need to change.
-/// KO: 피처 의존 없는 라우트 상수와 인덱스입니다. 조립·가드·피처 타입을 쓰는
-/// KO: 내비게이션 헬퍼는 `lib/app/router/`에 있으며, 기존 임포터가 바뀌지
-/// KO: 않도록 여기서 재노출합니다.
+/// EN: Feature-free navigation contract: route name/index constants, the
+/// EN: `BuildContext` navigation extension, and the open-redirect guard.
+/// EN: Router assembly (`appRouterProvider`) lives in `lib/app/router/` and
+/// EN: must only be imported from `lib/app.dart`, `lib/main.dart`, or
+/// EN: `lib/app/**`.
+/// KO: 피처 의존 없는 내비게이션 계약입니다: 라우트 이름/인덱스 상수,
+/// KO: `BuildContext` 내비게이션 확장, 오픈 리다이렉트 가드. 라우터 조립
+/// KO: (`appRouterProvider`)은 `lib/app/router/`에 있으며 `lib/app.dart`,
+/// KO: `lib/main.dart`, `lib/app/**`에서만 임포트해야 합니다.
 library;
 
-export '../../app/router/app_router.dart';
-export '../../app/router/nav_extensions.dart';
+export 'nav_extensions.dart';
+
+/// EN: Validates a post-login `redirect` query value, rejecting anything
+/// EN: that isn't a safe relative in-app path (open-redirect guard).
+/// KO: 로그인 후 `redirect` 쿼리 값이 안전한 상대 경로인지 검증합니다
+/// KO: (오픈 리다이렉트 방지).
+String? safeRedirectTarget(String? redirect) {
+  if (redirect == null || redirect.isEmpty) return null;
+  if (!redirect.startsWith('/') || redirect.startsWith('//')) return null;
+  const authPrefixes = [
+    '/login',
+    '/register',
+    '/auth/',
+    '/oauth/',
+    '/forgot-password',
+    '/reset-password',
+    '/email-verification-pending',
+    '/email-verified',
+  ];
+  if (authPrefixes.any(redirect.startsWith)) return null;
+  return redirect;
+}
 
 /// EN: Route names as constants
 /// KO: 라우트 이름 상수

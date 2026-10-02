@@ -57,7 +57,12 @@ class _FieldGuidePageState extends ConsumerState<FieldGuidePage> {
     if (projectKey == null || projectKey.isEmpty) {
       return;
     }
-    context.goToUnitDetail(unit: artist, projectId: projectKey);
+    final unitIdentifier = artist.code.isNotEmpty ? artist.code : artist.id;
+    context.goToUnitDetailByIdentifier(
+      unitIdentifier,
+      projectId: projectKey,
+      initialUnit: artist,
+    );
   }
 
   void _openMusicArchive() {

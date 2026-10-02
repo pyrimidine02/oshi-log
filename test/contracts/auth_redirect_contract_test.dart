@@ -22,7 +22,7 @@ import 'package:go_router/go_router.dart';
 import 'package:oshi_log/core/error/failure.dart';
 import 'package:oshi_log/core/providers/core_providers.dart';
 import 'package:oshi_log/features/auth/application/session_state.dart';
-import 'package:oshi_log/core/router/app_router.dart';
+import 'package:oshi_log/app/router/app_router.dart';
 import 'package:oshi_log/core/security/secure_storage.dart';
 import 'package:oshi_log/core/utils/result.dart';
 import 'package:oshi_log/features/calendar/application/calendar_controller.dart';

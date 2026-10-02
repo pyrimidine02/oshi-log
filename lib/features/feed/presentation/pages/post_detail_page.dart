@@ -578,7 +578,7 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
     PostDetail post,
   ) async {
     if (action == _PostAction.edit) {
-      context.goToPostEdit(post);
+      context.goToPostEdit(post.id, extra: post);
       return;
     }
     if (action == _PostAction.delete) {

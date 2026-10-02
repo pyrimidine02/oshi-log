@@ -10,6 +10,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:oshi_log/core/connectivity/connectivity_service.dart';
 import 'package:oshi_log/core/providers/core_providers.dart';
 import 'package:oshi_log/core/providers/registrant_provider.dart';
+import 'package:oshi_log/app/router/app_router.dart';
 import 'package:oshi_log/core/router/app_router.dart';
 import 'package:oshi_log/core/security/secure_storage.dart';
 import 'package:oshi_log/core/storage/local_storage.dart';

@@ -1,18 +1,15 @@
-/// EN: BuildContext navigation helpers that need feature-typed arguments
-/// EN: (Unit, UnitMember, PostDetail). Kept out of `lib/core/router` because
-/// EN: core must stay feature-free (R4).
-/// KO: 피처 타입 인자(Unit, UnitMember, PostDetail)가 필요한 BuildContext
-/// KO: 내비게이션 헬퍼입니다. core는 피처 의존이 없어야 하므로(R4)
-/// KO: `lib/core/router`가 아닌 여기에 둡니다.
+/// EN: BuildContext navigation helpers. Feature-free (R3): callers pass
+/// EN: primitive ids/values; anything feature-typed goes through `extra`
+/// EN: as `Object?` and is cast back at the route builder in `lib/app`.
+/// KO: BuildContext 내비게이션 헬퍼입니다. 피처 의존 없음(R3): 호출자는
+/// KO: 기본 타입 id/값을 넘기고, 피처 타입이 필요하면 `extra`에 `Object?`로
+/// KO: 담아 `lib/app`의 라우트 빌더에서 다시 캐스팅합니다.
 library;
 
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/router/app_router.dart' show AppRoutes;
-import '../../features/feed/domain/entities/feed_entities.dart';
-import '../../features/projects/domain/entities/project_entities.dart'
-    show Unit, UnitMember;
+import 'app_router.dart' show AppRoutes;
 
 DateTime? _lastPostDetailNavigationAt;
 String? _lastPostDetailNavigationPath;
@@ -212,23 +209,16 @@ extension AppRouterExtension on BuildContext {
     }
   }
 
-  /// EN: Navigate to unit detail page.
-  /// KO: 유닛 상세 페이지로 이동.
-  void goToUnitDetail({required Unit unit, required String projectId}) {
-    final unitIdentifier = unit.code.isNotEmpty ? unit.code : unit.id;
-    goToUnitDetailByIdentifier(
-      unitIdentifier,
-      projectId: projectId,
-      initialUnit: unit,
-    );
-  }
-
   /// EN: Navigate to unit detail when only a search identity is available.
-  /// KO: 검색 식별자만 있는 경우 유닛 상세 페이지로 이동합니다.
+  /// EN: `initialUnit` is an optional feature-typed entity passed through as
+  /// EN: `Object?`; the route builder in `lib/app` casts it back.
+  /// KO: 검색 식별자만 있는 경우 유닛 상세 페이지로 이동합니다. `initialUnit`은
+  /// KO: 선택적 피처 타입 엔티티로 `Object?`로 전달되며, `lib/app`의 라우트
+  /// KO: 빌더에서 다시 캐스팅합니다.
   void goToUnitDetailByIdentifier(
     String unitIdentifier, {
     required String projectId,
-    Unit? initialUnit,
+    Object? initialUnit,
   }) {
     final trimmedUnitIdentifier = unitIdentifier.trim();
     final trimmedProjectId = projectId.trim();
@@ -243,19 +233,21 @@ extension AppRouterExtension on BuildContext {
     );
   }
 
-  /// EN: Navigate to member (character + VA) detail page.
-  /// KO: 멤버(캐릭터 + 성우) 상세 페이지로 이동.
+  /// EN: Navigate to member (character + VA) detail page. `extra` carries
+  /// EN: feature-typed unit/member entities as `Object?`.
+  /// KO: 멤버(캐릭터 + 성우) 상세 페이지로 이동. `extra`는 피처 타입
+  /// KO: 유닛/멤버 엔티티를 `Object?`로 전달합니다.
   void goToMemberDetail({
-    required Unit unit,
-    required UnitMember member,
+    required String unitIdentifier,
+    required String memberId,
     required String projectId,
+    Object? extra,
   }) {
-    final unitIdentifier = unit.code.isNotEmpty ? unit.code : unit.id;
     pushNamed(
       AppRoutes.memberDetail,
-      pathParameters: {'unitId': unitIdentifier, 'memberId': member.id},
+      pathParameters: {'unitId': unitIdentifier, 'memberId': memberId},
       queryParameters: {'projectId': projectId},
-      extra: {'member': member, 'unit': unit},
+      extra: extra,
     );
   }
 
@@ -374,13 +366,15 @@ extension AppRouterExtension on BuildContext {
     pushNamed(AppRoutes.postCreate);
   }
 
-  /// EN: Navigate to post edit.
-  /// KO: 게시글 수정으로 이동
-  void goToPostEdit(PostDetail post) {
+  /// EN: Navigate to post edit. `extra` carries the feature-typed post
+  /// EN: entity as `Object?`.
+  /// KO: 게시글 수정으로 이동. `extra`는 피처 타입 게시글 엔티티를
+  /// KO: `Object?`로 전달합니다.
+  void goToPostEdit(String postId, {Object? extra}) {
     pushNamed(
       AppRoutes.postEdit,
-      pathParameters: {'postId': post.id},
-      extra: post,
+      pathParameters: {'postId': postId},
+      extra: extra,
     );
   }
 

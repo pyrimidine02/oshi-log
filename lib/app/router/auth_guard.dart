@@ -4,28 +4,10 @@ library;
 
 import 'package:go_router/go_router.dart';
 
+import '../../core/router/app_router.dart' show safeRedirectTarget;
 import '../../features/auth/application/session_state.dart';
 
-/// EN: Validates a post-login `redirect` query value, rejecting anything
-/// EN: that isn't a safe relative in-app path (open-redirect guard).
-/// KO: 로그인 후 `redirect` 쿼리 값이 안전한 상대 경로인지 검증합니다
-/// KO: (오픈 리다이렉트 방지).
-String? safeRedirectTarget(String? redirect) {
-  if (redirect == null || redirect.isEmpty) return null;
-  if (!redirect.startsWith('/') || redirect.startsWith('//')) return null;
-  const authPrefixes = [
-    '/login',
-    '/register',
-    '/auth/',
-    '/oauth/',
-    '/forgot-password',
-    '/reset-password',
-    '/email-verification-pending',
-    '/email-verified',
-  ];
-  if (authPrefixes.any(redirect.startsWith)) return null;
-  return redirect;
-}
+export '../../core/router/app_router.dart' show safeRedirectTarget;
 
 /// EN: Builds the `GoRouter.redirect` callback bound to the given auth state.
 /// KO: 주어진 인증 상태에 묶인 `GoRouter.redirect` 콜백을 만듭니다.

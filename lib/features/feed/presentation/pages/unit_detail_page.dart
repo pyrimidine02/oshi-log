@@ -56,9 +56,10 @@ class UnitDetailPage extends ConsumerWidget {
         unit: unit,
         membersState: membersState,
         onMemberTap: (member) => context.goToMemberDetail(
-          unit: unit,
-          member: member,
+          unitIdentifier: resolvedUnitIdentifier,
+          memberId: member.id,
           projectId: projectId,
+          extra: {'member': member, 'unit': unit},
         ),
       ),
     );

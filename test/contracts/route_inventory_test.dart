@@ -8,7 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:oshi_log/core/providers/core_providers.dart';
-import 'package:oshi_log/core/router/app_router.dart';
+import 'package:oshi_log/app/router/app_router.dart';
 import 'package:oshi_log/core/security/secure_storage.dart';
 
 /// EN: Walks the route tree, joining parent/child paths the same way

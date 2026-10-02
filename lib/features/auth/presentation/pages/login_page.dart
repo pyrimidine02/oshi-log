@@ -15,7 +15,6 @@ import '../../../../core/widgets/buttons/gbt_button.dart';
 import '../../../../core/widgets/common/gbt_page_reveal.dart';
 import '../../../../core/widgets/inputs/gbt_text_field.dart';
 import '../../../../core/router/app_router.dart';
-import '../../../../app/router/auth_guard.dart';
 import '../../application/auth_controller.dart';
 import '../widgets/field_auth_components.dart';
 import '../widgets/oauth_buttons.dart';

@@ -23,7 +23,7 @@ import 'core/localization/locale_text.dart';
 import 'core/providers/core_providers.dart';
 import 'core/telemetry/telemetry_event_types.dart';
 import 'core/telemetry/telemetry_service.dart';
-import 'core/router/app_router.dart';
+import 'app/router/app_router.dart';
 import 'core/theme/gbt_colors.dart';
 import 'core/theme/gbt_spacing.dart';
 import 'core/theme/gbt_typography.dart';
