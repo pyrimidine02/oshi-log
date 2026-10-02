@@ -67,9 +67,8 @@ void main() {
         'lib/core/notifications/local_notifications_service.dart',
         'lib/core/notifications/remote_push_service.dart',
         'lib/features/auth/presentation/pages/login_page.dart',
-        'lib/features/feed/presentation/pages/board_page.dart',
+        'lib/features/feed/presentation/field_community/field_community_page.dart',
         'lib/features/home/presentation/field_home/field_home_page.dart',
-        'lib/features/home/presentation/pages/home_page.dart',
         'lib/features/my/presentation/travel_passport/passport_document.dart',
         'lib/features/settings/presentation/pages/settings_page.dart',
       ];
