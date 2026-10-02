@@ -4,10 +4,10 @@ library;
 
 import 'package:flutter/material.dart';
 
-import '../../../../../core/localization/locale_text.dart';
-import '../../../../../core/theme/gbt_colors.dart';
-import '../../../../../core/theme/gbt_spacing.dart';
-import '../../../../../core/theme/gbt_typography.dart';
+import 'package:oshi_log/core/localization/locale_text.dart';
+import 'package:oshi_log/core/theme/gbt_colors.dart';
+import 'package:oshi_log/core/theme/gbt_spacing.dart';
+import 'package:oshi_log/core/theme/gbt_typography.dart';
 import '../field_user_profile_view_data.dart';
 
 class FieldProfileLedger extends StatelessWidget {

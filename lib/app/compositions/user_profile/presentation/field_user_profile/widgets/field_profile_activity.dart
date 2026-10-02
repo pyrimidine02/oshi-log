@@ -4,12 +4,12 @@ library;
 
 import 'package:flutter/material.dart';
 
-import '../../../../../core/localization/locale_text.dart';
-import '../../../../../core/theme/gbt_colors.dart';
-import '../../../../../core/theme/gbt_spacing.dart';
-import '../../../../../core/theme/gbt_typography.dart';
-import '../../../../../core/widgets/common/gbt_linkified_text.dart';
-import '../../../../../core/widgets/feedback/gbt_loading.dart';
+import 'package:oshi_log/core/localization/locale_text.dart';
+import 'package:oshi_log/core/theme/gbt_colors.dart';
+import 'package:oshi_log/core/theme/gbt_spacing.dart';
+import 'package:oshi_log/core/theme/gbt_typography.dart';
+import 'package:oshi_log/core/widgets/common/gbt_linkified_text.dart';
+import 'package:oshi_log/core/widgets/feedback/gbt_loading.dart';
 import 'package:oshi_log/features/community/posts/domain/entities/feed_entities.dart';
 
 typedef FieldOpenPost = void Function(String postId, String projectCode);

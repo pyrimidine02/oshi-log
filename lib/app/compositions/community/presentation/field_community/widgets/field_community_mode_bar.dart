@@ -4,8 +4,8 @@ library;
 
 import 'package:flutter/material.dart';
 
-import '../../../../../core/localization/locale_text.dart';
-import '../../../../../core/theme/gbt_spacing.dart';
+import 'package:oshi_log/core/localization/locale_text.dart';
+import 'package:oshi_log/core/theme/gbt_spacing.dart';
 import 'package:oshi_log/features/community/posts/application/board_controller.dart';
 
 /// EN: Selects feed mode while section navigation stays in the bottom bar.

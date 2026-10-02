@@ -3,8 +3,8 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oshi_log/core/theme/gbt_theme.dart';
 import 'package:oshi_log/features/community/posts/domain/entities/feed_entities.dart';
-import 'package:oshi_log/features/feed/presentation/field_user_profile/field_user_profile_view_data.dart';
-import 'package:oshi_log/features/feed/presentation/field_user_profile/widgets/field_user_profile_document.dart';
+import 'package:oshi_log/app/compositions/user_profile/presentation/field_user_profile/field_user_profile_view_data.dart';
+import 'package:oshi_log/app/compositions/user_profile/presentation/field_user_profile/widgets/field_user_profile_document.dart';
 
 void main() {
   testWidgets(

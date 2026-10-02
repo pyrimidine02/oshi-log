@@ -4,7 +4,7 @@ library;
 
 import 'package:flutter/material.dart';
 
-import '../../../../../core/theme/gbt_colors.dart';
+import 'package:oshi_log/core/theme/gbt_colors.dart';
 import 'package:oshi_log/features/community/posts/domain/entities/feed_entities.dart';
 import '../field_user_profile_view_data.dart';
 import 'field_profile_activity.dart';

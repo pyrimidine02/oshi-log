@@ -15,7 +15,7 @@ import '../../../features/cheer_guides/presentation/pages/cheer_guide_detail_pag
 import '../../../features/cheer_guides/presentation/pages/cheer_guides_page.dart';
 import '../../../features/favorites/presentation/pages/favorites_page.dart';
 import '../../../features/fan_level/presentation/pages/fan_level_page.dart';
-import '../../../features/feed/presentation/field_user_profile/field_user_profile_page.dart';
+import '../../compositions/user_profile/presentation/field_user_profile/field_user_profile_page.dart';
 import '../../../features/community/news/presentation/pages/news_detail_page.dart';
 import 'package:oshi_log/features/community/posts/presentation/pages/post_bookmarks_page.dart';
 import 'package:oshi_log/features/community/posts/presentation/pages/post_detail_page.dart';

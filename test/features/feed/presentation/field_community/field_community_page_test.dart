@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oshi_log/core/theme/gbt_theme.dart';
 import 'package:oshi_log/features/community/posts/application/board_controller.dart';
 import 'package:oshi_log/features/community/posts/domain/entities/feed_entities.dart';
-import 'package:oshi_log/features/feed/presentation/field_community/field_community_page.dart';
+import 'package:oshi_log/app/compositions/community/presentation/field_community/field_community_page.dart';
 import 'package:oshi_log/features/community/posts/presentation/field_community/field_community_providers.dart';
 
 void main() {

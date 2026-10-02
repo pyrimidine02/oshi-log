@@ -8,8 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/router/app_router.dart';
-import '../../../../core/theme/gbt_colors.dart';
+import 'package:oshi_log/core/router/app_router.dart';
+import 'package:oshi_log/core/theme/gbt_colors.dart';
 import 'package:oshi_log/features/community/posts/application/board_controller.dart';
 import 'package:oshi_log/features/community/posts/presentation/widgets/community_fab_layout.dart';
 import 'package:oshi_log/features/community/posts/presentation/field_community/field_community_providers.dart';

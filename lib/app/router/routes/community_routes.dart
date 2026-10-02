@@ -7,7 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/router/app_router.dart' show AppRoutes;
 import 'package:oshi_log/features/community/posts/domain/entities/feed_entities.dart';
-import '../../../features/feed/presentation/field_community/field_community_page.dart';
+import '../../compositions/community/presentation/field_community/field_community_page.dart';
 import 'package:oshi_log/features/community/posts/presentation/pages/post_create_page.dart';
 import 'package:oshi_log/features/community/posts/presentation/pages/post_detail_page.dart';
 import 'package:oshi_log/features/community/posts/presentation/pages/post_edit_page.dart';
