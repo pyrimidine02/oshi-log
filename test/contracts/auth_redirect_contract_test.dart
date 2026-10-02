@@ -118,4 +118,42 @@ void main() {
 
     expect(currentLocation(router), '/home');
   });
+
+  testWidgets(
+    'logged-in access to /login with a valid redirect goes to that path',
+    (tester) async {
+      final router = await pumpRouterWithAuthState(
+        tester,
+        (c) => c.read(authStateProvider.notifier).setAuthenticated(),
+      );
+
+      router.go('/login?redirect=%2Fmypage');
+      await tester.pump(const Duration(milliseconds: 50));
+      tester.takeException();
+
+      expect(currentLocation(router), '/mypage');
+    },
+  );
+
+  testWidgets(
+    'logged-in access to /login with a malicious redirect falls back to /home',
+    (tester) async {
+      final router = await pumpRouterWithAuthState(
+        tester,
+        (c) => c.read(authStateProvider.notifier).setAuthenticated(),
+      );
+
+      router.go('/login?redirect=${Uri.encodeComponent('//evil.com')}');
+      await tester.pump(const Duration(milliseconds: 50));
+      tester.takeException();
+
+      expect(currentLocation(router), '/home');
+
+      router.go('/login?redirect=${Uri.encodeComponent('https://evil.com')}');
+      await tester.pump(const Duration(milliseconds: 50));
+      tester.takeException();
+
+      expect(currentLocation(router), '/home');
+    },
+  );
 }

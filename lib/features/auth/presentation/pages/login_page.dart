@@ -15,6 +15,7 @@ import '../../../../core/widgets/buttons/gbt_button.dart';
 import '../../../../core/widgets/common/gbt_page_reveal.dart';
 import '../../../../core/widgets/inputs/gbt_text_field.dart';
 import '../../../../core/router/app_router.dart';
+import '../../../../app/router/auth_guard.dart';
 import '../../application/auth_controller.dart';
 import '../widgets/field_auth_components.dart';
 import '../widgets/oauth_buttons.dart';
@@ -331,6 +332,16 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     );
   }
 
+  /// EN: Target to navigate to after a successful login — the validated
+  /// EN: `redirect` query param, or `/home` as the default/fallback.
+  /// KO: 로그인 성공 후 이동할 경로 — 검증된 `redirect` 쿼리 파라미터,
+  /// KO: 없거나 유효하지 않으면 기본값인 `/home`.
+  String get _postLoginTarget =>
+      safeRedirectTarget(
+        GoRouterState.of(context).uri.queryParameters['redirect'],
+      ) ??
+      '/home';
+
   Future<void> _handleLogin() async {
     if (_isSubmitting) return;
     if (!_formKey.currentState!.validate()) return;
@@ -345,7 +356,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       );
       if (!mounted) return;
       if (result is Success<void>) {
-        context.go('/home');
+        context.go(_postLoginTarget);
       } else if (result is Err<void>) {
         // EN: Redirect to email verification pending when account is unverified.
         // KO: 이메일 인증이 완료되지 않은 계정은 인증 대기 화면으로 이동합니다.
@@ -365,7 +376,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             password: _passwordController.text,
           );
           if (mounted && recoveryResult is Success<void>) {
-            context.go('/home');
+            context.go(_postLoginTarget);
           }
         }
       }

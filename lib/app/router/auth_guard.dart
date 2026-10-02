@@ -6,6 +6,27 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/providers/core_providers.dart';
 
+/// EN: Validates a post-login `redirect` query value, rejecting anything
+/// EN: that isn't a safe relative in-app path (open-redirect guard).
+/// KO: 로그인 후 `redirect` 쿼리 값이 안전한 상대 경로인지 검증합니다
+/// KO: (오픈 리다이렉트 방지).
+String? safeRedirectTarget(String? redirect) {
+  if (redirect == null || redirect.isEmpty) return null;
+  if (!redirect.startsWith('/') || redirect.startsWith('//')) return null;
+  const authPrefixes = [
+    '/login',
+    '/register',
+    '/auth/',
+    '/oauth/',
+    '/forgot-password',
+    '/reset-password',
+    '/email-verification-pending',
+    '/email-verified',
+  ];
+  if (authPrefixes.any(redirect.startsWith)) return null;
+  return redirect;
+}
+
 /// EN: Builds the `GoRouter.redirect` callback bound to the given auth state.
 /// KO: 주어진 인증 상태에 묶인 `GoRouter.redirect` 콜백을 만듭니다.
 GoRouterRedirect authRedirect(AuthState authState) {
@@ -27,10 +48,13 @@ GoRouterRedirect authRedirect(AuthState authState) {
         loc == '/email-verified';
     final isPublicRoute = loc == '/home' || loc.startsWith('/information');
 
-    // EN: If logged in and on auth pages, redirect to home.
-    // KO: 로그인했고 인증 페이지면 홈으로 리다이렉트.
+    // EN: If logged in and on auth pages, redirect to home (or a valid
+    // EN: pending redirect target, e.g. /login?redirect=/mypage).
+    // KO: 로그인했고 인증 페이지면 홈으로(또는 유효한 redirect 쿼리가
+    // KO: 있으면 그 경로로) 리다이렉트.
     if (isLoggedIn && isAuthRoute) {
-      return '/home';
+      final target = safeRedirectTarget(state.uri.queryParameters['redirect']);
+      return target ?? '/home';
     }
 
     // EN: If not logged in and trying to access protected routes, redirect
