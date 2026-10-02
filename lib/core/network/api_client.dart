@@ -21,10 +21,14 @@ class ApiClient {
     required SecureStorage secureStorage,
     VoidCallback? onUnauthorized,
     VoidCallback? onTokenRefreshed,
+    int Function()? currentSessionGeneration,
+    bool Function(int capturedGeneration)? isSessionGenerationCurrent,
     Dio? dio,
   }) : _secureStorage = secureStorage,
        _onUnauthorized = onUnauthorized,
        _onTokenRefreshed = onTokenRefreshed,
+       _currentSessionGeneration = currentSessionGeneration,
+       _isSessionGenerationCurrent = isSessionGenerationCurrent,
        _dio = dio ?? Dio() {
     _setupDio();
   }
@@ -33,6 +37,13 @@ class ApiClient {
   final SecureStorage _secureStorage;
   final VoidCallback? _onUnauthorized;
   final VoidCallback? _onTokenRefreshed;
+  // EN: Captures the auth session generation when a request/refresh starts
+  //     and later verifies it is still current before acting on a stale
+  //     refresh failure (see onError/onRequest below).
+  // KO: 요청/갱신 시작 시 인증 세션 세대를 캡처하고, 이후 오래된 갱신
+  //     실패에 대해 동작하기 전 현재 세대인지 확인합니다.
+  final int Function()? _currentSessionGeneration;
+  final bool Function(int capturedGeneration)? _isSessionGenerationCurrent;
   late final _AuthInterceptor _authInterceptor;
 
   /// EN: Setup Dio with base configuration and interceptors
@@ -55,6 +66,8 @@ class ApiClient {
       _dio,
       onUnauthorized: _onUnauthorized,
       onTokenRefreshed: _onTokenRefreshed,
+      currentSessionGeneration: _currentSessionGeneration,
+      isSessionGenerationCurrent: _isSessionGenerationCurrent,
     );
     _dio.interceptors.addAll([_authInterceptor, _LoggingInterceptor()]);
   }
@@ -261,13 +274,33 @@ class _AuthInterceptor extends Interceptor {
     this._dio, {
     this.onUnauthorized,
     this.onTokenRefreshed,
+    this.currentSessionGeneration,
+    this.isSessionGenerationCurrent,
   });
 
   final SecureStorage _secureStorage;
   final Dio _dio;
   final VoidCallback? onUnauthorized;
   final VoidCallback? onTokenRefreshed;
+  final int Function()? currentSessionGeneration;
+  final bool Function(int capturedGeneration)? isSessionGenerationCurrent;
   Future<_RefreshOutcome>? _refreshFuture;
+
+  /// EN: Returns true when no generation has been captured (no auth
+  ///     feature wired, or a stale generation guard isn't available) or the
+  ///     captured generation still matches the live session. A false
+  ///     result means a newer session has since replaced this one and the
+  ///     caller must not clear tokens / flip auth state for it.
+  /// KO: 캡처된 세대가 없거나(인증 feature 미연결), 캡처된 세대가 아직도
+  ///     현재 세션과 일치하면 true를 반환합니다. false이면 이미 새 세션이
+  ///     대체했으므로 호출자는 토큰 삭제/인증 상태 전환을 해서는 안 됩니다.
+  bool _isStillCurrent(int? capturedGeneration) {
+    final guard = isSessionGenerationCurrent;
+    if (guard == null || capturedGeneration == null) {
+      return true;
+    }
+    return guard(capturedGeneration);
+  }
 
   static const Set<String> _invalidRefreshErrorCodes = {
     'INVALID_REFRESH_TOKEN',
@@ -298,9 +331,24 @@ class _AuthInterceptor extends Interceptor {
     // KO: 첫 번째 요청에서 불필요한 401 왕복을 방지합니다.
     // KO: _refreshOrWait()이 중복 제거를 처리하므로 동시 요청은
     // KO: 하나의 갱신 호출만 트리거합니다.
+    // EN: Capture the session generation before refreshing so a stale
+    //     result arriving after re-login can be detected and ignored.
+    // KO: 갱신 전 세션 세대를 캡처하여, 재로그인 이후 도착한 오래된 결과를
+    //     감지하고 무시할 수 있게 합니다.
+    final capturedGeneration = currentSessionGeneration?.call();
+    options.extra['_authSessionGeneration'] = capturedGeneration;
+
     if (await _secureStorage.isTokenExpired()) {
       final outcome = await _refreshOrWait();
       if (outcome == _RefreshOutcome.invalidSession) {
+        if (!_isStillCurrent(capturedGeneration)) {
+          AppLogger.warning(
+            'Ignoring stale invalid-session refresh result; '
+            'session generation changed since request started',
+            tag: 'AuthInterceptor',
+          );
+          return handler.next(options);
+        }
         await _secureStorage.clearTokens();
         onUnauthorized?.call();
         return handler.reject(
@@ -394,14 +442,31 @@ class _AuthInterceptor extends Interceptor {
         }
 
         if (refreshOutcome == _RefreshOutcome.invalidSession) {
-          // EN: Clear tokens only when refresh token is definitively invalid.
-          // KO: 리프레시 토큰이 확실히 무효할 때만 토큰을 삭제합니다.
-          AppLogger.warning(
-            'Refresh token invalid; clearing local auth tokens',
-            tag: 'AuthInterceptor',
-          );
-          await _secureStorage.clearTokens();
-          onUnauthorized?.call();
+          final capturedGeneration =
+              err.requestOptions.extra['_authSessionGeneration'] as int?;
+          if (!_isStillCurrent(capturedGeneration)) {
+            // EN: This 401/refresh-failure belongs to a session generation
+            //     that has already been replaced (e.g. the user logged back
+            //     in while this request was in flight). Do not delete the
+            //     new session's tokens or flip it to unauthenticated.
+            // KO: 이 401/갱신 실패는 이미 교체된 세션 세대에 속합니다
+            //     (예: 요청이 진행 중일 때 재로그인). 새 세션의 토큰을
+            //     삭제하거나 미인증으로 전환하지 않습니다.
+            AppLogger.warning(
+              'Ignoring stale invalid-session refresh result; '
+              'session generation changed since request started',
+              tag: 'AuthInterceptor',
+            );
+          } else {
+            // EN: Clear tokens only when refresh token is definitively invalid.
+            // KO: 리프레시 토큰이 확실히 무효할 때만 토큰을 삭제합니다.
+            AppLogger.warning(
+              'Refresh token invalid; clearing local auth tokens',
+              tag: 'AuthInterceptor',
+            );
+            await _secureStorage.clearTokens();
+            onUnauthorized?.call();
+          }
         } else {
           AppLogger.warning(
             'Token refresh failed transiently; keeping current session',

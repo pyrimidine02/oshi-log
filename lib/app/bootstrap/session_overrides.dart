@@ -19,6 +19,23 @@ final List<Override> sessionOverrides = [
   apiUnauthorizedCallbackProvider.overrideWith((ref) {
     return () => ref.read(authStateProvider.notifier).setUnauthenticated();
   }),
+  // EN: Let the API client capture the active auth session generation at
+  //     request/refresh start and verify it is still current before
+  //     clearing tokens / flipping auth state, so a stale refresh failure
+  //     arriving after re-login cannot log out the new session.
+  // KO: API 클라이언트가 요청/갱신 시작 시 활성 인증 세션 세대를 캡처하고,
+  //     토큰 삭제/인증 상태 전환 전에 여전히 현재 세대인지 확인하도록
+  //     연결합니다. 재로그인 이후 도착한 오래된 갱신 실패가 새 세션을
+  //     로그아웃시키지 못하도록 합니다.
+  apiSessionGenerationProvider.overrideWith((ref) {
+    return () =>
+        ref.read(authControllerProvider.notifier).currentSessionGeneration;
+  }),
+  apiSessionGenerationGuardProvider.overrideWith((ref) {
+    return (generation) => ref
+        .read(authControllerProvider.notifier)
+        .isCurrentSessionGeneration(generation);
+  }),
   apiTokenRefreshedCallbackProvider.overrideWith((ref) {
     return () {
       final notifier = ref.read(authTokenRefreshTickProvider.notifier);

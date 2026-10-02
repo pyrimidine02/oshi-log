@@ -84,6 +84,34 @@ final apiTokenRefreshedCallbackProvider = Provider<ApiTokenRefreshedCallback>((
   return () {};
 });
 
+/// EN: Returns an opaque marker for the currently active auth session
+///     (e.g. a generation counter). Default has no session concept.
+///     Overridden in `lib/app/bootstrap/session_overrides.dart`.
+/// KO: 현재 활성 인증 세션을 나타내는 불투명 마커(예: 세대 카운터)를
+///     반환합니다. 기본값은 세션 개념이 없습니다.
+///     `lib/app/bootstrap/session_overrides.dart`에서 override 됩니다.
+typedef ApiSessionGenerationCallback = int Function();
+
+/// EN: Returns whether a previously captured session generation is still
+///     the active one. Used to ignore a stale refresh failure that arrives
+///     after re-login. Default always answers true (no-op).
+/// KO: 이전에 캡처한 세션 세대가 여전히 활성 상태인지 확인합니다.
+///     재로그인 이후 도착한 오래된 갱신 실패를 무시하는 데 사용됩니다.
+///     기본값은 항상 true입니다(no-op).
+typedef ApiSessionGenerationGuard = bool Function(int capturedGeneration);
+
+final apiSessionGenerationProvider = Provider<ApiSessionGenerationCallback>((
+  ref,
+) {
+  return () => 0;
+});
+
+final apiSessionGenerationGuardProvider = Provider<ApiSessionGenerationGuard>((
+  ref,
+) {
+  return (_) => true;
+});
+
 /// EN: API client provider
 /// KO: API 클라이언트 프로바이더
 final apiClientProvider = Provider<ApiClient>((ref) {
@@ -92,6 +120,9 @@ final apiClientProvider = Provider<ApiClient>((ref) {
     secureStorage: secureStorage,
     onUnauthorized: () => ref.read(apiUnauthorizedCallbackProvider)(),
     onTokenRefreshed: () => ref.read(apiTokenRefreshedCallbackProvider)(),
+    currentSessionGeneration: () => ref.read(apiSessionGenerationProvider)(),
+    isSessionGenerationCurrent: (generation) =>
+        ref.read(apiSessionGenerationGuardProvider)(generation),
   );
 });
 

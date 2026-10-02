@@ -6,16 +6,19 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:oshi_log/app/session/session_cleanup.dart';
 import 'package:oshi_log/core/analytics/analytics_service.dart';
 import 'package:oshi_log/core/cache/cache_manager.dart';
 import 'package:oshi_log/core/config/app_config.dart';
 import 'package:oshi_log/core/error/failure.dart';
 import 'package:oshi_log/core/providers/core_providers.dart';
+import 'package:oshi_log/core/router/navigation_state.dart';
 import 'package:oshi_log/features/auth/application/session_state.dart';
 import 'package:oshi_log/core/security/secure_storage.dart';
 import 'package:oshi_log/core/storage/local_storage.dart';
 import 'package:oshi_log/core/utils/result.dart';
 import 'package:oshi_log/features/auth/application/auth_controller.dart';
+import 'package:oshi_log/features/projects/application/project_context.dart';
 import 'package:oshi_log/features/auth/application/native_social_login_service.dart';
 import 'package:oshi_log/features/auth/application/oauth_service.dart';
 import 'package:oshi_log/features/auth/domain/entities/auth_tokens.dart';
@@ -103,6 +106,29 @@ void main() {
       expect(cleanupCalls, 1);
     },
   );
+
+  test('logout resets selected project/unit/tab state via the real '
+      'appSessionCleanup wiring', () async {
+    final repository = _FakeAuthRepository();
+    final harness = await _AuthHarness.create(repository);
+    addTearDown(harness.dispose);
+    harness.authStateNotifier.setAuthenticated();
+    repository.logoutHandler = () async => const Result.success(null);
+
+    harness.container.read(selectedProjectKeyProvider.notifier).state =
+        'project-key';
+    harness.container.read(selectedProjectIdProvider.notifier).state =
+        'project-id';
+    harness.container.read(selectedUnitIdsProvider.notifier).state = ['unit-1'];
+    harness.container.read(currentNavIndexProvider.notifier).state = 2;
+
+    await harness.controller.logout();
+
+    expect(harness.container.read(selectedProjectKeyProvider), isNull);
+    expect(harness.container.read(selectedProjectIdProvider), isNull);
+    expect(harness.container.read(selectedUnitIdsProvider), isEmpty);
+    expect(harness.container.read(currentNavIndexProvider), 0);
+  });
 
   test(
     'login waits for an in-progress logout and keeps the new session tokens',
@@ -581,6 +607,13 @@ class _AuthHarness {
           localNotificationsService,
         ),
         analyticsServiceProvider.overrideWithValue(analyticsService),
+        // EN: Wire the real app-owned cleanup by default so this harness
+        //     matches production wiring; individual tests can still override
+        //     sessionCleanupProvider via extraOverrides (last entry wins).
+        // KO: 이 하네스가 운영 환경 연결과 일치하도록 기본값으로 실제
+        //     app 소유 cleanup을 연결합니다. 개별 테스트는 extraOverrides로
+        //     sessionCleanupProvider를 재정의할 수 있습니다(마지막 항목 적용).
+        sessionCleanupProvider.overrideWithValue(appSessionCleanup),
         ...extraOverrides,
       ],
     );

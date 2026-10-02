@@ -36,10 +36,27 @@ import 'session_state.dart';
 ///     `lib/app/bootstrap/session_overrides.dart` 참고).
 typedef SessionCleanupCallback = void Function(Ref ref);
 
-/// EN: Default no-op cleanup; app bootstrap overrides this.
-/// KO: 기본값은 아무 작업도 하지 않습니다 — app bootstrap에서 override 합니다.
+/// EN: Default fails loudly in debug (assert) because an unwired cleanup
+///     silently skips project/tab/profile invalidation on logout. Release
+///     builds fall through as a no-op since asserts are stripped. Always
+///     override with `appSessionCleanup` in app bootstrap and in test
+///     harnesses that exercise logout.
+/// KO: 기본값은 디버그에서 assert로 즉시 실패합니다 — 연결되지 않은 cleanup은
+///     로그아웃 시 project/tab/profile 초기화를 조용히 건너뛰기 때문입니다.
+///     릴리스 빌드는 assert가 제거되므로 no-op으로 동작합니다. app
+///     bootstrap과 logout을 실행하는 테스트 하네스에서는 항상
+///     `appSessionCleanup`으로 override 하세요.
 final sessionCleanupProvider = Provider<SessionCleanupCallback>((ref) {
-  return (Ref ref) {};
+  return (Ref ref) {
+    assert(
+      false,
+      'sessionCleanupProvider has no override wired — project/tab/profile '
+      'state will NOT be reset on logout. Override it with '
+      'lib/app/session/session_cleanup.dart appSessionCleanup (see '
+      'lib/app/bootstrap/session_overrides.dart), or provide a stub '
+      'override in this test harness.',
+    );
+  };
 });
 
 const String _kPostComposeCreateDraftKeyPrefix = 'feed_post_create_draft_';
@@ -1216,6 +1233,23 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
     return operationGeneration == null ||
         operationGeneration == _authSessionGeneration;
   }
+
+  /// EN: The auth session generation currently considered active. Bumped on
+  ///     logout/password-change/reset so in-flight work from a superseded
+  ///     session can be told apart from the current one.
+  /// KO: 현재 활성 상태로 간주되는 인증 세션 세대입니다. 로그아웃/비밀번호
+  ///     변경/재설정 시 증가하며, 교체된 세션의 진행 중 작업을 현재 세션과
+  ///     구분하는 데 사용됩니다.
+  int get currentSessionGeneration => _authSessionGeneration;
+
+  /// EN: Whether [generation] still matches the active session. Used by the
+  ///     API client to ignore a stale refresh-failure callback that arrives
+  ///     after a new login has already started.
+  /// KO: [generation]이 여전히 활성 세션과 일치하는지 확인합니다. 새 로그인이
+  ///     이미 시작된 뒤 도착한 오래된 갱신 실패 콜백을 무시하는 데 API
+  ///     클라이언트가 사용합니다.
+  bool isCurrentSessionGeneration(int generation) =>
+      generation == _authSessionGeneration;
 
   Result<void> _authSessionSupersededResult() {
     return const Result.failure(
