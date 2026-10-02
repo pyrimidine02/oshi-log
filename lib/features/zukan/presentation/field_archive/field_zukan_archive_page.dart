@@ -13,7 +13,7 @@ import '../../../../core/theme/theme.dart';
 import '../../../../core/widgets/feedback/gbt_loading.dart';
 import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/projects_controller.dart';
-import 'package:oshi_log/features/oshikatsu/catalog/presentation/widgets/field_project_picker_sheet.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/domain/entities/project_entities.dart';
 import '../../application/zukan_controller.dart';
 import '../../domain/entities/zukan_collection.dart';
 import 'field_zukan_archive_sections.dart';
@@ -22,11 +22,24 @@ import 'field_zukan_archive_view_data.dart';
 /// EN: Presents real project-scoped collections as an indexed field archive.
 /// KO: 실제 프로젝트 범위 컬렉션을 색인형 필드 아카이브로 표시합니다.
 class FieldZukanArchivePage extends ConsumerWidget {
-  const FieldZukanArchivePage({super.key, this.embedded = false});
+  const FieldZukanArchivePage({
+    super.key,
+    this.embedded = false,
+    required this.onPickProject,
+  });
 
   /// EN: Omits standalone chrome when hosted by the Explore workspace.
   /// KO: 탐방 워크스페이스에 포함될 때 독립 화면 크롬을 생략합니다.
   final bool embedded;
+
+  /// EN: Host-supplied project picker, avoiding a direct catalog import.
+  /// KO: catalog 직접 import를 피하기 위해 호스트가 공급하는 프로젝트 피커.
+  final Future<Project?> Function(
+    BuildContext context,
+    List<Project> projects,
+    Project selectedProject,
+  )
+  onPickProject;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -135,11 +148,7 @@ class FieldZukanArchivePage extends ConsumerWidget {
                 ja: 'プロジェクト選択',
               ),
               onAction: () async {
-                final picked = await showFieldProjectPicker(
-                  context: context,
-                  projects: items,
-                  selectedProject: items.first,
-                );
+                final picked = await onPickProject(context, items, items.first);
                 if (picked == null || !context.mounted) {
                   return;
                 }

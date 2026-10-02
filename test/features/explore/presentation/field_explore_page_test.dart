@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oshi_log/core/router/navigation_state.dart';
 import 'package:oshi_log/app/compositions/explore/presentation/field_explore/field_explore_mode_dock.dart';
 import 'package:oshi_log/app/compositions/explore/presentation/field_explore/field_explore_page.dart';
-import 'package:oshi_log/features/places/presentation/pages/places_map_page.dart';
+import 'package:oshi_log/app/compositions/places/places_map_host.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/projects_controller.dart';
 import 'package:oshi_log/features/settings/application/settings_controller.dart';
 import 'package:oshi_log/features/visits/application/visits_controller.dart';
@@ -53,7 +53,7 @@ void main() {
     );
     final inactiveMap =
         tester.widget<TabBarView>(find.byType(TabBarView)).children.first
-            as PlacesMapPage;
+            as PlacesMapHost;
     expect(inactiveMap.isActive, isFalse);
     expect(inactiveMap.topOverlayClearance, 0);
     expect(inactiveMap.bottomInset, 0);
@@ -150,7 +150,7 @@ void main() {
 
     final map =
         tester.widget<TabBarView>(find.byType(TabBarView)).children.first
-            as PlacesMapPage;
+            as PlacesMapHost;
     expect(map.bottomInset, 74);
   });
 

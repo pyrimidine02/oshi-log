@@ -5,11 +5,11 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/theme/theme.dart';
-import '../../../live_events/application/live_events_controller.dart';
-import '../../../live_events/domain/entities/live_event_entities.dart';
+import 'package:oshi_log/core/theme/theme.dart';
+import 'package:oshi_log/features/live_events/application/live_events_controller.dart';
+import 'package:oshi_log/features/live_events/domain/entities/live_event_entities.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/domain/entities/project_entities.dart';
-import '../../domain/entities/visit_entities.dart';
+import 'package:oshi_log/features/visits/domain/entities/visit_entities.dart';
 import 'field_event_ledger.dart';
 import 'field_place_ledger.dart';
 import 'field_visit_ledger_common.dart';

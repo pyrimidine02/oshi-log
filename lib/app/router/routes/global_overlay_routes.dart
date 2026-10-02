@@ -29,12 +29,12 @@ import 'package:oshi_log/features/oshikatsu/catalog/presentation/pages/fan_subje
 import '../../../features/quotes/presentation/pages/quotes_page.dart';
 import '../../compositions/search/presentation/pages/search_page.dart';
 import '../../../features/titles/presentation/pages/title_catalog_page.dart';
-import '../../../features/visits/presentation/field_visit_ledger/field_visit_ledger_common.dart';
-import '../../../features/visits/presentation/field_visit_ledger/field_visit_ledger_page.dart';
-import '../../../features/visits/presentation/pages/visit_detail_page.dart';
-import '../../../features/visits/presentation/pages/visit_stats_page.dart';
-import '../../../features/zukan/presentation/field_archive/field_zukan_archive_page.dart';
+import 'package:oshi_log/app/compositions/visits/presentation/field_visit_ledger/field_visit_ledger_common.dart';
+import 'package:oshi_log/app/compositions/visits/presentation/field_visit_ledger/field_visit_ledger_page.dart';
+import 'package:oshi_log/app/compositions/visits/presentation/pages/visit_detail_page.dart';
+import 'package:oshi_log/app/compositions/visits/presentation/pages/visit_stats_page.dart';
 import '../../../features/zukan/presentation/pages/zukan_detail_page.dart';
+import '../../compositions/collections/collections_host.dart';
 import '../route_helpers.dart';
 
 List<RouteBase> buildGlobalOverlayRoutes() => [
@@ -131,7 +131,7 @@ List<RouteBase> buildGlobalOverlayRoutes() => [
     name: AppRoutes.zukan,
     pageBuilder: (context, state) => buildAdaptiveOverlayPage(
       key: state.pageKey,
-      child: const FieldZukanArchivePage(),
+      child: const CollectionsHost(),
     ),
     routes: [
       GoRoute(

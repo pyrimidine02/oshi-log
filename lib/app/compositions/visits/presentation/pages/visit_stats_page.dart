@@ -6,18 +6,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../core/error/failure.dart';
-import '../../../../core/localization/locale_text.dart';
-import '../../../../core/router/app_router.dart';
-import '../../../../core/theme/theme.dart';
-import '../../../../core/widgets/common/gbt_image.dart';
-import '../../../../core/widgets/feedback/gbt_loading.dart';
-import '../../../../core/widgets/layout/gbt_page_header.dart';
-import '../../../../core/widgets/navigation/gbt_app_bar_icon_button.dart';
-import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
-import '../../../places/domain/entities/place_entities.dart';
-import '../../application/visits_controller.dart';
-import '../../domain/entities/visit_entities.dart';
+import 'package:oshi_log/core/error/failure.dart';
+import 'package:oshi_log/core/localization/locale_text.dart';
+import 'package:oshi_log/core/router/app_router.dart';
+import 'package:oshi_log/core/theme/theme.dart';
+import 'package:oshi_log/core/widgets/common/gbt_image.dart';
+import 'package:oshi_log/core/widgets/feedback/gbt_loading.dart';
+import 'package:oshi_log/core/widgets/layout/gbt_page_header.dart';
+import 'package:oshi_log/core/widgets/navigation/gbt_app_bar_icon_button.dart';
+import 'package:oshi_log/core/widgets/navigation/gbt_standard_app_bar.dart';
+import 'package:oshi_log/features/places/domain/entities/place_entities.dart';
+import 'package:oshi_log/features/visits/application/visits_controller.dart';
+import 'package:oshi_log/app/compositions/visits/application/visit_place_context.dart';
+import 'package:oshi_log/features/visits/domain/entities/visit_entities.dart';
 
 /// EN: Shows accumulated visit records as a readable travel ledger.
 /// KO: 누적 방문 기록을 읽기 쉬운 여행 장부로 표시합니다.

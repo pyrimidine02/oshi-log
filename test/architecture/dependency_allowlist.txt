@@ -2,12 +2,3 @@ lib/features/calendar/presentation/field_calendar/field_calendar_page.dart -> li
 lib/features/calendar/presentation/field_calendar/field_calendar_page.dart -> lib/features/oshikatsu/catalog/presentation/widgets/field_project_lens.dart : R2
 lib/features/calendar/presentation/field_calendar/field_month_grid.dart -> lib/features/live_events/presentation/field_events/live_schedule_status_badge.dart : R2
 lib/features/live_events/presentation/field_events/field_live_events_page.dart -> lib/features/oshikatsu/catalog/presentation/widgets/field_project_lens.dart : R2
-lib/features/places/presentation/pages/places_map_page.dart -> lib/features/oshikatsu/catalog/presentation/widgets/band_filter_sheet.dart : R2
-lib/features/places/presentation/pages/places_map_page.dart -> lib/features/oshikatsu/catalog/presentation/widgets/field_project_picker_sheet.dart : R2
-lib/features/places/presentation/pages/places_map_page.dart -> lib/features/visits/application/visits_controller.dart : R5
-lib/features/visits/application/visits_controller.dart -> lib/features/places/application/places_controller.dart : R5
-lib/features/visits/application/visits_controller.dart -> lib/features/places/domain/entities/place_entities.dart : R5
-lib/features/visits/presentation/field_visit_ledger/field_visit_ledger_view_data.dart -> lib/features/places/domain/entities/place_entities.dart : R5
-lib/features/visits/presentation/pages/visit_detail_page.dart -> lib/features/places/domain/entities/place_entities.dart : R5
-lib/features/visits/presentation/pages/visit_stats_page.dart -> lib/features/places/domain/entities/place_entities.dart : R5
-lib/features/zukan/presentation/field_archive/field_zukan_archive_page.dart -> lib/features/oshikatsu/catalog/presentation/widgets/field_project_picker_sheet.dart : R2

@@ -17,9 +17,28 @@ import 'package:oshi_log/core/utils/result.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/projects_controller.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/domain/entities/project_entities.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/domain/repositories/projects_repository.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/presentation/widgets/field_project_picker_sheet.dart';
 import 'package:oshi_log/features/zukan/application/zukan_controller.dart';
 import 'package:oshi_log/features/zukan/domain/entities/zukan_collection.dart';
 import 'package:oshi_log/features/zukan/presentation/field_archive/field_zukan_archive_page.dart';
+
+Future<Project?> _noopPickProject(
+  BuildContext context,
+  List<Project> projects,
+  Project selectedProject,
+) async => null;
+
+Future<Project?> _realPickProject(
+  BuildContext context,
+  List<Project> projects,
+  Project selectedProject,
+) {
+  return showFieldProjectPicker(
+    context: context,
+    projects: projects,
+    selectedProject: selectedProject,
+  );
+}
 
 void main() {
   const collections = [
@@ -74,7 +93,10 @@ void main() {
           ],
           supportedLocales: const [Locale('ko'), Locale('en'), Locale('ja')],
           theme: GBTTheme.light,
-          home: const FieldZukanArchivePage(embedded: true),
+          home: FieldZukanArchivePage(
+            embedded: true,
+            onPickProject: _noopPickProject,
+          ),
         ),
       ),
     );
@@ -107,7 +129,10 @@ void main() {
       routes: [
         GoRoute(
           path: '/',
-          builder: (_, __) => const FieldZukanArchivePage(embedded: true),
+          builder: (_, __) => FieldZukanArchivePage(
+            embedded: true,
+            onPickProject: _noopPickProject,
+          ),
         ),
         GoRoute(
           path: '/zukan/:collectionId',
@@ -161,12 +186,15 @@ void main() {
         child: MaterialApp(
           locale: const Locale('en'),
           theme: GBTTheme.light,
-          home: const MediaQuery(
-            data: MediaQueryData(
+          home: MediaQuery(
+            data: const MediaQueryData(
               size: Size(320, 720),
               textScaler: TextScaler.linear(2),
             ),
-            child: FieldZukanArchivePage(embedded: true),
+            child: FieldZukanArchivePage(
+              embedded: true,
+              onPickProject: _noopPickProject,
+            ),
           ),
         ),
       ),
@@ -202,7 +230,10 @@ void main() {
         child: MaterialApp(
           locale: const Locale('en'),
           theme: GBTTheme.dark,
-          home: const FieldZukanArchivePage(embedded: true),
+          home: FieldZukanArchivePage(
+            embedded: true,
+            onPickProject: _noopPickProject,
+          ),
         ),
       ),
     );
@@ -253,7 +284,10 @@ void main() {
           ],
           supportedLocales: const [Locale('ko'), Locale('en'), Locale('ja')],
           theme: GBTTheme.light,
-          home: const FieldZukanArchivePage(embedded: true),
+          home: FieldZukanArchivePage(
+            embedded: true,
+            onPickProject: _noopPickProject,
+          ),
         ),
       ),
     );
@@ -294,7 +328,10 @@ void main() {
           ],
           supportedLocales: const [Locale('ko'), Locale('en'), Locale('ja')],
           theme: GBTTheme.light,
-          home: const FieldZukanArchivePage(embedded: true),
+          home: FieldZukanArchivePage(
+            embedded: true,
+            onPickProject: _noopPickProject,
+          ),
         ),
       ),
     );
@@ -347,7 +384,10 @@ void main() {
             ],
             supportedLocales: const [Locale('ko'), Locale('en'), Locale('ja')],
             theme: GBTTheme.light,
-            home: const FieldZukanArchivePage(embedded: true),
+            home: FieldZukanArchivePage(
+              embedded: true,
+              onPickProject: _realPickProject,
+            ),
           ),
         ),
       );
@@ -414,7 +454,10 @@ void main() {
           ],
           supportedLocales: const [Locale('ko'), Locale('en'), Locale('ja')],
           theme: GBTTheme.light,
-          home: const FieldZukanArchivePage(embedded: true),
+          home: FieldZukanArchivePage(
+            embedded: true,
+            onPickProject: _noopPickProject,
+          ),
         ),
       ),
     );

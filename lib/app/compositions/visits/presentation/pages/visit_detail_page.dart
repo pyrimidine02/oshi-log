@@ -12,16 +12,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as gmaps;
 import 'package:intl/intl.dart';
 
-import '../../../../core/localization/locale_text.dart';
-import '../../../../core/router/app_router.dart';
-import '../../../../core/theme/gbt_map_styles.dart';
-import '../../../../core/theme/theme.dart';
-import '../../../../core/widgets/common/gbt_image.dart';
-import '../../../../core/widgets/feedback/gbt_loading.dart';
-import '../../../../core/widgets/navigation/gbt_standard_app_bar.dart';
-import '../../../places/domain/entities/place_entities.dart';
-import '../../application/visits_controller.dart';
-import '../../domain/entities/visit_entities.dart';
+import 'package:oshi_log/core/localization/locale_text.dart';
+import 'package:oshi_log/core/router/app_router.dart';
+import 'package:oshi_log/core/theme/gbt_map_styles.dart';
+import 'package:oshi_log/core/theme/theme.dart';
+import 'package:oshi_log/core/widgets/common/gbt_image.dart';
+import 'package:oshi_log/core/widgets/feedback/gbt_loading.dart';
+import 'package:oshi_log/core/widgets/navigation/gbt_standard_app_bar.dart';
+import 'package:oshi_log/features/places/domain/entities/place_entities.dart';
+import 'package:oshi_log/features/visits/application/visits_controller.dart';
+import 'package:oshi_log/app/compositions/visits/application/visit_place_context.dart';
+import 'package:oshi_log/features/visits/domain/entities/visit_entities.dart';
 
 /// EN: Shows one immutable visit record and its supporting evidence.
 /// KO: 하나의 불변 방문 기록과 그 근거 정보를 표시합니다.

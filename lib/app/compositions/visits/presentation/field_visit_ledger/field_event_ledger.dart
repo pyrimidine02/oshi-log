@@ -4,12 +4,12 @@ library;
 
 import 'package:flutter/material.dart';
 
-import '../../../../core/error/failure.dart';
-import '../../../../core/localization/locale_text.dart';
-import '../../../../core/theme/theme.dart';
-import '../../../../core/widgets/layout/gbt_field_primitives.dart';
-import '../../../live_events/application/live_events_controller.dart';
-import '../../../live_events/domain/entities/live_event_entities.dart';
+import 'package:oshi_log/core/error/failure.dart';
+import 'package:oshi_log/core/localization/locale_text.dart';
+import 'package:oshi_log/core/theme/theme.dart';
+import 'package:oshi_log/core/widgets/layout/gbt_field_primitives.dart';
+import 'package:oshi_log/features/live_events/application/live_events_controller.dart';
+import 'package:oshi_log/features/live_events/domain/entities/live_event_entities.dart';
 import 'field_visit_ledger_common.dart';
 import 'field_visit_ledger_view_data.dart';
 

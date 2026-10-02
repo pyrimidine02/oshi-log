@@ -26,9 +26,6 @@ import '../../../../core/widgets/feedback/gbt_loading.dart';
 import '../../../../core/widgets/inputs/gbt_search_bar.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/projects_controller.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/domain/entities/project_entities.dart';
-import 'package:oshi_log/features/oshikatsu/catalog/presentation/widgets/band_filter_sheet.dart';
-import 'package:oshi_log/features/oshikatsu/catalog/presentation/widgets/field_project_picker_sheet.dart';
-import '../../../visits/application/visits_controller.dart';
 import '../../application/places_controller.dart';
 import '../../domain/entities/place_entities.dart';
 import '../../domain/entities/place_region_entities.dart';
@@ -55,6 +52,9 @@ class PlacesMapPage extends ConsumerStatefulWidget {
     this.modeLabels = const [],
     this.selectedModeIndex = 0,
     this.onModeSelected,
+    this.visitedPlaceIds = const <String>{},
+    required this.onShowBandFilter,
+    required this.onShowProjectPicker,
   });
 
   /// EN: Hides duplicated shell actions when hosted by FieldExplorePage.
@@ -78,6 +78,31 @@ class PlacesMapPage extends ConsumerStatefulWidget {
   final List<String> modeLabels;
   final int selectedModeIndex;
   final ValueChanged<int>? onModeSelected;
+
+  /// EN: Place IDs the user has visited, supplied by the host so this page
+  ///     does not depend on the visits feature directly.
+  /// KO: 사용자가 방문한 장소 ID 목록. 이 페이지가 visits feature에 직접
+  ///     의존하지 않도록 호스트가 공급합니다.
+  final Set<String> visitedPlaceIds;
+
+  /// EN: Host-supplied band filter picker, avoiding a direct catalog import.
+  /// KO: catalog 직접 import를 피하기 위해 호스트가 공급하는 밴드 필터 피커.
+  final Future<void> Function(
+    BuildContext context,
+    String projectKey,
+    List<String> selectedBandIds,
+    ValueChanged<List<String>> onApply,
+  )
+  onShowBandFilter;
+
+  /// EN: Host-supplied project picker, avoiding a direct catalog import.
+  /// KO: catalog 직접 import를 피하기 위해 호스트가 공급하는 프로젝트 피커.
+  final Future<Project?> Function(
+    BuildContext context,
+    List<Project> projects,
+    Project selectedProject,
+  )
+  onShowProjectPicker;
 
   @override
   ConsumerState<PlacesMapPage> createState() => _PlacesMapPageState();
@@ -125,9 +150,6 @@ class _PlacesMapPageState extends ConsumerState<PlacesMapPage> {
     super.initState();
     _sheetController.addListener(_handleSheetSizeChange);
     _fetchInitialLocation();
-    Future<void>.microtask(
-      () => ref.read(userVisitsControllerProvider.notifier).load(),
-    );
   }
 
   @override
@@ -185,10 +207,7 @@ class _PlacesMapPageState extends ConsumerState<PlacesMapPage> {
       data: (items) => items,
       orElse: () => const <PlaceSummary>[],
     );
-    final visits = ref.watch(userVisitsControllerProvider).valueOrNull;
-    final visitedPlaceIds = Set<String>.unmodifiable(
-      (visits ?? const []).map((visit) => visit.placeId),
-    );
+    final visitedPlaceIds = widget.visitedPlaceIds;
     final enrichedPlaces = applyVisitedPlaceIds(rawPlaces, visitedPlaceIds);
     // EN: Never present a fallback landmark as the user's real distance.
     //     Without permission, preserve the server's ordering and labels.
@@ -898,15 +917,11 @@ class _PlacesMapPageState extends ConsumerState<PlacesMapPage> {
         : (projectId ?? '');
     if (resolvedProjectKey.isEmpty) return;
 
-    showBandFilterSheet(
-      context: context,
-      ref: ref,
-      projectKey: resolvedProjectKey,
-      selectedBandIds: selectedBandIds,
-      onApply: (ids) {
-        ref.read(selectedPlaceBandIdsProvider.notifier).state = ids;
-      },
-    );
+    widget.onShowBandFilter(context, resolvedProjectKey, selectedBandIds, (
+      ids,
+    ) {
+      ref.read(selectedPlaceBandIdsProvider.notifier).state = ids;
+    });
   }
 
   Future<void> _refreshPlaces() async {
@@ -978,10 +993,10 @@ class _PlacesMapPageState extends ConsumerState<PlacesMapPage> {
           project.id == selection.projectKey,
       orElse: () => projects.first,
     );
-    final picked = await showFieldProjectPicker(
-      context: context,
-      projects: projects,
-      selectedProject: selected,
+    final picked = await widget.onShowProjectPicker(
+      context,
+      projects,
+      selected,
     );
     if (picked == null || !mounted) return;
     final key = picked.code.isNotEmpty ? picked.code : picked.id;

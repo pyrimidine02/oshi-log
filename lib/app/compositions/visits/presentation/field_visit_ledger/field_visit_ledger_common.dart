@@ -4,9 +4,9 @@ library;
 
 import 'package:flutter/material.dart';
 
-import '../../../../core/localization/locale_text.dart';
-import '../../../../core/theme/theme.dart';
-import '../../../../core/widgets/layout/gbt_field_primitives.dart';
+import 'package:oshi_log/core/localization/locale_text.dart';
+import 'package:oshi_log/core/theme/theme.dart';
+import 'package:oshi_log/core/widgets/layout/gbt_field_primitives.dart';
 
 enum FieldVisitLedgerKind { places, events }
 

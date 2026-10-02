@@ -2,9 +2,9 @@
 /// KO: 탐방 원장을 위한 불변 프레젠테이션 데이터입니다.
 library;
 
-import '../../../live_events/domain/entities/live_event_entities.dart';
-import '../../../places/domain/entities/place_entities.dart';
-import '../../domain/entities/visit_entities.dart';
+import 'package:oshi_log/features/live_events/domain/entities/live_event_entities.dart';
+import 'package:oshi_log/features/places/domain/entities/place_entities.dart';
+import 'package:oshi_log/features/visits/domain/entities/visit_entities.dart';
 
 typedef FieldVisitPlaceMetadata = ({
   PlaceSummary place,

@@ -11,8 +11,8 @@ import 'package:oshi_log/features/live_events/domain/entities/live_event_entitie
 import 'package:oshi_log/features/places/domain/entities/place_entities.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/domain/entities/project_entities.dart';
 import 'package:oshi_log/features/visits/domain/entities/visit_entities.dart';
-import 'package:oshi_log/features/visits/presentation/field_visit_ledger/field_visit_ledger_body.dart';
-import 'package:oshi_log/features/visits/presentation/field_visit_ledger/field_visit_ledger_view_data.dart';
+import 'package:oshi_log/app/compositions/visits/presentation/field_visit_ledger/field_visit_ledger_body.dart';
+import 'package:oshi_log/app/compositions/visits/presentation/field_visit_ledger/field_visit_ledger_view_data.dart';
 
 void main() {
   testWidgets('renders a ruled place ledger without legacy tabs or cards', (
