@@ -71,7 +71,10 @@ class TelemetryService {
     final prefs = await SharedPreferences.getInstance();
     _deviceBanned = prefs.getBool(_kDeviceBannedKey) ?? false;
     if (_deviceBanned) {
-      AppLogger.warning('Device is banned — telemetry disabled', tag: 'Telemetry');
+      AppLogger.warning(
+        'Device is banned — telemetry disabled',
+        tag: 'Telemetry',
+      );
     }
   }
 
@@ -90,11 +93,9 @@ class TelemetryService {
   ///     [isDeviceBanned]가 true이면 no-op입니다.
   void enqueue(String type, {Map<String, dynamic>? payload}) {
     if (_deviceBanned) return;
-    _queue.add(TelemetryEvent(
-      type: type,
-      occurredAt: _nowIso8601(),
-      payload: payload,
-    ));
+    _queue.add(
+      TelemetryEvent(type: type, occurredAt: _nowIso8601(), payload: payload),
+    );
   }
 
   /// EN: Send a single event immediately (for security events).
@@ -109,10 +110,9 @@ class TelemetryService {
     String? authToken,
   }) async {
     if (_deviceBanned) return;
-    await _sendBatch(
-      [TelemetryEvent(type: type, occurredAt: _nowIso8601(), payload: payload)],
-      authToken: authToken,
-    );
+    await _sendBatch([
+      TelemetryEvent(type: type, occurredAt: _nowIso8601(), payload: payload),
+    ], authToken: authToken);
   }
 
   /// EN: Flush the queue — send all queued events in batches of 50.
@@ -191,10 +191,7 @@ class TelemetryService {
       // EN: Network failure — restore events for retry on next flush.
       // KO: 네트워크 오류 — 다음 flush 시 재시도를 위해 이벤트를 복원합니다.
       _queue.insertAll(0, events);
-      AppLogger.warning(
-        'Telemetry send failed: $error',
-        tag: 'Telemetry',
-      );
+      AppLogger.warning('Telemetry send failed: $error', tag: 'Telemetry');
     }
   }
 

@@ -11,8 +11,7 @@ class ChangePasswordResponse {
   factory ChangePasswordResponse.fromJson(Map<String, dynamic> json) {
     return ChangePasswordResponse(
       changed: json['changed'] as bool? ?? false,
-      revokedRefreshTokenCount:
-          json['revokedRefreshTokenCount'] as int? ?? 0,
+      revokedRefreshTokenCount: json['revokedRefreshTokenCount'] as int? ?? 0,
     );
   }
 

@@ -86,7 +86,10 @@ class FailedVerificationAttempt {
   /// KO: 외부 패키지 없이 로컬 고유 ID를 생성합니다.
   static String generateId() {
     final ms = DateTime.now().millisecondsSinceEpoch.toRadixString(16);
-    final rand = Random.secure().nextInt(0xFFFF).toRadixString(16).padLeft(4, '0');
+    final rand = Random.secure()
+        .nextInt(0xFFFF)
+        .toRadixString(16)
+        .padLeft(4, '0');
     return '$ms-$rand';
   }
 }

@@ -17,7 +17,8 @@ import '../../../core/utils/result.dart';
 //     --dart-define=GOOGLE_SERVER_CLIENT_ID=<web-client-id> 로 주입하세요.
 const String _googleServerClientId = String.fromEnvironment(
   'GOOGLE_SERVER_CLIENT_ID',
-  defaultValue: '413403814343-8dumqdu0qn0jlo7qqgvh0312215687t9.apps.googleusercontent.com',
+  defaultValue:
+      '413403814343-8dumqdu0qn0jlo7qqgvh0312215687t9.apps.googleusercontent.com',
 );
 
 /// EN: Credentials returned by Sign in with Apple.
@@ -53,7 +54,8 @@ class NativeSocialLoginService {
     required SecureStorage secureStorage,
     GoogleSignIn? googleSignIn,
   }) : _secureStorage = secureStorage,
-       _googleSignIn = googleSignIn ??
+       _googleSignIn =
+           googleSignIn ??
            GoogleSignIn(
              scopes: ['email'],
              serverClientId: _googleServerClientId.isNotEmpty

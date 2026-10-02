@@ -68,8 +68,7 @@ class RegisterResponse {
 
     DateTime? parsedVerificationExpiresAt;
     if (verificationExpiresAtRaw is String) {
-      parsedVerificationExpiresAt =
-          DateTime.tryParse(verificationExpiresAtRaw);
+      parsedVerificationExpiresAt = DateTime.tryParse(verificationExpiresAtRaw);
     }
 
     return RegisterResponse(
@@ -81,8 +80,7 @@ class RegisterResponse {
       refreshToken: json['refreshToken'] as String?,
       expiresAt: parsedExpiresAt,
       expiresIn: parsedExpiresIn,
-      tokenType:
-          json['tokenType'] as String? ?? json['token_type'] as String?,
+      tokenType: json['tokenType'] as String? ?? json['token_type'] as String?,
     );
   }
 

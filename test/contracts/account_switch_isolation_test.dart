@@ -45,7 +45,10 @@ void main() {
     await storage.setLocalPostBookmarks([
       {'marker': 'account-a-bookmark'},
     ]);
-    await storage.setString(LocalStorageKeys.selectedProjectId, 'account-a-project');
+    await storage.setString(
+      LocalStorageKeys.selectedProjectId,
+      'account-a-project',
+    );
   }
 
   test(
@@ -68,36 +71,37 @@ void main() {
 
       // EN: Account B now starts on a clean slate — no leaked A data.
       // KO: 계정 B는 이제 A 데이터가 누출되지 않은 상태에서 시작합니다.
-      expect(storage.getPendingFavoriteMutations(), isNot(contains({'marker': 'account-a-favorite'})));
-    },
-  );
-
-  test(
-    'pre-login cleanup (clearUserScopedMutations) also clears queues '
-    'left over from an account that never ran a clean logout',
-    () async {
-      final storage = await buildStorage();
-      await seedAccountAData(storage);
-
-      final cleared = await clearUserScopedMutations(storage);
-
-      expect(cleared, isTrue);
-      expect(storage.getPendingFavoriteMutations(), isEmpty);
-      expect(storage.getPendingPostReactionMutations(), isEmpty);
-      expect(storage.getPendingLiveAttendanceMutations(), isEmpty);
-      expect(storage.getLocalPostBookmarks(), isEmpty);
-
-      // EN: KNOWN LEAK — clearUserScopedMutations does not touch
-      // selectedProjectId; only the full clearUserScopedLocalStorage
-      // (logout path) does. If a caller relies on clearUserScopedMutations
-      // alone (e.g. pre-login guard) account A's project selection can
-      // survive into account B's session. Not fixed here per PR 0 scope.
       expect(
-        storage.getString(LocalStorageKeys.selectedProjectId),
-        'account-a-project',
-        reason: 'KNOWN LEAK: clearUserScopedMutations leaves selectedProjectId behind; '
-            'only clearUserScopedLocalStorage (full logout) clears it.',
+        storage.getPendingFavoriteMutations(),
+        isNot(contains({'marker': 'account-a-favorite'})),
       );
     },
   );
+
+  test('pre-login cleanup (clearUserScopedMutations) also clears queues '
+      'left over from an account that never ran a clean logout', () async {
+    final storage = await buildStorage();
+    await seedAccountAData(storage);
+
+    final cleared = await clearUserScopedMutations(storage);
+
+    expect(cleared, isTrue);
+    expect(storage.getPendingFavoriteMutations(), isEmpty);
+    expect(storage.getPendingPostReactionMutations(), isEmpty);
+    expect(storage.getPendingLiveAttendanceMutations(), isEmpty);
+    expect(storage.getLocalPostBookmarks(), isEmpty);
+
+    // EN: KNOWN LEAK — clearUserScopedMutations does not touch
+    // selectedProjectId; only the full clearUserScopedLocalStorage
+    // (logout path) does. If a caller relies on clearUserScopedMutations
+    // alone (e.g. pre-login guard) account A's project selection can
+    // survive into account B's session. Not fixed here per PR 0 scope.
+    expect(
+      storage.getString(LocalStorageKeys.selectedProjectId),
+      'account-a-project',
+      reason:
+          'KNOWN LEAK: clearUserScopedMutations leaves selectedProjectId behind; '
+          'only clearUserScopedLocalStorage (full logout) clears it.',
+    );
+  });
 }

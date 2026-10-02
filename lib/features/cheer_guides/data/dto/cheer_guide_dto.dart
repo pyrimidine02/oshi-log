@@ -30,16 +30,13 @@ class CheerSectionDto {
           json['sectionName'] as String? ??
           json['section_name'] as String? ??
           '',
-      cheerType:
-          json['cheerType'] as String? ?? json['cheer_type'] as String?,
+      cheerType: json['cheerType'] as String? ?? json['cheer_type'] as String?,
       lyrics: json['lyrics'] as String?,
-      cheerText:
-          json['cheerText'] as String? ?? json['cheer_text'] as String?,
+      cheerText: json['cheerText'] as String? ?? json['cheer_text'] as String?,
       penlightColors: rawColors.whereType<String>().toList(growable: false),
       timing: json['timing'] as String?,
       notes: json['notes'] as String?,
-      sortOrder:
-          json['sortOrder'] as int? ?? json['sort_order'] as int? ?? 0,
+      sortOrder: json['sortOrder'] as int? ?? json['sort_order'] as int? ?? 0,
     );
   }
 
@@ -87,23 +84,17 @@ class CheerGuideDto {
     final sectionsRaw = json['sections'] as List<dynamic>? ?? const [];
     return CheerGuideDto(
       id: json['id'] as String? ?? '',
-      songId:
-          json['songId'] as String? ?? json['song_id'] as String? ?? '',
+      songId: json['songId'] as String? ?? json['song_id'] as String? ?? '',
       songTitle:
-          json['songTitle'] as String? ??
-          json['song_title'] as String? ??
-          '',
-      projectId:
-          json['projectId'] as String? ?? json['project_id'] as String?,
+          json['songTitle'] as String? ?? json['song_title'] as String? ?? '',
+      projectId: json['projectId'] as String? ?? json['project_id'] as String?,
       artistName:
           json['artistName'] as String? ?? json['artist_name'] as String?,
       difficulty: _parseDifficulty(json['difficulty']),
       overallNotes:
-          json['overallNotes'] as String? ??
-          json['overall_notes'] as String?,
+          json['overallNotes'] as String? ?? json['overall_notes'] as String?,
       lastUpdatedAt: _parseDate(
-        json['lastUpdatedAt'] as String? ??
-            json['last_updated_at'] as String?,
+        json['lastUpdatedAt'] as String? ?? json['last_updated_at'] as String?,
       ),
       sections: sectionsRaw
           .whereType<Map<String, dynamic>>()
@@ -178,21 +169,15 @@ class CheerGuideSummaryDto {
   factory CheerGuideSummaryDto.fromJson(Map<String, dynamic> json) {
     return CheerGuideSummaryDto(
       id: json['id'] as String? ?? '',
-      songId:
-          json['songId'] as String? ?? json['song_id'] as String? ?? '',
+      songId: json['songId'] as String? ?? json['song_id'] as String? ?? '',
       songTitle:
-          json['songTitle'] as String? ??
-          json['song_title'] as String? ??
-          '',
-      projectId:
-          json['projectId'] as String? ?? json['project_id'] as String?,
+          json['songTitle'] as String? ?? json['song_title'] as String? ?? '',
+      projectId: json['projectId'] as String? ?? json['project_id'] as String?,
       artistName:
           json['artistName'] as String? ?? json['artist_name'] as String?,
       difficulty: _parseDifficulty(json['difficulty']),
       sectionCount:
-          json['sectionCount'] as int? ??
-          json['section_count'] as int? ??
-          0,
+          json['sectionCount'] as int? ?? json['section_count'] as int? ?? 0,
     );
   }
 

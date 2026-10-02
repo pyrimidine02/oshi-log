@@ -34,10 +34,8 @@ class QuotesRemoteDataSource {
           items = json;
         } else if (json is Map<String, dynamic>) {
           items =
-              (json['quotes'] ??
-                  json['items'] ??
-                  json['data'] ??
-                  const []) as List<dynamic>;
+              (json['quotes'] ?? json['items'] ?? json['data'] ?? const [])
+                  as List<dynamic>;
         } else {
           items = const [];
         }

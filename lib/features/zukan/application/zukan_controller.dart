@@ -24,32 +24,32 @@ final zukanRepositoryProvider = Provider<ZukanRepository>((ref) {
 /// KO: [projectId]로 범위가 제한된 도감 컬렉션 요약 목록을 가져옵니다.
 final zukanCollectionsProvider = FutureProvider.autoDispose
     .family<List<ZukanCollectionSummary>, String?>((ref, projectId) async {
-  final repo = ref.watch(zukanRepositoryProvider);
-  final result = await repo.fetchCollections(projectId: projectId);
-  return result.when(
-    success: (list) => list,
-    failure: (f) {
-      // EN: 404 means no collections yet — return empty list, not an error.
-      // KO: 404는 아직 도감이 없는 것이므로 에러가 아닌 빈 목록으로 반환합니다.
-      if (f is NotFoundFailure) return const <ZukanCollectionSummary>[];
-      throw f;
-    },
-  );
-});
+      final repo = ref.watch(zukanRepositoryProvider);
+      final result = await repo.fetchCollections(projectId: projectId);
+      return result.when(
+        success: (list) => list,
+        failure: (f) {
+          // EN: 404 means no collections yet — return empty list, not an error.
+          // KO: 404는 아직 도감이 없는 것이므로 에러가 아닌 빈 목록으로 반환합니다.
+          if (f is NotFoundFailure) return const <ZukanCollectionSummary>[];
+          throw f;
+        },
+      );
+    });
 
 /// EN: Fetches the full detail of a single zukan collection by [collectionId].
 /// KO: [collectionId]로 단일 도감 컬렉션의 전체 상세 정보를 가져옵니다.
 final zukanCollectionDetailProvider = FutureProvider.autoDispose
     .family<ZukanCollection?, String>((ref, collectionId) async {
-  final repo = ref.watch(zukanRepositoryProvider);
-  final result = await repo.fetchCollectionDetail(collectionId);
-  return result.when(
-    success: (c) => c,
-    failure: (f) {
-      // EN: 404 means this collection doesn't exist — return null for empty state.
-      // KO: 404는 해당 도감이 없는 것이므로 빈 상태용 null을 반환합니다.
-      if (f is NotFoundFailure) return null;
-      throw f;
-    },
-  );
-});
+      final repo = ref.watch(zukanRepositoryProvider);
+      final result = await repo.fetchCollectionDetail(collectionId);
+      return result.when(
+        success: (c) => c,
+        failure: (f) {
+          // EN: 404 means this collection doesn't exist — return null for empty state.
+          // KO: 404는 해당 도감이 없는 것이므로 빈 상태용 null을 반환합니다.
+          if (f is NotFoundFailure) return null;
+          throw f;
+        },
+      );
+    });

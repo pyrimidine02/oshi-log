@@ -33,9 +33,7 @@ class QuoteCardDto {
     return QuoteCardDto(
       id: json['id'] as String? ?? '',
       quoteText:
-          json['quoteText'] as String? ??
-          json['quote_text'] as String? ??
-          '',
+          json['quoteText'] as String? ?? json['quote_text'] as String? ?? '',
       characterName:
           json['characterName'] as String? ??
           json['character_name'] as String? ??
@@ -45,8 +43,7 @@ class QuoteCardDto {
           json['episode_context'] as String?,
       animeTitle:
           json['animeTitle'] as String? ?? json['anime_title'] as String?,
-      projectId:
-          json['projectId'] as String? ?? json['project_id'] as String?,
+      projectId: json['projectId'] as String? ?? json['project_id'] as String?,
       characterImageUrl:
           json['characterImageUrl'] as String? ??
           json['character_image_url'] as String?,
@@ -54,10 +51,8 @@ class QuoteCardDto {
           json['backgroundHexColor'] as String? ??
           json['background_hex_color'] as String?,
       backgroundGradientColors: gradients.cast<String>(),
-      likeCount:
-          json['likeCount'] as int? ?? json['like_count'] as int? ?? 0,
-      isLiked:
-          json['isLiked'] as bool? ?? json['is_liked'] as bool? ?? false,
+      likeCount: json['likeCount'] as int? ?? json['like_count'] as int? ?? 0,
+      isLiked: json['isLiked'] as bool? ?? json['is_liked'] as bool? ?? false,
       tags: tags.cast<String>(),
     );
   }

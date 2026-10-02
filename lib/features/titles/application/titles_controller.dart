@@ -186,26 +186,29 @@ class TitleCatalogNotifier
 ///     해당 사용자에게 활성 칭호가 없으면 null을 반환합니다.
 final userActiveTitleProvider = FutureProvider.autoDispose
     .family<ActiveTitleItem?, String>((ref, userId) async {
-  if (userId.isEmpty) return null;
-  final repository = await ref.read(titlesRepositoryProvider.future);
-  final result = await repository.fetchUserActiveTitle(userId);
-  return result.when(success: (item) => item, failure: (_) => null);
-});
+      if (userId.isEmpty) return null;
+      final repository = await ref.read(titlesRepositoryProvider.future);
+      final result = await repository.fetchUserActiveTitle(userId);
+      return result.when(success: (item) => item, failure: (_) => null);
+    });
 
 /// EN: Auto-disposing provider for [TitleCatalogNotifier].
 ///     Auto-disposed because it is only needed while the picker page is open.
 /// KO: [TitleCatalogNotifier]를 위한 자동 해제 프로바이더.
 ///     피커 페이지가 열려 있는 동안에만 필요하므로 autoDispose를 사용합니다.
-final titleCatalogProvider = StateNotifierProvider.autoDispose<
-  TitleCatalogNotifier,
-  AsyncValue<List<TitleCatalogItem>>
->((ref) {
-  return ref.watch(titlesRepositoryProvider).when(
-    data: (repo) => TitleCatalogNotifier(repo, ref),
-    loading: _LoadingTitleCatalogNotifier.new,
-    error: (error, stack) => _ErrorTitleCatalogNotifier(error, stack),
-  );
-});
+final titleCatalogProvider =
+    StateNotifierProvider.autoDispose<
+      TitleCatalogNotifier,
+      AsyncValue<List<TitleCatalogItem>>
+    >((ref) {
+      return ref
+          .watch(titlesRepositoryProvider)
+          .when(
+            data: (repo) => TitleCatalogNotifier(repo, ref),
+            loading: _LoadingTitleCatalogNotifier.new,
+            error: (error, stack) => _ErrorTitleCatalogNotifier(error, stack),
+          );
+    });
 
 // =============================================================================
 // EN: Internal placeholder notifiers for loading/error repository states.
@@ -226,8 +229,7 @@ class _ErrorActiveTitleNotifier extends ActiveTitleNotifier {
 }
 
 class _LoadingTitleCatalogNotifier extends TitleCatalogNotifier {
-  _LoadingTitleCatalogNotifier()
-    : super(_NopTitlesRepository(), _NopRef()) {
+  _LoadingTitleCatalogNotifier() : super(_NopTitlesRepository(), _NopRef()) {
     state = const AsyncValue.loading();
   }
 }
@@ -248,28 +250,25 @@ class _NopTitlesRepository implements TitlesRepository {
   @override
   Future<Result<List<TitleCatalogItem>>> fetchTitleCatalog({
     String? projectKey,
-  }) async =>
-      const Result.success([]);
+  }) async => const Result.success([]);
 
   @override
   Future<Result<ActiveTitleItem?>> fetchMyActiveTitle({
     String? projectKey,
-  }) async =>
-      const Result.success(null);
+  }) async => const Result.success(null);
 
   @override
   Future<Result<ActiveTitleItem>> setMyActiveTitle(
     String titleId, {
     String? projectKey,
-  }) async =>
-      const Result.success(
-        ActiveTitleItem(
-          titleId: '',
-          code: '',
-          name: '',
-          category: TitleCategory.activity,
-        ),
-      );
+  }) async => const Result.success(
+    ActiveTitleItem(
+      titleId: '',
+      code: '',
+      name: '',
+      category: TitleCategory.activity,
+    ),
+  );
 
   @override
   Future<Result<void>> clearMyActiveTitle({String? projectKey}) async =>
@@ -279,8 +278,7 @@ class _NopTitlesRepository implements TitlesRepository {
   Future<Result<ActiveTitleItem?>> fetchUserActiveTitle(
     String userId, {
     String? projectKey,
-  }) async =>
-      const Result.success(null);
+  }) async => const Result.success(null);
 
   @override
   Future<void> invalidateTitleCaches() async {}
@@ -297,8 +295,7 @@ class _NopRef implements Ref {
   }
 
   @override
-  Never noSuchMethod(Invocation invocation) =>
-      throw UnsupportedError(
-        '_NopRef does not support method: ${invocation.memberName}',
-      );
+  Never noSuchMethod(Invocation invocation) => throw UnsupportedError(
+    '_NopRef does not support method: ${invocation.memberName}',
+  );
 }

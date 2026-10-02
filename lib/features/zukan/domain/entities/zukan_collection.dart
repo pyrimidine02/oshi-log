@@ -93,8 +93,7 @@ class ZukanCollection {
 
   /// EN: Ratio of stamps earned (0.0 – 1.0).
   /// KO: 획득된 스탬프 비율 (0.0 – 1.0).
-  double get progressRatio =>
-      totalCount > 0 ? stampedCount / totalCount : 0.0;
+  double get progressRatio => totalCount > 0 ? stampedCount / totalCount : 0.0;
 
   @override
   bool operator ==(Object other) =>
@@ -134,8 +133,7 @@ class ZukanCollectionSummary {
 
   /// EN: Ratio of stamps earned (0.0 – 1.0).
   /// KO: 획득된 스탬프 비율 (0.0 – 1.0).
-  double get progressRatio =>
-      totalCount > 0 ? stampedCount / totalCount : 0.0;
+  double get progressRatio => totalCount > 0 ? stampedCount / totalCount : 0.0;
 
   @override
   bool operator ==(Object other) =>

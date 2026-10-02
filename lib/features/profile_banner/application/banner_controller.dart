@@ -193,16 +193,19 @@ class BannerCatalogNotifier
 ///     Auto-disposed because it is only needed while the picker page is open.
 /// KO: [BannerCatalogNotifier]를 위한 자동 해제 프로바이더.
 ///     피커 페이지가 열려 있는 동안에만 필요하므로 autoDispose를 사용합니다.
-final bannerCatalogProvider = StateNotifierProvider.autoDispose<
-  BannerCatalogNotifier,
-  AsyncValue<List<BannerItem>>
->((ref) {
-  return ref.watch(bannerRepositoryProvider).when(
-    data: (repo) => BannerCatalogNotifier(repo, ref),
-    loading: _LoadingCatalogNotifier.new,
-    error: (error, stack) => _ErrorCatalogNotifier(error, stack),
-  );
-});
+final bannerCatalogProvider =
+    StateNotifierProvider.autoDispose<
+      BannerCatalogNotifier,
+      AsyncValue<List<BannerItem>>
+    >((ref) {
+      return ref
+          .watch(bannerRepositoryProvider)
+          .when(
+            data: (repo) => BannerCatalogNotifier(repo, ref),
+            loading: _LoadingCatalogNotifier.new,
+            error: (error, stack) => _ErrorCatalogNotifier(error, stack),
+          );
+    });
 
 // =============================================================================
 // EN: Internal placeholder notifiers for loading/error repository states.
@@ -250,8 +253,7 @@ class _NopBannerRepository implements BannerRepository {
       const Result.success(ActiveBanner());
 
   @override
-  Future<Result<void>> clearActiveBanner() async =>
-      const Result.success(null);
+  Future<Result<void>> clearActiveBanner() async => const Result.success(null);
 
   @override
   Future<Result<List<BannerItem>>> fetchBanners() async =>
@@ -269,8 +271,7 @@ class _NopRef implements Ref {
   }
 
   @override
-  Never noSuchMethod(Invocation invocation) =>
-      throw UnsupportedError(
-        '_NopRef does not support method: ${invocation.memberName}',
-      );
+  Never noSuchMethod(Invocation invocation) => throw UnsupportedError(
+    '_NopRef does not support method: ${invocation.memberName}',
+  );
 }

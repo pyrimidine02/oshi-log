@@ -19,13 +19,14 @@ import '../domain/repositories/cheer_guides_repository.dart';
 
 /// EN: Provides a fully-wired [CheerGuidesRepository].
 /// KO: 완전히 연결된 [CheerGuidesRepository]를 제공합니다.
-final cheerGuidesRepositoryProvider =
-    FutureProvider<CheerGuidesRepository>((ref) async {
-      final apiClient = ref.watch(apiClientProvider);
-      return CheerGuidesRepositoryImpl(
-        remoteDataSource: CheerGuidesRemoteDataSource(apiClient: apiClient),
-      );
-    });
+final cheerGuidesRepositoryProvider = FutureProvider<CheerGuidesRepository>((
+  ref,
+) async {
+  final apiClient = ref.watch(apiClientProvider);
+  return CheerGuidesRepositoryImpl(
+    remoteDataSource: CheerGuidesRemoteDataSource(apiClient: apiClient),
+  );
+});
 
 // ========================================
 // EN: Feature providers
@@ -38,16 +39,15 @@ final cheerGuidesRepositoryProvider =
 /// 오류 상태를 노출하기 위해 [Failure]를 throw합니다.
 final cheerGuidesListProvider = FutureProvider.autoDispose
     .family<List<CheerGuideSummary>, String?>((ref, projectId) async {
-      final repository = await ref.watch(
-        cheerGuidesRepositoryProvider.future,
-      );
+      final repository = await ref.watch(cheerGuidesRepositoryProvider.future);
       final result = await repository.fetchSummaries(
         projectId: projectId?.isNotEmpty == true ? projectId : null,
       );
       if (result case Success<List<CheerGuideSummary>>(:final data)) {
         return data;
       }
-      final failure = result.failureOrNull ??
+      final failure =
+          result.failureOrNull ??
           const UnknownFailure(
             'Unknown cheer guides list provider state',
             code: 'unknown_cheer_guides_list_provider',
@@ -64,9 +64,7 @@ final cheerGuidesListProvider = FutureProvider.autoDispose
 /// 오류 상태를 노출하기 위해 [Failure]를 throw합니다.
 final cheerGuideDetailProvider = FutureProvider.autoDispose
     .family<CheerGuide, String>((ref, guideId) async {
-      final repository = await ref.watch(
-        cheerGuidesRepositoryProvider.future,
-      );
+      final repository = await ref.watch(cheerGuidesRepositoryProvider.future);
       final result = await repository.fetchGuideDetail(guideId);
       if (result case Success<CheerGuide>(:final data)) {
         return data;

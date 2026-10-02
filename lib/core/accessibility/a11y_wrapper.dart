@@ -160,7 +160,11 @@ class A11ySkipLink extends StatelessWidget {
 /// EN: Announce a message to screen readers
 /// KO: 스크린 리더에 메시지 알림
 void announceToScreenReader(BuildContext context, String message) {
-  SemanticsService.sendAnnouncement(View.of(context), message, TextDirection.ltr);
+  SemanticsService.sendAnnouncement(
+    View.of(context),
+    message,
+    TextDirection.ltr,
+  );
 }
 
 /// EN: Extension for common accessibility patterns
@@ -320,7 +324,11 @@ class A11yAnnouncer {
     // KO: 빈 메시지는 무시
     if (message.trim().isEmpty) return;
 
-    SemanticsService.sendAnnouncement(View.of(context), message, TextDirection.ltr);
+    SemanticsService.sendAnnouncement(
+      View.of(context),
+      message,
+      TextDirection.ltr,
+    );
   }
 
   /// EN: Announce an error message to screen readers with "Error: " prefix
@@ -335,7 +343,11 @@ class A11yAnnouncer {
     final locale = Localizations.localeOf(context);
     final prefix = locale.languageCode == 'ko' ? '오류: ' : 'Error: ';
 
-    SemanticsService.sendAnnouncement(View.of(context), '$prefix$message', TextDirection.ltr);
+    SemanticsService.sendAnnouncement(
+      View.of(context),
+      '$prefix$message',
+      TextDirection.ltr,
+    );
   }
 
   /// EN: Announce a success message to screen readers with "Success: " prefix
@@ -350,6 +362,10 @@ class A11yAnnouncer {
     final locale = Localizations.localeOf(context);
     final prefix = locale.languageCode == 'ko' ? '성공: ' : 'Success: ';
 
-    SemanticsService.sendAnnouncement(View.of(context), '$prefix$message', TextDirection.ltr);
+    SemanticsService.sendAnnouncement(
+      View.of(context),
+      '$prefix$message',
+      TextDirection.ltr,
+    );
   }
 }

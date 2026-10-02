@@ -24,7 +24,7 @@ final quotesRepositoryProvider = Provider<QuotesRepository>((ref) {
 /// KO: 좋아요/취소 변이를 포함한 명대사 카드 목록을 관리합니다.
 class QuotesNotifier extends StateNotifier<AsyncValue<List<QuoteCard>>> {
   QuotesNotifier(this._repository, this._projectId)
-      : super(const AsyncValue.loading()) {
+    : super(const AsyncValue.loading()) {
     _load();
   }
 
@@ -93,10 +93,10 @@ class QuotesNotifier extends StateNotifier<AsyncValue<List<QuoteCard>>> {
 /// EN: Auto-dispose family provider keyed by optional projectId.
 /// KO: 선택적 projectId로 키가 지정된 자동 해제 패밀리 프로바이더입니다.
 final quotesControllerProvider = StateNotifierProvider.autoDispose
-    .family<QuotesNotifier, AsyncValue<List<QuoteCard>>, String?>(
-      (ref, projectId) {
-        final repository = ref.watch(quotesRepositoryProvider);
-        return QuotesNotifier(repository, projectId);
-      },
-    );
-
+    .family<QuotesNotifier, AsyncValue<List<QuoteCard>>, String?>((
+      ref,
+      projectId,
+    ) {
+      final repository = ref.watch(quotesRepositoryProvider);
+      return QuotesNotifier(repository, projectId);
+    });

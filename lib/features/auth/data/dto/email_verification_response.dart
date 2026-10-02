@@ -16,8 +16,7 @@ class EmailVerificationResponse {
   final DateTime? resendAvailableAt;
 
   factory EmailVerificationResponse.fromJson(Map<String, dynamic> json) {
-    final raw =
-        json['resendAvailableAt'] ?? json['resend_available_at'];
+    final raw = json['resendAvailableAt'] ?? json['resend_available_at'];
     DateTime? parsed;
     if (raw is String) {
       parsed = DateTime.tryParse(raw)?.toLocal();

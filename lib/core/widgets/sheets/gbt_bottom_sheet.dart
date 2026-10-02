@@ -175,7 +175,9 @@ class GBTBottomSheet extends StatelessWidget {
           // background DecoratedBox.
           // KO: ListTile/잉크 효과가 이 Container의 배경 DecoratedBox에 가려지지
           // 않도록 Material로 감싼 콘텐츠.
-          Flexible(child: Material(color: Colors.transparent, child: child)),
+          Flexible(
+            child: Material(color: Colors.transparent, child: child),
+          ),
         ],
       ),
     );

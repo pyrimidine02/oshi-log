@@ -188,12 +188,7 @@ class _LiveProjectHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        0,
-        GBTSpacing.lg,
-        0,
-        GBTSpacing.xs,
-      ),
+      padding: const EdgeInsets.fromLTRB(0, GBTSpacing.lg, 0, GBTSpacing.xs),
       child: Text(
         label,
         style: GBTTypography.headlineSmall.copyWith(

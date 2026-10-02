@@ -22,8 +22,7 @@ class CheerGuidesRemoteDataSource {
     return apiClient.get<List<CheerGuideSummaryDto>>(
       ApiEndpoints.cheerGuides,
       queryParameters: {
-        if (projectId != null && projectId.isNotEmpty)
-          'projectId': projectId,
+        if (projectId != null && projectId.isNotEmpty) 'projectId': projectId,
       },
       fromJson: (json) {
         List<dynamic> items;
@@ -31,10 +30,8 @@ class CheerGuidesRemoteDataSource {
           items = json;
         } else if (json is Map<String, dynamic>) {
           items =
-              (json['guides'] ??
-                  json['items'] ??
-                  json['data'] ??
-                  const []) as List<dynamic>;
+              (json['guides'] ?? json['items'] ?? json['data'] ?? const [])
+                  as List<dynamic>;
         } else {
           items = const [];
         }
@@ -51,8 +48,7 @@ class CheerGuidesRemoteDataSource {
   Future<Result<CheerGuideDto>> fetchGuideDetail(String guideId) {
     return apiClient.get<CheerGuideDto>(
       ApiEndpoints.cheerGuide(guideId),
-      fromJson: (json) =>
-          CheerGuideDto.fromJson(json as Map<String, dynamic>),
+      fromJson: (json) => CheerGuideDto.fromJson(json as Map<String, dynamic>),
     );
   }
 }

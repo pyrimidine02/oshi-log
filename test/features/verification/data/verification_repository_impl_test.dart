@@ -63,90 +63,93 @@ void main() {
     expect(capturedRequest.verificationMethod, 'AUTO');
   });
 
-  test('verifyLiveEvent forwards verificationMethod to remote data source',
-      () async {
-    final remoteDataSource = MockVerificationRemoteDataSource();
-    final repository = VerificationRepositoryImpl(
-      remoteDataSource: remoteDataSource,
-    );
+  test(
+    'verifyLiveEvent forwards verificationMethod to remote data source',
+    () async {
+      final remoteDataSource = MockVerificationRemoteDataSource();
+      final repository = VerificationRepositoryImpl(
+        remoteDataSource: remoteDataSource,
+      );
 
-    when(
-      () => remoteDataSource.verifyLiveEvent(
-        projectId: any(named: 'projectId'),
-        liveEventId: any(named: 'liveEventId'),
-        request: any(named: 'request'),
-      ),
-    ).thenAnswer(
-      (_) async => const Result.success(
-        VerificationResultDto(liveEventId: 'live-1', result: 'RECORDED'),
-      ),
-    );
-
-    final result = await repository.verifyLiveEvent(
-      projectId: 'project-1',
-      liveEventId: 'live-1',
-      verificationMethod: 'MANUAL',
-    );
-
-    expect(result, isA<Success<VerificationResult>>());
-
-    final capturedRequest =
-        verify(
-              () => remoteDataSource.verifyLiveEvent(
-                projectId: 'project-1',
-                liveEventId: 'live-1',
-                request: captureAny(named: 'request'),
-              ),
-            ).captured.single
-            as VerificationRequestDto;
-
-    expect(capturedRequest.verificationMethod, 'MANUAL');
-  });
-
-  test('registerDeviceKey forwards JWK payload to remote data source',
-      () async {
-    final remoteDataSource = MockVerificationRemoteDataSource();
-    final repository = VerificationRepositoryImpl(
-      remoteDataSource: remoteDataSource,
-    );
-
-    when(
-      () => remoteDataSource.registerDeviceKey(
-        request: any(named: 'request'),
-      ),
-    ).thenAnswer(
-      (_) async => Result.success(
-        VerificationDeviceKeyDto(
-          keyId: 'device-key-1',
-          deviceId: 'ios-15-pro-001',
-          algorithm: 'RS256',
-          isActive: true,
-          createdAt: DateTime.parse('2026-02-11T13:10:00+09:00'),
-          lastUsedAt: null,
-          revokedAt: null,
+      when(
+        () => remoteDataSource.verifyLiveEvent(
+          projectId: any(named: 'projectId'),
+          liveEventId: any(named: 'liveEventId'),
+          request: any(named: 'request'),
         ),
-      ),
-    );
+      ).thenAnswer(
+        (_) async => const Result.success(
+          VerificationResultDto(liveEventId: 'live-1', result: 'RECORDED'),
+        ),
+      );
 
-    final result = await repository.registerDeviceKey(
-      keyId: 'device-key-1',
-      deviceId: 'ios-15-pro-001',
-      publicKeyJwk: const {'kty': 'RSA', 'kid': 'device-key-1'},
-    );
+      final result = await repository.verifyLiveEvent(
+        projectId: 'project-1',
+        liveEventId: 'live-1',
+        verificationMethod: 'MANUAL',
+      );
 
-    expect(result, isA<Success<VerificationDeviceKey>>());
+      expect(result, isA<Success<VerificationResult>>());
 
-    final capturedRequest =
-        verify(
-              () => remoteDataSource.registerDeviceKey(
-                request: captureAny(named: 'request'),
-              ),
-            ).captured.single
-            as VerificationKeyRegisterRequestDto;
+      final capturedRequest =
+          verify(
+                () => remoteDataSource.verifyLiveEvent(
+                  projectId: 'project-1',
+                  liveEventId: 'live-1',
+                  request: captureAny(named: 'request'),
+                ),
+              ).captured.single
+              as VerificationRequestDto;
 
-    expect(capturedRequest.keyId, 'device-key-1');
-    expect(capturedRequest.deviceId, 'ios-15-pro-001');
-    expect(capturedRequest.publicKeyJwk, isNotNull);
-    expect(capturedRequest.publicKeyPem, isNull);
-  });
+      expect(capturedRequest.verificationMethod, 'MANUAL');
+    },
+  );
+
+  test(
+    'registerDeviceKey forwards JWK payload to remote data source',
+    () async {
+      final remoteDataSource = MockVerificationRemoteDataSource();
+      final repository = VerificationRepositoryImpl(
+        remoteDataSource: remoteDataSource,
+      );
+
+      when(
+        () =>
+            remoteDataSource.registerDeviceKey(request: any(named: 'request')),
+      ).thenAnswer(
+        (_) async => Result.success(
+          VerificationDeviceKeyDto(
+            keyId: 'device-key-1',
+            deviceId: 'ios-15-pro-001',
+            algorithm: 'RS256',
+            isActive: true,
+            createdAt: DateTime.parse('2026-02-11T13:10:00+09:00'),
+            lastUsedAt: null,
+            revokedAt: null,
+          ),
+        ),
+      );
+
+      final result = await repository.registerDeviceKey(
+        keyId: 'device-key-1',
+        deviceId: 'ios-15-pro-001',
+        publicKeyJwk: const {'kty': 'RSA', 'kid': 'device-key-1'},
+      );
+
+      expect(result, isA<Success<VerificationDeviceKey>>());
+
+      final capturedRequest =
+          verify(
+                () => remoteDataSource.registerDeviceKey(
+                  request: captureAny(named: 'request'),
+                ),
+              ).captured.single
+              as VerificationKeyRegisterRequestDto;
+
+      expect(capturedRequest.keyId, 'device-key-1');
+      expect(capturedRequest.deviceId, 'ios-15-pro-001');
+      expect(capturedRequest.publicKeyJwk, isNotNull);
+      expect(capturedRequest.publicKeyPem, isNull);
+    },
+  );
 }

@@ -8,8 +8,9 @@ import 'package:oshi_log/core/accessibility/a11y_wrapper.dart';
 
 void main() {
   group('A11yScalableText', () {
-    testWidgets('renders text with default scale factor',
-        (WidgetTester tester) async {
+    testWidgets('renders text with default scale factor', (
+      WidgetTester tester,
+    ) async {
       // EN: Build widget with default text scale
       // KO: 기본 텍스트 스케일로 위젯 빌드
       await tester.pumpWidget(
@@ -28,16 +29,15 @@ void main() {
       expect(find.text('Test Text'), findsOneWidget);
     });
 
-    testWidgets('applies text scale factor from MediaQuery',
-        (WidgetTester tester) async {
+    testWidgets('applies text scale factor from MediaQuery', (
+      WidgetTester tester,
+    ) async {
       // EN: Build widget with custom text scale factor
       // KO: 사용자 정의 텍스트 스케일 팩터로 위젯 빌드
       await tester.pumpWidget(
         MaterialApp(
           home: MediaQuery(
-            data: const MediaQueryData(
-              textScaler: TextScaler.linear(1.5),
-            ),
+            data: const MediaQueryData(textScaler: TextScaler.linear(1.5)),
             child: const Scaffold(
               body: A11yScalableText(
                 'Scaled Text',
@@ -57,16 +57,15 @@ void main() {
       expect(textWidget.style?.fontSize, 24.0);
     });
 
-    testWidgets('clamps text scale factor to maximum 2.0',
-        (WidgetTester tester) async {
+    testWidgets('clamps text scale factor to maximum 2.0', (
+      WidgetTester tester,
+    ) async {
       // EN: Build widget with excessive text scale factor
       // KO: 과도한 텍스트 스케일 팩터로 위젯 빌드
       await tester.pumpWidget(
         MaterialApp(
           home: MediaQuery(
-            data: const MediaQueryData(
-              textScaler: TextScaler.linear(3.0),
-            ),
+            data: const MediaQueryData(textScaler: TextScaler.linear(3.0)),
             child: const Scaffold(
               body: A11yScalableText(
                 'Clamped Text',
@@ -86,16 +85,15 @@ void main() {
       expect(textWidget.style?.fontSize, 32.0);
     });
 
-    testWidgets('respects minimum scale factor of 1.0',
-        (WidgetTester tester) async {
+    testWidgets('respects minimum scale factor of 1.0', (
+      WidgetTester tester,
+    ) async {
       // EN: Build widget with text scale factor below minimum
       // KO: 최소값 이하의 텍스트 스케일 팩터로 위젯 빌드
       await tester.pumpWidget(
         MaterialApp(
           home: MediaQuery(
-            data: const MediaQueryData(
-              textScaler: TextScaler.linear(0.5),
-            ),
+            data: const MediaQueryData(textScaler: TextScaler.linear(0.5)),
             child: const Scaffold(
               body: A11yScalableText(
                 'Min Scale Text',
@@ -115,19 +113,16 @@ void main() {
       expect(textWidget.style?.fontSize, 16.0);
     });
 
-    testWidgets('uses default font size when style is null',
-        (WidgetTester tester) async {
+    testWidgets('uses default font size when style is null', (
+      WidgetTester tester,
+    ) async {
       // EN: Build widget without style
       // KO: 스타일 없이 위젯 빌드
       await tester.pumpWidget(
         MaterialApp(
           home: MediaQuery(
-            data: const MediaQueryData(
-              textScaler: TextScaler.linear(1.5),
-            ),
-            child: const Scaffold(
-              body: A11yScalableText('Default Size Text'),
-            ),
+            data: const MediaQueryData(textScaler: TextScaler.linear(1.5)),
+            child: const Scaffold(body: A11yScalableText('Default Size Text')),
           ),
         ),
       );
@@ -141,17 +136,15 @@ void main() {
       expect(textWidget.style?.fontSize, 21.0);
     });
 
-    testWidgets('applies text alignment correctly',
-        (WidgetTester tester) async {
+    testWidgets('applies text alignment correctly', (
+      WidgetTester tester,
+    ) async {
       // EN: Build widget with text alignment
       // KO: 텍스트 정렬이 있는 위젯 빌드
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(
-            body: A11yScalableText(
-              'Aligned Text',
-              textAlign: TextAlign.center,
-            ),
+            body: A11yScalableText('Aligned Text', textAlign: TextAlign.center),
           ),
         ),
       );
@@ -204,8 +197,9 @@ void main() {
       expect(textWidget.overflow, TextOverflow.ellipsis);
     });
 
-    testWidgets('applies semantic label correctly',
-        (WidgetTester tester) async {
+    testWidgets('applies semantic label correctly', (
+      WidgetTester tester,
+    ) async {
       // EN: Build widget with semantic label
       // KO: 시맨틱 라벨이 있는 위젯 빌드
       await tester.pumpWidget(
@@ -227,8 +221,9 @@ void main() {
   });
 
   group('A11yAnnouncer', () {
-    testWidgets('announce works with valid context and message',
-        (WidgetTester tester) async {
+    testWidgets('announce works with valid context and message', (
+      WidgetTester tester,
+    ) async {
       // EN: Build a simple widget to get context
       // KO: 컨텍스트를 얻기 위한 간단한 위젯 빌드
       late BuildContext capturedContext;
@@ -253,8 +248,7 @@ void main() {
       );
     });
 
-    testWidgets('announce ignores empty messages',
-        (WidgetTester tester) async {
+    testWidgets('announce ignores empty messages', (WidgetTester tester) async {
       // EN: Build a simple widget to get context
       // KO: 컨텍스트를 얻기 위한 간단한 위젯 빌드
       late BuildContext capturedContext;
@@ -279,8 +273,9 @@ void main() {
       );
     });
 
-    testWidgets('announceError works with Korean locale',
-        (WidgetTester tester) async {
+    testWidgets('announceError works with Korean locale', (
+      WidgetTester tester,
+    ) async {
       // EN: Build widget with Korean locale
       // KO: 한국어 로케일로 위젯 빌드
       late BuildContext capturedContext;
@@ -310,8 +305,9 @@ void main() {
       );
     });
 
-    testWidgets('announceError works with English locale',
-        (WidgetTester tester) async {
+    testWidgets('announceError works with English locale', (
+      WidgetTester tester,
+    ) async {
       // EN: Build widget with English locale
       // KO: 영어 로케일로 위젯 빌드
       late BuildContext capturedContext;
@@ -337,8 +333,9 @@ void main() {
       );
     });
 
-    testWidgets('announceSuccess works with Korean locale',
-        (WidgetTester tester) async {
+    testWidgets('announceSuccess works with Korean locale', (
+      WidgetTester tester,
+    ) async {
       // EN: Build widget with Korean locale
       // KO: 한국어 로케일로 위젯 빌드
       late BuildContext capturedContext;
@@ -368,8 +365,9 @@ void main() {
       );
     });
 
-    testWidgets('announceSuccess works with English locale',
-        (WidgetTester tester) async {
+    testWidgets('announceSuccess works with English locale', (
+      WidgetTester tester,
+    ) async {
       // EN: Build widget with English locale
       // KO: 영어 로케일로 위젯 빌드
       late BuildContext capturedContext;
@@ -395,8 +393,9 @@ void main() {
       );
     });
 
-    testWidgets('announceError ignores empty messages',
-        (WidgetTester tester) async {
+    testWidgets('announceError ignores empty messages', (
+      WidgetTester tester,
+    ) async {
       // EN: Build a simple widget to get context
       // KO: 컨텍스트를 얻기 위한 간단한 위젯 빌드
       late BuildContext capturedContext;
@@ -421,8 +420,9 @@ void main() {
       );
     });
 
-    testWidgets('announceSuccess ignores empty messages',
-        (WidgetTester tester) async {
+    testWidgets('announceSuccess ignores empty messages', (
+      WidgetTester tester,
+    ) async {
       // EN: Build a simple widget to get context
       // KO: 컨텍스트를 얻기 위한 간단한 위젯 빌드
       late BuildContext capturedContext;
@@ -449,17 +449,16 @@ void main() {
   });
 
   group('A11yUtils', () {
-    testWidgets('getTextScaleFactor returns correct value',
-        (WidgetTester tester) async {
+    testWidgets('getTextScaleFactor returns correct value', (
+      WidgetTester tester,
+    ) async {
       // EN: Build widget with custom text scale factor
       // KO: 사용자 정의 텍스트 스케일 팩터로 위젯 빌드
       late BuildContext capturedContext;
       await tester.pumpWidget(
         MaterialApp(
           home: MediaQuery(
-            data: const MediaQueryData(
-              textScaler: TextScaler.linear(1.5),
-            ),
+            data: const MediaQueryData(textScaler: TextScaler.linear(1.5)),
             child: Scaffold(
               body: Builder(
                 builder: (context) {
@@ -478,17 +477,16 @@ void main() {
       expect(scaleFactor, 1.5);
     });
 
-    testWidgets('isScreenReaderEnabled returns correct value',
-        (WidgetTester tester) async {
+    testWidgets('isScreenReaderEnabled returns correct value', (
+      WidgetTester tester,
+    ) async {
       // EN: Build widget with accessibleNavigation enabled
       // KO: accessibleNavigation이 활성화된 위젯 빌드
       late BuildContext capturedContext;
       await tester.pumpWidget(
         MaterialApp(
           home: MediaQuery(
-            data: const MediaQueryData(
-              accessibleNavigation: true,
-            ),
+            data: const MediaQueryData(accessibleNavigation: true),
             child: Scaffold(
               body: Builder(
                 builder: (context) {

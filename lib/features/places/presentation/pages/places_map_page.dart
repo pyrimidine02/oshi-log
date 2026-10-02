@@ -155,8 +155,9 @@ class _PlacesMapPageState extends ConsumerState<PlacesMapPage> {
   Future<void> _fetchInitialLocation() async {
     try {
       final locationService = ref.read(locationServiceProvider);
-      final snapshot =
-          await locationService.getCurrentLocation(requestPermission: false);
+      final snapshot = await locationService.getCurrentLocation(
+        requestPermission: false,
+      );
       if (!mounted) return;
       final target = _MapTarget(snapshot.latitude, snapshot.longitude);
       setState(() {

@@ -11,10 +11,7 @@ class PasswordResetConfirmRequest {
   final String token;
   final String newPassword;
 
-  Map<String, dynamic> toJson() => {
-    'token': token,
-    'newPassword': newPassword,
-  };
+  Map<String, dynamic> toJson() => {'token': token, 'newPassword': newPassword};
 }
 
 /// EN: Response DTO for a successful password-reset confirm.
@@ -28,8 +25,7 @@ class PasswordResetConfirmResponse {
   factory PasswordResetConfirmResponse.fromJson(Map<String, dynamic> json) {
     return PasswordResetConfirmResponse(
       email: json['email'] as String? ?? '',
-      revokedRefreshTokenCount:
-          json['revokedRefreshTokenCount'] as int? ?? 0,
+      revokedRefreshTokenCount: json['revokedRefreshTokenCount'] as int? ?? 0,
     );
   }
 

@@ -109,39 +109,43 @@ final visitPlacesMapProvider = FutureProvider<Map<String, PlaceSummary>>((
 /// KO: 전체 프로젝트에 걸친 장소 ID → 장소 요약 + 프로젝트 메타데이터 맵.
 ///     방문 기록의 프로젝트별 그룹화에 사용됩니다.
 ///     개별 프로젝트 조회 실패는 무시되어 부분 결과를 계속 사용합니다.
-final visitAllProjectsPlacesMapProvider = FutureProvider<
-  Map<String, ({PlaceSummary place, String projectId, String projectName})>
->((ref) async {
-  final projects =
-      ref.watch(projectsControllerProvider).valueOrNull ?? const [];
-  if (projects.isEmpty) {
-    return {};
-  }
-  final repository = await ref.read(placesRepositoryProvider.future);
-  final result =
-      <String, ({PlaceSummary place, String projectId, String projectName})>{};
-  await Future.wait(
-    projects.map((project) async {
-      final key = project.code.isNotEmpty ? project.code : project.id;
-      try {
-        final res = await repository.getAllPlaces(projectId: key);
-        if (res is Success<List<PlaceSummary>>) {
-          for (final place in res.data) {
-            result[place.id] = (
-              place: place,
-              projectId: project.id,
-              projectName: project.name,
-            );
-          }
-        }
-      } catch (_) {
-        // EN: Ignore individual project failures; other projects still show.
-        // KO: 개별 프로젝트 실패는 무시하고 나머지 프로젝트는 계속 표시합니다.
+final visitAllProjectsPlacesMapProvider =
+    FutureProvider<
+      Map<String, ({PlaceSummary place, String projectId, String projectName})>
+    >((ref) async {
+      final projects =
+          ref.watch(projectsControllerProvider).valueOrNull ?? const [];
+      if (projects.isEmpty) {
+        return {};
       }
-    }),
-  );
-  return result;
-});
+      final repository = await ref.read(placesRepositoryProvider.future);
+      final result =
+          <
+            String,
+            ({PlaceSummary place, String projectId, String projectName})
+          >{};
+      await Future.wait(
+        projects.map((project) async {
+          final key = project.code.isNotEmpty ? project.code : project.id;
+          try {
+            final res = await repository.getAllPlaces(projectId: key);
+            if (res is Success<List<PlaceSummary>>) {
+              for (final place in res.data) {
+                result[place.id] = (
+                  place: place,
+                  projectId: project.id,
+                  projectName: project.name,
+                );
+              }
+            }
+          } catch (_) {
+            // EN: Ignore individual project failures; other projects still show.
+            // KO: 개별 프로젝트 실패는 무시하고 나머지 프로젝트는 계속 표시합니다.
+          }
+        }),
+      );
+      return result;
+    });
 
 /// EN: User ranking provider for visit statistics.
 /// KO: 방문 통계를 위한 사용자 랭킹 프로바이더.

@@ -38,10 +38,8 @@ class NewPostsIndicatorState {
 
 /// EN: Notifier that silently polls for new posts and surfaces them as a pill.
 /// KO: 새 게시글을 조용히 폴링하고 필 형태로 표시하는 노티파이어.
-class NewPostsIndicatorNotifier
-    extends StateNotifier<NewPostsIndicatorState> {
-  NewPostsIndicatorNotifier(this._ref)
-      : super(const NewPostsIndicatorState()) {
+class NewPostsIndicatorNotifier extends StateNotifier<NewPostsIndicatorState> {
+  NewPostsIndicatorNotifier(this._ref) : super(const NewPostsIndicatorState()) {
     _timer = Timer.periodic(_pollInterval, (_) => _poll());
   }
 
@@ -119,7 +117,8 @@ class NewPostsIndicatorNotifier
 
 /// EN: Provider for the new posts indicator notifier.
 /// KO: 새 게시글 인디케이터 노티파이어 프로바이더.
-final newPostsIndicatorProvider = StateNotifierProvider.autoDispose<
-    NewPostsIndicatorNotifier, NewPostsIndicatorState>(
-  (ref) => NewPostsIndicatorNotifier(ref),
-);
+final newPostsIndicatorProvider =
+    StateNotifierProvider.autoDispose<
+      NewPostsIndicatorNotifier,
+      NewPostsIndicatorState
+    >((ref) => NewPostsIndicatorNotifier(ref));

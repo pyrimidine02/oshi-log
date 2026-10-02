@@ -13,7 +13,7 @@ import '../dto/zukan_dto.dart';
 ///     모든 메서드는 [Result]를 반환하므로 호출자가 try/catch 없이 오류를 처리할 수 있습니다.
 class ZukanRemoteDataSource {
   const ZukanRemoteDataSource({required ApiClient apiClient})
-      : _apiClient = apiClient;
+    : _apiClient = apiClient;
 
   final ApiClient _apiClient;
 
@@ -24,9 +24,7 @@ class ZukanRemoteDataSource {
   }) {
     return _apiClient.get<List<ZukanCollectionSummaryDto>>(
       ApiEndpoints.zukanCollections,
-      queryParameters: {
-        if (projectId != null) 'projectId': projectId,
-      },
+      queryParameters: {if (projectId != null) 'projectId': projectId},
       fromJson: (json) {
         // EN: The API may return a root list or a map with a collections/items/data key.
         // KO: API는 최상위 배열이나 collections/items/data 키를 가진 맵을 반환할 수 있습니다.
@@ -34,10 +32,12 @@ class ZukanRemoteDataSource {
         if (json is List) {
           items = json;
         } else if (json is Map<String, dynamic>) {
-          items = (json['collections'] ??
-                  json['items'] ??
-                  json['data'] ??
-                  <dynamic>[]) as List<dynamic>;
+          items =
+              (json['collections'] ??
+                      json['items'] ??
+                      json['data'] ??
+                      <dynamic>[])
+                  as List<dynamic>;
         } else {
           items = [];
         }

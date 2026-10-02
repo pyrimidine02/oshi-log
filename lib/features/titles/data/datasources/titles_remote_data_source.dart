@@ -35,8 +35,7 @@ class TitlesRemoteDataSource {
   }) async {
     return _apiClient.get<List<TitleCatalogItemDto>>(
       ApiEndpoints.titles,
-      queryParameters:
-          projectKey != null ? {'projectKey': projectKey} : null,
+      queryParameters: projectKey != null ? {'projectKey': projectKey} : null,
       fromJson: (json) {
         if (json is List) {
           return json
@@ -63,8 +62,7 @@ class TitlesRemoteDataSource {
   }) async {
     return _apiClient.get<ActiveTitleItemDto?>(
       ApiEndpoints.userMeTitle,
-      queryParameters:
-          projectKey != null ? {'projectKey': projectKey} : null,
+      queryParameters: projectKey != null ? {'projectKey': projectKey} : null,
       fromJson: (json) {
         // EN: HTTP 204 surfaces as null data; guard accordingly.
         // KO: HTTP 204는 null 데이터로 전달됩니다. 이를 처리합니다.
@@ -85,8 +83,7 @@ class TitlesRemoteDataSource {
     return _apiClient.put<ActiveTitleItemDto>(
       ApiEndpoints.userMeTitle,
       data: {'titleId': titleId},
-      queryParameters:
-          projectKey != null ? {'projectKey': projectKey} : null,
+      queryParameters: projectKey != null ? {'projectKey': projectKey} : null,
       fromJson: (json) => ActiveTitleItemDto.fromJson(
         json is Map<String, dynamic> ? json : const <String, dynamic>{},
       ),
@@ -98,8 +95,7 @@ class TitlesRemoteDataSource {
   Future<Result<void>> clearMyActiveTitle({String? projectKey}) async {
     return _apiClient.delete<void>(
       ApiEndpoints.userMeTitle,
-      queryParameters:
-          projectKey != null ? {'projectKey': projectKey} : null,
+      queryParameters: projectKey != null ? {'projectKey': projectKey} : null,
     );
   }
 
@@ -118,8 +114,7 @@ class TitlesRemoteDataSource {
   }) async {
     return _apiClient.get<ActiveTitleItemDto?>(
       ApiEndpoints.userTitle(userId),
-      queryParameters:
-          projectKey != null ? {'projectKey': projectKey} : null,
+      queryParameters: projectKey != null ? {'projectKey': projectKey} : null,
       fromJson: (json) {
         // EN: HTTP 204 surfaces as null data; guard accordingly.
         // KO: HTTP 204는 null 데이터로 전달됩니다. 이를 처리합니다.

@@ -60,7 +60,8 @@ class InAppNotificationQueueNotifier
 
 /// EN: Provider for the in-app notification banner queue.
 /// KO: 인앱 알림 배너 큐 프로바이더입니다.
-final inAppNotificationQueueProvider = StateNotifierProvider<
-    InAppNotificationQueueNotifier, List<InAppNotificationEntry>>(
-  (ref) => InAppNotificationQueueNotifier(),
-);
+final inAppNotificationQueueProvider =
+    StateNotifierProvider<
+      InAppNotificationQueueNotifier,
+      List<InAppNotificationEntry>
+    >((ref) => InAppNotificationQueueNotifier());

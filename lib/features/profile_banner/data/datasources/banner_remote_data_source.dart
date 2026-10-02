@@ -51,9 +51,7 @@ class BannerRemoteDataSource {
   /// EN: Clears the active banner for the authenticated user.
   /// KO: 인증된 사용자의 활성 배너를 초기화합니다.
   Future<Result<void>> clearActiveBanner() async {
-    final result = await _apiClient.delete<void>(
-      ApiEndpoints.userBanner,
-    );
+    final result = await _apiClient.delete<void>(ApiEndpoints.userBanner);
     return result;
   }
 

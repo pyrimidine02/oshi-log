@@ -78,9 +78,7 @@ void main() {
     },
   );
 
-  testWidgets('logged-out access to /home (public) is allowed', (
-    tester,
-  ) async {
+  testWidgets('logged-out access to /home (public) is allowed', (tester) async {
     final router = await pumpRouterWithAuthState(
       tester,
       (c) => c.read(authStateProvider.notifier).setUnauthenticated(),
@@ -108,9 +106,7 @@ void main() {
     expect(currentLocation(router), '/information');
   });
 
-  testWidgets('logged-in access to /login redirects to /home', (
-    tester,
-  ) async {
+  testWidgets('logged-in access to /login redirects to /home', (tester) async {
     final router = await pumpRouterWithAuthState(
       tester,
       (c) => c.read(authStateProvider.notifier).setAuthenticated(),

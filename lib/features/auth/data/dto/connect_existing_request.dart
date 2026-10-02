@@ -7,10 +7,7 @@
 library;
 
 class ConnectExistingRequest {
-  const ConnectExistingRequest({
-    required this.email,
-    required this.password,
-  });
+  const ConnectExistingRequest({required this.email, required this.password});
 
   /// EN: Email of the existing local account to merge with.
   /// KO: 합칠 기존 로컬 계정의 이메일.
@@ -20,8 +17,5 @@ class ConnectExistingRequest {
   /// KO: 기존 로컬 계정의 비밀번호.
   final String password;
 
-  Map<String, dynamic> toJson() => {
-    'email': email,
-    'password': password,
-  };
+  Map<String, dynamic> toJson() => {'email': email, 'password': password};
 }

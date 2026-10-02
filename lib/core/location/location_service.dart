@@ -36,7 +36,7 @@ class LocationSnapshot {
 ///     GPS 모의 위치 감지 및 정확도 이상값에 대한 텔레메트리 이벤트를 전송합니다.
 class LocationService {
   LocationService({TelemetryService? telemetry})
-      : _telemetry = telemetry ?? TelemetryService.instance;
+    : _telemetry = telemetry ?? TelemetryService.instance;
 
   final TelemetryService _telemetry;
 
@@ -144,14 +144,13 @@ class LocationService {
       );
       // EN: Immediately send GPS_MOCK_DETECTED telemetry — triggers Loki alert.
       // KO: GPS_MOCK_DETECTED 텔레메트리를 즉시 전송합니다 — Loki 알림 트리거.
-      unawaited(_telemetry.sendImmediately(
-        TelemetryEventTypes.gpsMockDetected,
-        payload: {
-          'provider': 'mock',
-          'accuracy': position.accuracy,
-        },
-        authToken: authToken,
-      ));
+      unawaited(
+        _telemetry.sendImmediately(
+          TelemetryEventTypes.gpsMockDetected,
+          payload: {'provider': 'mock', 'accuracy': position.accuracy},
+          authToken: authToken,
+        ),
+      );
     } else {
       AppLogger.info(
         'Location acquired: isMocked=false, accuracy=${position.accuracy}m',
@@ -162,11 +161,14 @@ class LocationService {
     // EN: Enqueue GPS_ACCURACY_ANOMALY when accuracy is 0 or negative.
     // KO: 정확도가 0 이하이면 GPS_ACCURACY_ANOMALY를 큐에 추가합니다.
     if (position.accuracy <= 0) {
-      _telemetry.enqueue(TelemetryEventTypes.gpsAccuracyAnomaly, payload: {
-        'accuracy': position.accuracy,
-        'latitude': position.latitude,
-        'longitude': position.longitude,
-      });
+      _telemetry.enqueue(
+        TelemetryEventTypes.gpsAccuracyAnomaly,
+        payload: {
+          'accuracy': position.accuracy,
+          'latitude': position.latitude,
+          'longitude': position.longitude,
+        },
+      );
     }
 
     return LocationSnapshot(

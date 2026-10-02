@@ -21,13 +21,13 @@ typedef ContributorKey = ({String entityType, String entityId});
 /// ```
 final contributorsProvider = FutureProvider.autoDispose
     .family<List<ContributorDto>, ContributorKey>((ref, key) async {
-  final apiClient = ref.read(apiClientProvider);
-  final result = await apiClient.get<List<ContributorDto>>(
-    ApiEndpoints.contributors(key.entityType, key.entityId),
-    fromJson: _decodeContributors,
-  );
-  return result.getOrThrow();
-});
+      final apiClient = ref.read(apiClientProvider);
+      final result = await apiClient.get<List<ContributorDto>>(
+        ApiEndpoints.contributors(key.entityType, key.entityId),
+        fromJson: _decodeContributors,
+      );
+      return result.getOrThrow();
+    });
 
 List<ContributorDto> _decodeContributors(dynamic json) {
   // EN: Plain array response.
