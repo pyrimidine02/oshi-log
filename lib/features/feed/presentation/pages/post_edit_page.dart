@@ -251,6 +251,7 @@ class _PostEditPageState extends ConsumerState<PostEditPage> {
 
   Future<void> _discardRecoverableDraft() async {
     await _autosaveController.clearSavedDraft(silent: true);
+    if (!mounted) return;
     _showMessage(
       context.l10n(
         ko: '임시 저장 글을 삭제했어요.',
@@ -1206,7 +1207,7 @@ class _PostEditPageState extends ConsumerState<PostEditPage> {
         ref.read(postListControllerProvider.notifier).load(forceRefresh: true),
       ]);
       await _autosaveController.clearSavedDraft(silent: true);
-      if (!mounted) {
+      if (!mounted || !context.mounted) {
         return;
       }
       messenger.showSnackBar(

@@ -19,9 +19,43 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:oshi_log/core/error/failure.dart';
 import 'package:oshi_log/core/providers/core_providers.dart';
 import 'package:oshi_log/core/router/app_router.dart';
 import 'package:oshi_log/core/security/secure_storage.dart';
+import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/features/calendar/application/calendar_controller.dart';
+import 'package:oshi_log/features/calendar/domain/entities/calendar_event.dart';
+import 'package:oshi_log/features/calendar/domain/repositories/calendar_repository.dart';
+import 'package:oshi_log/features/fan_level/application/fan_level_controller.dart';
+import 'package:oshi_log/features/fan_level/domain/entities/fan_level.dart';
+import 'package:oshi_log/features/fan_level/domain/repositories/fan_level_repository.dart';
+
+/// EN: Fake repositories that resolve synchronously without touching the
+/// EN: real network, so destination pages that fetch data on build (e.g.
+/// EN: TravelPassportPage) don't leave pending Dio timers behind when the
+/// EN: test tears down.
+/// KO: 실제 네트워크를 건드리지 않고 동기적으로 해결되는 가짜 리포지토리입니다.
+/// KO: 빌드 시 데이터를 가져오는 목적지 페이지(TravelPassportPage 등)가
+/// KO: 테스트 종료 시 대기 중인 Dio 타이머를 남기지 않도록 합니다.
+class _FakeFanLevelRepository implements FanLevelRepository {
+  @override
+  Future<Result<FanLevelProfile>> fetchProfile() async =>
+      const Result.failure(NotFoundFailure('not found'));
+
+  @override
+  Future<Result<CheckInResult>> checkIn() async =>
+      const Result.failure(NotFoundFailure('not found'));
+}
+
+class _FakeCalendarRepository implements CalendarRepository {
+  @override
+  Future<Result<List<CalendarEvent>>> fetchEvents({
+    required int year,
+    required int month,
+    String? projectKey,
+  }) async => const Result.failure(NotFoundFailure('not found'));
+}
 
 void main() {
   // EN: appRouterProvider rebuilds (new GoRouter instance) whenever
@@ -36,7 +70,11 @@ void main() {
     void Function(ProviderContainer) setup,
   ) async {
     final container = ProviderContainer(
-      overrides: [secureStorageProvider.overrideWithValue(SecureStorage())],
+      overrides: [
+        secureStorageProvider.overrideWithValue(SecureStorage()),
+        fanLevelRepositoryProvider.overrideWithValue(_FakeFanLevelRepository()),
+        calendarRepositoryProvider.overrideWithValue(_FakeCalendarRepository()),
+      ],
     );
     addTearDown(container.dispose);
     setup(container);

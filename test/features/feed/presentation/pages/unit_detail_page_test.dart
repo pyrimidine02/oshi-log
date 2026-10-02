@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -15,6 +16,13 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: GBTTheme.light,
+        locale: const Locale('ko'),
+        supportedLocales: const [Locale('ko')],
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
         home: UnitDossierView(
           unit: _unit,
           membersState: const AsyncData(_members),
@@ -48,6 +56,13 @@ void main() {
         ),
         child: MaterialApp(
           theme: GBTTheme.light,
+          locale: const Locale('ko'),
+          supportedLocales: const [Locale('ko')],
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
           home: UnitDossierView(
             unit: _unit,
             membersState: const AsyncData(_members),
