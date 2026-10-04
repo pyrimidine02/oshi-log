@@ -100,7 +100,7 @@ the existing references. Missing references fail explicitly, with no fallback or
 tolerance increase. Independent artifact reviews covered all 100 failed pairs,
 with representative visual checks showing host glyph/wrapping/raster changes
 and no lost controls or new overflow. Added 100 reviewed CI actuals plus 10
-references already passing on that runner; preserved the existing 3 Linux Home
+existing reference copies; preserved the existing 3 Linux Home
 references and every non-Linux reference. These are not device-font proof.
 Analysis passes (6.4s). Hosted rerun must pass before release verification is complete.
 
@@ -118,3 +118,15 @@ all 6 tests. The three timezone fixture files pass all 14 tests in each zone.
 Independent reference review confirms no missing Linux images and matching
 SHA-256 for all 100 adopted actuals. App source, native files, workflow, lockfile
 and comparison tolerances have no changes in this follow-up.
+
+Hosted run `37187631239` at `3e96c71` passed analysis and 1,108 tests. Only the
+4 Home scrolled-bottom comparisons failed. They were not reached in the first
+run because the preceding top comparison stopped each test. The earlier claim
+that all 10 copied references had already passed was incorrect: 6 had passed,
+4 were unexecuted. Reviewed and replaced those 4 with the second run's Linux actuals.
+The final added set is 104 reviewed Linux actuals plus 6 references verified on
+Linux, preserving the original 3 Home Linux references. Comparator tolerances
+and application code remain unchanged.
+
+After the bottom-reference correction, the macOS / Asia/Seoul Home file passes
+all 9 tests. Hosted Linux must also execute the final dispatch-row tap assertion.
