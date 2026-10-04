@@ -11,7 +11,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/providers/core_providers.dart';
+import '../../../platform/providers/core_providers.dart';
 import 'package:oshi_log/features/shared/notifications/application/notifications_controller.dart';
 import 'package:oshi_log/features/shared/notifications/domain/entities/notification_navigation.dart';
 import 'package:oshi_log/features/identity/progression/application/titles_controller.dart';

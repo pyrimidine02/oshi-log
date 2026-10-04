@@ -3,6 +3,7 @@
 library;
 
 import 'package:intl/intl.dart';
+import '../event_time_policy.dart';
 
 class LiveEventSummary {
   const LiveEventSummary({
@@ -47,11 +48,17 @@ class LiveEventSummary {
   final String? rescheduledEventId;
 
   bool get isUpcoming {
-    return showStartTime.isAfter(DateTime.now());
+    return EventTimePolicy.isActive(
+      start: showStartTime,
+      end: endTime,
+      now: DateTime.now(),
+    );
   }
 
   String get dateLabel {
-    return DateFormat.MMMd(_localeTag()).format(showStartTime.toLocal());
+    return DateFormat.MMMd(
+      _localeTag(),
+    ).format(EventTimePolicy.inJst(showStartTime));
   }
 
   String get dDayLabel {
@@ -136,7 +143,9 @@ class LiveEventDetail {
   }
 
   String get dateLabel {
-    return DateFormat.yMMMMd(_localeTag()).format(showStartTime.toLocal());
+    return DateFormat.yMMMMd(
+      _localeTag(),
+    ).format(EventTimePolicy.inJst(showStartTime));
   }
 
   String get dDayLabel {
@@ -144,7 +153,7 @@ class LiveEventDetail {
   }
 
   String get timeLabel {
-    return DateFormat('HH:mm').format(showStartTime.toLocal());
+    return DateFormat('HH:mm').format(EventTimePolicy.inJst(showStartTime));
   }
 
   String get doorTimeLabel {
@@ -154,7 +163,7 @@ class LiveEventDetail {
       if (lang == 'ja') return '未定';
       return '미정';
     }
-    return DateFormat('HH:mm').format(doorsOpenTime!.toLocal());
+    return DateFormat('HH:mm').format(EventTimePolicy.inJst(doorsOpenTime!));
   }
 }
 
@@ -364,14 +373,8 @@ class LiveAttendanceHistoryPageData {
 }
 
 String _formatDDay(DateTime dateTime) {
-  final now = DateTime.now();
-  final today = DateTime(now.year, now.month, now.day);
-  final localDateTime = dateTime.toLocal();
-  final eventDate = DateTime(
-    localDateTime.year,
-    localDateTime.month,
-    localDateTime.day,
-  );
+  final today = EventTimePolicy.dateInJst(DateTime.now());
+  final eventDate = EventTimePolicy.dateInJst(dateTime);
   final diff = eventDate.difference(today).inDays;
   if (diff == 0) {
     return 'D-day';

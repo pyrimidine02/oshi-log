@@ -2,7 +2,7 @@
 /// KO: 팬 레벨 시스템의 리포지토리 인터페이스.
 library;
 
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/identity/progression/domain/entities/fan_level.dart';
 
 /// EN: Defines the contract for fan level data operations.

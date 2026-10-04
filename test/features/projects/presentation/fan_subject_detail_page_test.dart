@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/fan_subjects_controller.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/domain/entities/fan_subject.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/domain/repositories/fan_subjects_repository.dart';

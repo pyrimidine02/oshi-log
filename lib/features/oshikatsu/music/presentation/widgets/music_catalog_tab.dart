@@ -5,14 +5,14 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/localization/locale_text.dart';
-import 'package:oshi_log/core/router/app_router.dart';
-import 'package:oshi_log/core/theme/gbt_colors.dart';
-import 'package:oshi_log/core/theme/gbt_spacing.dart';
-import 'package:oshi_log/core/theme/gbt_typography.dart';
-import 'package:oshi_log/core/widgets/common/gbt_image.dart';
-import 'package:oshi_log/core/widgets/layout/gbt_page_header.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
+import 'package:oshi_log/platform/router/app_router.dart';
+import 'package:oshi_log/design_system/theme/gbt_colors.dart';
+import 'package:oshi_log/design_system/theme/gbt_spacing.dart';
+import 'package:oshi_log/design_system/theme/gbt_typography.dart';
+import 'package:oshi_log/design_system/widgets/common/gbt_image.dart';
+import 'package:oshi_log/design_system/widgets/layout/gbt_page_header.dart';
 import 'package:oshi_log/features/oshikatsu/music/application/music_controller.dart';
 import 'package:oshi_log/features/oshikatsu/music/domain/entities/music_entities.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/projects_controller.dart';
@@ -270,9 +270,26 @@ extension _NonZeroInt on int {
 /// EN: Music catalog tab — album grid + track list with segmented switcher.
 /// KO: 악곡 카탈로그 탭 — 세그먼트 스위처로 앨범 그리드·트랙 목록을 탐색합니다.
 class MusicCatalogTab extends ConsumerStatefulWidget {
-  const MusicCatalogTab({super.key, this.showPageHeader = false});
+  const MusicCatalogTab({
+    super.key,
+    this.showPageHeader = false,
+    this.showViewSwitcher = true,
+    this.initialSection = 'albums',
+    this.initialUnitKey,
+    this.initialQuery = '',
+    this.initialSort = 'newest',
+    this.initialAlbumType,
+    this.onSelectionChanged,
+  });
 
   final bool showPageHeader;
+  final bool showViewSwitcher;
+  final String initialSection;
+  final String? initialUnitKey;
+  final String initialQuery;
+  final String initialSort;
+  final String? initialAlbumType;
+  final ValueChanged<Map<String, String>>? onSelectionChanged;
 
   @override
   ConsumerState<MusicCatalogTab> createState() => _MusicCatalogTabState();
@@ -293,9 +310,52 @@ class _MusicCatalogTabState extends ConsumerState<MusicCatalogTab> {
   @override
   void initState() {
     super.initState();
-    _searchController = TextEditingController();
+    _readSelection();
+    _searchController = TextEditingController(text: _query);
     _albumScroll = ScrollController();
     _songScroll = ScrollController();
+  }
+
+  void _readSelection() {
+    _viewIndex = widget.initialSection == 'songs' ? 1 : 0;
+    _selectedUnitKey = widget.initialUnitKey;
+    _selectedAlbumType = widget.initialAlbumType;
+    _query = widget.initialQuery;
+    _sortOrder = switch (widget.initialSort) {
+      'title' => MusicCatalogSortOrder.titleAsc,
+      'oldest' => MusicCatalogSortOrder.releaseOldest,
+      _ => MusicCatalogSortOrder.releaseNewest,
+    };
+  }
+
+  @override
+  void didUpdateWidget(covariant MusicCatalogTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialSection != widget.initialSection ||
+        oldWidget.initialUnitKey != widget.initialUnitKey ||
+        oldWidget.initialQuery != widget.initialQuery ||
+        oldWidget.initialSort != widget.initialSort ||
+        oldWidget.initialAlbumType != widget.initialAlbumType) {
+      _readSelection();
+      if (_searchController.text != _query) {
+        _searchController.text = _query;
+      }
+    }
+  }
+
+  void _changeSelection(VoidCallback change) {
+    setState(change);
+    widget.onSelectionChanged?.call({
+      'archiveSection': _viewIndex == 0 ? 'albums' : 'songs',
+      if (_selectedUnitKey != null) 'unit': _selectedUnitKey!,
+      if (_selectedAlbumType != null) 'albumType': _selectedAlbumType!,
+      if (_query.isNotEmpty) 'q': _query,
+      'sort': switch (_sortOrder) {
+        MusicCatalogSortOrder.titleAsc => 'title',
+        MusicCatalogSortOrder.releaseNewest => 'newest',
+        MusicCatalogSortOrder.releaseOldest => 'oldest',
+      },
+    });
   }
 
   @override
@@ -485,28 +545,10 @@ class _MusicCatalogTabState extends ConsumerState<MusicCatalogTab> {
     final unitOptions = _buildUnitOptions(songsState.items, albumsState.items);
     final albumTypeOptions = musicCatalogAlbumTypes(albumsState.items);
 
-    // EN: Reset filter key if no longer valid
-    // KO: 유효하지 않은 필터 키는 초기화
-    final validKey = unitOptions.any((o) => o.key == _selectedUnitKey)
-        ? _selectedUnitKey
-        : null;
-    if (validKey != _selectedUnitKey && _selectedUnitKey != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) setState(() => _selectedUnitKey = null);
-      });
-    }
-    final validAlbumType =
-        albumTypeOptions.any(
-          (type) =>
-              type.toLowerCase() == _selectedAlbumType?.trim().toLowerCase(),
-        )
-        ? _selectedAlbumType
-        : null;
-    if (validAlbumType != _selectedAlbumType && _selectedAlbumType != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) setState(() => _selectedAlbumType = null);
-      });
-    }
+    // EN: Keep URL filters while pages load, including empty matches.
+    // KO: 페이지 로딩 중에도 결과가 없는 경우를 포함해 URL 필터를 유지합니다.
+    final validKey = _selectedUnitKey;
+    final validAlbumType = _selectedAlbumType;
 
     final albumsById = {for (final album in albumsState.items) album.id: album};
     final filteredSongs = filterAndSortMusicSongs(
@@ -552,20 +594,21 @@ class _MusicCatalogTabState extends ConsumerState<MusicCatalogTab> {
           isLoadingAlbums: albumsState.isLoading && filteredAlbums.isNotEmpty,
           isLoadingSongs: songsState.isLoading && filteredSongs.isNotEmpty,
         ),
-      Padding(
-        padding: const EdgeInsets.fromLTRB(
-          GBTSpacing.pageHorizontal,
-          GBTSpacing.md,
-          GBTSpacing.pageHorizontal,
-          GBTSpacing.xs,
+      if (widget.showViewSwitcher)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            GBTSpacing.pageHorizontal,
+            GBTSpacing.md,
+            GBTSpacing.pageHorizontal,
+            GBTSpacing.xs,
+          ),
+          child: _ViewSwitcher(
+            currentIndex: _viewIndex,
+            isDark: isDark,
+            accent: ac,
+            onChanged: (i) => _changeSelection(() => _viewIndex = i),
+          ),
         ),
-        child: _ViewSwitcher(
-          currentIndex: _viewIndex,
-          isDark: isDark,
-          accent: ac,
-          onChanged: (i) => setState(() => _viewIndex = i),
-        ),
-      ),
       Padding(
         padding: const EdgeInsets.only(
           left: GBTSpacing.pageHorizontal,
@@ -584,15 +627,16 @@ class _MusicCatalogTabState extends ConsumerState<MusicCatalogTab> {
           showAlbumType: _viewIndex == 0,
           isDark: isDark,
           accent: ac,
-          onQueryChanged: (value) => setState(() => _query = value),
+          onQueryChanged: (value) => _changeSelection(() => _query = value),
           onClearQuery: () {
             _searchController.clear();
-            setState(() => _query = '');
+            _changeSelection(() => _query = '');
           },
-          onSortChanged: (value) => setState(() => _sortOrder = value),
-          onUnitSelected: (value) => setState(() => _selectedUnitKey = value),
+          onSortChanged: (value) => _changeSelection(() => _sortOrder = value),
+          onUnitSelected: (value) =>
+              _changeSelection(() => _selectedUnitKey = value),
           onAlbumTypeSelected: (value) =>
-              setState(() => _selectedAlbumType = value),
+              _changeSelection(() => _selectedAlbumType = value),
         ),
       ),
     ];
@@ -614,6 +658,7 @@ class _MusicCatalogTabState extends ConsumerState<MusicCatalogTab> {
           )
         : _SongsList(
             songs: filteredSongs,
+            albumsById: albumsById,
             isLoading: songsState.isLoading && songsState.items.isEmpty,
             isLoadingMore: songsState.isLoading && songsState.items.isNotEmpty,
             failure: songsState.failure,
@@ -1503,6 +1548,7 @@ class _AlbumCardSkeleton extends StatelessWidget {
 class _SongsList extends StatelessWidget {
   const _SongsList({
     required this.songs,
+    required this.albumsById,
     required this.isLoading,
     required this.isLoadingMore,
     required this.failure,
@@ -1514,6 +1560,7 @@ class _SongsList extends StatelessWidget {
   });
 
   final List<MusicSongSummary> songs;
+  final Map<String, MusicAlbumSummary> albumsById;
   final bool isLoading;
   final bool isLoadingMore;
   final Failure? failure;
@@ -1623,6 +1670,7 @@ class _SongsList extends StatelessWidget {
         }
         return _SongRow(
           song: songs[songIndex],
+          albumTitle: albumsById[songs[songIndex].albumId]?.title,
           rank: songIndex + 1,
           isDark: isDark,
           accent: accent,
@@ -1636,6 +1684,7 @@ class _SongsList extends StatelessWidget {
 class _SongRow extends StatelessWidget {
   const _SongRow({
     required this.song,
+    this.albumTitle,
     required this.rank,
     required this.isDark,
     required this.accent,
@@ -1643,6 +1692,7 @@ class _SongRow extends StatelessWidget {
   });
 
   final MusicSongSummary song;
+  final String? albumTitle;
   final int rank;
   final bool isDark;
   final Color accent;
@@ -1665,6 +1715,9 @@ class _SongRow extends StatelessWidget {
     final metaParts = <String>[];
     if ((song.primaryUnitName ?? '').trim().isNotEmpty) {
       metaParts.add(song.primaryUnitName!.trim());
+    }
+    if (albumTitle?.trim().isNotEmpty == true) {
+      metaParts.add(albumTitle!.trim());
     }
     if (song.bpm != null && song.bpm! > 0) {
       metaParts.add('BPM ${song.bpm}');
@@ -1694,14 +1747,15 @@ class _SongRow extends StatelessWidget {
               // EN: A slim index rail avoids repetitive placeholder artwork.
               // KO: 반복 플레이스홀더 아트 대신 얇은 인덱스 레일을 사용합니다.
               Container(
-                width: 30,
-                height: 44,
+                constraints: const BoxConstraints(minWidth: 30, minHeight: 44),
+                padding: const EdgeInsets.symmetric(horizontal: GBTSpacing.xs),
                 decoration: BoxDecoration(
                   border: Border(left: BorderSide(color: accent, width: 2)),
                 ),
                 alignment: Alignment.center,
                 child: Text(
                   '${song.trackNo ?? rank}'.padLeft(2, '0'),
+                  softWrap: false,
                   style: GBTTypography.labelSmall.copyWith(
                     color: metaColor,
                     fontWeight: FontWeight.w700,
@@ -1759,7 +1813,7 @@ class _SongRow extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         metaParts.join('  ·  '),
-                        maxLines: 1,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: GBTTypography.caption.copyWith(color: metaColor),
                       ),

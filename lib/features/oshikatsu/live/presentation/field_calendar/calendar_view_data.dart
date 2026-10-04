@@ -22,7 +22,8 @@ List<CalendarEvent> filterCalendarEvents(
 }) {
   final filtered = events.where((event) {
     final matchesDate =
-        selectedDate == null || isSameCalendarDate(event.date, selectedDate);
+        selectedDate == null ||
+        isSameCalendarDate(calendarEventDate(event), selectedDate);
     final matchesType =
         selectedTypes.isEmpty || selectedTypes.contains(event.type);
     return matchesDate && matchesType;
@@ -44,7 +45,7 @@ List<CalendarEvent> filterCalendarGridEvents(
 List<CalendarDateGroup> groupCalendarEvents(Iterable<CalendarEvent> events) {
   final grouped = <DateTime, List<CalendarEvent>>{};
   for (final event in events) {
-    final local = event.date.toLocal();
+    final local = calendarEventDate(event);
     final key = DateTime(local.year, local.month, local.day);
     grouped.putIfAbsent(key, () => <CalendarEvent>[]).add(event);
   }
@@ -62,7 +63,12 @@ List<CalendarDateGroup> groupCalendarEvents(Iterable<CalendarEvent> events) {
 /// EN: Date-only equality in the local calendar.
 /// KO: 로컬 캘린더의 날짜 단위 동일성 비교입니다.
 bool isSameCalendarDate(DateTime first, DateTime second) {
-  final a = first.toLocal();
-  final b = second.toLocal();
+  final a = first;
+  final b = second;
   return a.year == b.year && a.month == b.month && a.day == b.day;
 }
+
+/// EN: Birthday/release dates are civil dates; timed events use JST.
+/// KO: 생일·발매일은 날짜를 보존하고 시각이 있는 일정은 JST를 사용합니다.
+bool isAllDayCalendarEvent(CalendarEvent event) => event.isAllDay;
+DateTime calendarEventDate(CalendarEvent event) => event.scheduleDate;

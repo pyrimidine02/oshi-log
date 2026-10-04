@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:oshi_log/core/theme/gbt_theme.dart';
+import 'package:oshi_log/design_system/theme/gbt_theme.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
+import 'package:oshi_log/features/community/reviews/application/travel_reviews_controller.dart';
 import 'package:oshi_log/features/community/posts/application/board_controller.dart';
 import 'package:oshi_log/features/community/posts/domain/entities/feed_entities.dart';
 import 'package:oshi_log/app/compositions/community/presentation/field_community/field_community_page.dart';
@@ -32,6 +34,8 @@ void main() {
   }) {
     return ProviderScope(
       overrides: [
+        selectedProjectKeyProvider.overrideWith((ref) => 'bandori'),
+        travelReviewsProvider('bandori').overrideWith((ref) async => []),
         fieldCommunityFeedStateProvider.overrideWith(
           (ref) =>
               state ??
@@ -80,20 +84,23 @@ void main() {
     expect(find.text('Shimokitazawa venue access notes'), findsOneWidget);
   });
 
-  testWidgets('travel notes is an honest beta instead of mock reviews', (
-    tester,
-  ) async {
-    await tester.pumpWidget(buildSubject(initialSectionIndex: 2));
-    await tester.pump();
+  testWidgets(
+    'travel reviews restores writing with current publication requirements',
+    (tester) async {
+      await tester.pumpWidget(buildSubject(initialSectionIndex: 2));
+      await tester.pump();
 
-    expect(
-      find.byKey(const Key('field-community-travel-beta')),
-      findsOneWidget,
-    );
-    expect(find.text('Travel notes are in honest beta'), findsOneWidget);
-    expect(find.textContaining('test review'), findsNothing);
-    expect(find.textContaining('Tokyo pilgrimage day'), findsNothing);
-  });
+      expect(
+        find.byKey(const Key('field-community-travel-reviews')),
+        findsOneWidget,
+      );
+      expect(find.text('Write a travel review'), findsOneWidget);
+      expect(find.textContaining('at least one place'), findsOneWidget);
+      expect(find.textContaining('published immediately'), findsOneWidget);
+      expect(find.textContaining('test review'), findsNothing);
+      expect(find.textContaining('Tokyo pilgrimage day'), findsNothing);
+    },
+  );
 
   testWidgets('mode controls and compose action remain usable at 320dp', (
     tester,
@@ -158,8 +165,8 @@ void main() {
     expect(actions.realtimeStartCount, 1);
     expect(actions.realtimeStopCount, 0);
 
-    // EN: The beta travel section has no live feed and releases the sync.
-    // KO: 베타 여행 섹션에는 실제 피드가 없어 동기화를 해제합니다.
+    // EN: Travel reviews use their own provider and release post sync.
+    // KO: 여행 후기는 자체 프로바이더를 사용하므로 게시글 동기화를 해제합니다.
     await tester.pumpWidget(
       buildSubject(initialSectionIndex: 2, actions: actions),
     );

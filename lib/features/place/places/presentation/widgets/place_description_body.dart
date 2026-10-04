@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'package:oshi_log/core/localization/locale_text.dart';
-import 'package:oshi_log/core/theme/gbt_spacing.dart';
-import 'package:oshi_log/core/theme/gbt_typography.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
+import 'package:oshi_log/design_system/theme/gbt_spacing.dart';
+import 'package:oshi_log/design_system/theme/gbt_typography.dart';
 
 /// EN: Renders a readable introduction inside the place page's existing scroll.
 /// KO: 장소 페이지의 기존 스크롤 안에 소개를 읽기 좋게 표시합니다.

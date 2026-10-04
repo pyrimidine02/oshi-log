@@ -4,8 +4,8 @@ library;
 
 import 'package:flutter/material.dart';
 
-import 'package:oshi_log/core/localization/locale_text.dart';
-import 'package:oshi_log/core/theme/gbt_spacing.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
+import 'package:oshi_log/design_system/theme/gbt_spacing.dart';
 
 /// EN: Orders practical tools by the moment a traveler needs them.
 /// KO: 여행자가 도구를 쓰는 시점에 따라 실용 기능을 정렬합니다.

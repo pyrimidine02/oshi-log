@@ -4,9 +4,9 @@ library;
 
 import 'package:flutter/material.dart';
 
-import 'package:oshi_log/core/theme/gbt_colors.dart';
-import 'package:oshi_log/core/theme/gbt_spacing.dart';
-import 'package:oshi_log/core/theme/gbt_typography.dart';
+import 'package:oshi_log/design_system/theme/gbt_colors.dart';
+import 'package:oshi_log/design_system/theme/gbt_spacing.dart';
+import 'package:oshi_log/design_system/theme/gbt_typography.dart';
 import 'package:oshi_log/features/identity/progression/domain/entities/title_entities.dart';
 
 // =============================================================================

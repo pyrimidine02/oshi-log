@@ -2,10 +2,15 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/application/projects_controller.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/domain/entities/project_entities.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/domain/repositories/projects_repository.dart';
 
 import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
-import 'package:oshi_log/core/router/navigation_state.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/router/navigation_state.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/place/places/application/places_controller.dart';
 import 'package:oshi_log/features/place/places/domain/entities/place_entities.dart';
 import 'package:oshi_log/features/place/places/domain/entities/place_region_entities.dart';
@@ -158,6 +163,47 @@ void main() {
   });
 
   group('PlaceDetailController project boundary', () {
+    test('fallback exposes the project that supplied the detail', () async {
+      final repository = _DeferredPlacesRepository();
+      final projects = _ProjectsRepository();
+      when(() => projects.getProjects()).thenAnswer(
+        (_) async => const Result.success([
+          Project(
+            id: 'project-b',
+            code: 'project-b',
+            name: 'B',
+            status: 'ACTIVE',
+            defaultTimezone: 'Asia/Tokyo',
+          ),
+        ]),
+      );
+      final container = ProviderContainer(
+        overrides: [
+          placesRepositoryProvider.overrideWith((_) async => repository),
+          projectsRepositoryProvider.overrideWith((_) async => projects),
+          selectedProjectKeyProvider.overrideWith((_) => 'project-a'),
+        ],
+      );
+      addTearDown(container.dispose);
+      final subscription = container.listen(
+        placeDetailControllerProvider('place-1'),
+        (_, __) {},
+      );
+      addTearDown(subscription.close);
+      final controller = container.read(
+        placeDetailControllerProvider('place-1').notifier,
+      );
+      await _flushEventQueue();
+      expect(controller.resolvedProjectKey, isNull);
+      repository
+          .detailRequest('project-a')!
+          .complete(const Result.failure(NotFoundFailure('missing')));
+      await _flushEventQueue();
+      repository.completeDetail('project-b', _placeDetail('project-b'));
+      await _flushEventQueue();
+      expect(controller.resolvedProjectKey, 'project-b');
+    });
+
     test('late project A detail cannot overwrite project B', () async {
       final repository = _DeferredPlacesRepository()
         ..deferDetail('project-a')
@@ -193,6 +239,13 @@ void main() {
 
       expect(
         container
+            .read(placeDetailControllerProvider('place-1').notifier)
+            .resolvedProjectKey,
+        'project-b',
+      );
+
+      expect(
+        container
             .read(placeDetailControllerProvider('place-1'))
             .valueOrNull
             ?.name,
@@ -201,6 +254,8 @@ void main() {
     });
   });
 }
+
+class _ProjectsRepository extends Mock implements ProjectsRepository {}
 
 ProviderContainer _container(
   PlacesRepository repository, {

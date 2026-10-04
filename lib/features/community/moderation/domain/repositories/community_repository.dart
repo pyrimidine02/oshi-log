@@ -2,7 +2,7 @@
 /// KO: 커뮤니티 신고/차단 리포지토리 인터페이스.
 library;
 
-import '../../../../../core/utils/result.dart';
+import '../../../../../platform/utils/result.dart';
 import '../entities/community_moderation.dart';
 
 abstract class CommunityRepository {

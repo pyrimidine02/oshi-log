@@ -10,20 +10,20 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as gmaps;
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/localization/locale_text.dart';
-import 'package:oshi_log/core/providers/core_providers.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
+import 'package:oshi_log/platform/providers/core_providers.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
-import 'package:oshi_log/core/router/navigation_state.dart';
-import 'package:oshi_log/core/router/app_router.dart';
-import 'package:oshi_log/core/theme/gbt_colors.dart';
-import 'package:oshi_log/core/theme/gbt_map_styles.dart';
-import 'package:oshi_log/core/theme/gbt_spacing.dart';
-import 'package:oshi_log/core/theme/gbt_typography.dart';
-import 'package:oshi_log/core/utils/result.dart';
-import 'package:oshi_log/core/widgets/common/themed_builder.dart';
-import 'package:oshi_log/core/widgets/feedback/gbt_loading.dart';
-import 'package:oshi_log/core/widgets/inputs/gbt_search_bar.dart';
+import 'package:oshi_log/platform/router/navigation_state.dart';
+import 'package:oshi_log/platform/router/app_router.dart';
+import 'package:oshi_log/design_system/theme/gbt_colors.dart';
+import 'package:oshi_log/design_system/theme/gbt_map_styles.dart';
+import 'package:oshi_log/design_system/theme/gbt_spacing.dart';
+import 'package:oshi_log/design_system/theme/gbt_typography.dart';
+import 'package:oshi_log/platform/utils/result.dart';
+import 'package:oshi_log/design_system/widgets/common/themed_builder.dart';
+import 'package:oshi_log/design_system/widgets/feedback/gbt_loading.dart';
+import 'package:oshi_log/design_system/widgets/inputs/gbt_search_bar.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/projects_controller.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/domain/entities/project_entities.dart';
 import 'package:oshi_log/features/place/places/application/places_controller.dart';
@@ -39,6 +39,7 @@ import 'package:oshi_log/features/place/places/presentation/widgets/field_map_co
 import 'package:oshi_log/features/place/places/presentation/widgets/field_map_controls.dart';
 import 'package:oshi_log/features/place/places/presentation/widgets/field_map_platform_gate.dart';
 import 'package:oshi_log/features/place/places/presentation/widgets/field_place_sheet_row.dart';
+import 'package:oshi_log/features/place/places/presentation/widgets/map_result_status.dart';
 
 /// EN: Places map page widget
 /// KO: 장소 지도 페이지 위젯
@@ -128,6 +129,17 @@ class _PlacesMapPageState extends ConsumerState<PlacesMapPage> {
   bool _showFullPlaceList = false;
   bool _isSheetCollapsed = true;
   String? _selectedPlaceId;
+  bool _listOnly = false;
+  bool _locationUnavailable = false;
+  bool _mapUnavailable = false;
+  bool _cameraMoved = false;
+  bool _cameraMoving = false;
+  Timer? _mapLoadTimer;
+
+  bool get _supportsNativeMap =>
+      !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.iOS ||
+          defaultTargetPlatform == TargetPlatform.android);
 
   // EN: User's current location fetched on init.
   // KO: 초기화 시 가져온 사용자 현재 위치.
@@ -150,21 +162,25 @@ class _PlacesMapPageState extends ConsumerState<PlacesMapPage> {
     super.initState();
     _sheetController.addListener(_handleSheetSizeChange);
     _fetchInitialLocation();
+    _watchMapStartup();
   }
 
   @override
   void didUpdateWidget(covariant PlacesMapPage oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.isActive && !widget.isActive) {
+      _mapLoadTimer?.cancel();
       _releaseNativeMapControllers();
     } else if (!oldWidget.isActive && widget.isActive) {
       _didInitialCenter = false;
+      _watchMapStartup();
     }
   }
 
   @override
   void dispose() {
     _sheetController.removeListener(_handleSheetSizeChange);
+    _mapLoadTimer?.cancel();
     _releaseNativeMapControllers();
     _sheetController.dispose();
     super.dispose();
@@ -187,6 +203,7 @@ class _PlacesMapPageState extends ConsumerState<PlacesMapPage> {
       setState(() {
         _userLocation = target;
         _hasLocationPermission = true;
+        _locationUnavailable = false;
       });
       if (!_didInitialCenter || _didCenterOnSafeDefault) {
         _moveCameraTo(snapshot.latitude, snapshot.longitude, zoom: 14);
@@ -196,6 +213,7 @@ class _PlacesMapPageState extends ConsumerState<PlacesMapPage> {
     } catch (_) {
       // EN: Location unavailable; fall back to places-based centering.
       // KO: 위치를 가져올 수 없으면 장소 기반 중심으로 대체합니다.
+      if (mounted) setState(() => _locationUnavailable = true);
     }
   }
 
@@ -233,17 +251,20 @@ class _PlacesMapPageState extends ConsumerState<PlacesMapPage> {
     final selectedRegionCodes = ref.watch(selectedPlaceRegionCodesProvider);
     final selectedBandIds = ref.watch(selectedPlaceBandIdsProvider);
     final listMode = ref.watch(placeListModeProvider);
+    final areaBounds = ref.watch(selectedPlaceBoundsProvider);
     final currentNavIndex = ref.watch(currentNavIndexProvider);
     ref.listen<int>(currentNavIndexProvider, (previous, next) {
-      if (previous == NavIndex.explore && next != NavIndex.explore) {
+      if (previous == NavIndex.map && next != NavIndex.map) {
+        _mapLoadTimer?.cancel();
         _releaseNativeMapControllers();
-      } else if (previous != NavIndex.explore &&
-          next == NavIndex.explore &&
+      } else if (previous != NavIndex.map &&
+          next == NavIndex.map &&
           widget.isActive) {
         _didInitialCenter = false;
+        _watchMapStartup();
       }
     });
-    final isTabActive = currentNavIndex == NavIndex.explore && widget.isActive;
+    final isTabActive = currentNavIndex == NavIndex.map && widget.isActive;
     final projectKey = ref.watch(selectedProjectKeyProvider);
     final projectId = ref.watch(selectedProjectIdProvider);
     final resolvedProjectKey = projectKey?.isNotEmpty == true
@@ -264,10 +285,12 @@ class _PlacesMapPageState extends ConsumerState<PlacesMapPage> {
       projectSelection,
     );
     final hasActiveFilters =
+        areaBounds != null ||
         selectedRegionCodes.isNotEmpty ||
         selectedBandIds.isNotEmpty ||
         listMode != PlaceListMode.all;
     final activeFilterCount =
+        (areaBounds != null ? 1 : 0) +
         (selectedRegionCodes.isNotEmpty ? 1 : 0) +
         (selectedBandIds.isNotEmpty ? 1 : 0) +
         (listMode != PlaceListMode.all ? 1 : 0);
@@ -276,6 +299,144 @@ class _PlacesMapPageState extends ConsumerState<PlacesMapPage> {
     // KO: 빌드 중 dispose된 GoogleMapController 사용을 방지하기 위해
     //     프레임 이후에 카메라 센터링을 예약합니다.
     _scheduleMaybeCenterOnMap(places, isTabActive: isTabActive);
+
+    final listOnly = _listOnly || !_supportsNativeMap;
+    final filters = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: GBTSpacing.xs),
+        FieldMapMissionStrip(
+          onLocalSearch: () => _showMapSearch(places, regionOptionsState),
+          trailing: IconButton(
+            key: const ValueKey('map-list-toggle'),
+            tooltip: listOnly
+                ? context.l10n(ko: '지도 보기', en: 'Show map', ja: '地図を表示')
+                : context.l10n(ko: '목록 보기', en: 'Show list', ja: '一覧を表示'),
+            onPressed: listOnly && !_supportsNativeMap
+                ? null
+                : () {
+                    if (listOnly) {
+                      setState(() {
+                        _listOnly = false;
+                        _mapUnavailable = false;
+                      });
+                      _watchMapStartup();
+                    } else {
+                      _openList();
+                    }
+                  },
+            icon: Icon(listOnly ? Icons.map_outlined : Icons.list),
+          ),
+        ),
+        const SizedBox(height: GBTSpacing.sm),
+        FieldMapFilterChips(
+          activeFilterCount: activeFilterCount,
+          projectLabel: selectedProjectLabel,
+          regionLabel: selectedRegionLabel,
+          bandLabel: selectedBandLabel,
+          onFiltersTap: () => showFieldMapFilters(
+            context: context,
+            projectLabel: selectedProjectLabel,
+            regionLabel: selectedRegionLabel,
+            bandLabel: selectedBandLabel,
+            mode: listMode,
+            hasRegionFilter: selectedRegionCodes.isNotEmpty,
+            hasBandFilter: selectedBandIds.isNotEmpty,
+            onProjectTap: _showProjectPicker,
+            onRegionTap: () => _showRegionFilter(selectedRegionCodes),
+            onBandTap: () => _showBandFilter(selectedBandIds),
+            onModeChanged: (mode) =>
+                ref.read(placeListModeProvider.notifier).state = mode,
+            onResetFilters: _resetFilters,
+          ),
+          onProjectTap: _showProjectPicker,
+          onRegionTap: () => _showRegionFilter(selectedRegionCodes),
+          onBandTap: () => _showBandFilter(selectedBandIds),
+        ),
+        if (_cameraMoved && !listOnly)
+          FilledButton.tonalIcon(
+            key: const ValueKey('map-search-area'),
+            style: FilledButton.styleFrom(minimumSize: const Size(48, 48)),
+            onPressed: _searchVisibleArea,
+            icon: const Icon(Icons.search),
+            label: Text(
+              context.l10n(
+                ko: '이 영역에서 재검색',
+                en: 'Search this area',
+                ja: 'このエリアで再検索',
+              ),
+            ),
+          ),
+      ],
+    );
+    final resultContext = Padding(
+      padding: const EdgeInsets.all(GBTSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          MapFilterSummary(
+            labels: [
+              selectedProjectLabel,
+              if (areaBounds != null)
+                context.l10n(ko: '지도 영역', en: 'Map area', ja: '地図の範囲')
+              else
+                selectedRegionLabel,
+              selectedBandLabel,
+              if (listMode == PlaceListMode.nearby)
+                context.l10n(
+                  ko: '현재 위치 주변',
+                  en: 'Near current location',
+                  ja: '現在地周辺',
+                ),
+            ],
+            onReset: hasActiveFilters ? _resetFilters : null,
+          ),
+          MapResultStatus(
+            locationUnavailable: _locationUnavailable,
+            mapUnavailable: _mapUnavailable || !_supportsNativeMap,
+            onChooseRegion: () => _showRegionFilter(selectedRegionCodes),
+          ),
+        ],
+      ),
+    );
+    if (listOnly) {
+      return Scaffold(
+        body: SafeArea(
+          child: Padding(
+            padding: EdgeInsets.only(top: widget.topOverlayClearance),
+            child: RefreshIndicator(
+              onRefresh: _refreshPlaces,
+              child: CustomScrollView(
+                key: const ValueKey('map-fallback-list'),
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: GBTSpacing.md,
+                      ),
+                      child: filters,
+                    ),
+                  ),
+                  SliverToBoxAdapter(child: resultContext),
+                  _PlacesSliverList(
+                    state: placesState.whenData((_) => places),
+                    onRetry: _refreshPlaces,
+                    onPlaceTap: _navigateToPlaceDetail,
+                    onDirectionsTap: _showDirectionsForPlace,
+                    hasActiveFilters: hasActiveFilters,
+                    onResetFilters: _resetFilters,
+                  ),
+                  SliverToBoxAdapter(
+                    child: SizedBox(height: widget.bottomInset),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       body: LayoutBuilder(
@@ -312,10 +473,12 @@ class _PlacesMapPageState extends ConsumerState<PlacesMapPage> {
                     myLocationEnabled: _hasLocationPermission,
                     initialTarget: _pendingCenterTarget ?? _userLocation,
                     onAppleMapCreated: (controller) {
+                      _mapLoadTimer?.cancel();
                       _appleMapLease.attach(controller);
                       _maybeCenterOnMap(places);
                     },
                     onGoogleMapCreated: (controller) {
+                      _mapLoadTimer?.cancel();
                       _googleMapLease.attach(controller);
                       _maybeCenterOnMap(places);
                     },
@@ -327,53 +490,11 @@ class _PlacesMapPageState extends ConsumerState<PlacesMapPage> {
                   ),
                 ),
               ),
-              // EN: Search and familiar filter chips are the only top chrome.
-              // KO: 검색과 익숙한 필터 칩만 상단에 둡니다.
               Positioned(
                 top: widget.topOverlayClearance,
                 left: GBTSpacing.md,
                 right: GBTSpacing.md,
-                child: SafeArea(
-                  bottom: false,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: GBTSpacing.xs),
-                      FieldMapMissionStrip(
-                        onLocalSearch: () =>
-                            _showMapSearch(places, regionOptionsState),
-                      ),
-                      const SizedBox(height: GBTSpacing.sm),
-                      FieldMapFilterChips(
-                        activeFilterCount: activeFilterCount,
-                        projectLabel: selectedProjectLabel,
-                        regionLabel: selectedRegionLabel,
-                        bandLabel: selectedBandLabel,
-                        onFiltersTap: () => showFieldMapFilters(
-                          context: context,
-                          projectLabel: selectedProjectLabel,
-                          regionLabel: selectedRegionLabel,
-                          bandLabel: selectedBandLabel,
-                          mode: listMode,
-                          hasRegionFilter: selectedRegionCodes.isNotEmpty,
-                          hasBandFilter: selectedBandIds.isNotEmpty,
-                          onProjectTap: _showProjectPicker,
-                          onRegionTap: () =>
-                              _showRegionFilter(selectedRegionCodes),
-                          onBandTap: () => _showBandFilter(selectedBandIds),
-                          onModeChanged: (mode) =>
-                              ref.read(placeListModeProvider.notifier).state =
-                                  mode,
-                          onResetFilters: _resetFilters,
-                        ),
-                        onProjectTap: _showProjectPicker,
-                        onRegionTap: () =>
-                            _showRegionFilter(selectedRegionCodes),
-                        onBandTap: () => _showBandFilter(selectedBandIds),
-                      ),
-                    ],
-                  ),
-                ),
+                child: SafeArea(bottom: false, child: filters),
               ),
 
               // EN: Square instrument actions preserve 48dp hit areas.
@@ -465,6 +586,8 @@ class _PlacesMapPageState extends ConsumerState<PlacesMapPage> {
                                       _togglePlaceSheet(effectiveSheetMinSize),
                                 ),
                               ),
+
+                              SliverToBoxAdapter(child: resultContext),
 
                               if (!_showFullPlaceList && places.isNotEmpty)
                                 SliverToBoxAdapter(
@@ -605,12 +728,85 @@ class _PlacesMapPageState extends ConsumerState<PlacesMapPage> {
 
   void _handleCameraMove(double zoom) {
     _pendingZoom = zoom;
+    _cameraMoving = true;
   }
 
   void _handleCameraIdle() {
-    if ((_pendingZoom - _currentZoom).abs() >= 0.3) {
-      setState(() => _currentZoom = _pendingZoom);
+    if (_cameraMoving || (_pendingZoom - _currentZoom).abs() >= 0.3) {
+      setState(() {
+        _currentZoom = _pendingZoom;
+        _cameraMoved = _cameraMoving;
+        _cameraMoving = false;
+      });
     }
+  }
+
+  void _openList({bool unavailable = false}) {
+    _mapLoadTimer?.cancel();
+    _releaseNativeMapControllers();
+    setState(() {
+      _listOnly = true;
+      _mapUnavailable = unavailable;
+    });
+  }
+
+  void _watchMapStartup() {
+    _mapLoadTimer?.cancel();
+    if (!_supportsNativeMap ||
+        !widget.isActive ||
+        ref.read(currentNavIndexProvider) != NavIndex.map ||
+        _listOnly) {
+      return;
+    }
+    _mapLoadTimer = Timer(const Duration(seconds: 10), () {
+      if (mounted &&
+          widget.isActive &&
+          ref.read(currentNavIndexProvider) == NavIndex.map &&
+          _googleMapLease.controller == null &&
+          _appleMapLease.controller == null) {
+        _openList(unavailable: true);
+      }
+    });
+  }
+
+  Future<void> _searchVisibleArea() async {
+    PlaceSearchBounds? bounds;
+    if (_isAppleMap) {
+      final leased = _appleMapLease.controller;
+      await _safeAppleMapCall((controller) async {
+        final area = await controller.getVisibleRegion();
+        if (!identical(leased, _appleMapLease.controller)) return;
+        bounds = (
+          south: area.southwest.latitude,
+          west: area.southwest.longitude,
+          north: area.northeast.latitude,
+          east: area.northeast.longitude,
+        );
+      });
+    } else {
+      final leased = _googleMapLease.controller;
+      await _safeGoogleMapCall((controller) async {
+        final area = await controller.getVisibleRegion();
+        if (!identical(leased, _googleMapLease.controller)) return;
+        bounds = (
+          south: area.southwest.latitude,
+          west: area.southwest.longitude,
+          north: area.northeast.latitude,
+          east: area.northeast.longitude,
+        );
+      });
+    }
+    if (!mounted ||
+        !widget.isActive ||
+        ref.read(currentNavIndexProvider) != NavIndex.map) {
+      return;
+    }
+    if (bounds == null) {
+      _openList(unavailable: true);
+      return;
+    }
+    setState(() => _cameraMoved = false);
+    await ref.read(placesListControllerProvider.notifier).searchBounds(bounds!);
   }
 
   /// EN: Saves place coordinates and navigates to detail page.
@@ -659,10 +855,12 @@ class _PlacesMapPageState extends ConsumerState<PlacesMapPage> {
       setState(() {
         _userLocation = _MapTarget(snapshot.latitude, snapshot.longitude);
         _hasLocationPermission = true;
+        _locationUnavailable = false;
       });
       _moveCameraTo(snapshot.latitude, snapshot.longitude, zoom: 14);
     } catch (error) {
       if (!mounted) return;
+      setState(() => _locationUnavailable = true);
       final message = error is Failure
           ? error.userMessage
           : context.l10n(

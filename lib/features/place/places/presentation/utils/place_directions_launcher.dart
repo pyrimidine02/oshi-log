@@ -8,8 +8,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'package:oshi_log/core/localization/locale_text.dart';
-import 'package:oshi_log/core/widgets/sheets/gbt_bottom_sheet.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
+import 'package:oshi_log/design_system/widgets/sheets/gbt_bottom_sheet.dart';
 import 'package:oshi_log/features/place/places/domain/entities/place_entities.dart';
 
 Future<void> showPlaceDirectionsSheet(

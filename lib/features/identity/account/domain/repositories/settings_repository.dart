@@ -2,7 +2,7 @@
 /// KO: 설정 리포지토리 인터페이스.
 library;
 
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/identity/account/domain/entities/account_tools.dart';
 import 'package:oshi_log/features/identity/account/domain/entities/consent_history.dart';
 import 'package:oshi_log/features/identity/account/domain/entities/notification_settings.dart';

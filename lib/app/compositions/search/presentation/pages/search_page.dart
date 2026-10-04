@@ -8,19 +8,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../../core/error/failure.dart';
-import '../../../../../core/localization/locale_text.dart';
-import '../../../../../core/providers/core_providers.dart';
-import '../../../../../core/router/app_router.dart';
-import '../../../../../core/theme/gbt_colors.dart';
-import '../../../../../core/theme/gbt_spacing.dart';
-import '../../../../../core/theme/gbt_typography.dart';
-import '../../../../../core/widgets/common/gbt_image.dart';
-import '../../../../../core/widgets/feedback/gbt_empty_state.dart';
-import '../../../../../core/widgets/feedback/gbt_loading.dart'
+import '../../../../../design_system/localization/locale_text.dart';
+import '../../../../../platform/providers/core_providers.dart';
+import '../../../../../platform/router/app_router.dart';
+import '../../../../../design_system/theme/gbt_colors.dart';
+import '../../../../../design_system/theme/gbt_spacing.dart';
+import '../../../../../design_system/theme/gbt_typography.dart';
+import '../../../../../design_system/widgets/common/gbt_image.dart';
+import '../../../../../design_system/widgets/feedback/gbt_empty_state.dart';
+import '../../../../../design_system/widgets/feedback/gbt_loading.dart'
     hide GBTEmptyState;
-import '../../../../../core/widgets/navigation/gbt_segmented_tab_bar.dart';
-import '../../../../../core/widgets/navigation/gbt_search_app_bar.dart';
+import '../../../../../design_system/widgets/navigation/gbt_segmented_tab_bar.dart';
+import '../../../../../design_system/widgets/navigation/gbt_search_app_bar.dart';
 import '../../../../../features/shared/search/application/search_controller.dart';
 import '../../../../../features/shared/search/domain/entities/search_entities.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/projects_controller.dart';
@@ -105,7 +104,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
   Widget build(BuildContext context) {
     final history = ref.watch(searchHistoryControllerProvider);
     final resultsState = ref.watch(searchControllerProvider);
-    final shouldShowDiscovery = _query.isEmpty;
+    final shouldShowDiscovery = _query.trim().isEmpty;
     final popularState = shouldShowDiscovery
         ? ref.watch(searchPopularDiscoveryProvider(_discoveryLimit))
         : null;
@@ -135,7 +134,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
       ),
       body: RefreshIndicator(
         onRefresh: _onRefresh,
-        child: _query.isEmpty
+        child: shouldShowDiscovery
             ? _RecentSearches(
                 items: history,
                 popularState: popularState!,
@@ -163,6 +162,13 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                 onRetry: () => ref
                     .read(searchControllerProvider.notifier)
                     .search(_query, forceRefresh: true),
+                onEditQuery: () {
+                  _searchController.selection = TextSelection(
+                    baseOffset: 0,
+                    extentOffset: _searchController.text.length,
+                  );
+                  _focusNode.requestFocus();
+                },
               ),
       ),
     );
@@ -822,11 +828,13 @@ class _SearchResults extends StatelessWidget {
     required this.query,
     required this.state,
     required this.onRetry,
+    required this.onEditQuery,
   });
 
   final String query;
   final AsyncValue<List<SearchItem>> state;
   final VoidCallback onRetry;
+  final VoidCallback onEditQuery;
 
   @override
   Widget build(BuildContext context) {
@@ -871,13 +879,11 @@ class _SearchResults extends StatelessWidget {
                 ],
               ),
               error: (error, _) {
-                final message = error is Failure
-                    ? _errorDisplayText(error)
-                    : context.l10n(
-                        ko: '검색 결과를 불러오지 못했어요',
-                        en: 'Failed to load search results',
-                        ja: '検索結果を読み込めませんでした',
-                      );
+                final message = context.l10n(
+                  ko: '검색 결과를 불러오지 못했어요',
+                  en: 'Failed to load search results',
+                  ja: '検索結果を読み込めませんでした',
+                );
                 return ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: GBTSpacing.paddingPage,
@@ -891,10 +897,16 @@ class _SearchResults extends StatelessWidget {
                 final visibleItems = _filterCurrentMobileItems(items);
                 return TabBarView(
                   children: [
-                    _SearchResultList(query: query, items: visibleItems),
+                    _SearchResultList(
+                      query: query,
+                      items: visibleItems,
+                      onEditQuery: onEditQuery,
+                    ),
                     _SearchResultList(
                       query: query,
                       items: _filterByType(visibleItems, SearchItemType.place),
+                      onEditQuery: onEditQuery,
+                      canClearCategory: visibleItems.isNotEmpty,
                     ),
                     _SearchResultList(
                       query: query,
@@ -902,14 +914,20 @@ class _SearchResults extends StatelessWidget {
                         visibleItems,
                         SearchItemType.liveEvent,
                       ),
+                      onEditQuery: onEditQuery,
+                      canClearCategory: visibleItems.isNotEmpty,
                     ),
                     _SearchResultList(
                       query: query,
                       items: _filterByType(visibleItems, SearchItemType.news),
+                      onEditQuery: onEditQuery,
+                      canClearCategory: visibleItems.isNotEmpty,
                     ),
                     _SearchResultList(
                       query: query,
                       items: _filterFanAndPeople(visibleItems),
+                      onEditQuery: onEditQuery,
+                      canClearCategory: visibleItems.isNotEmpty,
                     ),
                   ],
                 );
@@ -922,19 +940,18 @@ class _SearchResults extends StatelessWidget {
   }
 }
 
-String _errorDisplayText(Failure failure) {
-  final code = failure.code?.trim();
-  if (code != null && code.isNotEmpty) {
-    return '[$code] ${failure.message}';
-  }
-  return failure.message;
-}
-
 class _SearchResultList extends StatelessWidget {
-  const _SearchResultList({required this.query, required this.items});
+  const _SearchResultList({
+    required this.query,
+    required this.items,
+    required this.onEditQuery,
+    this.canClearCategory = false,
+  });
 
   final String query;
   final List<SearchItem> items;
+  final VoidCallback onEditQuery;
+  final bool canClearCategory;
 
   @override
   Widget build(BuildContext context) {
@@ -953,11 +970,31 @@ class _SearchResultList extends StatelessWidget {
               en: 'No search results',
               ja: '検索結果がありません',
             ),
-            subtitle: context.l10n(
-              ko: '다른 키워드로 검색해보세요.',
-              en: 'Try another keyword.',
-              ja: '別のキーワードで検索してください。',
-            ),
+            subtitle: canClearCategory
+                ? context.l10n(
+                    ko: '이 분류에는 결과가 없어요. 다른 분류의 결과를 확인해 보세요.',
+                    en: 'No matches in this category. Results are available in other categories.',
+                    ja: 'この分類には結果がありません。他の分類の結果を確認してください。',
+                  )
+                : context.l10n(
+                    ko: '다른 키워드로 검색해보세요.',
+                    en: 'Try another keyword.',
+                    ja: '別のキーワードで検索してください。',
+                  ),
+            actionLabel: canClearCategory
+                ? context.l10n(
+                    ko: '전체 결과 보기',
+                    en: 'Show all results',
+                    ja: 'すべての結果を見る',
+                  )
+                : context.l10n(
+                    ko: '검색어 바꾸기',
+                    en: 'Change keyword',
+                    ja: 'キーワードを変える',
+                  ),
+            onAction: canClearCategory
+                ? () => DefaultTabController.of(context).animateTo(0)
+                : onEditQuery,
           ),
         ],
       );

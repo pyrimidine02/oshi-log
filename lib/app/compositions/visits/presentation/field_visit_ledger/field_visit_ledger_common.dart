@@ -4,11 +4,11 @@ library;
 
 import 'package:flutter/material.dart';
 
-import 'package:oshi_log/core/localization/locale_text.dart';
-import 'package:oshi_log/core/theme/theme.dart';
-import 'package:oshi_log/core/widgets/layout/gbt_field_primitives.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
+import 'package:oshi_log/design_system/theme/theme.dart';
+import 'package:oshi_log/design_system/widgets/layout/gbt_field_primitives.dart';
 
-enum FieldVisitLedgerKind { places, events }
+enum FieldVisitLedgerKind { all, places, events }
 
 class FieldLedgerKindSwitch extends StatelessWidget {
   const FieldLedgerKindSwitch({
@@ -29,7 +29,9 @@ class FieldLedgerKindSwitch extends StatelessWidget {
         MediaQuery.sizeOf(context).width < 380 ||
         MediaQuery.textScalerOf(context).scale(1) > 1.3;
     final isPlaces = selected == FieldVisitLedgerKind.places;
-    final title = isPlaces
+    final title = selected == FieldVisitLedgerKind.all
+        ? context.l10n(ko: '통합 기록', en: 'All records', ja: 'すべての記録')
+        : isPlaces
         ? context.l10n(ko: '장소 기록', en: 'Place records', ja: '場所記録')
         : context.l10n(ko: '이벤트 출석', en: 'Event attendance', ja: 'イベント参加');
     final titleBlock = GBTFieldSectionHeader(
@@ -70,84 +72,56 @@ class FieldLedgerKindSwitch extends StatelessWidget {
                 ],
               ),
             const SizedBox(height: GBTSpacing.sm),
-            ConstrainedBox(
-              constraints: const BoxConstraints(
-                minHeight: GBTSpacing.touchTarget,
-              ),
-              child: SegmentedButton<FieldVisitLedgerKind>(
-                key: const Key('field-ledger-kind-switch'),
-                showSelectedIcon: false,
-                expandedInsets: EdgeInsets.zero,
-                segments: [
-                  ButtonSegment(
-                    value: FieldVisitLedgerKind.places,
+            Wrap(
+              key: const Key('field-ledger-kind-switch'),
+              spacing: GBTSpacing.sm,
+              runSpacing: GBTSpacing.xs,
+              children: [
+                for (final kind in FieldVisitLedgerKind.values)
+                  ChoiceChip(
+                    key: Key('field-ledger-kind-${kind.name}'),
+                    selected: selected == kind,
+                    onSelected: (_) => onSelected(kind),
+                    materialTapTargetSize: MaterialTapTargetSize.padded,
                     label: Semantics(
-                      key: const Key('field-ledger-kind-places'),
-                      label: context.l10n(
-                        ko: '장소 방문 기록 보기',
-                        en: 'Show place visit records',
-                        ja: '場所訪問記録を表示',
-                      ),
+                      label: switch (kind) {
+                        FieldVisitLedgerKind.all => context.l10n(
+                          ko: '통합 기록 보기',
+                          en: 'Show all records',
+                          ja: 'すべての記録を表示',
+                        ),
+                        FieldVisitLedgerKind.places => context.l10n(
+                          ko: '장소 방문 기록 보기',
+                          en: 'Show place visit records',
+                          ja: '場所訪問記録を表示',
+                        ),
+                        FieldVisitLedgerKind.events => context.l10n(
+                          ko: '이벤트 출석 기록 보기',
+                          en: 'Show event attendance records',
+                          ja: 'イベント参加記録を表示',
+                        ),
+                      },
                       excludeSemantics: true,
-                      child: Text(
-                        context.l10n(
+                      child: Text(switch (kind) {
+                        FieldVisitLedgerKind.all => context.l10n(
+                          ko: '전체',
+                          en: 'All',
+                          ja: 'すべて',
+                        ),
+                        FieldVisitLedgerKind.places => context.l10n(
                           ko: '장소 방문',
                           en: 'Place visits',
                           ja: '場所訪問',
                         ),
-                        maxLines: 2,
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ),
-                  ButtonSegment(
-                    value: FieldVisitLedgerKind.events,
-                    label: Semantics(
-                      key: const Key('field-ledger-kind-events'),
-                      label: context.l10n(
-                        ko: '이벤트 출석 기록 보기',
-                        en: 'Show event attendance records',
-                        ja: 'イベント参加記録を表示',
-                      ),
-                      excludeSemantics: true,
-                      child: Text(
-                        context.l10n(
+                        FieldVisitLedgerKind.events => context.l10n(
                           ko: '이벤트 출석',
                           en: 'Event attendance',
                           ja: 'イベント参加',
                         ),
-                        maxLines: 2,
-                        textAlign: TextAlign.center,
-                      ),
+                      }),
                     ),
                   ),
-                ],
-                selected: {selected},
-                onSelectionChanged: (selection) => onSelected(selection.first),
-                style: ButtonStyle(
-                  minimumSize: const WidgetStatePropertyAll(
-                    Size(0, GBTSpacing.touchTarget),
-                  ),
-                  backgroundColor: WidgetStateProperty.resolveWith((states) {
-                    return states.contains(WidgetState.selected)
-                        ? colors.primaryContainer
-                        : colors.surfaceContainerLow;
-                  }),
-                  foregroundColor: WidgetStateProperty.resolveWith((states) {
-                    return states.contains(WidgetState.selected)
-                        ? colors.onPrimaryContainer
-                        : colors.onSurfaceVariant;
-                  }),
-                  side: WidgetStateProperty.resolveWith((states) {
-                    return BorderSide(
-                      color: states.contains(WidgetState.selected)
-                          ? colors.primary
-                          : colors.outlineVariant,
-                      width: states.contains(WidgetState.selected) ? 1.5 : 1,
-                    );
-                  }),
-                ),
-              ),
+              ],
             ),
           ],
         ),

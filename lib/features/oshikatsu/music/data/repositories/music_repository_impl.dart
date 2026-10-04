@@ -2,9 +2,9 @@
 /// KO: 악곡 리포지토리 구현체입니다.
 library;
 
-import 'package:oshi_log/core/error/error_handler.dart';
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/error/error_handler.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/oshikatsu/music/domain/entities/music_entities.dart';
 import 'package:oshi_log/features/oshikatsu/music/domain/repositories/music_repository.dart';
 import 'package:oshi_log/features/oshikatsu/music/data/datasources/music_remote_data_source.dart';

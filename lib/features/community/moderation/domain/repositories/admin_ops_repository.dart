@@ -2,7 +2,7 @@
 /// KO: 운영/관리자 리포지토리 인터페이스.
 library;
 
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/community/moderation/domain/entities/admin_ops_entities.dart';
 
 abstract class AdminOpsRepository {

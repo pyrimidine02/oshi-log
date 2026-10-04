@@ -5,8 +5,8 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:oshi_log/core/localization/locale_text.dart';
-import 'package:oshi_log/core/theme/theme.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
+import 'package:oshi_log/design_system/theme/theme.dart';
 import '../../application/projects_controller.dart';
 import '../../domain/entities/project_entities.dart';
 import 'field_project_picker_sheet.dart';

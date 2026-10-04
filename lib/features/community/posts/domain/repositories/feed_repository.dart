@@ -2,7 +2,7 @@
 /// KO: 뉴스 및 커뮤니티 게시글 리포지토리 인터페이스.
 library;
 
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/community/posts/domain/entities/feed_entities.dart';
 
 abstract class FeedRepository {

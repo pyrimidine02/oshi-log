@@ -17,6 +17,34 @@ void main() {
     type: CalendarEventType.release,
   );
 
+  test(
+    'birthday date stays civil while timed live shifts into JST next day',
+    () {
+      final instant = DateTime.parse('2026-09-30T18:00:00Z');
+      final birthday = CalendarEvent(
+        id: 'b',
+        title: 'Birthday',
+        date: instant,
+        type: CalendarEventType.characterBirthday,
+      );
+      final timed = CalendarEvent(
+        id: 'l',
+        title: 'Live',
+        date: instant,
+        type: CalendarEventType.live,
+      );
+      expect(calendarEventDate(birthday), DateTime.utc(2026, 9, 30));
+      expect(calendarEventDate(timed), DateTime.utc(2026, 10, 1, 3));
+      expect(
+        filterCalendarEvents([
+          birthday,
+          timed,
+        ], selectedDate: DateTime(2026, 10, 1)),
+        [timed],
+      );
+    },
+  );
+
   test('filterCalendarEvents combines date and immutable type filters', () {
     final filtered = filterCalendarEvents(
       [live, release],

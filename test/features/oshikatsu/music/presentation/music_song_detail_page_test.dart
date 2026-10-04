@@ -1,16 +1,37 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/router/app_router.dart';
-import 'package:oshi_log/core/theme/gbt_theme.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/platform/router/app_router.dart';
+import 'package:oshi_log/design_system/theme/gbt_theme.dart';
+import 'package:oshi_log/design_system/widgets/common/spoiler_guard.dart';
 import 'package:oshi_log/features/oshikatsu/music/application/music_controller.dart';
 import 'package:oshi_log/features/oshikatsu/music/domain/entities/music_entities.dart';
 import 'package:oshi_log/features/oshikatsu/music/presentation/pages/music_song_detail_page.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  setUpAll(() async {
+    final font = FontLoader('Pretendard');
+    for (final weight in [
+      'Regular',
+      'Medium',
+      'SemiBold',
+      'Bold',
+      'ExtraBold',
+    ]) {
+      font.addFont(rootBundle.load('assets/fonts/Pretendard-$weight.otf'));
+    }
+    final icons = FontLoader('MaterialIcons')
+      ..addFont(rootBundle.load('fonts/MaterialIcons-Regular.otf'));
+    await Future.wait([font.load(), icons.load()]);
+  });
   const projectId = 'project';
   const songId = 'song';
   const detail = MusicSongDetail(
@@ -28,6 +49,295 @@ void main() {
     version: 'FULL',
     cues: <MusicCallCue>[],
   );
+
+  for (final language in ['ko', 'ja']) {
+    for (final dark in [false, true]) {
+      testWidgets('$language live guide fits 320dp at 200 percent, dark=$dark', (
+        tester,
+      ) async {
+        tester.view.physicalSize = const Size(320, 640);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        await tester.pumpWidget(
+          _testApp(
+            eventId: 'event',
+            locale: Locale(language),
+            dark: dark,
+            detail: const MusicSongDetail(
+              id: songId,
+              projectId: projectId,
+              title: '長い楽曲名と한국어 공연 준비곡',
+              primaryUnitName: 'Band A',
+            ),
+            lyrics: const MusicLyricsPayload(
+              songId: songId,
+              version: 'FULL',
+              lines: [],
+            ),
+            emptyParts: emptyParts,
+            emptyCallGuide: emptyCallGuide,
+            textScaler: const TextScaler.linear(2),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(tester.widget<TabBar>(find.byType(TabBar)).controller?.index, 1);
+        expect(tester.takeException(), isNull);
+        await expectLater(
+          find.byKey(const ValueKey('song-detail-golden')),
+          matchesGoldenFile(
+            'goldens/song_guide_${language}_${dark ? 'dark' : 'light'}_320_200.png',
+          ),
+        );
+        await tester.drag(
+          find.byType(CustomScrollView).first,
+          const Offset(0, -550),
+        );
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+      });
+    }
+  }
+
+  const protectedLyrics = MusicLyricsPayload(
+    songId: songId,
+    version: 'FULL',
+    lines: [
+      MusicLyricLine(
+        lineId: 'private-line',
+        order: 1,
+        startMs: 0,
+        endMs: 1000,
+        section: 'Verse',
+        textOriginal: 'Rights-sensitive lyric',
+      ),
+    ],
+  );
+  for (final policy in [
+    'UNKNOWN',
+    'COPYRIGHT_BLOCKED',
+    'PRE_RELEASE',
+    'EXPIRED',
+    '',
+  ]) {
+    testWidgets('lyrics stay hidden without confirmed rights: $policy', (
+      tester,
+    ) async {
+      final semantics = tester.ensureSemantics();
+      try {
+        var lyricCalls = 0;
+        await tester.pumpWidget(
+          _testApp(
+            eventId: policy == 'COPYRIGHT_BLOCKED' ? 'event' : null,
+            lyrics: protectedLyrics,
+            emptyParts: emptyParts,
+            emptyCallGuide: emptyCallGuide,
+            loadLyrics: () async {
+              lyricCalls++;
+              return protectedLyrics;
+            },
+            availability: () async => MusicAvailability(
+              isAvailableNow: true,
+              allowedCountries: const [],
+              blockedCountries: const [],
+              rightsPolicy: policy,
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.byType(Tab).first);
+        await tester.pumpAndSettle();
+        expect(find.text('Rights-sensitive lyric'), findsNothing);
+        expect(find.bySemanticsLabel('Rights-sensitive lyric'), findsNothing);
+        expect(lyricCalls, 0);
+        expect(
+          find.text(
+            'Lyrics are unavailable until display rights are confirmed.',
+          ),
+          findsOneWidget,
+        );
+      } finally {
+        semantics.dispose();
+      }
+    });
+  }
+  testWidgets('lyrics wait for availability and require current permission', (
+    tester,
+  ) async {
+    final availability = Completer<MusicAvailability>();
+    await tester.pumpWidget(
+      _testApp(
+        lyrics: protectedLyrics,
+        emptyParts: emptyParts,
+        emptyCallGuide: emptyCallGuide,
+        availability: () => availability.future,
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+    expect(find.text('Rights-sensitive lyric'), findsNothing);
+    availability.complete(
+      const MusicAvailability(
+        isAvailableNow: false,
+        allowedCountries: [],
+        blockedCountries: [],
+        rightsPolicy: 'OK',
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Rights-sensitive lyric'), findsNothing);
+  });
+  testWidgets('availability failure keeps lyrics hidden', (tester) async {
+    await tester.pumpWidget(
+      _testApp(
+        lyrics: protectedLyrics,
+        emptyParts: emptyParts,
+        emptyCallGuide: emptyCallGuide,
+        availability: () async => throw StateError('unavailable'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Rights-sensitive lyric'), findsNothing);
+    expect(find.text('Retry'), findsOneWidget);
+  });
+  testWidgets('confirmed rights allow lyrics', (tester) async {
+    await tester.pumpWidget(
+      _testApp(
+        lyrics: protectedLyrics,
+        emptyParts: emptyParts,
+        emptyCallGuide: emptyCallGuide,
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Rights-sensitive lyric'), findsOneWidget);
+  });
+  testWidgets(
+    'lyrics disappear when permission expires while page stays open',
+    (tester) async {
+      final until = DateTime.now().add(const Duration(minutes: 1));
+      await tester.pumpWidget(
+        _testApp(
+          lyrics: protectedLyrics,
+          emptyParts: emptyParts,
+          emptyCallGuide: emptyCallGuide,
+          availability: () async => MusicAvailability(
+            isAvailableNow: true,
+            availableUntil: until,
+            allowedCountries: const [],
+            blockedCountries: const [],
+            rightsPolicy: 'OK',
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Rights-sensitive lyric'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 61));
+      await tester.pumpAndSettle();
+      expect(find.text('Rights-sensitive lyric'), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
+  for (final expired in [false, true]) {
+    testWidgets(
+      'lyric permission respects known ${expired ? 'expiry' : 'release'} bound',
+      (tester) async {
+        final now = DateTime.now();
+        await tester.pumpWidget(
+          _testApp(
+            lyrics: protectedLyrics,
+            emptyParts: emptyParts,
+            emptyCallGuide: emptyCallGuide,
+            availability: () async => MusicAvailability(
+              isAvailableNow: true,
+              availableFrom: expired ? null : now.add(const Duration(days: 1)),
+              availableUntil: expired
+                  ? now.subtract(const Duration(days: 1))
+                  : null,
+              allowedCountries: const [],
+              blockedCountries: const [],
+              rightsPolicy: 'OK',
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('Rights-sensitive lyric'), findsNothing);
+      },
+    );
+  }
+  for (final locale in [const Locale('ja', 'JP'), const Locale('ko', 'KR')]) {
+    testWidgets(
+      'display language does not establish lyric country rights: $locale',
+      (tester) async {
+        await tester.pumpWidget(
+          _testApp(
+            locale: locale,
+            lyrics: protectedLyrics,
+            emptyParts: emptyParts,
+            emptyCallGuide: emptyCallGuide,
+            availability: () async => const MusicAvailability(
+              isAvailableNow: true,
+              allowedCountries: ['JP'],
+              blockedCountries: [],
+              rightsPolicy: 'OK',
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('Rights-sensitive lyric'), findsNothing);
+      },
+    );
+  }
+  testWidgets(
+    'blocked countries require verified region before displaying lyrics',
+    (tester) async {
+      await tester.pumpWidget(
+        _testApp(
+          lyrics: protectedLyrics,
+          emptyParts: emptyParts,
+          emptyCallGuide: emptyCallGuide,
+          availability: () async => const MusicAvailability(
+            isAvailableNow: true,
+            allowedCountries: [],
+            blockedCountries: ['KR'],
+            rightsPolicy: 'OK',
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Rights-sensitive lyric'), findsNothing);
+    },
+  );
+  testWidgets('unconfirmed lyrics offer only provided HTTPS official links', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _testApp(
+        lyrics: protectedLyrics,
+        emptyParts: emptyParts,
+        emptyCallGuide: emptyCallGuide,
+        availability: () async => const MusicAvailability(
+          isAvailableNow: false,
+          allowedCountries: [],
+          blockedCountries: [],
+          rightsPolicy: 'UNKNOWN',
+        ),
+        media: const MusicMediaLinks(
+          preview: MusicPreview(),
+          streamingLinks: [
+            MusicStreamingLink(
+              provider: 'YouTube',
+              url: 'https://www.youtube.com/watch?v=example',
+            ),
+            MusicStreamingLink(provider: 'Invalid', url: 'javascript:alert(1)'),
+          ],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.textContaining('View official site'), findsOneWidget);
+    expect(find.textContaining('Invalid'), findsNothing);
+    expect(find.text('Rights-sensitive lyric'), findsNothing);
+  });
 
   for (final fromSetlist in [false, true]) {
     testWidgets(
@@ -59,7 +369,7 @@ void main() {
                     : '/information/songs/:songId',
                 name: overlay
                     ? AppRoutes.overlaySongDetail
-                    : AppRoutes.songDetail,
+                    : AppRoutes.musicSongDetail,
                 builder: (context, state) => MusicSongDetailPage(
                   projectId: state.uri.queryParameters['projectId']!,
                   songId: state.pathParameters['songId']!,
@@ -327,6 +637,18 @@ void main() {
         ],
       );
 
+      expect(find.text('Future Live'), findsNothing);
+      final guard = find.ancestor(
+        of: find.text('Lives featuring this song'),
+        matching: find.byType(SpoilerGuard),
+      );
+      final reveal = find.descendant(
+        of: guard,
+        matching: find.text('Show spoilers'),
+      );
+      await tester.ensureVisible(reveal);
+      await tester.tap(reveal);
+      await tester.pumpAndSettle();
       expect(find.text('Future Live'), findsOneWidget);
       expect(find.text('Past Live'), findsOneWidget);
       expect(find.text('2026.12.24 · Song #3'), findsOneWidget);
@@ -337,10 +659,26 @@ void main() {
         tester.getTopLeft(find.text('Future Live')).dy,
         lessThan(tester.getTopLeft(find.text('Past Live')).dy),
       );
+      expect(
+        find.text('Performer not provided · may differ from the song artist'),
+        findsNWidgets(2),
+      );
+      final hide = find.descendant(
+        of: guard,
+        matching: find.text('Hide spoilers'),
+      );
+      await tester.ensureVisible(hide);
+      await tester.tap(hide);
+      await tester.pumpAndSettle();
+      expect(find.text('Future Live'), findsNothing);
     });
 
     testWidgets('shows empty state', (tester) async {
       await openRecordTab(tester, () async => const []);
+      final reveal = find.text('Show spoilers').last;
+      await tester.ensureVisible(reveal);
+      await tester.tap(reveal);
+      await tester.pumpAndSettle();
 
       expect(find.text('No performances yet.'), findsOneWidget);
     });
@@ -350,6 +688,10 @@ void main() {
         tester,
         () => Future.error(const NotFoundFailure('not deployed')),
       );
+      final reveal = find.text('Show spoilers').last;
+      await tester.ensureVisible(reveal);
+      await tester.tap(reveal);
+      await tester.pumpAndSettle();
 
       expect(find.text('요청하신 정보를 찾을 수 없습니다'), findsOneWidget);
       expect(find.text('Versions'), findsOneWidget);
@@ -523,12 +865,19 @@ void main() {
     var partsCalls = 0;
     var callGuideCalls = 0;
     var liveContextCalls = 0;
+    var songCalls = 0;
     String? capturedEventId;
 
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          musicSongDetailProvider.overrideWith((ref, key) async => detail),
+          musicSongAvailabilityProvider.overrideWith(
+            (ref, key) async => _allowedAvailability,
+          ),
+          musicSongDetailProvider.overrideWith((ref, key) async {
+            songCalls++;
+            return detail;
+          }),
           musicSongLyricsProvider.overrideWith((ref, key) async {
             lyricsCalls++;
             return const MusicLyricsPayload(
@@ -549,6 +898,7 @@ void main() {
             liveContextCalls++;
             capturedEventId = key.eventId;
             return const MusicSongLiveContext(
+              song: detail,
               lyrics: MusicLyricsPayload(
                 songId: songId,
                 version: 'FULL',
@@ -574,6 +924,8 @@ void main() {
     await tester.pump();
 
     expect(liveContextCalls, 1);
+    expect(songCalls, 0);
+    expect(tester.widget<TabBar>(find.byType(TabBar)).controller!.index, 1);
     expect(capturedEventId, 'event');
     expect(lyricsCalls, 0);
     expect(partsCalls, 0);
@@ -597,6 +949,9 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          musicSongAvailabilityProvider.overrideWith(
+            (ref, key) async => _allowedAvailability,
+          ),
           musicSongDetailProvider.overrideWith((ref, key) async => detail),
           musicSongLyricsProvider.overrideWith((ref, key) async {
             lyricsCalls++;
@@ -633,13 +988,14 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(lyricsCalls, 1);
-    expect(partsCalls, 0);
-    expect(callGuideCalls, 0);
+    expect(lyricsCalls, 0);
+    expect(partsCalls, 1);
+    expect(callGuideCalls, 1);
 
-    await tester.tap(find.byType(Tab).at(1));
+    await tester.tap(find.byType(Tab).at(0));
     await tester.pumpAndSettle();
 
+    expect(lyricsCalls, 1);
     expect(partsCalls, 1);
     expect(callGuideCalls, 1);
   });
@@ -647,6 +1003,9 @@ void main() {
 
 Widget _testApp({
   GoRouter? router,
+  String? eventId,
+  Locale locale = const Locale('en'),
+  bool dark = false,
   MusicSongDetail? detail,
   required MusicLyricsPayload lyrics,
   required MusicPartsPayload emptyParts,
@@ -654,10 +1013,20 @@ Widget _testApp({
   TextScaler? textScaler,
   double topInset = 0,
   Future<List<MusicSongPerformance>> Function()? performances,
+  Future<MusicAvailability> Function()? availability,
+  Future<MusicLyricsPayload> Function()? loadLyrics,
+  MusicMediaLinks? media,
 }) {
-  final page = router == null
-      ? const MusicSongDetailPage(projectId: 'project', songId: 'song')
-      : Router.withConfig(config: router);
+  final page = RepaintBoundary(
+    key: const ValueKey('song-detail-golden'),
+    child: router == null
+        ? MusicSongDetailPage(
+            projectId: 'project',
+            songId: 'song',
+            eventId: eventId,
+          )
+        : Router.withConfig(config: router),
+  );
   return ProviderScope(
     overrides: [
       musicSongDetailProvider.overrideWith(
@@ -669,7 +1038,9 @@ Widget _testApp({
               title: 'Test song',
             ),
       ),
-      musicSongLyricsProvider.overrideWith((ref, key) async => lyrics),
+      musicSongLyricsProvider.overrideWith(
+        (ref, key) async => loadLyrics == null ? lyrics : await loadLyrics(),
+      ),
       musicSongLiveContextProvider.overrideWith(
         (ref, key) async => MusicSongLiveContext(
           lyrics: lyrics,
@@ -698,10 +1069,12 @@ Widget _testApp({
         ),
       ),
       musicSongMediaLinksProvider.overrideWith(
-        (ref, key) async => const MusicMediaLinks(
-          preview: MusicPreview(),
-          streamingLinks: <MusicStreamingLink>[],
-        ),
+        (ref, key) async =>
+            media ??
+            const MusicMediaLinks(
+              preview: MusicPreview(),
+              streamingLinks: <MusicStreamingLink>[],
+            ),
       ),
       musicSongCreditsProvider.overrideWith(
         (ref, key) async => const <MusicCreditGroup>[],
@@ -710,17 +1083,19 @@ Widget _testApp({
         (ref, key) => performances?.call() ?? Future.value(const []),
       ),
       musicSongAvailabilityProvider.overrideWith(
-        (ref, key) async => const MusicAvailability(
-          isAvailableNow: false,
-          allowedCountries: <String>[],
-          blockedCountries: <String>[],
-          rightsPolicy: 'UNKNOWN',
-        ),
+        (ref, key) =>
+            availability?.call() ?? Future.value(_allowedAvailability),
       ),
     ],
     child: MaterialApp(
-      theme: GBTTheme.light,
-      locale: const Locale('ko'),
+      theme: dark ? GBTTheme.dark : GBTTheme.light,
+      locale: locale,
+      supportedLocales: const [Locale('en'), Locale('ko'), Locale('ja')],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       home: textScaler == null
           ? page
           : MediaQuery(
@@ -735,3 +1110,10 @@ Widget _testApp({
     ),
   );
 }
+
+const _allowedAvailability = MusicAvailability(
+  isAvailableNow: true,
+  allowedCountries: [],
+  blockedCountries: [],
+  rightsPolicy: 'OK',
+);

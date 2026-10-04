@@ -2,7 +2,7 @@
 /// KO: 하이브리드 스폰서 슬롯을 위한 리포지토리 계약입니다.
 library;
 
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/shared/ads/domain/entities/ad_slot_entities.dart';
 
 abstract class AdsRepository {

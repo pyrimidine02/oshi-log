@@ -5,12 +5,12 @@ library;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import 'package:oshi_log/core/localization/locale_text.dart';
-import 'package:oshi_log/core/theme/theme.dart';
-import 'package:oshi_log/core/widgets/common/gbt_image.dart';
-import 'package:oshi_log/core/widgets/layout/gbt_field_primitives.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
+import 'package:oshi_log/design_system/theme/theme.dart';
+import 'package:oshi_log/design_system/widgets/common/gbt_image.dart';
 import 'package:oshi_log/features/oshikatsu/live/domain/entities/live_event_entities.dart';
 import 'live_schedule_status_badge.dart';
+import '../../domain/event_time_policy.dart';
 
 /// EN: One event rendered as a dated railway-agenda row, not a card carousel.
 /// KO: 카드 캐러셀이 아닌 날짜 기반 철도 아젠다 행으로 표시하는 이벤트입니다.
@@ -29,11 +29,11 @@ class FieldEventAgendaRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final local = event.showStartTime.toLocal();
+    final local = EventTimePolicy.inJst(event.showStartTime);
     final locale = Localizations.localeOf(context).toLanguageTag();
     final locationLabel = fieldEventSummaryLocationLabel(event);
     final attendanceLabel = attended
-        ? context.l10n(ko: '방문 완료', en: 'Visited', ja: '訪問済み')
+        ? context.l10n(ko: '참전 기록됨', en: 'Attendance recorded', ja: '参戦済み')
         : null;
     final scheduleLabel = liveScheduleStatusLabel(
       context,
@@ -45,21 +45,33 @@ class FieldEventAgendaRow extends StatelessWidget {
         ko: [
           event.title,
           DateFormat.yMMMMd(locale).format(local),
-          event.status,
+          eventTimeStatusLabel(
+            context,
+            start: event.showStartTime,
+            end: event.endTime,
+          ),
           scheduleLabel,
           attendanceLabel,
         ].whereType<String>().join(', '),
         en: [
           event.title,
           DateFormat.yMMMMd(locale).format(local),
-          event.status,
+          eventTimeStatusLabel(
+            context,
+            start: event.showStartTime,
+            end: event.endTime,
+          ),
           scheduleLabel,
           attendanceLabel,
         ].whereType<String>().join(', '),
         ja: [
           event.title,
           DateFormat.yMMMMd(locale).format(local),
-          event.status,
+          eventTimeStatusLabel(
+            context,
+            start: event.showStartTime,
+            end: event.endTime,
+          ),
           scheduleLabel,
           attendanceLabel,
         ].whereType<String>().join(', '),
@@ -121,25 +133,11 @@ class FieldEventAgendaRow extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Wrap(
-                          spacing: GBTSpacing.xs,
-                          runSpacing: GBTSpacing.xs,
-                          children: [
-                            GBTFieldBadge(
-                              label: event.status.toUpperCase(),
-                              color: colors.primary,
-                            ),
-                            if (scheduleLabel != null)
-                              LiveScheduleStatusBadge(
-                                status: event.scheduleStatus,
-                              ),
-                            if (attended)
-                              GBTFieldBadge(
-                                label: attendanceLabel!,
-                                icon: Icons.verified_rounded,
-                                color: colors.secondary,
-                              ),
-                          ],
+                        EventStatusBadges(
+                          start: event.showStartTime,
+                          end: event.endTime,
+                          scheduleStatus: event.scheduleStatus,
+                          attended: attended,
                         ),
                         const SizedBox(height: GBTSpacing.xs),
                         Text(
@@ -151,7 +149,7 @@ class FieldEventAgendaRow extends StatelessWidget {
                         ),
                         const SizedBox(height: GBTSpacing.xs),
                         Text(
-                          '${DateFormat.Hm(locale).format(local)}  ·  $locationLabel',
+                          '${DateFormat.Hm(locale).format(local)} JST  ·  $locationLabel',
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.bodySmall
@@ -207,7 +205,7 @@ class FieldEventPosterFeature extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final locale = Localizations.localeOf(context).toLanguageTag();
-    final local = event.showStartTime.toLocal();
+    final local = EventTimePolicy.inJst(event.showStartTime);
     return Semantics(
       button: true,
       label: context.l10n(
@@ -337,11 +335,12 @@ class _FieldEventFeatureDocument extends StatelessWidget {
                   ),
                 ),
               ),
-              LiveScheduleStatusBadge(status: event.scheduleStatus),
-              const SizedBox(width: GBTSpacing.xs),
-              GBTFieldBadge(
-                label: event.status.toUpperCase(),
-                color: colors.primary,
+              Flexible(
+                child: EventStatusBadges(
+                  start: event.showStartTime,
+                  end: event.endTime,
+                  scheduleStatus: event.scheduleStatus,
+                ),
               ),
             ],
           ),

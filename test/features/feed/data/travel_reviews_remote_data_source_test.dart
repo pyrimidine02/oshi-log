@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-import 'package:oshi_log/core/constants/api_constants.dart';
-import 'package:oshi_log/core/network/api_client.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/constants/api_constants.dart';
+import 'package:oshi_log/platform/network/api_client.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/community/reviews/data/datasources/travel_reviews_remote_data_source.dart';
 import 'package:oshi_log/features/community/reviews/data/dto/travel_review_dto.dart';
 

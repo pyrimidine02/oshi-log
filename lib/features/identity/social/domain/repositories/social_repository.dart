@@ -2,7 +2,7 @@
 /// KO: 소셜(팔로우/차단) 리포지토리 인터페이스.
 library;
 
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 
 import '../entities/social_entities.dart';
 

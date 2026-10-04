@@ -7,9 +7,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
-import 'package:oshi_log/core/router/app_router.dart';
-import 'package:oshi_log/core/theme/gbt_colors.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
+import 'package:oshi_log/platform/router/app_router.dart';
+import 'package:oshi_log/design_system/theme/gbt_colors.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
 import 'package:oshi_log/features/community/posts/application/board_controller.dart';
 import 'package:oshi_log/features/community/posts/presentation/widgets/community_fab_layout.dart';
 import 'package:oshi_log/features/community/posts/presentation/field_community/field_community_providers.dart';
@@ -153,6 +156,19 @@ class _FieldCommunityPageState extends ConsumerState<FieldCommunityPage>
     unawaited(ref.read(fieldCommunityActionsProvider).selectMode(mode));
   }
 
+  void _selectSection(_FieldCommunitySection section) {
+    if (section == _section) return;
+    HapticFeedback.selectionClick();
+    switch (section) {
+      case _FieldCommunitySection.feed:
+        context.go('/community');
+      case _FieldCommunitySection.discover:
+        context.go('/community/discover');
+      case _FieldCommunitySection.travel:
+        context.go('/community/travel-reviews-tab');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -172,6 +188,14 @@ class _FieldCommunityPageState extends ConsumerState<FieldCommunityPage>
             FieldCommunityMasthead(
               onSearch: context.goToSearch,
               onSettings: context.goToCommunitySettings,
+            ),
+            // EN: PR9 IA: section switch moved here (top) now that the
+            // EN: bottom bar is the shared main `GBTBottomNav`.
+            // KO: PR9 IA: 하단바가 공유 메인 `GBTBottomNav`가 되어 섹션
+            // KO: 전환을 여기(상단)로 옮겼습니다.
+            _CommunitySectionBar(
+              selected: _section,
+              onSelected: _selectSection,
             ),
             if (selectedMode != null)
               FieldCommunityModeBar(
@@ -208,8 +232,14 @@ class _FieldCommunityPageState extends ConsumerState<FieldCommunityPage>
 
   Widget _buildSection(CommunityFeedViewState? feedState) {
     if (_section == _FieldCommunitySection.travel) {
+      final projectCode = ref.watch(selectedProjectKeyProvider);
       return FieldCommunityTravelSection(
-        onWriteGeneralReport: context.goToPostCreate,
+        projectCode: projectCode,
+        onWriteReview: () => context.pushNamed(AppRoutes.travelReviewCreate),
+        onOpenReview: (reviewId) => context.pushNamed(
+          AppRoutes.travelReviewDetail,
+          pathParameters: {'projectCode': projectCode!, 'reviewId': reviewId},
+        ),
       );
     }
     final state = feedState ?? const CommunityFeedViewState();
@@ -231,5 +261,48 @@ class _FieldCommunityPageState extends ConsumerState<FieldCommunityPage>
     if (languageCode == 'en') return 'Write report';
     if (languageCode == 'ja') return 'レポートを書く';
     return '리포트 쓰기';
+  }
+}
+
+/// EN: PR9 IA: feed/discover/travel section switch, moved from the removed
+/// EN: `CommunitySubBottomNav` to the top of the page.
+/// KO: PR9 IA: 피드/발견/여행 섹션 전환을 제거된 `CommunitySubBottomNav`에서
+/// KO: 페이지 상단으로 옮겼습니다.
+class _CommunitySectionBar extends StatelessWidget {
+  const _CommunitySectionBar({
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final _FieldCommunitySection selected;
+  final ValueChanged<_FieldCommunitySection> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: SegmentedButton<_FieldCommunitySection>(
+        key: const Key('field-community-section-bar'),
+        showSelectedIcon: false,
+        segments: [
+          ButtonSegment(
+            value: _FieldCommunitySection.feed,
+            label: Text(context.l10n(ko: '피드', en: 'Feed', ja: 'フィード')),
+          ),
+          ButtonSegment(
+            value: _FieldCommunitySection.discover,
+            label: Text(context.l10n(ko: '발견', en: 'Discover', ja: '発見')),
+          ),
+          ButtonSegment(
+            value: _FieldCommunitySection.travel,
+            label: Text(
+              context.l10n(ko: '여행후기', en: 'Travel Reviews', ja: '旅行レビュー'),
+            ),
+          ),
+        ],
+        selected: {selected},
+        onSelectionChanged: (selection) => onSelected(selection.single),
+      ),
+    );
   }
 }

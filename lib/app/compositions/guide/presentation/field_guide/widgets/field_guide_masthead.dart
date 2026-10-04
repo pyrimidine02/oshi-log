@@ -4,9 +4,9 @@ library;
 
 import 'package:flutter/material.dart';
 
-import 'package:oshi_log/core/localization/locale_text.dart';
-import 'package:oshi_log/core/widgets/layout/gbt_page_header.dart';
-import 'package:oshi_log/core/widgets/navigation/gbt_app_bar_icon_button.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
+import 'package:oshi_log/design_system/widgets/layout/gbt_page_header.dart';
+import 'package:oshi_log/design_system/widgets/navigation/gbt_app_bar_icon_button.dart';
 
 /// EN: Identifies the guide and the active project without a generic app bar.
 /// KO: 일반적인 앱 바 대신 가이드와 활성 프로젝트를 식별합니다.

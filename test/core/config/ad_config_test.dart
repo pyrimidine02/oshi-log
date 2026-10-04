@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:oshi_log/core/config/ad_config.dart';
-import 'package:oshi_log/core/config/app_config.dart';
+import 'package:oshi_log/platform/config/ad_config.dart';
+import 'package:oshi_log/platform/config/app_config.dart';
 
 void main() {
   test('disabled builds fail closed before selecting an ad unit', () {

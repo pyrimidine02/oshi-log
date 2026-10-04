@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:oshi_log/core/theme/gbt_theme.dart';
-import 'package:oshi_log/core/theme/gbt_typography.dart';
+import 'package:oshi_log/design_system/theme/gbt_theme.dart';
+import 'package:oshi_log/design_system/theme/gbt_typography.dart';
 
 void main() {
   group('GBTTheme locale-aware typography', () {

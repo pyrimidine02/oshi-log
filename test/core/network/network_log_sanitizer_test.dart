@@ -4,11 +4,11 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:oshi_log/core/config/app_config.dart';
-import 'package:oshi_log/core/constants/api_constants.dart';
-import 'package:oshi_log/core/network/api_client.dart';
-import 'package:oshi_log/core/network/network_log_sanitizer.dart';
-import 'package:oshi_log/core/security/secure_storage.dart';
+import 'package:oshi_log/platform/config/app_config.dart';
+import 'package:oshi_log/platform/constants/api_constants.dart';
+import 'package:oshi_log/platform/network/api_client.dart';
+import 'package:oshi_log/platform/network/network_log_sanitizer.dart';
+import 'package:oshi_log/platform/security/secure_storage.dart';
 
 void main() {
   group('sanitizeNetworkLogData', () {

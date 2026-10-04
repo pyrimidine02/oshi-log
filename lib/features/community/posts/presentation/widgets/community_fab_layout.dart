@@ -1,4 +1,4 @@
-import 'package:oshi_log/core/theme/gbt_spacing.dart';
+import 'package:oshi_log/design_system/theme/gbt_spacing.dart';
 
 /// EN: Resolves bottom padding for community compose FAB above curved nav bars.
 /// KO: 곡률 하단바 위로 커뮤니티 작성 FAB를 올리기 위한 하단 패딩을 계산합니다.

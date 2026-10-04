@@ -6,8 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:oshi_log/core/router/app_router.dart';
-import 'package:oshi_log/core/theme/gbt_colors.dart';
+import 'package:oshi_log/platform/router/app_router.dart';
+import 'package:oshi_log/design_system/theme/gbt_colors.dart';
 import 'package:oshi_log/features/community/news/application/news_controller.dart';
 import 'package:oshi_log/features/community/news/domain/entities/news_entities.dart';
 import 'package:oshi_log/features/community/news/presentation/field_guide/sections/field_guide_updates_section.dart';
@@ -15,7 +15,6 @@ import 'package:oshi_log/features/oshikatsu/catalog/application/field_guide_arti
 import 'package:oshi_log/features/oshikatsu/catalog/application/projects_controller.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/domain/entities/project_entities.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/presentation/field_guide/sections/field_guide_artists_section.dart';
-import 'field_guide_music_page.dart';
 import 'sections/field_guide_kit_section.dart';
 import 'widgets/field_guide_masthead.dart';
 import 'widgets/field_guide_section_switcher.dart';
@@ -65,12 +64,12 @@ class _FieldGuidePageState extends ConsumerState<FieldGuidePage> {
     );
   }
 
+  // EN: PR9 IA: the music archive now lives at the named route `/live/music`
+  // EN: shared by home/search, replacing the old unrouted push.
+  // KO: PR9 IA: 음악 아카이브는 이제 홈·검색이 공유하는 named route
+  // KO: `/live/music`에 있으며, 기존 URL 없는 push를 대체합니다.
   void _openMusicArchive() {
-    Navigator.of(context).push<void>(
-      MaterialPageRoute<void>(
-        builder: (context) => const FieldGuideMusicPage(),
-      ),
-    );
+    context.goNamed(AppRoutes.musicArchive);
   }
 
   @override

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:oshi_log/core/theme/gbt_theme.dart';
+import 'package:oshi_log/design_system/theme/gbt_theme.dart';
 import 'package:oshi_log/features/identity/account/presentation/widgets/field_settings_components.dart';
 
 void main() {

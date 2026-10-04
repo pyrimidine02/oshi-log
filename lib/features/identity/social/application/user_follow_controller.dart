@@ -3,8 +3,8 @@
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/identity/auth/application/session_state.dart';
 
 import '../domain/entities/social_entities.dart';

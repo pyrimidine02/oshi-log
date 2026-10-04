@@ -3,10 +3,10 @@
 /// KO: 원격 API와 CacheManager를 기반으로 한 [TitlesRepository]의 구체적 구현.
 library;
 
-import 'package:oshi_log/core/cache/cache_manager.dart';
-import 'package:oshi_log/core/error/error_handler.dart';
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/cache/cache_manager.dart';
+import 'package:oshi_log/platform/error/error_handler.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/identity/progression/domain/entities/title_entities.dart';
 import 'package:oshi_log/features/identity/progression/domain/repositories/titles_repository.dart';
 import 'package:oshi_log/features/identity/progression/data/datasources/titles_remote_data_source.dart';

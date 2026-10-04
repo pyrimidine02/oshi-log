@@ -5,11 +5,11 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:oshi_log/core/localization/locale_text.dart';
-import 'package:oshi_log/core/theme/gbt_spacing.dart';
-import 'package:oshi_log/core/theme/gbt_typography.dart';
-import 'package:oshi_log/core/widgets/common/gbt_image.dart';
-import 'package:oshi_log/core/widgets/legal/legal_policy_links_section.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
+import 'package:oshi_log/design_system/theme/gbt_spacing.dart';
+import 'package:oshi_log/design_system/theme/gbt_typography.dart';
+import 'package:oshi_log/design_system/widgets/common/gbt_image.dart';
+import 'package:oshi_log/design_system/widgets/legal/legal_policy_links_section.dart';
 import 'package:oshi_log/features/identity/auth/application/legal_policies_provider.dart';
 
 /// EN: Keeps profile media, editable identity, and account provenance in one folio.

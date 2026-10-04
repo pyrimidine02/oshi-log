@@ -4,10 +4,10 @@ library;
 
 import 'package:flutter/material.dart';
 
-import 'package:oshi_log/core/localization/locale_text.dart';
-import 'package:oshi_log/core/theme/gbt_spacing.dart';
-import 'package:oshi_log/core/theme/gbt_typography.dart';
-import 'package:oshi_log/core/widgets/common/gbt_image.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
+import 'package:oshi_log/design_system/theme/gbt_spacing.dart';
+import 'package:oshi_log/design_system/theme/gbt_typography.dart';
+import 'package:oshi_log/design_system/widgets/common/gbt_image.dart';
 import '../field_user_profile_view_data.dart';
 
 class FieldProfileCallingCard extends StatelessWidget {

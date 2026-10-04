@@ -2,7 +2,7 @@
 /// KO: 응원 가이드 리포지토리 인터페이스.
 library;
 
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/oshikatsu/live/domain/entities/cheer_guide.dart';
 
 /// EN: Defines the contract for fetching cheer guide data.

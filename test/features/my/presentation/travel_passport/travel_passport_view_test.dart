@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:oshi_log/core/widgets/layout/gbt_page_header.dart';
+import 'package:oshi_log/design_system/theme/gbt_theme.dart';
+import 'package:oshi_log/design_system/widgets/layout/gbt_page_header.dart';
 import 'package:oshi_log/features/oshikatsu/live/domain/entities/calendar_event.dart';
 import 'package:oshi_log/features/identity/progression/domain/entities/fan_level.dart';
 import 'package:oshi_log/app/compositions/my/presentation/travel_passport/passport_sections.dart';
@@ -8,6 +10,58 @@ import 'package:oshi_log/app/compositions/my/presentation/travel_passport/travel
 import 'package:oshi_log/app/compositions/my/presentation/travel_passport/travel_passport_view_data.dart';
 
 void main() {
+  for (final locale in ['ko', 'ja']) {
+    for (final dark in [false, true]) {
+      testWidgets(
+        'saved and local planner entries remain usable at 320dp 200% $locale $dark',
+        (tester) async {
+          tester.view.physicalSize = const Size(320, 900);
+          tester.view.devicePixelRatio = 1;
+          addTearDown(tester.view.resetPhysicalSize);
+          addTearDown(tester.view.resetDevicePixelRatio);
+          final opened = <String>[];
+          await tester.pumpWidget(
+            MaterialApp(
+              locale: Locale(locale),
+              supportedLocales: const [Locale('ko'), Locale('ja')],
+              localizationsDelegates: const [
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+              ],
+              theme: dark ? GBTTheme.dark : GBTTheme.light,
+              home: MediaQuery(
+                data: const MediaQueryData(textScaler: TextScaler.linear(2)),
+                child: TravelPassportView(
+                  data: _data(),
+                  onRefresh: () async {},
+                  onOpenSettings: () {},
+                  onOpenFanLevel: () {},
+                  onOpenCalendar: () {},
+                  onOpenStop: (_) {},
+                  onOpenVisits: () {},
+                  onOpenCollection: () {},
+                  onOpenBookmarks: () => opened.add('bookmarks'),
+                  onOpenFavorites: () => opened.add('favorites'),
+                  onOpenToday: () => opened.add('today'),
+                  onOpenTrips: () => opened.add('trips'),
+                ),
+              ),
+            ),
+          );
+          for (final entry in ['favorites', 'bookmarks', 'today', 'trips']) {
+            final finder = find.byKey(Key('archive-$entry'));
+            await tester.ensureVisible(finder);
+            await tester.pumpAndSettle();
+            await tester.tap(finder);
+            expect(tester.takeException(), isNull);
+          }
+          expect(opened, ['favorites', 'bookmarks', 'today', 'trips']);
+        },
+      );
+    }
+  }
+
   testWidgets('passport section heading reflows and remains a header at 300%', (
     tester,
   ) async {

@@ -4,10 +4,10 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/error/failure.dart';
-import '../../../../core/providers/core_providers.dart';
+import '../../../../platform/error/failure.dart';
+import '../../../../platform/providers/core_providers.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
-import '../../../../core/utils/result.dart';
+import '../../../../platform/utils/result.dart';
 import '../data/datasources/search_remote_data_source.dart';
 import '../data/repositories/search_repository_impl.dart';
 import '../domain/entities/search_entities.dart';

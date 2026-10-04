@@ -2,7 +2,7 @@
 /// KO: 프로젝트 리포지토리 인터페이스.
 library;
 
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import '../entities/project_entities.dart';
 
 abstract class ProjectsRepository {

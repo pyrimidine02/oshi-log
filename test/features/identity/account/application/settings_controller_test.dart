@@ -5,13 +5,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/providers/core_providers.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/platform/providers/core_providers.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
 import 'package:oshi_log/features/identity/auth/application/session_state.dart';
-import 'package:oshi_log/core/security/secure_storage.dart';
-import 'package:oshi_log/core/storage/local_storage.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/security/secure_storage.dart';
+import 'package:oshi_log/platform/storage/local_storage.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/identity/account/application/settings_controller.dart';
 import 'package:oshi_log/features/identity/account/domain/entities/account_tools.dart';
 import 'package:oshi_log/features/identity/account/domain/entities/consent_history.dart';

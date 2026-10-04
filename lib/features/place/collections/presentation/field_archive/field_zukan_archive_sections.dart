@@ -4,9 +4,9 @@ library;
 
 import 'package:flutter/material.dart';
 
-import 'package:oshi_log/core/localization/locale_text.dart';
-import 'package:oshi_log/core/theme/theme.dart';
-import 'package:oshi_log/core/widgets/common/gbt_image.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
+import 'package:oshi_log/design_system/theme/theme.dart';
+import 'package:oshi_log/design_system/widgets/common/gbt_image.dart';
 import 'package:oshi_log/features/place/collections/domain/entities/zukan_collection.dart';
 import 'field_zukan_archive_view_data.dart';
 
@@ -24,9 +24,9 @@ class FieldArchiveMasthead extends StatelessWidget {
       container: true,
       header: true,
       label: context.l10n(
-        ko: '여행 표본 아카이브, ${data.collectedStampCount}개 수집, 전체 ${data.totalStampCount}개',
-        en: 'Travel specimen archive, ${data.collectedStampCount} of ${data.totalStampCount} collected',
-        ja: '旅の標本アーカイブ、${data.totalStampCount}件中${data.collectedStampCount}件を収集',
+        ko: '스폿집, ${data.collectedStampCount}개 수집, 전체 ${data.totalStampCount}개',
+        en: 'Spot collections, ${data.collectedStampCount} of ${data.totalStampCount} collected',
+        ja: 'スポット集、${data.totalStampCount}件中${data.collectedStampCount}件を収集',
       ),
       child: ExcludeSemantics(
         child: Column(
@@ -48,11 +48,7 @@ class FieldArchiveMasthead extends StatelessWidget {
             ),
             const SizedBox(height: GBTSpacing.xs),
             Text(
-              context.l10n(
-                ko: '여행 표본 아카이브',
-                en: 'TRAVEL SPECIMEN ARCHIVE',
-                ja: '旅の標本アーカイブ',
-              ),
+              context.l10n(ko: '스폿집', en: 'SPOT COLLECTIONS', ja: 'スポット集'),
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 fontWeight: FontWeight.w800,
                 letterSpacing: -0.4,

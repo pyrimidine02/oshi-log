@@ -2,9 +2,10 @@
 /// KO: [CalendarRepository]의 구체적인 구현체.
 library;
 
-import 'package:oshi_log/core/error/error_handler.dart';
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/error/error_handler.dart';
+import '../../domain/event_time_policy.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/oshikatsu/live/domain/entities/calendar_event.dart';
 import 'package:oshi_log/features/oshikatsu/live/domain/repositories/calendar_repository.dart';
 import 'package:oshi_log/features/oshikatsu/live/data/datasources/calendar_remote_data_source.dart';
@@ -87,15 +88,23 @@ Iterable<CalendarEvent> _projectIntoMonth(
   required int month,
 }) sync* {
   final source = dto.toEntity();
-  final localStart = source.date.toLocal();
-  final parsedEnd = dto.endDate?.toLocal();
+  final localStart = source.scheduleDate;
+  final parsedEnd = dto.endDate == null
+      ? null
+      : source.isAllDay
+      ? DateTime.utc(dto.endDate!.year, dto.endDate!.month, dto.endDate!.day)
+      : EventTimePolicy.inJst(dto.endDate!);
   final localEnd = parsedEnd == null || parsedEnd.isBefore(localStart)
       ? localStart
       : parsedEnd;
-  final monthStart = DateTime(year, month);
-  final monthEnd = DateTime(year, month + 1, 0);
-  final startDay = DateTime(localStart.year, localStart.month, localStart.day);
-  final endDay = DateTime(localEnd.year, localEnd.month, localEnd.day);
+  final monthStart = DateTime.utc(year, month);
+  final monthEnd = DateTime.utc(year, month + 1, 0);
+  final startDay = DateTime.utc(
+    localStart.year,
+    localStart.month,
+    localStart.day,
+  );
+  final endDay = DateTime.utc(localEnd.year, localEnd.month, localEnd.day);
   // EN: Clamp malformed or very wide source ranges before iterating. A
   // multi-year event only needs the visible month projected into the grid.
   // KO: 비정상적으로 넓은 원본 범위를 순회하기 전에 잘라냅니다. 여러 해에
@@ -114,7 +123,11 @@ Iterable<CalendarEvent> _projectIntoMonth(
     yield CalendarEvent(
       id: isStartDay ? source.id : '${source.id}:${_dateKey(day)}',
       title: source.title,
-      date: isStartDay ? localStart : day,
+      date: isStartDay
+          ? source.date
+          : source.isAllDay
+          ? day
+          : day.subtract(EventTimePolicy.jstOffset),
       type: source.type,
       description: source.description,
       imageUrl: source.imageUrl,
@@ -125,7 +138,7 @@ Iterable<CalendarEvent> _projectIntoMonth(
       isRecurringAnnually: source.isRecurringAnnually,
       scheduleStatus: source.scheduleStatus,
     );
-    day = DateTime(day.year, day.month, day.day + 1);
+    day = DateTime.utc(day.year, day.month, day.day + 1);
   }
 }
 

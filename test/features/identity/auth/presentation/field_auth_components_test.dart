@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:oshi_log/core/theme/gbt_theme.dart';
+import 'package:oshi_log/design_system/theme/gbt_theme.dart';
 import 'package:oshi_log/features/identity/auth/presentation/widgets/field_auth_components.dart';
 import 'package:oshi_log/features/identity/auth/presentation/widgets/account_recovery_dialog.dart';
 

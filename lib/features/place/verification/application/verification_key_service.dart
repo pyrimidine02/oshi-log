@@ -8,8 +8,8 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:jose/jose.dart';
 
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/security/secure_storage.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/platform/security/secure_storage.dart';
 import 'package:oshi_log/features/place/verification/domain/repositories/verification_repository.dart';
 
 /// EN: In-memory representation of a verification signing key.

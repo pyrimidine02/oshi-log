@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:network_image_mock/network_image_mock.dart';
 
-import 'package:oshi_log/core/widgets/common/gbt_image.dart';
+import 'package:oshi_log/design_system/widgets/common/gbt_image.dart';
 import 'package:oshi_log/app/compositions/home/presentation/field_home/widgets/field_home_components.dart';
 
 void main() {

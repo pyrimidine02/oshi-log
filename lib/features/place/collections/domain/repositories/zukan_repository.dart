@@ -2,7 +2,7 @@
 /// KO: 도감 컬렉션 리포지토리 인터페이스.
 library;
 
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/place/collections/domain/entities/zukan_collection.dart';
 
 /// EN: Defines the contract for reading zukan collection data.

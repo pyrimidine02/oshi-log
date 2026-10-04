@@ -2,7 +2,7 @@
 /// KO: [ZukanRepository]의 구체적인 구현체.
 library;
 
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/place/collections/domain/entities/zukan_collection.dart';
 import 'package:oshi_log/features/place/collections/domain/repositories/zukan_repository.dart';
 import 'package:oshi_log/features/place/collections/data/datasources/zukan_remote_data_source.dart';

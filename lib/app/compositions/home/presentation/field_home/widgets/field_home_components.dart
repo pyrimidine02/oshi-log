@@ -4,9 +4,9 @@ library;
 
 import 'package:flutter/material.dart';
 
-import '../../../../../../core/theme/theme.dart';
-import '../../../../../../core/widgets/common/gbt_image.dart';
-import '../../../../../../core/widgets/layout/gbt_field_primitives.dart';
+import '../../../../../../design_system/theme/theme.dart';
+import '../../../../../../design_system/widgets/common/gbt_image.dart';
+import '../../../../../../design_system/widgets/layout/gbt_field_primitives.dart';
 
 /// EN: Section heading with a quiet rule and optional action.
 /// KO: 얇은 규칙선과 선택 액션이 있는 섹션 제목입니다.

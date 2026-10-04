@@ -4,8 +4,8 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/providers/core_providers.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/platform/providers/core_providers.dart';
 import 'package:oshi_log/features/oshikatsu/quotes/data/datasources/quotes_remote_data_source.dart';
 import 'package:oshi_log/features/oshikatsu/quotes/data/repositories/quotes_repository_impl.dart';
 import 'package:oshi_log/features/oshikatsu/quotes/domain/entities/quote_card.dart';

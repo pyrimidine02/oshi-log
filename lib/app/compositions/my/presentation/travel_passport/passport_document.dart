@@ -4,10 +4,10 @@ library;
 
 import 'package:flutter/material.dart';
 
-import '../../../../../core/localization/locale_text.dart';
-import '../../../../../core/theme/gbt_colors.dart';
-import '../../../../../core/theme/gbt_spacing.dart';
-import '../../../../../core/widgets/common/gbt_image.dart';
+import '../../../../../design_system/localization/locale_text.dart';
+import '../../../../../design_system/theme/gbt_colors.dart';
+import '../../../../../design_system/theme/gbt_spacing.dart';
+import '../../../../../design_system/widgets/common/gbt_image.dart';
 import './travel_passport_view_data.dart';
 
 /// EN: Passport-like identity block backed by the authenticated profile.
@@ -301,6 +301,7 @@ class FanGradeStamp extends StatelessWidget {
       'ko' => data.grade.koLabel,
       _ => data.grade.enLabel,
     };
+    final diameter = 80 * MediaQuery.textScalerOf(context).scale(12) / 12;
     final semanticLabel = context.l10n(
       ko: '팬 등급 $grade, 상세 보기',
       en: 'Fan grade $grade, view details',
@@ -319,8 +320,8 @@ class FanGradeStamp extends StatelessWidget {
             onTap: onPressed,
             customBorder: const CircleBorder(),
             child: Container(
-              width: 80,
-              height: 80,
+              width: diameter,
+              height: diameter,
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,

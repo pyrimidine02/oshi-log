@@ -152,11 +152,13 @@ void main() {
     });
 
     test('legal policy URLs and legacy media buckets are unchanged', () {
-      final policies = read('lib/core/constants/legal_policy_constants.dart');
+      final policies = read(
+        'lib/platform/constants/legal_policy_constants.dart',
+      );
       for (final path in const ['terms', 'privacy', 'location']) {
         expect(policies, contains('https://girlsbandtabi.app/policies/$path'));
       }
-      final mediaUrl = read('lib/core/utils/media_url.dart');
+      final mediaUrl = read('lib/platform/utils/media_url.dart');
       expect(mediaUrl, contains("'girlsbandtabi'"));
       expect(mediaUrl, contains("'girlsbandtabi-dev'"));
     });
@@ -187,7 +189,7 @@ void main() {
         ),
       );
       expect(
-        read('lib/core/cache/cache_manager.dart'),
+        read('lib/platform/cache/cache_manager.dart'),
         contains("static const String _namespace = 'gbt_cache';"),
       );
     });

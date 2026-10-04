@@ -8,7 +8,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/providers/core_providers.dart';
+import '../../platform/providers/core_providers.dart';
 import 'package:oshi_log/features/identity/auth/application/session_state.dart';
 
 /// EN: Global bootstrap provider for remote push setup + auth-bound sync.

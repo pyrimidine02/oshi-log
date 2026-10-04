@@ -6,9 +6,9 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/providers/core_providers.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/platform/providers/core_providers.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import '../data/datasources/fan_subjects_remote_data_source.dart';
 import '../data/repositories/fan_subjects_repository_impl.dart';
 import '../domain/entities/fan_subject.dart';

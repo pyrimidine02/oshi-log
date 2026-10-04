@@ -26,3 +26,19 @@ class PlaceGuideSummary {
     return DateFormat('yyyy.MM.dd').format(updatedAt!.toLocal());
   }
 }
+
+/// EN: Full published guide; update time only describes an editorial change.
+/// KO: 발행된 가이드 본문이며 수정일은 편집 시각만 나타냅니다.
+class PlaceGuideDetail {
+  const PlaceGuideDetail({
+    required this.id,
+    required this.title,
+    required this.contentMarkdown,
+    this.updatedAt,
+  });
+
+  final String id;
+  final String title;
+  final String contentMarkdown;
+  final DateTime? updatedAt;
+}

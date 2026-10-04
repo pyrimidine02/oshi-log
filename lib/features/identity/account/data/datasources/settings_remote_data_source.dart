@@ -2,9 +2,9 @@
 /// KO: 설정/프로필 API 원격 데이터 소스.
 library;
 
-import 'package:oshi_log/core/constants/api_constants.dart';
-import 'package:oshi_log/core/network/api_client.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/constants/api_constants.dart';
+import 'package:oshi_log/platform/network/api_client.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/identity/account/data/dto/account_tools_dto.dart';
 import 'package:oshi_log/features/identity/account/data/dto/consent_history_dto.dart';
 import 'package:oshi_log/features/identity/account/data/dto/notification_device_dto.dart';

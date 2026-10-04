@@ -15,6 +15,10 @@ extension PlaceCommentDetailDtoDomainMapper on PlaceCommentDetailDto {
         : _stripHtml(dto.bodyHtml ?? '');
     return PlaceComment(
       id: dto.id,
+      bestRoute: dto.bestRoute,
+      advice: dto.advice,
+      accessibility: dto.accessibility,
+      isPreview: dto.isPreview,
       authorId: dto.authorSubjectId,
       body: rawBody.trim(),
       createdAt: dto.createdAt,

@@ -3,7 +3,7 @@
 
 library;
 
-import 'package:oshi_log/core/models/post_dto.dart';
+import 'package:oshi_log/platform/models/post_dto.dart';
 import 'package:oshi_log/features/community/moderation/domain/entities/community_moderation.dart';
 import 'package:oshi_log/features/community/posts/domain/entities/feed_entities.dart';
 import 'package:oshi_log/features/community/reviews/data/dto/travel_review_dto.dart';

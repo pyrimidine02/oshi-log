@@ -1,5 +1,25 @@
 # Changelog
 
+## 2026-10-04
+
+- Completed the approved PR9–21 local screen work: persistent five-tab routing,
+  event preparation, on-site place tools, saved items/records, map/collections,
+  song/archive context, community review entry, and language/theme onboarding.
+- Added account-scoped Today lists with explicit text downloads and private
+  local trips/photos. Public review drafts receive only selected records and
+  metadata-stripped photo exports; private titles and notes remain local.
+- Hardened action-time login, redirect continuity, cancellation and session
+  changes. Notification permission remains an explicit settings action.
+- Guarded lyrics by confirmed rights, availability and expiry; country-restricted
+  lyrics await an authoritative region contract. Fixed archive ordinal clipping
+  at 200% text and added JA/KO home, archive, song and utility visual regressions.
+- Split shared infrastructure and UI into `platform` and `design_system` after
+  screen integration. Existing API contracts remain authoritative; unsupported
+  server features stay documented in the implementation status report.
+- Final validation and device/server follow-ups are recorded in
+  `docs/product/redesign-implementation-status-20261004.md`.
+
+
 ## 2026-10-02
 
 - Fixed bottom sheet content painting: ListTiles inside action sheets now have a

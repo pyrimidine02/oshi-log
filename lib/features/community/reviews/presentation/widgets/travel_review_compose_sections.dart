@@ -6,9 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import 'package:oshi_log/core/localization/locale_text.dart';
-import 'package:oshi_log/core/theme/gbt_spacing.dart';
-import 'package:oshi_log/core/theme/gbt_typography.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
+import 'package:oshi_log/design_system/theme/gbt_spacing.dart';
+import 'package:oshi_log/design_system/theme/gbt_typography.dart';
 import 'package:oshi_log/features/oshikatsu/live/application/live_events_controller.dart';
 import 'package:oshi_log/features/oshikatsu/live/domain/entities/live_event_entities.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/fan_subjects_controller.dart';

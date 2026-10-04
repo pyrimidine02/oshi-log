@@ -2,12 +2,12 @@
 /// KO: 피드(뉴스/커뮤니티) 원격 데이터 소스.
 library;
 
-import 'package:oshi_log/core/constants/api_constants.dart';
-import 'package:oshi_log/core/network/api_client.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/constants/api_constants.dart';
+import 'package:oshi_log/platform/network/api_client.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/community/posts/data/dto/community_translation_dto.dart';
 import 'package:oshi_log/features/community/posts/data/dto/post_comment_dto.dart';
-import 'package:oshi_log/core/models/post_dto.dart';
+import 'package:oshi_log/platform/models/post_dto.dart';
 
 class FeedRemoteDataSource {
   FeedRemoteDataSource(this._apiClient);

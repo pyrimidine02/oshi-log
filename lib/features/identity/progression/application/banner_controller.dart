@@ -4,9 +4,9 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:oshi_log/core/providers/core_providers.dart';
+import 'package:oshi_log/platform/providers/core_providers.dart';
 import 'package:oshi_log/features/identity/auth/application/session_state.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'dart:async';
 import 'package:oshi_log/features/identity/progression/data/datasources/banner_remote_data_source.dart';
 import 'package:oshi_log/features/identity/progression/data/repositories/banner_repository_impl.dart';

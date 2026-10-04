@@ -5,19 +5,20 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/localization/locale_text.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
 import 'package:oshi_log/features/identity/auth/application/session_state.dart';
-import 'package:oshi_log/core/theme/gbt_animations.dart';
-import 'package:oshi_log/core/theme/gbt_colors.dart';
-import 'package:oshi_log/core/theme/gbt_spacing.dart';
-import 'package:oshi_log/core/theme/gbt_typography.dart';
-import 'package:oshi_log/core/utils/result.dart';
-import 'package:oshi_log/core/widgets/common/gbt_image.dart';
-import 'package:oshi_log/core/widgets/common/gbt_linkified_text.dart';
-import 'package:oshi_log/core/widgets/feedback/gbt_loading.dart';
-import 'package:oshi_log/core/widgets/navigation/gbt_standard_app_bar.dart';
+import 'package:oshi_log/features/identity/auth/application/auth_action_gate.dart';
+import 'package:oshi_log/design_system/theme/gbt_animations.dart';
+import 'package:oshi_log/design_system/theme/gbt_colors.dart';
+import 'package:oshi_log/design_system/theme/gbt_spacing.dart';
+import 'package:oshi_log/design_system/theme/gbt_typography.dart';
+import 'package:oshi_log/platform/utils/result.dart';
+import 'package:oshi_log/design_system/widgets/common/gbt_image.dart';
+import 'package:oshi_log/design_system/widgets/common/gbt_linkified_text.dart';
+import 'package:oshi_log/design_system/widgets/feedback/gbt_loading.dart';
+import 'package:oshi_log/design_system/widgets/navigation/gbt_standard_app_bar.dart';
 import 'package:oshi_log/features/shared/favorites/application/favorites_controller.dart';
 import 'package:oshi_log/features/shared/favorites/domain/entities/favorite_entities.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/projects_controller.dart';
@@ -30,8 +31,9 @@ import 'package:oshi_log/features/place/places/domain/entities/place_guide_entit
 import 'package:oshi_log/features/place/places/domain/utils/place_type_search.dart';
 import 'package:oshi_log/features/place/places/presentation/utils/place_directions_launcher.dart';
 import 'package:oshi_log/features/place/places/presentation/utils/place_related_units.dart';
-import 'package:oshi_log/core/widgets/common/registrant_credit_widget.dart';
+import 'package:oshi_log/design_system/widgets/common/registrant_credit_widget.dart';
 import 'package:oshi_log/features/place/places/presentation/widgets/place_description_body.dart';
+import 'package:oshi_log/features/place/places/presentation/widgets/place_onsite_sections.dart';
 
 /// EN: Place detail page widget
 /// KO: 장소 상세 페이지 위젯
@@ -53,10 +55,12 @@ class PlaceDetailPage extends ConsumerWidget {
     super.key,
     required this.placeId,
     required this.onVerify,
+    this.onAddToToday,
   });
 
   final String placeId;
   final PlaceVerifyCallback onVerify;
+  final ValueChanged<PlaceDetail>? onAddToToday;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -185,6 +189,9 @@ class PlaceDetailPage extends ConsumerWidget {
   }
 
   Future<void> _refreshAll(WidgetRef ref) async {
+    for (final category in PlaceTipCategory.values) {
+      ref.invalidate(placeTipsProvider((placeId: placeId, category: category)));
+    }
     await Future.wait([
       ref
           .read(placeDetailControllerProvider(placeId).notifier)
@@ -238,16 +245,28 @@ class PlaceDetailPage extends ConsumerWidget {
             PlaceDetailDocumentHeader(
               name: place.name,
               address: place.address,
-              visitLabel: context.l10n(
-                ko: '${place.visitCount ?? 0}명 방문',
-                en: '${place.visitCount ?? 0} visits',
-                ja: '${place.visitCount ?? 0}人が訪問',
-              ),
-              favoriteLabel: context.l10n(
-                ko: '${place.favoriteCount ?? 0}명 관심',
-                en: '${place.favoriteCount ?? 0} interested',
-                ja: '${place.favoriteCount ?? 0}人がお気に入り',
-              ),
+              visitLabel: place.visitCount == null
+                  ? context.l10n(
+                      ko: '방문 수 정보 없음',
+                      en: 'Visit count unavailable',
+                      ja: '訪問数は不明',
+                    )
+                  : context.l10n(
+                      ko: '${place.visitCount}명 방문',
+                      en: '${place.visitCount ?? 0} visits',
+                      ja: '${place.visitCount ?? 0}人が訪問',
+                    ),
+              favoriteLabel: place.favoriteCount == null
+                  ? context.l10n(
+                      ko: '저장 수 정보 없음',
+                      en: 'Save count unavailable',
+                      ja: '保存数は不明',
+                    )
+                  : context.l10n(
+                      ko: '${place.favoriteCount}명 관심',
+                      en: '${place.favoriteCount ?? 0} interested',
+                      ja: '${place.favoriteCount ?? 0}人がお気に入り',
+                    ),
               favoriteTooltip: isFavorite
                   ? context.l10n(
                       ko: '즐겨찾기 해제',
@@ -260,13 +279,29 @@ class PlaceDetailPage extends ConsumerWidget {
                       ja: 'お気に入り追加',
                     ),
               isFavorite: isFavorite,
-              onFavorite: () => ref
-                  .read(favoritesControllerProvider.notifier)
-                  .toggleFavorite(
-                    entityId: place.id,
-                    type: FavoriteType.place,
-                    isCurrentlyFavorite: isFavorite,
-                  ),
+              onFavorite: () async {
+                if (!ref.read(isAuthenticatedProvider) &&
+                    !await ref.read(authenticationGateProvider)(context)) {
+                  return;
+                }
+                if (!context.mounted) return;
+                final current = ref
+                    .read(favoritesControllerProvider)
+                    .valueOrNull;
+                await ref
+                    .read(favoritesControllerProvider.notifier)
+                    .toggleFavorite(
+                      entityId: place.id,
+                      type: FavoriteType.place,
+                      isCurrentlyFavorite:
+                          current?.any(
+                            (item) =>
+                                item.entityId == place.id &&
+                                item.type == FavoriteType.place,
+                          ) ??
+                          isFavorite,
+                    );
+              },
               directionsLabel: context.l10n(
                 ko: '길안내',
                 en: 'Directions',
@@ -279,6 +314,59 @@ class PlaceDetailPage extends ConsumerWidget {
                       directions: place.directions!,
                     )
                   : null,
+            ),
+            Padding(
+              padding: GBTSpacing.paddingPage,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const PlaceVisitNotice(),
+                  const SizedBox(height: GBTSpacing.xl),
+                  _RecordSectionHeader(
+                    indexLabel: '01',
+                    title: context.l10n(ko: '접근 안내', en: 'Access', ja: 'アクセス'),
+                  ),
+                  const SizedBox(height: GBTSpacing.sm),
+                  PlaceAccessSection(
+                    place: place,
+                    onAddToToday: onAddToToday == null
+                        ? null
+                        : () => onAddToToday!(place),
+                  ),
+                  const SizedBox(height: GBTSpacing.xl),
+                  _RecordSectionHeader(
+                    indexLabel: '02',
+                    title: context.l10n(
+                      ko: '현지 가이드',
+                      en: 'On-site guide',
+                      ja: '現地ガイド',
+                    ),
+                  ),
+                  const SizedBox(height: GBTSpacing.sm),
+                  PlaceDescriptionBody(description: place.description),
+                  const SizedBox(height: GBTSpacing.md),
+                  _GuideSection(
+                    placeId: place.id,
+                    state: guidesState,
+                    isDark: isDark,
+                    onRetry: () => ref
+                        .read(placeGuidesControllerProvider(place.id).notifier)
+                        .load(forceRefresh: true),
+                  ),
+                  const SizedBox(height: GBTSpacing.xl),
+                  _RecordSectionHeader(
+                    indexLabel: '03',
+                    title: context.l10n(
+                      ko: '팬의 Tips',
+                      en: 'Fan tips',
+                      ja: 'ファンのTips',
+                    ),
+                  ),
+                  const SizedBox(height: GBTSpacing.sm),
+                  PlaceTipsSection(placeId: place.id),
+                  const SizedBox(height: GBTSpacing.xl),
+                ],
+              ),
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(
@@ -317,14 +405,7 @@ class PlaceDetailPage extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _RecordSectionHeader(
-                    indexLabel: '01',
-                    title: context.l10n(ko: '소개', en: 'About', ja: '紹介'),
-                  ),
-                  const SizedBox(height: GBTSpacing.sm),
-                  PlaceDescriptionBody(description: place.description),
-                  const SizedBox(height: GBTSpacing.xl),
-                  _RecordSectionHeader(
-                    indexLabel: '02',
+                    indexLabel: '04',
                     title: context.l10n(
                       ko: '장소 분류',
                       en: 'Place categories',
@@ -370,7 +451,7 @@ class PlaceDetailPage extends ConsumerWidget {
                 children: [
                   const SizedBox(height: GBTSpacing.xl),
                   _RecordSectionHeader(
-                    indexLabel: '03',
+                    indexLabel: '05',
                     title: context.l10n(
                       ko: '관련 밴드',
                       en: 'Related bands',
@@ -431,24 +512,7 @@ class PlaceDetailPage extends ConsumerWidget {
                   ),
                   const SizedBox(height: GBTSpacing.xl),
                   _RecordSectionHeader(
-                    indexLabel: '04',
-                    title: context.l10n(
-                      ko: '장소 가이드',
-                      en: 'Place guides',
-                      ja: '場所ガイド',
-                    ),
-                  ),
-                  const SizedBox(height: GBTSpacing.sm),
-                  _GuideSection(
-                    state: guidesState,
-                    isDark: isDark,
-                    onRetry: () => ref
-                        .read(placeGuidesControllerProvider(place.id).notifier)
-                        .load(forceRefresh: true),
-                  ),
-                  const SizedBox(height: GBTSpacing.xl),
-                  _RecordSectionHeader(
-                    indexLabel: '05',
+                    indexLabel: '06',
                     title: context.l10n(
                       ko: '방문 후기',
                       en: 'Visit reviews',
@@ -467,7 +531,7 @@ class PlaceDetailPage extends ConsumerWidget {
                   ),
                   const SizedBox(height: GBTSpacing.xl),
                   _RecordSectionHeader(
-                    indexLabel: '06',
+                    indexLabel: '07',
                     title: context.l10n(
                       ko: '기록 기여자',
                       en: 'Record contributors',
@@ -875,11 +939,13 @@ class _PhotoGalleryState extends State<_PhotoGallery> {
 
 class _GuideSection extends StatelessWidget {
   const _GuideSection({
+    required this.placeId,
     required this.state,
     required this.isDark,
     required this.onRetry,
   });
 
+  final String placeId;
   final AsyncValue<List<PlaceGuideSummary>> state;
   final bool isDark;
   final VoidCallback onRetry;
@@ -933,7 +999,15 @@ class _GuideSection extends StatelessWidget {
           separatorBuilder: (_, __) => const Divider(height: 1),
           itemBuilder: (context, index) {
             final guide = guides[index];
-            return _GuideCard(guide: guide, isDark: isDark, index: index);
+            return _GuideCard(
+              guide: guide,
+              isDark: isDark,
+              onOpen: () => showDialog<void>(
+                context: context,
+                builder: (_) =>
+                    PlaceGuideReader(placeId: placeId, guide: guide),
+              ),
+            );
           },
         );
       },
@@ -947,12 +1021,12 @@ class _GuideCard extends StatelessWidget {
   const _GuideCard({
     required this.guide,
     required this.isDark,
-    required this.index,
+    required this.onOpen,
   });
 
   final PlaceGuideSummary guide;
   final bool isDark;
-  final int index;
+  final VoidCallback onOpen;
 
   @override
   Widget build(BuildContext context) {
@@ -963,93 +1037,41 @@ class _GuideCard extends StatelessWidget {
         ? GBTColors.darkTextTertiary
         : GBTColors.textTertiary;
 
-    return Semantics(
-      label: context.l10n(
-        ko: '가이드: ${guide.title.isNotEmpty ? guide.title : '가이드'}',
-        en: 'Guide: ${guide.title.isNotEmpty ? guide.title : 'Guide'}',
-        ja: 'ガイド: ${guide.title.isNotEmpty ? guide.title : 'ガイド'}',
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: GBTSpacing.md),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              width: 32,
-              child: Text(
-                '${index + 1}'.padLeft(2, '0'),
-                style: GBTTypography.labelSmall.copyWith(
-                  color: isDark ? GBTColors.darkPrimary : GBTColors.primary,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.7,
-                ),
-              ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: GBTSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            guide.title.isNotEmpty
+                ? guide.title
+                : context.l10n(ko: '가이드', en: 'Guide', ja: 'ガイド'),
+            style: GBTTypography.titleSmall,
+          ),
+          if (guide.preview.isNotEmpty) ...[
+            const SizedBox(height: GBTSpacing.xs),
+            Text(
+              guide.preview,
+              style: GBTTypography.bodySmall.copyWith(color: secondaryColor),
             ),
-            const SizedBox(width: GBTSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    guide.title.isNotEmpty
-                        ? guide.title
-                        : context.l10n(ko: '가이드', en: 'Guide', ja: 'ガイド'),
-                    style: GBTTypography.labelLarge.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (guide.preview.isNotEmpty) ...[
-                    const SizedBox(height: GBTSpacing.xxs),
-                    Text(
-                      guide.preview,
-                      style: GBTTypography.bodySmall.copyWith(
-                        color: secondaryColor,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                  const SizedBox(height: GBTSpacing.xs),
-                  Row(
-                    children: [
-                      if (guide.updatedAtLabel.isNotEmpty)
-                        Text(
-                          guide.updatedAtLabel,
-                          style: GBTTypography.labelSmall.copyWith(
-                            color: tertiaryColor,
-                          ),
-                        ),
-                      if (guide.hasImages && guide.updatedAtLabel.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(left: GBTSpacing.sm),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.photo_outlined,
-                                size: 12,
-                                color: tertiaryColor,
-                              ),
-                              const SizedBox(width: 2),
-                              Text(
-                                '${guide.imageCount}',
-                                style: GBTTypography.labelSmall.copyWith(
-                                  color: tertiaryColor,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: GBTSpacing.sm),
-            Icon(Icons.chevron_right_rounded, color: tertiaryColor, size: 20),
           ],
-        ),
+          const SizedBox(height: GBTSpacing.sm),
+          Text(
+            placeGuideUpdatedLabel(context, guide.updatedAt),
+            style: GBTTypography.labelSmall.copyWith(color: tertiaryColor),
+          ),
+          TextButton(
+            onPressed: onOpen,
+            style: TextButton.styleFrom(minimumSize: const Size(48, 48)),
+            child: Text(
+              context.l10n(
+                ko: '가이드 전체 읽기',
+                en: 'Read full guide',
+                ja: 'ガイド全文を読む',
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

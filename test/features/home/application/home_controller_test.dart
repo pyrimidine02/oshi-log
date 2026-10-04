@@ -4,10 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
-import 'package:oshi_log/core/router/navigation_state.dart';
+import 'package:oshi_log/platform/router/navigation_state.dart';
 import 'package:oshi_log/features/identity/auth/application/session_state.dart';
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/shared/home/application/home_controller.dart';
 import 'package:oshi_log/features/shared/home/domain/entities/home_summary.dart';
 import 'package:oshi_log/features/shared/home/domain/repositories/home_repository.dart';

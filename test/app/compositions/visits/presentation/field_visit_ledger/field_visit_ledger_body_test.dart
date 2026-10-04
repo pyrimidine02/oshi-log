@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/theme/gbt_theme.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/design_system/theme/gbt_theme.dart';
 import 'package:oshi_log/features/oshikatsu/live/application/live_events_controller.dart';
 import 'package:oshi_log/features/oshikatsu/live/domain/entities/live_event_entities.dart';
 import 'package:oshi_log/features/place/places/domain/entities/place_entities.dart';
@@ -15,6 +15,65 @@ import 'package:oshi_log/app/compositions/visits/presentation/field_visit_ledger
 import 'package:oshi_log/app/compositions/visits/presentation/field_visit_ledger/field_visit_ledger_view_data.dart';
 
 void main() {
+  for (final locale in ['ko', 'ja']) {
+    for (final dark in [false, true]) {
+      testWidgets(
+        'unified records preserve partial data at 320dp 200% $locale $dark',
+        (tester) async {
+          tester.view.physicalSize = const Size(320, 900);
+          tester.view.devicePixelRatio = 1;
+          addTearDown(tester.view.resetPhysicalSize);
+          addTearDown(tester.view.resetDevicePixelRatio);
+          var visitRetries = 0;
+          var loadMoreCalls = 0;
+          String? openedEvent;
+          await _pumpLedger(
+            tester,
+            locale: Locale(locale),
+            theme: dark ? GBTTheme.dark : GBTTheme.light,
+            textScaler: const TextScaler.linear(2),
+            child: FieldVisitLedgerBody(
+              initialKind: FieldVisitLedgerKind.all,
+              visitsState: AsyncError(
+                const NetworkFailure('offline'),
+                StackTrace.empty,
+              ),
+              placesMapState: const AsyncData(_places),
+              projects: _projects,
+              attendanceState: LiveAttendanceHistoryViewState(
+                items: _attendance.items,
+                hasNext: true,
+              ),
+              onRefreshPlaces: () async => visitRetries++,
+              onRefreshEvents: () async {},
+              onLoadMoreEvents: () async => loadMoreCalls++,
+              onOpenVisit: (_) {},
+              onOpenEvent: (record) => openedEvent = record.eventId,
+              onOpenStats: () {},
+            ),
+          );
+          await tester.scrollUntilVisible(
+            find.byKey(const Key('timeline-visits-retry')),
+            200,
+          );
+          await tester.tap(find.byKey(const Key('timeline-visits-retry')));
+          expect(visitRetries, 1);
+          await tester.scrollUntilVisible(find.text('Field Notes Tour'), 200);
+          await tester.tap(find.text('Field Notes Tour'));
+          expect(openedEvent, 'event-1');
+          await tester.scrollUntilVisible(
+            find.byKey(const Key('timeline-load-more')),
+            200,
+          );
+          await tester.pumpAndSettle();
+          await tester.tap(find.byKey(const Key('timeline-load-more')));
+          expect(loadMoreCalls, 1);
+          expect(tester.takeException(), isNull);
+        },
+      );
+    }
+  }
+
   testWidgets('renders a ruled place ledger without legacy tabs or cards', (
     tester,
   ) async {
@@ -248,10 +307,11 @@ Future<void> _pumpLedger(
   required Widget child,
   ThemeData? theme,
   TextScaler textScaler = TextScaler.noScaling,
+  Locale locale = const Locale('ko'),
 }) {
   return tester.pumpWidget(
     MaterialApp(
-      locale: const Locale('ko'),
+      locale: locale,
       supportedLocales: const [Locale('ko'), Locale('en'), Locale('ja')],
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,

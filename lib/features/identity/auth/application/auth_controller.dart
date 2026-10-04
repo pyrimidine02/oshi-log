@@ -6,13 +6,13 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:oshi_log/core/cache/cache_manager.dart';
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/logging/app_logger.dart';
-import 'package:oshi_log/core/providers/core_providers.dart';
-import 'package:oshi_log/core/security/secure_storage.dart';
-import 'package:oshi_log/core/storage/local_storage.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/cache/cache_manager.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/platform/logging/app_logger.dart';
+import 'package:oshi_log/platform/providers/core_providers.dart';
+import 'package:oshi_log/platform/security/secure_storage.dart';
+import 'package:oshi_log/platform/storage/local_storage.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/identity/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:oshi_log/features/identity/auth/data/repositories/auth_repository_impl.dart';
 import 'package:oshi_log/features/identity/auth/domain/entities/auth_tokens.dart';
@@ -261,7 +261,6 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
       }
       _authStateNotifier.setAuthenticated();
       state = const AsyncData(null);
-      unawaited(_requestNotificationPermissionOnLogin());
       unawaited(
         _logAuthSuccess(
           analyticsType: _AuthAnalyticsType.signup,
@@ -1193,7 +1192,6 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
       }
       _authStateNotifier.setAuthenticated();
       state = const AsyncData(null);
-      unawaited(_requestNotificationPermissionOnLogin());
       if (analyticsType != null &&
           analyticsMethod != null &&
           analyticsMethod.isNotEmpty) {
@@ -1272,54 +1270,6 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
     await analytics.logSignup(method);
   }
 
-  /// EN: Prompt runtime notification permission after successful login.
-  /// KO: 로그인 성공 직후 런타임 알림 권한을 요청합니다.
-  Future<void> _requestNotificationPermissionOnLogin() async {
-    try {
-      final localStorage = await _localStorageFuture;
-      final pushEnabled =
-          localStorage.getBool(LocalStorageKeys.notificationsEnabled) ?? true;
-      if (!pushEnabled) {
-        return;
-      }
-      final remotePushService = _ref.read(remotePushServiceProvider);
-      await remotePushService.initialize();
-      // EN: setAuthenticated(true) is intentionally omitted here.
-      //     It is called by remotePushBootstrapProvider's authStateProvider
-      //     listener, which fires immediately after login sets AuthState.authenticated.
-      //     Calling it again here would trigger a redundant syncRegistration().
-      // KO: setAuthenticated(true)는 여기서 호출하지 않습니다.
-      //     remotePushBootstrapProvider의 authStateProvider 리스너가
-      //     로그인 직후 AuthState.authenticated로 전환될 때 이미 호출합니다.
-      //     여기서 중복 호출하면 syncRegistration()이 불필요하게 추가 실행됩니다.
-      await remotePushService.requestPermission();
-      // EN: syncRegistration() after requestPermission() is intentional:
-      //     on iOS, the APNs token may only become available AFTER the user
-      //     grants permission, so we need an explicit sync at this point.
-      // KO: requestPermission() 이후 syncRegistration() 호출은 의도적입니다.
-      //     iOS에서는 사용자가 권한을 승인한 후에야 APNs 토큰을 얻을 수 있으므로
-      //     이 시점에 명시적으로 동기화가 필요합니다.
-      await remotePushService.syncRegistration();
-
-      final localNotifier = _ref.read(localNotificationsServiceProvider);
-      await localNotifier.requestPermissions();
-    } catch (e, stackTrace) {
-      AppLogger.warning(
-        'Failed to request notification permission after login',
-        data: e,
-        tag: 'AuthController',
-      );
-      AppLogger.error(
-        'Notification permission request error',
-        error: e,
-        stackTrace: stackTrace,
-        tag: 'AuthController',
-      );
-    }
-  }
-
-  /// EN: Clear app cache namespace on auth transitions.
-  /// KO: 인증 상태 전환 시 앱 캐시 네임스페이스를 초기화합니다.
   Future<void> _clearAppCaches() async {
     try {
       final cacheManager = await _cacheManagerFuture;

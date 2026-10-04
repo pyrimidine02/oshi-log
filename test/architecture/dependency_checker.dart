@@ -50,7 +50,8 @@ Set<String> findDependencyViolations(Map<String, String> sources) {
       if (targetFeature != null &&
           (source.startsWith('lib/core/') ||
               source.startsWith('lib/shared/') ||
-              source.startsWith('lib/platform/'))) {
+              source.startsWith('lib/platform/') ||
+              source.startsWith('lib/design_system/'))) {
         violations.add('$source -> $target : R4');
       }
       if (sourceFeature != null && target.startsWith('lib/app/')) {

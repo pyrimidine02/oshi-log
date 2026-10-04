@@ -2,9 +2,9 @@
 /// KO: 소셜(팔로우/차단) 리포지토리 구현.
 library;
 
-import 'package:oshi_log/core/error/error_handler.dart';
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/error/error_handler.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 
 import '../../domain/entities/social_entities.dart';
 import '../../domain/repositories/social_repository.dart';

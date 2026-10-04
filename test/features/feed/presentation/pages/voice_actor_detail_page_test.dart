@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:oshi_log/core/theme/gbt_theme.dart';
-import 'package:oshi_log/core/widgets/common/gbt_linkified_text.dart';
+import 'package:oshi_log/design_system/theme/gbt_theme.dart';
+import 'package:oshi_log/design_system/widgets/common/gbt_linkified_text.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/presentation/pages/voice_actor_detail_page.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/domain/entities/project_entities.dart';
 
@@ -33,7 +33,7 @@ void main() {
       ),
     );
 
-    expect(find.text('VOICE CAST'), findsOneWidget);
+    expect(find.text('PERSON · VOICE ACTOR / PERFORMER'), findsOneWidget);
     expect(find.text('양자리 리오'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });

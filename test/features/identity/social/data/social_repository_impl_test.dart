@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/identity/social/data/datasources/social_remote_data_source.dart';
 import 'package:oshi_log/features/identity/social/data/dto/social_dto.dart';
 import 'package:oshi_log/features/identity/social/data/repositories/social_repository_impl.dart';

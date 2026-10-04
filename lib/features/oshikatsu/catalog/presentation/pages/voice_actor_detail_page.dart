@@ -5,18 +5,18 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/localization/locale_text.dart';
-import 'package:oshi_log/core/theme/gbt_colors.dart';
-import 'package:oshi_log/core/theme/gbt_spacing.dart';
-import 'package:oshi_log/core/theme/gbt_typography.dart';
-import 'package:oshi_log/core/widgets/common/gbt_image.dart';
-import 'package:oshi_log/core/widgets/common/gbt_linkified_text.dart';
-import 'package:oshi_log/core/widgets/feedback/gbt_empty_state.dart';
-import 'package:oshi_log/core/widgets/feedback/gbt_loading.dart'
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
+import 'package:oshi_log/design_system/theme/gbt_colors.dart';
+import 'package:oshi_log/design_system/theme/gbt_spacing.dart';
+import 'package:oshi_log/design_system/theme/gbt_typography.dart';
+import 'package:oshi_log/design_system/widgets/common/gbt_image.dart';
+import 'package:oshi_log/design_system/widgets/common/gbt_linkified_text.dart';
+import 'package:oshi_log/design_system/widgets/feedback/gbt_empty_state.dart';
+import 'package:oshi_log/design_system/widgets/feedback/gbt_loading.dart'
     hide GBTEmptyState;
-import 'package:oshi_log/core/widgets/navigation/gbt_segmented_tab_bar.dart';
-import 'package:oshi_log/core/widgets/navigation/gbt_standard_app_bar.dart';
+import 'package:oshi_log/design_system/widgets/navigation/gbt_segmented_tab_bar.dart';
+import 'package:oshi_log/design_system/widgets/navigation/gbt_standard_app_bar.dart';
 import '../../application/projects_controller.dart';
 import '../../domain/entities/project_entities.dart';
 
@@ -198,7 +198,11 @@ class VoiceActorProfileHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'VOICE CAST',
+                  context.l10n(
+                    ko: '실제 인물 · 성우/연주자',
+                    en: 'PERSON · VOICE ACTOR / PERFORMER',
+                    ja: '実在の人物・声優／演奏者',
+                  ),
                   style: GBTTypography.labelSmall.copyWith(
                     color: isDark ? GBTColors.darkPrimary : GBTColors.primary,
                     fontWeight: FontWeight.w800,

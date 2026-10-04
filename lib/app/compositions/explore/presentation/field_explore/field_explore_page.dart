@@ -5,8 +5,8 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../../../../core/localization/locale_text.dart';
-import '../../../../../core/theme/theme.dart';
+import '../../../../../design_system/localization/locale_text.dart';
+import '../../../../../design_system/theme/theme.dart';
 import 'package:oshi_log/app/compositions/live/live_host.dart';
 import 'package:oshi_log/app/compositions/visits/presentation/field_visit_ledger/field_visit_ledger_page.dart';
 import 'package:oshi_log/app/compositions/collections/collections_host.dart';

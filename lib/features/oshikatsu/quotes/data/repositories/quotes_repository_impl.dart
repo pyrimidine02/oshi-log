@@ -2,9 +2,9 @@
 /// KO: [QuotesRepository]의 구체적인 구현체.
 library;
 
-import 'package:oshi_log/core/error/error_handler.dart';
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/error/error_handler.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/oshikatsu/quotes/domain/entities/quote_card.dart';
 import 'package:oshi_log/features/oshikatsu/quotes/domain/repositories/quotes_repository.dart';
 import 'package:oshi_log/features/oshikatsu/quotes/data/datasources/quotes_remote_data_source.dart';

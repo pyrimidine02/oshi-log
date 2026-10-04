@@ -2,7 +2,7 @@
 /// KO: 장소 리포지토리 인터페이스.
 library;
 
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/place/places/domain/entities/place_comment_entities.dart';
 import 'package:oshi_log/features/place/places/domain/entities/place_entities.dart';
 import 'package:oshi_log/features/place/places/domain/entities/place_guide_entities.dart';
@@ -95,6 +95,22 @@ abstract class PlacesRepository {
     required String placeId,
     int page = 0,
     int size = 20,
+    bool forceRefresh = false,
+  });
+
+  /// EN: Read a published guide on demand.
+  /// KO: 발행된 가이드 본문을 필요할 때 읽습니다.
+  Future<Result<PlaceGuideDetail>> getPlaceGuide({
+    required String placeId,
+    required String guideId,
+    bool forceRefresh = false,
+  });
+
+  /// EN: Read existing server-filtered tips or pinned notes.
+  /// KO: 서버에서 필터링한 팁 또는 고정 안내를 읽습니다.
+  Future<Result<List<PlaceComment>>> getPlaceTips({
+    required String placeId,
+    required PlaceTipCategory category,
     bool forceRefresh = false,
   });
 

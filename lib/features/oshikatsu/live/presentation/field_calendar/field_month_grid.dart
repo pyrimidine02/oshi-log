@@ -4,11 +4,12 @@ library;
 
 import 'package:flutter/material.dart';
 
-import 'package:oshi_log/core/localization/locale_text.dart';
-import 'package:oshi_log/core/theme/theme.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
+import 'package:oshi_log/design_system/theme/theme.dart';
 import 'package:oshi_log/features/oshikatsu/live/domain/entities/calendar_event.dart';
 import 'package:oshi_log/features/oshikatsu/live/presentation/field_events/live_schedule_status_badge.dart';
 import 'calendar_view_data.dart';
+import '../../domain/event_time_policy.dart';
 
 /// EN: Month grid remains visible and interactive even with zero events.
 /// KO: 이벤트가 없어도 계속 보이고 조작할 수 있는 월간 그리드입니다.
@@ -37,7 +38,7 @@ class FieldMonthGrid extends StatelessWidget {
     final totalSlots = ((leadingDays + dayCount) / 7).ceil() * 7;
     final eventsByDay = <int, List<CalendarEvent>>{};
     for (final event in events) {
-      final local = event.date.toLocal();
+      final local = calendarEventDate(event);
       if (local.year == visibleMonth.year &&
           local.month == visibleMonth.month) {
         eventsByDay.putIfAbsent(local.day, () => []).add(event);
@@ -53,51 +54,68 @@ class FieldMonthGrid extends StatelessWidget {
       context.l10n(ko: '토', en: 'S', ja: '土'),
     ];
 
-    return Column(
-      children: [
-        Row(
-          children: [
-            for (final label in weekdayLabels)
-              Expanded(
-                child: Text(
-                  label,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: SizedBox(
+          width: constraints.maxWidth.clamp(336.0, double.infinity),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  for (final label in weekdayLabels)
+                    Expanded(
+                      child: Text(
+                        label,
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                ],
               ),
-          ],
-        ),
-        const SizedBox(height: GBTSpacing.xs),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: totalSlots,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 7,
-            crossAxisSpacing: 0,
-            mainAxisSpacing: 2,
-            childAspectRatio: 0.86,
+              const SizedBox(height: GBTSpacing.xs),
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: totalSlots,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 7,
+                  crossAxisSpacing: 0,
+                  mainAxisSpacing: 2,
+                  mainAxisExtent:
+                      56 *
+                      MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 2.0),
+                ),
+                itemBuilder: (context, index) {
+                  final day = index - leadingDays + 1;
+                  if (day < 1 || day > dayCount) return const SizedBox.shrink();
+                  final date = DateTime(
+                    visibleMonth.year,
+                    visibleMonth.month,
+                    day,
+                  );
+                  return _FieldDayCell(
+                    day: day,
+                    date: date,
+                    events: eventsByDay[day] ?? const [],
+                    isToday: isSameCalendarDate(
+                      date,
+                      EventTimePolicy.inJst(DateTime.now()),
+                    ),
+                    isSelected:
+                        selectedDate != null &&
+                        isSameCalendarDate(date, selectedDate!),
+                    onTap: () => onSelectDate(date),
+                  );
+                },
+              ),
+            ],
           ),
-          itemBuilder: (context, index) {
-            final day = index - leadingDays + 1;
-            if (day < 1 || day > dayCount) return const SizedBox.shrink();
-            final date = DateTime(visibleMonth.year, visibleMonth.month, day);
-            return _FieldDayCell(
-              day: day,
-              date: date,
-              events: eventsByDay[day] ?? const [],
-              isToday: isSameCalendarDate(date, DateTime.now()),
-              isSelected:
-                  selectedDate != null &&
-                  isSameCalendarDate(date, selectedDate!),
-              onTap: () => onSelectDate(date),
-            );
-          },
         ),
-      ],
+      ),
     );
   }
 }

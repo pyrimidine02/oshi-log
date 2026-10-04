@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:oshi_log/core/theme/gbt_theme.dart';
+import 'package:oshi_log/design_system/theme/gbt_theme.dart';
 import 'package:oshi_log/app/compositions/user_profile/presentation/field_user_profile/field_user_profile_view_data.dart';
 import 'package:oshi_log/app/compositions/user_profile/presentation/field_user_profile/widgets/field_profile_calling_card.dart';
 

@@ -3,6 +3,7 @@
 library;
 
 import 'dart:math' as math;
+import 'package:oshi_log/features/oshikatsu/live/domain/event_time_policy.dart';
 
 import 'package:flutter/foundation.dart';
 
@@ -54,10 +55,12 @@ class TravelPassportViewData {
     PassportProfileStatus profileStatus = PassportProfileStatus.ready,
     PassportScheduleStatus scheduleStatus = PassportScheduleStatus.ready,
   }) {
-    final startOfToday = DateTime(now.year, now.month, now.day);
+    final startOfToday = EventTimePolicy.dateInJst(now);
     final uniqueFutureEvents = <String, CalendarEvent>{};
     for (final event in calendarEvents) {
-      if (event.date.toLocal().isBefore(startOfToday)) continue;
+      if (EventTimePolicy.dateInJst(event.date).isBefore(startOfToday)) {
+        continue;
+      }
       uniqueFutureEvents[event.id] = event;
     }
     final sortedEvents = uniqueFutureEvents.values.toList(growable: false)

@@ -8,9 +8,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/theme/gbt_colors.dart';
-import '../../../core/theme/gbt_spacing.dart';
-import '../../../core/theme/gbt_typography.dart';
+import '../../../design_system/theme/gbt_colors.dart';
+import '../../../design_system/theme/gbt_spacing.dart';
+import '../../../design_system/theme/gbt_typography.dart';
 import 'package:oshi_log/features/shared/notifications/application/in_app_notification_queue.dart';
 import 'package:oshi_log/features/shared/notifications/domain/entities/notification_navigation.dart';
 

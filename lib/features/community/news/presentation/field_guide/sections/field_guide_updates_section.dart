@@ -6,13 +6,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/localization/locale_text.dart';
-import 'package:oshi_log/core/theme/gbt_colors.dart';
-import 'package:oshi_log/core/theme/gbt_spacing.dart';
-import 'package:oshi_log/core/theme/gbt_typography.dart';
-import 'package:oshi_log/core/widgets/common/gbt_image.dart';
-import 'package:oshi_log/core/widgets/feedback/gbt_loading.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
+import 'package:oshi_log/design_system/theme/gbt_colors.dart';
+import 'package:oshi_log/design_system/theme/gbt_spacing.dart';
+import 'package:oshi_log/design_system/theme/gbt_typography.dart';
+import 'package:oshi_log/design_system/widgets/common/gbt_image.dart';
+import 'package:oshi_log/design_system/widgets/feedback/gbt_loading.dart';
 import 'package:oshi_log/features/community/news/application/field_guide_updates_provider.dart';
 import '../../../domain/entities/news_entities.dart';
 

@@ -1,10 +1,14 @@
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:oshi_log/features/oshikatsu/live/application/calendar_controller.dart';
+import 'package:oshi_log/features/oshikatsu/live/domain/entities/calendar_event.dart';
+import 'package:oshi_log/features/oshikatsu/live/presentation/field_calendar/field_month_grid.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:oshi_log/core/theme/gbt_theme.dart';
+import 'package:oshi_log/design_system/theme/gbt_theme.dart';
 import 'package:oshi_log/features/oshikatsu/live/domain/entities/live_event_entities.dart';
 import 'package:oshi_log/features/oshikatsu/live/application/live_events_controller.dart';
 import 'package:oshi_log/features/oshikatsu/live/presentation/field_events/field_event_agenda_widgets.dart';
@@ -23,201 +27,64 @@ void main() {
     expect(const FieldLiveEventDetailPage(eventId: 'event-1'), isA<Widget>());
   });
 
-  testWidgets('event desk switches from next show to archive at 320dp', (
-    tester,
-  ) async {
-    tester.view.physicalSize = const Size(320, 900);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-    final now = DateTime.now();
-    final seeded = [
-      LiveEventSummary(
-        id: 'future',
-        title: 'FUTURE FIELD SHOW',
-        showStartTime: now.add(const Duration(days: 10)),
-        status: 'SCHEDULED',
-        projectIds: const ['p1'],
-        unitIds: const ['u1'],
-      ),
-      LiveEventSummary(
-        id: 'past',
-        title: 'PAST FIELD SHOW',
-        showStartTime: now.subtract(const Duration(days: 10)),
-        status: 'COMPLETED',
-        projectIds: const ['p1'],
-        unitIds: const ['u1'],
-      ),
-    ];
-
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          liveEventsListControllerProvider.overrideWith(
-            (ref) => _SeededLiveEventsController(ref, seeded),
-          ),
-        ],
-        child: MaterialApp(
-          locale: const Locale('en'),
-          theme: GBTTheme.light,
-          home: const FieldLiveEventsPage(
-            embedded: true,
-            projectLens: SizedBox.shrink(),
-          ),
-        ),
-      ),
-    );
-    await tester.pump();
-
-    expect(tester.takeException(), isNull);
-    expect(find.text('FUTURE FIELD SHOW'), findsOneWidget);
-    await tester.tap(find.text('Archive'));
-    await tester.pumpAndSettle();
-    expect(find.text('PAST FIELD SHOW'), findsOneWidget);
-    expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('embedded schedule desk keeps its controls within 104dp', (
-    tester,
-  ) async {
-    tester.view.physicalSize = const Size(320, 900);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          liveEventsListControllerProvider.overrideWith(
-            (ref) => _SeededLiveEventsController(ref, [_summary]),
-          ),
-        ],
-        child: MaterialApp(
-          locale: const Locale('en'),
-          theme: GBTTheme.light,
-          home: const FieldLiveEventsPage(
-            embedded: true,
-            projectLens: SizedBox(
-              height: 48,
-              child: Center(child: Text('Girls Band Cry')),
-            ),
-          ),
-        ),
-      ),
-    );
-    await tester.pump();
-
-    final header = find.byKey(const Key('field-event-schedule-desk-header'));
-    expect(header, findsOneWidget);
-    expect(tester.getSize(header).height, lessThanOrEqualTo(104));
-    expect(find.text('LIVE FIELD DESK'), findsNothing);
-    expect(find.text('TEST LIVE TOUR'), findsOneWidget);
-    expect(
-      tester.getTopLeft(find.byType(FieldEventPosterFeature)).dy,
-      lessThan(150),
-    );
-    expect(tester.takeException(), isNull);
-  });
-
-  testWidgets(
-    'compact schedule controls survive 200 percent text in dark mode',
-    (tester) async {
-      final semantics = tester.ensureSemantics();
-      tester.view.physicalSize = const Size(320, 900);
-      tester.view.devicePixelRatio = 1;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
-
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            liveEventsListControllerProvider.overrideWith(
-              (ref) => _SeededLiveEventsController(ref, [_summary]),
-            ),
-          ],
-          child: MaterialApp(
-            locale: const Locale('en'),
-            theme: GBTTheme.dark,
-            home: MediaQuery(
-              data: const MediaQueryData(textScaler: TextScaler.linear(2)),
-              child: const FieldLiveEventsPage(
-                embedded: true,
-                projectLens: SizedBox(height: 48),
+  for (final locale in ['ja', 'ko']) {
+    for (final dark in [false, true]) {
+      testWidgets(
+        'month list and calendar toggle $locale dark=$dark at 320dp 200%',
+        (tester) async {
+          tester.view.physicalSize = const Size(320, 1100);
+          tester.view.devicePixelRatio = 1;
+          addTearDown(tester.view.resetPhysicalSize);
+          addTearDown(tester.view.resetDevicePixelRatio);
+          final now = DateTime.now();
+          final date = DateTime(now.year, now.month, 15);
+          await tester.pumpWidget(
+            ProviderScope(
+              overrides: [
+                calendarEventsProvider.overrideWith(
+                  (ref, query) async => [
+                    CalendarEvent(
+                      id: 'birthday',
+                      title: 'BIRTHDAY',
+                      date: date,
+                      type: CalendarEventType.characterBirthday,
+                    ),
+                  ],
+                ),
+                liveEventsListControllerProvider.overrideWith(
+                  (ref) => _SeededLiveEventsController(ref, []),
+                ),
+              ],
+              child: MaterialApp(
+                locale: Locale(locale),
+                supportedLocales: const [Locale('ja'), Locale('ko')],
+                localizationsDelegates: GlobalMaterialLocalizations.delegates,
+                theme: dark ? GBTTheme.dark : GBTTheme.light,
+                home: MediaQuery(
+                  data: const MediaQueryData(textScaler: TextScaler.linear(2)),
+                  child: const FieldLiveEventsPage(
+                    embedded: true,
+                    projectLens: SizedBox.shrink(),
+                  ),
+                ),
               ),
             ),
-          ),
-        ),
+          );
+          await tester.pumpAndSettle();
+          expect(find.byType(FieldMonthGrid), findsNothing);
+          expect(find.text('BIRTHDAY'), findsOneWidget);
+          expect(tester.takeException(), isNull);
+          await tester.tap(find.byTooltip(locale == 'ja' ? '月カレンダー' : '월 캘린더'));
+          await tester.pumpAndSettle();
+          expect(find.byType(FieldMonthGrid), findsOneWidget);
+          expect(tester.takeException(), isNull);
+          await tester.tap(find.byTooltip(locale == 'ja' ? '月の一覧' : '월별 목록'));
+          await tester.pumpAndSettle();
+          expect(find.byType(FieldMonthGrid), findsNothing);
+        },
       );
-      await tester.pump();
-
-      expect(find.bySemanticsLabel('Upcoming events'), findsOneWidget);
-      expect(
-        find.bySemanticsLabel('Filter schedule, all units'),
-        findsOneWidget,
-      );
-      _expectEnabledButtonWithTap(
-        tester,
-        find.bySemanticsLabel('Upcoming events'),
-      );
-      _expectEnabledButtonWithTap(
-        tester,
-        find.bySemanticsLabel('Archived events'),
-      );
-      _expectEnabledButtonWithTap(
-        tester,
-        find.bySemanticsLabel('Filter schedule, all units'),
-      );
-      await tester.tap(find.bySemanticsLabel('Filter schedule, all units'));
-      await tester.pumpAndSettle();
-      expect(find.text('Schedule filter'), findsOneWidget);
-      expect(tester.takeException(), isNull);
-      semantics.dispose();
-    },
-  );
-
-  testWidgets('archive year lives inside the compact schedule filter', (
-    tester,
-  ) async {
-    final archived = LiveEventSummary(
-      id: 'archived-2025',
-      title: 'ARCHIVED FIELD SHOW',
-      showStartTime: DateTime(2025, 6, 20, 18),
-      status: 'COMPLETED',
-      projectIds: const ['p1'],
-      unitIds: const [],
-    );
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          liveEventsListControllerProvider.overrideWith(
-            (ref) => _SeededLiveEventsController(ref, [archived]),
-          ),
-        ],
-        child: MaterialApp(
-          locale: const Locale('en'),
-          theme: GBTTheme.light,
-          home: const FieldLiveEventsPage(
-            embedded: true,
-            projectLens: SizedBox(height: 48),
-          ),
-        ),
-      ),
-    );
-    await tester.pump();
-
-    expect(find.text('All years'), findsNothing);
-    await tester.tap(find.bySemanticsLabel('Archived events'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.bySemanticsLabel('Filter schedule, all units'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Schedule filter'), findsOneWidget);
-    expect(find.text('YEAR'), findsOneWidget);
-    expect(find.text('All years'), findsOneWidget);
-    expect(find.text('2025'), findsOneWidget);
-    expect(find.text('UNITS'), findsOneWidget);
-    expect(tester.takeException(), isNull);
-  });
+    }
+  }
 
   testWidgets('agenda row remains usable at 320dp with large text', (
     tester,
@@ -397,7 +264,7 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.text('Not provided in event data'), findsOneWidget);
-    expect(find.text('No ticket information'), findsOneWidget);
+    expect(find.text('No ticket information'), findsNothing);
   });
 
   testWidgets('event document exposes a real venue place route', (
@@ -477,6 +344,9 @@ void main() {
     );
 
     expect(tester.takeException(), isNull);
+    expect(find.text('Field Notes Anthem'), findsNothing);
+    await tester.tap(find.text('Show spoilers'));
+    await tester.pump();
     await tester.tap(find.text('Field Notes Anthem'));
     expect(tapped?.songId, 'song-1');
     expect(find.byIcon(Icons.star_rounded), findsOneWidget);
@@ -515,48 +385,13 @@ void main() {
       ),
     );
 
+    expect(find.text('Field Notes Anthem'), findsNothing);
+    await tester.tap(find.text('Show spoilers'));
+    await tester.pump();
     await tester.tap(find.text('Field Notes Anthem'));
 
     expect(tapCount, 0);
     expect(find.byIcon(Icons.chevron_right_rounded), findsNothing);
-    expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('archive ignores a selected year absent from loaded events', (
-    tester,
-  ) async {
-    final past = LiveEventSummary(
-      id: 'past-2026',
-      title: 'PAST 2026 SHOW',
-      showStartTime: DateTime.now().subtract(const Duration(days: 30)),
-      status: 'COMPLETED',
-      projectIds: const ['p1'],
-      unitIds: const [],
-    );
-
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          liveEventsListControllerProvider.overrideWith(
-            (ref) => _SeededLiveEventsController(ref, [past]),
-          ),
-          selectedLiveEventYearProvider.overrideWith((ref) => 1999),
-        ],
-        child: MaterialApp(
-          locale: const Locale('en'),
-          theme: GBTTheme.light,
-          home: const FieldLiveEventsPage(
-            embedded: true,
-            projectLens: SizedBox.shrink(),
-          ),
-        ),
-      ),
-    );
-    await tester.pump();
-    await tester.tap(find.text('Archive'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('PAST 2026 SHOW'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

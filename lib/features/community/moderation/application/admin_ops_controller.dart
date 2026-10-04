@@ -4,9 +4,9 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/providers/core_providers.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/platform/providers/core_providers.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/identity/account/application/settings_controller.dart';
 import 'package:oshi_log/features/community/moderation/data/datasources/admin_ops_remote_data_source.dart';
 import 'package:oshi_log/features/community/moderation/data/repositories/admin_ops_repository_impl.dart';

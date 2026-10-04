@@ -6,17 +6,23 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/providers/core_providers.dart';
+import '../../platform/providers/core_providers.dart';
 import 'package:oshi_log/features/identity/auth/application/auth_controller.dart';
 import 'package:oshi_log/features/identity/auth/application/session_state.dart';
 import 'package:oshi_log/features/shared/notifications/application/notification_delivery.dart';
 import 'package:oshi_log/features/place/verification/application/verification_controller.dart';
 import '../compositions/places/verification_completion.dart';
 import '../session/session_cleanup.dart';
+import '../session/action_login_sheet.dart';
+import 'package:oshi_log/features/identity/auth/application/auth_action_gate.dart';
 
 /// EN: Overrides to add to the root `ProviderScope` in `main.dart`/`app.dart`.
 /// KO: `main.dart`/`app.dart`의 루트 `ProviderScope`에 추가할 override 목록.
 final List<Override> sessionOverrides = [
+  authenticationGateProvider.overrideWith(
+    (ref) =>
+        (context) => showActionLoginSheet(context, ref),
+  ),
   sessionCleanupProvider.overrideWithValue(appSessionCleanup),
   apiUnauthorizedCallbackProvider.overrideWith((ref) {
     return () => ref.read(authStateProvider.notifier).setUnauthenticated();

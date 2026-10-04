@@ -1,9 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:oshi_log/core/cache/cache_manager.dart';
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/storage/local_storage.dart';
+import 'package:oshi_log/platform/cache/cache_manager.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/platform/storage/local_storage.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -11,6 +13,133 @@ void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues({});
   });
+
+  for (final policy in CachePolicy.values.where(
+    (policy) => policy != CachePolicy.cacheOnly,
+  )) {
+    test(
+      'clearAll rejects delayed ${policy.name} fetch and cache write',
+      () async {
+        final storage = LocalStorage(await SharedPreferences.getInstance());
+        final manager = CacheManager(storage);
+        final started = Completer<void>();
+        final response = Completer<Map<String, dynamic>>();
+        final pending = manager.resolve<Map<String, dynamic>>(
+          key: 'visits',
+          policy: policy,
+          fetcher: () {
+            started.complete();
+            return response.future;
+          },
+          toJson: (data) => data,
+          fromJson: (json) => json,
+        );
+        await started.future;
+        await manager.clearAll();
+        final rejected = expectLater(pending, throwsA(_invalidatedCache));
+        response.complete({'owner': 'a'});
+        await rejected;
+        expect(storage.getJson('gbt_cache:visits'), isNull);
+        expect(
+          manager.getJsonEntry('visits', fromJson: (json) => json),
+          isNull,
+        );
+      },
+    );
+  }
+
+  for (final policy in CachePolicy.values) {
+    test(
+      'clearAll rejects ${policy.name} snapshot after delayed probe',
+      () async {
+        final storage = LocalStorage(await SharedPreferences.getInstance());
+        final probe = Completer<bool>();
+        final manager = CacheManager(storage, isOnline: () => probe.future);
+        await manager.setJson('visits', {'owner': 'a'});
+        var fetched = false;
+        final pending = manager.resolve<Map<String, dynamic>>(
+          key: 'visits',
+          policy: policy,
+          fetcher: () async {
+            fetched = true;
+            return {'owner': 'b'};
+          },
+          toJson: (data) => data,
+          fromJson: (json) => json,
+        );
+        await manager.clearAll();
+        final rejected = expectLater(pending, throwsA(_invalidatedCache));
+        probe.complete(false);
+        await rejected;
+        expect(fetched, isFalse);
+      },
+    );
+  }
+
+  test(
+    'clearAll prevents networkFirst fallback to the prior account',
+    () async {
+      final storage = LocalStorage(await SharedPreferences.getInstance());
+      final manager = CacheManager(storage);
+      await manager.setJson('visits', {'owner': 'a'});
+      final started = Completer<void>();
+      final response = Completer<Map<String, dynamic>>();
+      final pending = manager.resolve<Map<String, dynamic>>(
+        key: 'visits',
+        policy: CachePolicy.networkFirst,
+        fetcher: () {
+          started.complete();
+          return response.future;
+        },
+        toJson: (data) => data,
+        fromJson: (json) => json,
+      );
+      await started.future;
+      await manager.clearAll();
+      final rejected = expectLater(pending, throwsA(_invalidatedCache));
+      response.completeError(StateError('Network failed'));
+      await rejected;
+    },
+  );
+
+  test(
+    'clearAll invalidates old refresh without blocking the new one',
+    () async {
+      final storage = LocalStorage(await SharedPreferences.getInstance());
+      final manager = CacheManager(storage);
+      await manager.setJson('visits', {'owner': 'a'});
+      final oldResponse = Completer<Map<String, dynamic>>();
+      final newResponse = Completer<Map<String, dynamic>>();
+      var refreshes = 0;
+      Future<CacheResult<Map<String, dynamic>>> resolve(
+        Completer<Map<String, dynamic>> response,
+      ) => manager.resolve(
+        key: 'visits',
+        policy: CachePolicy.staleWhileRevalidate,
+        fetcher: () {
+          refreshes++;
+          return response.future;
+        },
+        toJson: (data) => data,
+        fromJson: (json) => json,
+      );
+      await resolve(oldResponse);
+      await manager.clearAll();
+      await manager.setJson('visits', {'owner': 'b'});
+      await resolve(newResponse);
+      expect(refreshes, 2);
+      oldResponse.complete({'owner': 'a-late'});
+      await Future<void>.delayed(Duration.zero);
+      expect(storage.getJson('gbt_cache:visits')!['data'], {'owner': 'b'});
+      await resolve(newResponse);
+      expect(refreshes, 2);
+      newResponse.complete({'owner': 'b-fresh'});
+      await Future<void>.delayed(Duration.zero);
+      expect(storage.getJson('gbt_cache:visits')!['data'], {
+        'owner': 'b-fresh',
+      });
+    },
+  );
 
   test('cacheFirst returns cached data without calling fetcher', () async {
     final prefs = await SharedPreferences.getInstance();
@@ -381,6 +510,12 @@ void main() {
     },
   );
 }
+
+final _invalidatedCache = isA<CacheFailure>().having(
+  (failure) => failure.code,
+  'code',
+  'cache_invalidated',
+);
 
 class _SpyLocalStorage extends LocalStorage {
   _SpyLocalStorage(super.prefs);

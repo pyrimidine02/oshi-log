@@ -6,15 +6,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/localization/locale_text.dart';
-import 'package:oshi_log/core/theme/gbt_spacing.dart';
-import 'package:oshi_log/core/theme/gbt_typography.dart';
-import 'package:oshi_log/core/utils/result.dart';
-import 'package:oshi_log/core/widgets/buttons/gbt_button.dart';
-import 'package:oshi_log/core/widgets/common/gbt_page_reveal.dart';
-import 'package:oshi_log/core/widgets/inputs/gbt_text_field.dart';
-import 'package:oshi_log/core/router/app_router.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
+import 'package:oshi_log/design_system/theme/gbt_spacing.dart';
+import 'package:oshi_log/design_system/theme/gbt_typography.dart';
+import 'package:oshi_log/platform/utils/result.dart';
+import 'package:oshi_log/design_system/widgets/buttons/gbt_button.dart';
+import 'package:oshi_log/design_system/widgets/common/gbt_page_reveal.dart';
+import 'package:oshi_log/design_system/widgets/inputs/gbt_text_field.dart';
+import 'package:oshi_log/platform/router/app_router.dart';
 import 'package:oshi_log/features/identity/auth/application/auth_controller.dart';
 import 'package:oshi_log/features/identity/auth/presentation/widgets/field_auth_components.dart';
 import 'package:oshi_log/features/identity/auth/presentation/widgets/oauth_buttons.dart';
@@ -24,7 +24,16 @@ import 'email_verification_args.dart';
 /// EN: Login page widget
 /// KO: 로그인 페이지 위젯
 class LoginPage extends ConsumerStatefulWidget {
-  const LoginPage({super.key});
+  const LoginPage({
+    super.key,
+    this.onAuthenticated,
+    this.onCancel,
+    this.redirectTarget,
+  });
+
+  final VoidCallback? onAuthenticated;
+  final VoidCallback? onCancel;
+  final String? redirectTarget;
 
   @override
   ConsumerState<LoginPage> createState() => _LoginPageState();
@@ -72,7 +81,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     .read(authControllerProvider.notifier)
                     .pendingConflictEmail ??
                 '';
-            context.push('/oauth/conflict', extra: email);
+            _openAuthPage('/oauth/conflict', extra: email);
             return;
           }
 
@@ -201,7 +210,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       ja: 'パスワードを忘れた場合',
                     ),
                     child: TextButton(
-                      onPressed: () => context.push('/forgot-password'),
+                      onPressed: () => _openAuthPage('/forgot-password'),
                       style: TextButton.styleFrom(
                         minimumSize: const Size(
                           GBTSpacing.touchTarget,
@@ -242,7 +251,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
                 const SizedBox(height: GBTSpacing.xxl),
 
-                const OAuthButtonsSection(),
+                OAuthButtonsSection(
+                  disabled: isLoading,
+                  onAuthenticated: _finishLogin,
+                  onExternalLogin: widget.onCancel,
+                  redirectTarget: _postLoginTarget,
+                ),
 
                 const SizedBox(height: GBTSpacing.xxl),
 
@@ -272,7 +286,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         ja: '会員登録ページへ移動',
                       ),
                       child: TextButton(
-                        onPressed: () => context.push('/register'),
+                        onPressed: () => _openAuthPage('/register'),
                         style: TextButton.styleFrom(
                           minimumSize: const Size(
                             GBTSpacing.touchTarget,
@@ -303,7 +317,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       ja: 'ログインせずにアプリを見る',
                     ),
                     child: TextButton(
-                      onPressed: () => context.go('/home'),
+                      onPressed: widget.onCancel ?? () => context.go('/home'),
                       style: TextButton.styleFrom(
                         minimumSize: const Size(
                           GBTSpacing.touchTarget,
@@ -337,7 +351,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   /// KO: 없거나 유효하지 않으면 기본값인 `/home`.
   String get _postLoginTarget =>
       safeRedirectTarget(
-        GoRouterState.of(context).uri.queryParameters['redirect'],
+        widget.redirectTarget ??
+            GoRouter.of(context).state.uri.queryParameters['redirect'],
       ) ??
       '/home';
 
@@ -353,29 +368,33 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         username: _usernameController.text.trim(),
         password: _passwordController.text,
       );
-      if (!mounted) return;
+      if (!mounted || ModalRoute.of(context)?.isCurrent != true) return;
       if (result is Success<void>) {
-        context.go(_postLoginTarget);
+        _finishLogin();
       } else if (result is Err<void>) {
         // EN: Redirect to email verification pending when account is unverified.
         // KO: 이메일 인증이 완료되지 않은 계정은 인증 대기 화면으로 이동합니다.
         if (result.failure.code == 'EMAIL_NOT_VERIFIED' ||
             result.failure.code == 'EMAIL_VERIFICATION_REQUIRED') {
-          context.pushNamed(
-            AppRoutes.emailVerificationPending,
+          _openAuthPage(
+            '/email-verification-pending',
             extra: EmailVerificationArgs(
               email: _usernameController.text.trim(),
             ),
           );
         } else if (result.failure.code == 'ACCOUNT_INACTIVE') {
           final confirmed = await showAccountRecoveryDialog(context);
-          if (!mounted || !confirmed) return;
+          if (!mounted ||
+              !confirmed ||
+              ModalRoute.of(context)?.isCurrent != true) {
+            return;
+          }
           final recoveryResult = await controller.recoverWithPassword(
             email: _usernameController.text.trim(),
             password: _passwordController.text,
           );
           if (mounted && recoveryResult is Success<void>) {
-            context.go(_postLoginTarget);
+            _finishLogin();
           }
         }
       }
@@ -385,6 +404,26 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           _isSubmitting = false;
         });
       }
+    }
+  }
+
+  void _openAuthPage(String path, {Object? extra}) {
+    if (!mounted || ModalRoute.of(context)?.isCurrent != true) return;
+    final router = GoRouter.of(context);
+    final target = _postLoginTarget;
+    widget.onCancel?.call();
+    router.push(
+      Uri(path: path, queryParameters: {'redirect': target}).toString(),
+      extra: extra,
+    );
+  }
+
+  void _finishLogin() {
+    if (!mounted || ModalRoute.of(context)?.isCurrent != true) return;
+    if (widget.onAuthenticated != null) {
+      widget.onAuthenticated!();
+    } else {
+      context.go(_postLoginTarget);
     }
   }
 }

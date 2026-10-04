@@ -1,19 +1,21 @@
-/// EN: Community branch routes (shell index 4) — board/feed, posts, travel
+/// EN: Community branch routes (shell index 3) — board/feed, posts, travel
 /// EN: reviews.
-/// KO: 커뮤니티 분기 라우트 (쉘 인덱스 4) — 게시판, 게시글, 여행 후기.
+/// KO: 커뮤니티 분기 라우트 (쉘 인덱스 3) — 게시판, 게시글, 여행 후기.
 library;
 
 import 'package:go_router/go_router.dart';
 
-import '../../../core/router/app_router.dart' show AppRoutes;
+import '../../../platform/router/app_router.dart' show AppRoutes;
 import 'package:oshi_log/features/community/posts/domain/entities/feed_entities.dart';
 import '../../compositions/community/presentation/field_community/field_community_page.dart';
 import '../../compositions/posts/post_create_route.dart';
 import '../../compositions/posts/post_detail_route.dart';
 import '../../compositions/posts/post_edit_route.dart';
 import '../../../features/community/reviews/presentation/pages/travel_review_create_page.dart';
+import '../../../features/community/reviews/domain/entities/travel_review_selection_seed.dart';
 import '../../../features/community/reviews/presentation/pages/travel_review_detail_page.dart';
 import '../route_helpers.dart';
+import '../../session/protected_read_gate.dart';
 
 List<RouteBase> buildCommunityRoutes() => [
   GoRoute(
@@ -21,7 +23,9 @@ List<RouteBase> buildCommunityRoutes() => [
     name: AppRoutes.community,
     pageBuilder: (context, state) => NoTransitionPage(
       key: state.pageKey,
-      child: const FieldCommunityPage(initialSectionIndex: 0),
+      child: const ProtectedReadGate(
+        child: FieldCommunityPage(initialSectionIndex: 0),
+      ),
     ),
     routes: [
       GoRoute(
@@ -29,7 +33,9 @@ List<RouteBase> buildCommunityRoutes() => [
         name: AppRoutes.discover,
         pageBuilder: (context, state) => NoTransitionPage(
           key: state.pageKey,
-          child: const FieldCommunityPage(initialSectionIndex: 1),
+          child: const ProtectedReadGate(
+            child: FieldCommunityPage(initialSectionIndex: 1),
+          ),
         ),
       ),
       GoRoute(
@@ -37,7 +43,9 @@ List<RouteBase> buildCommunityRoutes() => [
         name: AppRoutes.travelReviewTab,
         pageBuilder: (context, state) => NoTransitionPage(
           key: state.pageKey,
-          child: const FieldCommunityPage(initialSectionIndex: 2),
+          child: const ProtectedReadGate(
+            child: FieldCommunityPage(initialSectionIndex: 2),
+          ),
         ),
       ),
       GoRoute(
@@ -53,7 +61,11 @@ List<RouteBase> buildCommunityRoutes() => [
         name: AppRoutes.travelReviewCreate,
         pageBuilder: (context, state) => buildAdaptiveOverlayPage(
           key: state.pageKey,
-          child: const TravelReviewCreatePage(),
+          child: TravelReviewCreatePage(
+            selectionSeed: state.extra is TravelReviewSelectionSeed
+                ? state.extra as TravelReviewSelectionSeed
+                : null,
+          ),
         ),
       ),
       GoRoute(

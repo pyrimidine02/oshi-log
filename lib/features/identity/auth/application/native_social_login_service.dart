@@ -5,9 +5,9 @@ library;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/security/secure_storage.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/platform/security/secure_storage.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 
 // EN: Web (server) OAuth 2.0 client ID for Android Google Sign-In.
 //     On iOS the client ID is read from GoogleService-Info.plist automatically.

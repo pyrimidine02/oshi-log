@@ -11,26 +11,26 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gal/gal.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/localization/locale_text.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
 import 'package:oshi_log/features/identity/auth/application/session_state.dart';
-import 'package:oshi_log/core/security/user_access_level.dart';
-import 'package:oshi_log/core/router/app_router.dart';
-import 'package:oshi_log/core/utils/result.dart';
-import 'package:oshi_log/core/theme/gbt_colors.dart';
-import 'package:oshi_log/core/theme/gbt_spacing.dart';
-import 'package:oshi_log/core/theme/gbt_typography.dart';
-import 'package:oshi_log/core/theme/gbt_animations.dart';
-import 'package:oshi_log/core/utils/image_url_extractor.dart';
-import 'package:oshi_log/core/utils/media_url.dart';
-import 'package:oshi_log/core/widgets/common/gbt_action_icons.dart';
-import 'package:oshi_log/core/widgets/common/gbt_image.dart';
-import 'package:oshi_log/core/widgets/common/gbt_linkified_text.dart';
-import 'package:oshi_log/core/widgets/dialogs/gbt_adaptive_dialog.dart';
-import 'package:oshi_log/core/widgets/feedback/gbt_loading.dart';
-import 'package:oshi_log/core/widgets/navigation/gbt_standard_app_bar.dart';
-import 'package:oshi_log/core/widgets/sheets/gbt_bottom_sheet.dart';
+import 'package:oshi_log/platform/security/user_access_level.dart';
+import 'package:oshi_log/platform/router/app_router.dart';
+import 'package:oshi_log/platform/utils/result.dart';
+import 'package:oshi_log/design_system/theme/gbt_colors.dart';
+import 'package:oshi_log/design_system/theme/gbt_spacing.dart';
+import 'package:oshi_log/design_system/theme/gbt_typography.dart';
+import 'package:oshi_log/design_system/theme/gbt_animations.dart';
+import 'package:oshi_log/platform/utils/image_url_extractor.dart';
+import 'package:oshi_log/platform/utils/media_url.dart';
+import 'package:oshi_log/design_system/widgets/common/gbt_action_icons.dart';
+import 'package:oshi_log/design_system/widgets/common/gbt_image.dart';
+import 'package:oshi_log/design_system/widgets/common/gbt_linkified_text.dart';
+import 'package:oshi_log/design_system/widgets/dialogs/gbt_adaptive_dialog.dart';
+import 'package:oshi_log/design_system/widgets/feedback/gbt_loading.dart';
+import 'package:oshi_log/design_system/widgets/navigation/gbt_standard_app_bar.dart';
+import 'package:oshi_log/design_system/widgets/sheets/gbt_bottom_sheet.dart';
 import 'package:oshi_log/features/identity/account/application/settings_controller.dart';
 import 'package:oshi_log/features/community/moderation/application/community_repository_provider.dart';
 import 'package:oshi_log/features/community/posts/application/feed_controller.dart';
@@ -1006,8 +1006,11 @@ class _PostDetailPageState extends ConsumerState<PostDetailPage> {
     final confirmed = await showGBTAdaptiveConfirmDialog(
       context: context,
       title: context.l10n(ko: '신고 접수', en: 'Submit report', ja: '通報を送信する'),
-      message:
-          '${targetType.label}을(를) "${reportReason.label}" 사유로 신고합니다.\n접수하시겠어요?',
+      message: context.l10n(
+        ko: '${targetType.label}을(를) "${reportReason.label}" 사유로 신고합니다.\n접수하시겠어요?',
+        en: 'Report ${targetType.label} for "${reportReason.label}"?',
+        ja: '${targetType.label}を「${reportReason.label}」の理由で通報しますか？',
+      ),
       cancelLabel: context.l10n(ko: '취소', en: 'Cancel', ja: 'キャンセル'),
       confirmLabel: context.l10n(
         ko: '신고 접수',

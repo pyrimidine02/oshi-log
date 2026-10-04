@@ -19,12 +19,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/providers/core_providers.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/platform/providers/core_providers.dart';
 import 'package:oshi_log/features/identity/auth/application/session_state.dart';
 import 'package:oshi_log/app/router/app_router.dart';
-import 'package:oshi_log/core/security/secure_storage.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/security/secure_storage.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/oshikatsu/live/application/calendar_controller.dart';
 import 'package:oshi_log/features/oshikatsu/live/domain/entities/calendar_event.dart';
 import 'package:oshi_log/features/oshikatsu/live/domain/repositories/calendar_repository.dart';
@@ -59,13 +59,8 @@ class _FakeCalendarRepository implements CalendarRepository {
 }
 
 void main() {
-  // EN: appRouterProvider rebuilds (new GoRouter instance) whenever
-  //     authStateProvider changes, since the redirect closure captures the
-  //     watched value at build time. So the auth state must be set BEFORE
-  //     reading the provider.
-  // KO: appRouterProvider는 authStateProvider가 바뀔 때마다 재생성됩니다.
-  //     redirect 클로저가 빌드 시점의 값을 캡처하기 때문입니다. 따라서
-  //     프로바이더를 읽기 전에 인증 상태를 먼저 설정해야 합니다.
+  // EN: Set auth before reading the stable, refreshable router.
+  // KO: 갱신 가능한 단일 라우터를 읽기 전에 인증 상태를 설정합니다.
   Future<GoRouter> pumpRouterWithAuthState(
     WidgetTester tester,
     void Function(ProviderContainer) setup,
@@ -80,7 +75,6 @@ void main() {
     addTearDown(container.dispose);
     setup(container);
     final router = container.read(appRouterProvider);
-    addTearDown(router.dispose);
 
     await tester.pumpWidget(
       UncontrolledProviderScope(
@@ -102,6 +96,10 @@ void main() {
       router.routeInformationProvider.value.uri.toString();
 
   testWidgets(
+    // EN: PR9 IA: `/mypage` root is now public (guest intro); the personal
+    // EN: visit ledger under it stays protected and is the example here.
+    // KO: PR9 IA: `/mypage` 루트는 이제 공개(게스트 소개)입니다; 그 아래
+    // KO: 개인 방문 원장은 보호된 상태를 유지하며 여기서 예시로 씁니다.
     'logged-out access to a protected path redirects to login with redirect param',
     (tester) async {
       final router = await pumpRouterWithAuthState(
@@ -109,13 +107,32 @@ void main() {
         (c) => c.read(authStateProvider.notifier).setUnauthenticated(),
       );
 
-      router.go('/mypage');
+      router.go('/mypage/records');
       await tester.pump(const Duration(milliseconds: 50));
       tester.takeException();
 
-      expect(currentLocation(router), '/login?redirect=%2Fmypage');
+      expect(currentLocation(router), '/login?redirect=%2Fmypage%2Frecords');
     },
   );
+
+  for (final path in ['/mypage/today', '/mypage/trips']) {
+    testWidgets('guest private entry $path preserves login destination', (
+      tester,
+    ) async {
+      final router = await pumpRouterWithAuthState(
+        tester,
+        (c) => c.read(authStateProvider.notifier).setUnauthenticated(),
+      );
+      router.go(path);
+      await tester.pump(const Duration(milliseconds: 50));
+      tester.takeException();
+      expect(Uri.parse(currentLocation(router)).path, '/login');
+      expect(
+        Uri.parse(currentLocation(router)).queryParameters['redirect'],
+        path,
+      );
+    });
+  }
 
   testWidgets('logged-out access to /home (public) is allowed', (tester) async {
     final router = await pumpRouterWithAuthState(
@@ -130,7 +147,24 @@ void main() {
     expect(currentLocation(router), '/home');
   });
 
-  testWidgets('logged-out access to /information* (public) is allowed', (
+  testWidgets(
+    'logged-out access to /information* (public) is allowed and resolves '
+    'through the PR9 alias to /live/music',
+    (tester) async {
+      final router = await pumpRouterWithAuthState(
+        tester,
+        (c) => c.read(authStateProvider.notifier).setUnauthenticated(),
+      );
+
+      router.go('/information');
+      await tester.pump(const Duration(milliseconds: 50));
+      tester.takeException();
+
+      expect(currentLocation(router), '/live/music');
+    },
+  );
+
+  testWidgets('logged-out access to /map (public, PR9 IA) is allowed', (
     tester,
   ) async {
     final router = await pumpRouterWithAuthState(
@@ -138,12 +172,44 @@ void main() {
       (c) => c.read(authStateProvider.notifier).setUnauthenticated(),
     );
 
-    router.go('/information');
+    router.go('/map');
     await tester.pump(const Duration(milliseconds: 50));
     tester.takeException();
 
-    expect(currentLocation(router), '/information');
+    expect(currentLocation(router), '/map');
   });
+
+  testWidgets('logged-out access to /live (public, PR9 IA) is allowed', (
+    tester,
+  ) async {
+    final router = await pumpRouterWithAuthState(
+      tester,
+      (c) => c.read(authStateProvider.notifier).setUnauthenticated(),
+    );
+
+    router.go('/live');
+    await tester.pump(const Duration(milliseconds: 50));
+    tester.takeException();
+
+    expect(currentLocation(router), '/live');
+  });
+
+  testWidgets(
+    'logged-out access to /mypage root (public guest intro, PR9 IA) is '
+    'allowed',
+    (tester) async {
+      final router = await pumpRouterWithAuthState(
+        tester,
+        (c) => c.read(authStateProvider.notifier).setUnauthenticated(),
+      );
+
+      router.go('/mypage');
+      await tester.pump(const Duration(milliseconds: 50));
+      tester.takeException();
+
+      expect(currentLocation(router), '/mypage');
+    },
+  );
 
   testWidgets('logged-in access to /login redirects to /home', (tester) async {
     final router = await pumpRouterWithAuthState(

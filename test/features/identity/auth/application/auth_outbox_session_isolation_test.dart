@@ -4,11 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:oshi_log/core/connectivity/connectivity_service.dart';
-import 'package:oshi_log/core/providers/core_providers.dart';
+import 'package:oshi_log/platform/connectivity/connectivity_service.dart';
+import 'package:oshi_log/platform/providers/core_providers.dart';
 import 'package:oshi_log/features/identity/auth/application/session_state.dart';
-import 'package:oshi_log/core/storage/local_storage.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/storage/local_storage.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/identity/auth/application/auth_controller.dart';
 import 'package:oshi_log/features/shared/favorites/application/favorites_controller.dart';
 import 'package:oshi_log/features/shared/favorites/application/pending_favorite_mutation.dart';

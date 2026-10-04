@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:oshi_log/core/cache/cache_manager.dart';
-import 'package:oshi_log/core/storage/local_storage.dart';
+import 'package:oshi_log/platform/cache/cache_manager.dart';
+import 'package:oshi_log/platform/storage/local_storage.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

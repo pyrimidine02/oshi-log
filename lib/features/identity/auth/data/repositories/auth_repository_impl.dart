@@ -5,10 +5,10 @@ library;
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/logging/app_logger.dart';
-import 'package:oshi_log/core/security/secure_storage.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/platform/logging/app_logger.dart';
+import 'package:oshi_log/platform/security/secure_storage.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/identity/auth/domain/entities/auth_tokens.dart';
 import 'package:oshi_log/features/identity/auth/domain/entities/oauth_provider.dart';
 import 'package:oshi_log/features/identity/auth/domain/entities/register_consent.dart';

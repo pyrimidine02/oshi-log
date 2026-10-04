@@ -6,7 +6,7 @@ library;
 
 import 'package:go_router/go_router.dart';
 
-import '../../../core/router/app_router.dart' show AppRoutes;
+import '../../../platform/router/app_router.dart' show AppRoutes;
 import 'package:oshi_log/features/identity/auth/presentation/pages/email_verification_args.dart';
 import 'package:oshi_log/features/identity/auth/presentation/pages/email_verification_pending_page.dart';
 import 'package:oshi_log/features/identity/auth/presentation/pages/email_verified_page.dart';

@@ -5,11 +5,11 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../../core/localization/locale_text.dart';
-import '../../../../../core/theme/gbt_colors.dart';
-import '../../../../../core/theme/gbt_decorations.dart';
-import '../../../../../core/theme/gbt_spacing.dart';
-import '../../../../../core/theme/gbt_typography.dart';
+import '../../../../../design_system/localization/locale_text.dart';
+import '../../../../../design_system/theme/gbt_colors.dart';
+import '../../../../../design_system/theme/gbt_decorations.dart';
+import '../../../../../design_system/theme/gbt_spacing.dart';
+import '../../../../../design_system/theme/gbt_typography.dart';
 import 'package:oshi_log/features/identity/progression/application/fan_level_controller.dart';
 
 /// EN: Full-width daily check-in button with loading state.

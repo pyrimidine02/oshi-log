@@ -7,16 +7,16 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:oshi_log/core/accessibility/a11y_wrapper.dart';
-import 'package:oshi_log/core/localization/locale_text.dart';
-import 'package:oshi_log/core/constants/legal_policy_constants.dart';
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/location/location_notice_consent.dart';
+import 'package:oshi_log/design_system/accessibility/a11y_wrapper.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
+import 'package:oshi_log/platform/constants/legal_policy_constants.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/platform/location/location_notice_consent.dart';
 import 'package:oshi_log/features/identity/auth/application/legal_policies_provider.dart';
-import 'package:oshi_log/core/theme/theme.dart';
-import 'package:oshi_log/core/utils/result.dart';
-import 'package:oshi_log/core/widgets/common/gbt_stamp_badge.dart';
-import 'package:oshi_log/core/widgets/feedback/gbt_loading.dart';
+import 'package:oshi_log/design_system/theme/theme.dart';
+import 'package:oshi_log/platform/utils/result.dart';
+import 'package:oshi_log/design_system/widgets/common/gbt_stamp_badge.dart';
+import 'package:oshi_log/design_system/widgets/feedback/gbt_loading.dart';
 import 'package:oshi_log/features/place/verification/application/verification_controller.dart';
 import 'package:oshi_log/features/place/verification/domain/entities/verification_entities.dart';
 

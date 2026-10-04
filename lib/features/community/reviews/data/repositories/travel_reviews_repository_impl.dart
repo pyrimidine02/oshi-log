@@ -2,7 +2,7 @@
 /// KO: 여행 후기 전송 계약을 불변 도메인 객체로 변환합니다.
 library;
 
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/community/reviews/domain/entities/travel_review.dart';
 import 'package:oshi_log/features/community/reviews/domain/repositories/travel_reviews_repository.dart';
 import 'package:oshi_log/features/community/reviews/data/datasources/travel_reviews_remote_data_source.dart';

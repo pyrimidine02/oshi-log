@@ -1,10 +1,11 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/shared/uploads/application/uploads_controller.dart';
 import 'package:oshi_log/features/shared/uploads/domain/entities/upload_entity.dart';
 import 'package:oshi_log/features/shared/uploads/domain/repositories/uploads_repository.dart';
@@ -12,6 +13,7 @@ import 'package:oshi_log/features/shared/uploads/domain/repositories/uploads_rep
 class _FakeUploadsRepository implements UploadsRepository {
   int directCalls = 0;
   int presignedCalls = 0;
+  void Function()? onDirect;
 
   @override
   Future<Result<UploadInfo>> directUpload({
@@ -20,6 +22,7 @@ class _FakeUploadsRepository implements UploadsRepository {
     required String contentType,
   }) async {
     directCalls += 1;
+    onDirect?.call();
     return Result.success(
       UploadInfo(
         uploadId: 'upload-1',
@@ -62,6 +65,61 @@ class _FakeUploadsRepository implements UploadsRepository {
 
 void main() {
   group('UploadsController.uploadImageBytes', () {
+    test(
+      'account change during repository loading prevents photo upload',
+      () async {
+        final repository = _FakeUploadsRepository();
+        final ready = Completer<UploadsRepository>();
+        var currentAccount = 'original';
+        final container = ProviderContainer(
+          overrides: [
+            uploadsRepositoryProvider.overrideWith((ref) => ready.future),
+          ],
+        );
+        addTearDown(container.dispose);
+        final pending = container
+            .read(uploadsControllerProvider.notifier)
+            .uploadImageBytes(
+              bytes: Uint8List.fromList([1]),
+              filename: 'photo.png',
+              contentType: 'image/png',
+              isCurrentOperation: () => currentAccount == 'original',
+            );
+        currentAccount = 'other';
+        ready.complete(repository);
+        expect(await pending, isA<Err<UploadInfo>>());
+        expect(repository.directCalls, 0);
+        expect(container.read(uploadsControllerProvider).valueOrNull, isNull);
+      },
+    );
+
+    test(
+      'account change during upload does not cache the previous account photo',
+      () async {
+        var currentAccount = 'original';
+        final repository = _FakeUploadsRepository()
+          ..onDirect = () => currentAccount = 'other';
+        final container = ProviderContainer(
+          overrides: [
+            uploadsRepositoryProvider.overrideWith((ref) async => repository),
+          ],
+        );
+        addTearDown(container.dispose);
+        await container.read(uploadsControllerProvider.notifier).load();
+        final result = await container
+            .read(uploadsControllerProvider.notifier)
+            .uploadImageBytes(
+              bytes: Uint8List.fromList([1]),
+              filename: 'photo.png',
+              contentType: 'image/png',
+              isCurrentOperation: () => currentAccount == 'original',
+            );
+        expect(result, isA<Err<UploadInfo>>());
+        expect(repository.directCalls, 1);
+        expect(container.read(uploadsControllerProvider).valueOrNull, isEmpty);
+      },
+    );
+
     test('routes gif to direct upload endpoint', () async {
       final repository = _FakeUploadsRepository();
       final container = ProviderContainer(

@@ -1,18 +1,38 @@
+import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
-import 'package:oshi_log/core/router/app_router.dart';
-import 'package:oshi_log/core/theme/gbt_colors.dart';
-import 'package:oshi_log/core/theme/gbt_theme.dart';
+import 'package:oshi_log/platform/router/app_router.dart';
+import 'package:oshi_log/design_system/theme/gbt_colors.dart';
+import 'package:oshi_log/design_system/theme/gbt_theme.dart';
 import 'package:oshi_log/features/place/collections/application/zukan_controller.dart';
 import 'package:oshi_log/features/place/collections/domain/entities/zukan_collection.dart';
 import 'package:oshi_log/features/place/collections/presentation/pages/zukan_detail_page.dart';
+import '../../../../../testing/tolerant_local_file_comparator.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  setUpAll(() async {
+    final font = FontLoader('Pretendard');
+    for (final weight in [
+      'Regular',
+      'Medium',
+      'SemiBold',
+      'Bold',
+      'ExtraBold',
+    ]) {
+      font.addFont(rootBundle.load('assets/fonts/Pretendard-$weight.otf'));
+    }
+    final icons = FontLoader('MaterialIcons')
+      ..addFont(rootBundle.load('fonts/MaterialIcons-Regular.otf'));
+    await Future.wait([font.load(), icons.load()]);
+  });
+
   final collection = ZukanCollection(
     id: 'route-notes',
     title: '가와사키 로케이션 노트',
@@ -189,6 +209,78 @@ void main() {
     expect(stampedStatus.style?.color, GBTColors.darkSecondary);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+    'scene hints stay out of rendering and semantics until revealed',
+    (tester) async {
+      final semantics = tester.ensureSemantics();
+      await _pumpDetail(tester, collection: collection);
+      expect(find.text('EP.03 / 첫 만남'), findsNothing);
+      expect(find.bySemanticsLabel(RegExp('첫 만남')), findsNothing);
+      final reveal = find.text('스포일러 보기').first;
+      await tester.ensureVisible(reveal);
+      await tester.tap(reveal);
+      await tester.pump();
+      expect(find.text('EP.03 / 첫 만남'), findsOneWidget);
+      expect(find.bySemanticsLabel(RegExp('첫 만남')), findsOneWidget);
+      await tester.tap(find.text('스포일러 숨기기'));
+      await tester.pump();
+      expect(find.text('EP.03 / 첫 만남'), findsNothing);
+      expect(find.textContaining('이동 순서'), findsOneWidget);
+      await tester.tap(find.text('스포일러 보기').first);
+      await tester.pump();
+      await tester.pumpWidget(const SizedBox());
+      await _pumpDetail(tester, collection: collection);
+      expect(find.text('EP.03 / 첫 만남'), findsNothing);
+      expect(find.bySemanticsLabel(RegExp('첫 만남')), findsNothing);
+      semantics.dispose();
+    },
+  );
+
+  for (final locale in ['ja', 'ko']) {
+    for (final dark in [false, true]) {
+      for (final compact in [false, true]) {
+        final name =
+            'collection_${locale}_${dark ? 'dark' : 'light'}_'
+            '${compact ? '320_200' : '390_100'}';
+        testWidgets(name, (tester) async {
+          final original = goldenFileComparator;
+          goldenFileComparator = TolerantLocalFileComparator(
+            Uri.file(
+              '${Directory.current.path}/test/features/place/collections/'
+              'presentation/pages/zukan_detail_page_test.dart',
+            ),
+            precisionTolerance: 0.015,
+          );
+          addTearDown(() => goldenFileComparator = original);
+          tester.view.physicalSize = Size(compact ? 320 : 390, 844);
+          tester.view.devicePixelRatio = 1;
+          addTearDown(tester.view.resetPhysicalSize);
+          addTearDown(tester.view.resetDevicePixelRatio);
+          await _pumpDetail(
+            tester,
+            collection: collection,
+            locale: Locale(locale),
+            theme: dark ? GBTTheme.darkFor(locale) : GBTTheme.lightFor(locale),
+            textScaler: TextScaler.linear(compact ? 2 : 1),
+          );
+          await expectLater(
+            find.byKey(const ValueKey('collection-golden')),
+            matchesGoldenFile('goldens/$name.png'),
+          );
+          await tester.dragUntilVisible(
+            find.byKey(const ValueKey('field-zukan-stamp-row-river-bank')),
+            find.byType(ListView),
+            const Offset(0, -250),
+          );
+          if (compact) {
+            expect(tester.getSize(find.text('03')).height, lessThan(50));
+          }
+          expect(tester.takeException(), isNull);
+        });
+      }
+    }
+  }
 }
 
 Future<void> _pumpDetail(
@@ -216,7 +308,10 @@ Future<void> _pumpDetail(
         theme: theme ?? GBTTheme.light,
         home: MediaQuery(
           data: MediaQueryData(textScaler: textScaler),
-          child: const ZukanDetailPage(collectionId: 'route-notes'),
+          child: const RepaintBoundary(
+            key: ValueKey('collection-golden'),
+            child: ZukanDetailPage(collectionId: 'route-notes'),
+          ),
         ),
       ),
     ),

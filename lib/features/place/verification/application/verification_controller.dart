@@ -4,13 +4,13 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:oshi_log/core/error/error_handler.dart';
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/logging/app_logger.dart';
-import 'package:oshi_log/core/providers/core_providers.dart';
+import 'package:oshi_log/platform/error/error_handler.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/platform/logging/app_logger.dart';
+import 'package:oshi_log/platform/providers/core_providers.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
 import 'package:oshi_log/features/identity/auth/application/session_state.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/place/verification/data/datasources/verification_remote_data_source.dart';
 import 'package:oshi_log/features/place/verification/data/repositories/verification_repository_impl.dart';
 import 'package:oshi_log/features/place/verification/domain/entities/failed_verification_attempt.dart';

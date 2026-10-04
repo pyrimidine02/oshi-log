@@ -2,10 +2,11 @@
 /// KO: 장소 API 원격 데이터 소스.
 library;
 
-import 'package:oshi_log/core/constants/api_constants.dart';
-import 'package:oshi_log/core/network/api_client.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/constants/api_constants.dart';
+import 'package:oshi_log/platform/network/api_client.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/place/places/data/dto/place_dto.dart';
+import 'package:oshi_log/features/place/places/domain/entities/place_comment_entities.dart';
 import 'package:oshi_log/features/place/places/data/dto/place_guide_dto.dart';
 import 'package:oshi_log/features/place/places/data/dto/place_comment_dto.dart';
 import 'package:oshi_log/features/place/places/data/dto/place_region_filter_dto.dart';
@@ -138,6 +139,43 @@ class PlacesRemoteDataSource {
       fromJson: (json) => _decodeGuideList(json),
     );
   }
+
+  /// EN: Fetch full content only when a guide is opened.
+  /// KO: 가이드를 열 때만 전체 본문을 조회합니다.
+  Future<Result<PlaceGuideDetailDto>> fetchPlaceGuide({
+    required String placeId,
+    required String guideId,
+  }) => _apiClient.get<PlaceGuideDetailDto>(
+    ApiEndpoints.placeGuide(placeId, guideId),
+    fromJson: (json) =>
+        PlaceGuideDetailDto.fromJson(json as Map<String, dynamic>),
+  );
+
+  /// EN: Server filters use structured fields, not arbitrary comment tags.
+  /// KO: 서버 필터는 임의 댓글 태그가 아닌 구조화 필드를 사용합니다.
+  Future<Result<List<PlaceCommentDetailDto>>> fetchPlaceTips({
+    required String placeId,
+    required PlaceTipCategory category,
+  }) => _apiClient.get<List<PlaceCommentDetailDto>>(
+    switch (category) {
+      PlaceTipCategory.access => ApiEndpoints.placeCommentsFilterAccessibility(
+        placeId,
+      ),
+      PlaceTipCategory.routes => ApiEndpoints.placeCommentsFilterRoutes(
+        placeId,
+      ),
+      PlaceTipCategory.advice => ApiEndpoints.placeCommentsFilterAdvice(
+        placeId,
+      ),
+      PlaceTipCategory.pinned => ApiEndpoints.placeCommentsPinned(placeId),
+    },
+    queryParameters: {
+      'page': 0,
+      'size': category == PlaceTipCategory.pinned ? 20 : 3,
+      'sort': 'createdAt,desc',
+    },
+    fromJson: _decodeCommentList,
+  );
 
   /// EN: Fetch comments for a place.
   /// KO: 장소 댓글을 조회합니다.

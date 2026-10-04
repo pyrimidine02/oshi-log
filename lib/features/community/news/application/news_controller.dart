@@ -4,28 +4,31 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:oshi_log/core/router/navigation_state.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/router/app_router.dart' show NavIndex;
+import 'package:oshi_log/platform/router/navigation_state.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
 import '../domain/entities/news_entities.dart';
 import 'news_repository_provider.dart';
 
-const int _kInfoNavIndex = 2;
-
-bool _isInfoTabActive(Ref ref) {
-  return ref.read(currentNavIndexProvider) == _kInfoNavIndex;
+// EN: News now surfaces on the Home branch (PR9 IA); the old "info tab 2"
+// EN: condition must not fire when the unrelated Live branch activates.
+// KO: 뉴스는 이제 홈 분기에 노출됩니다(PR9 IA). 기존 "정보 탭 2" 조건이
+// KO: 무관한 라이브 분기 활성화 시 발동하면 안 됩니다.
+bool _isNewsConsumerTabActive(Ref ref) {
+  return ref.read(currentNavIndexProvider) == NavIndex.home;
 }
 
 class NewsListController extends StateNotifier<AsyncValue<List<NewsSummary>>> {
   NewsListController(this._ref) : super(const AsyncLoading()) {
     _ref.listen<String?>(selectedProjectKeyProvider, (_, __) {
-      if (!_isInfoTabActive(_ref)) {
+      if (!_isNewsConsumerTabActive(_ref)) {
         return;
       }
       load(forceRefresh: true);
     });
     _ref.listen<int>(currentNavIndexProvider, (previous, next) {
-      if (next != _kInfoNavIndex || next == previous) {
+      if (next != NavIndex.home || next == previous) {
         return;
       }
       load(forceRefresh: true);
@@ -38,7 +41,7 @@ class NewsListController extends StateNotifier<AsyncValue<List<NewsSummary>>> {
     if (!mounted) {
       return;
     }
-    if (!_isInfoTabActive(_ref)) {
+    if (!_isNewsConsumerTabActive(_ref)) {
       return;
     }
     final projectKey = _ref.read(selectedProjectKeyProvider);

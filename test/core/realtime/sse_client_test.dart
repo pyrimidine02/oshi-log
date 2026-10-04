@@ -4,8 +4,8 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 
-import 'package:oshi_log/core/realtime/sse_client.dart';
-import 'package:oshi_log/core/security/secure_storage.dart';
+import 'package:oshi_log/platform/realtime/sse_client.dart';
+import 'package:oshi_log/platform/security/secure_storage.dart';
 
 class _FakeSecureStorage extends SecureStorage {
   _FakeSecureStorage(this._token) : super();

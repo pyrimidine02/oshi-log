@@ -2,9 +2,9 @@
 /// KO: 일반화된 팬 대상 원격 데이터 소스입니다.
 library;
 
-import 'package:oshi_log/core/constants/api_constants.dart';
-import 'package:oshi_log/core/network/api_client.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/constants/api_constants.dart';
+import 'package:oshi_log/platform/network/api_client.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import '../../domain/entities/fan_subject.dart';
 import '../dto/fan_subject_dto.dart';
 

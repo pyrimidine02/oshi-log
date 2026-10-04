@@ -3,6 +3,7 @@
 library;
 
 import '../../../../../features/shared/home/domain/entities/home_summary.dart';
+import 'package:oshi_log/features/oshikatsu/live/domain/event_time_policy.dart';
 
 /// EN: Honest presentation state for the home content area.
 /// KO: 홈 콘텐츠 영역을 정직하게 표현하기 위한 상태입니다.
@@ -46,7 +47,7 @@ FieldHomeContentState resolveFieldHomeContentState(
   final hasVisibleContent =
       summary.recommendedPlaces.isNotEmpty ||
       summary.latestNews.isNotEmpty ||
-      summary.trendingLiveEvents.any((event) => !event.startsAt.isBefore(now));
+      selectUpcomingHomeEvents(summary.trendingLiveEvents, now: now).isNotEmpty;
   if (hasVisibleContent) return FieldHomeContentState.content;
   if (summary.shouldShowNoContentEmptyState) {
     return FieldHomeContentState.hardEmpty;
@@ -54,16 +55,16 @@ FieldHomeContentState resolveFieldHomeContentState(
   return FieldHomeContentState.softEmpty;
 }
 
-/// EN: Returns a new chronological list containing only events that have not
-///     started before [now]. The source collection is never mutated.
-/// KO: [now]보다 먼저 시작하지 않은 이벤트만 새 시간순 목록으로 반환하며,
-///     원본 컬렉션은 변경하지 않습니다.
+/// EN: Keeps today's shows until JST midnight when no end time is supplied.
+/// KO: 종료 시각이 없는 오늘 공연은 JST 자정까지 유지합니다.
 List<HomeEventItem> selectUpcomingHomeEvents(
   Iterable<HomeEventItem> events, {
   required DateTime now,
 }) {
   final upcoming = events
-      .where((event) => !event.startsAt.isBefore(now))
+      .where(
+        (event) => EventTimePolicy.isActive(start: event.startsAt, now: now),
+      )
       .toList(growable: false);
   return [...upcoming]
     ..sort((left, right) => left.startsAt.compareTo(right.startsAt));

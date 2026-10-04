@@ -2,19 +2,22 @@
 /// KO: 악곡 정보 API용 곡 상세 페이지 — 탭 기반 레이아웃입니다.
 library;
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/localization/locale_text.dart';
-import 'package:oshi_log/core/router/app_router.dart';
-import 'package:oshi_log/core/theme/gbt_colors.dart';
-import 'package:oshi_log/core/theme/gbt_spacing.dart';
-import 'package:oshi_log/core/theme/gbt_typography.dart';
-import 'package:oshi_log/core/widgets/common/gbt_image.dart';
-import 'package:oshi_log/core/widgets/navigation/gbt_standard_app_bar.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
+import 'package:oshi_log/platform/router/app_router.dart';
+import 'package:oshi_log/design_system/theme/gbt_colors.dart';
+import 'package:oshi_log/design_system/theme/gbt_spacing.dart';
+import 'package:oshi_log/design_system/theme/gbt_typography.dart';
+import 'package:oshi_log/design_system/widgets/common/gbt_image.dart';
+import 'package:oshi_log/design_system/widgets/common/spoiler_guard.dart';
+import 'package:oshi_log/design_system/widgets/navigation/gbt_standard_app_bar.dart';
 import 'package:oshi_log/features/oshikatsu/music/application/music_controller.dart';
 import 'package:oshi_log/features/oshikatsu/music/domain/entities/music_entities.dart';
 
@@ -24,6 +27,36 @@ import 'package:oshi_log/features/oshikatsu/music/domain/entities/music_entities
 // ──────────────────────────────────────────────────────────────
 Color _musicAccent(bool isDark) =>
     isDark ? GBTColors.darkSecondary : GBTColors.secondary;
+
+// EN: Reuse the live payload, requesting song detail only when omitted.
+// KO: 라이브 응답을 재사용하고 곡 상세가 없을 때만 추가 요청합니다.
+AsyncValue<MusicSongDetail> _watchSongDetail(
+  WidgetRef ref, {
+  required String projectId,
+  required String songId,
+  required String? eventId,
+  required String lang,
+}) {
+  if (eventId != null) {
+    final context = ref.watch(
+      musicSongLiveContextProvider((
+        projectId: projectId,
+        songId: songId,
+        eventId: eventId,
+        lang: lang,
+        version: null,
+        includeRomanized: true,
+        includeTranslated: true,
+      )),
+    );
+    final song = context.valueOrNull?.song;
+    if (song != null) return AsyncData(song);
+    if (context.isLoading) return const AsyncLoading();
+  }
+  return ref.watch(
+    musicSongDetailProvider((projectId: projectId, songId: songId)),
+  );
+}
 
 // ══════════════════════════════════════════════════════════════
 // MAIN PAGE
@@ -70,7 +103,11 @@ class _MusicSongDetailPageState extends ConsumerState<MusicSongDetailPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(
+      length: 3,
+      initialIndex: _eventId == null ? 0 : 1,
+      vsync: this,
+    );
     final platformLanguage =
         WidgetsBinding.instance.platformDispatcher.locale.languageCode;
     switch (platformLanguage) {
@@ -158,7 +195,13 @@ class _MusicSongDetailPageState extends ConsumerState<MusicSongDetailPage>
 
   @override
   Widget build(BuildContext context) {
-    final songState = ref.watch(musicSongDetailProvider(_songKey));
+    final songState = _watchSongDetail(
+      ref,
+      projectId: widget.projectId,
+      songId: widget.songId,
+      eventId: _eventId,
+      lang: _lang,
+    );
     final song = songState.valueOrNull;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accent = _musicAccent(isDark);
@@ -558,7 +601,7 @@ class _SongDossierCover extends StatelessWidget {
 
 /// EN: Lyrics tab — displays integrated lyrics with filter controls.
 /// KO: 가사 탭 — 필터 컨트롤이 있는 통합 가사를 표시합니다.
-class _LyricsTab extends ConsumerWidget {
+class _LyricsTab extends ConsumerStatefulWidget {
   const _LyricsTab({
     required this.projectId,
     required this.songId,
@@ -586,25 +629,154 @@ class _LyricsTab extends ConsumerWidget {
   final Future<void> Function() onRefresh;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_LyricsTab> createState() => _LyricsTabState();
+}
+
+class _LyricsTabState extends ConsumerState<_LyricsTab> {
+  Timer? _expiryTimer;
+  MusicAvailabilityKey? _observedKey;
+  AsyncValue<MusicAvailability>? _observedAvailability;
+  bool _hasExpired = false;
+
+  void _syncExpiryTimer(
+    MusicAvailabilityKey key,
+    AsyncValue<MusicAvailability> availabilityState,
+  ) {
+    if (_observedKey == key &&
+        identical(_observedAvailability, availabilityState)) {
+      return;
+    }
+    _observedKey = key;
+    _observedAvailability = availabilityState;
+    _expiryTimer?.cancel();
+    _expiryTimer = null;
+    _hasExpired = false;
+    final until = availabilityState.valueOrNull?.availableUntil;
+    if (availabilityState.isLoading ||
+        availabilityState.hasError ||
+        until == null) {
+      return;
+    }
+    final remaining = until.difference(DateTime.now());
+    if (remaining <= Duration.zero) {
+      _hasExpired = true;
+      return;
+    }
+    // EN: Expire the visible grant even when no provider emits a new value.
+    // KO: 프로바이더 갱신이 없어도 표시 중인 권한을 만료시킵니다.
+    _expiryTimer = Timer(remaining, () {
+      if (mounted) setState(() => _hasExpired = true);
+    });
+  }
+
+  @override
+  void dispose() {
+    _expiryTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final availabilityKey = (
+      projectId: widget.projectId,
+      songId: widget.songId,
+      country: _countryFromLocale(Localizations.localeOf(context)),
+    );
+    final availabilityState = ref.watch(
+      musicSongAvailabilityProvider(availabilityKey),
+    );
+    _syncExpiryTimer(availabilityKey, availabilityState);
+    final availability = availabilityState.valueOrNull;
+    final now = DateTime.now();
+    final availableFrom = availability?.availableFrom;
+    final availableUntil = availability?.availableUntil;
+    // EN: Unknown, stale, or restricted rights must not expose lyric text.
+    // KO: 미확인·갱신 중·제한된 권리 상태에서는 가사 본문을 노출하지 않습니다.
+    final canDisplayLyrics =
+        !availabilityState.isLoading &&
+        !availabilityState.hasError &&
+        !_hasExpired &&
+        (availableFrom == null || !now.isBefore(availableFrom)) &&
+        (availableUntil == null || now.isBefore(availableUntil)) &&
+        availability?.isAvailableNow == true &&
+        availability?.rightsPolicy.trim().toUpperCase() == 'OK' &&
+        availability?.allowedCountries.isEmpty == true &&
+        availability?.blockedCountries.isEmpty == true;
+    if (!canDisplayLyrics) {
+      final mediaState = ref.watch(
+        musicSongMediaLinksProvider((
+          projectId: widget.projectId,
+          songId: widget.songId,
+        )),
+      );
+      final links =
+          mediaState.valueOrNull?.streamingLinks.where((link) {
+            final uri = Uri.tryParse(link.url);
+            return uri?.scheme == 'https' && uri!.host.isNotEmpty;
+          }) ??
+          const <MusicStreamingLink>[];
+      return RefreshIndicator(
+        color: widget.accent,
+        onRefresh: widget.onRefresh,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: GBTSpacing.paddingMd,
+          children: [
+            _EmptyHint(
+              text: context.l10n(
+                ko: '표시 권리가 확인될 때까지 가사를 제공하지 않습니다.',
+                en: 'Lyrics are unavailable until display rights are confirmed.',
+                ja: '表示権利が確認できるまで歌詞を提供しません。',
+              ),
+            ),
+            if (availabilityState.isLoading) const _InlineLoading(),
+            if (availabilityState.hasError)
+              TextButton(
+                onPressed: widget.onRefresh,
+                child: Text(context.l10n(ko: '다시 시도', en: 'Retry', ja: '再試行')),
+              ),
+            for (final link in links)
+              _StreamingLinkRow(
+                label: context.l10n(
+                  ko: '공식 사이트에서 확인 · ${_streamingDisplayName(link.provider)}',
+                  en: 'View official site · ${_streamingDisplayName(link.provider)}',
+                  ja: '公式サイトで見る · ${_streamingDisplayName(link.provider)}',
+                ),
+                icon: Icons.open_in_new,
+                platformColor: widget.accent,
+                onTap: () => _launchUrl(link.url),
+                isDark: widget.isDark,
+              ),
+            if (links.isEmpty && !mediaState.isLoading)
+              _EmptyHint(
+                text: context.l10n(
+                  ko: '등록된 공식 링크가 없습니다.',
+                  en: 'No official link is provided.',
+                  ja: '公式リンクは未提供です。',
+                ),
+              ),
+          ],
+        ),
+      );
+    }
     final lyricsKey = (
-      projectId: projectId,
-      songId: songId,
-      lang: lang,
+      projectId: widget.projectId,
+      songId: widget.songId,
+      lang: widget.lang,
       version: null,
       includeRomanized: true,
       includeTranslated: true,
     );
-    final usesLiveContext = eventId != null;
+    final usesLiveContext = widget.eventId != null;
     final AsyncValue<MusicSongLiveContext?>? liveContextState = !usesLiveContext
         ? null
         : ref
               .watch(
                 musicSongLiveContextProvider((
-                  projectId: projectId,
-                  songId: songId,
-                  eventId: eventId!,
-                  lang: lang,
+                  projectId: widget.projectId,
+                  songId: widget.songId,
+                  eventId: widget.eventId!,
+                  lang: widget.lang,
                   version: null,
                   includeRomanized: true,
                   includeTranslated: true,
@@ -620,30 +792,30 @@ class _LyricsTab extends ConsumerWidget {
         ? ref.watch(musicSongLyricsProvider(lyricsKey))
         : null;
     return RefreshIndicator(
-      color: accent,
-      onRefresh: onRefresh,
+      color: widget.accent,
+      onRefresh: widget.onRefresh,
       child: _IntegratedLyricsPanel(
         controls: Padding(
           padding: const EdgeInsets.only(bottom: GBTSpacing.md),
           child: _LyricsFilterRow(
-            includeRomanized: includeRomanized,
-            includeTranslated: includeTranslated,
-            isDark: isDark,
-            accent: accent,
-            onToggleRomanized: onToggleRomanized,
-            onToggleTranslated: onToggleTranslated,
+            includeRomanized: widget.includeRomanized,
+            includeTranslated: widget.includeTranslated,
+            isDark: widget.isDark,
+            accent: widget.accent,
+            onToggleRomanized: widget.onToggleRomanized,
+            onToggleTranslated: widget.onToggleTranslated,
           ),
         ),
         liveContextState: liveContextState,
         lyricsState: lyricsState,
         partsState: null,
         callGuideState: null,
-        includeRomanized: includeRomanized,
-        includeTranslated: includeTranslated,
+        includeRomanized: widget.includeRomanized,
+        includeTranslated: widget.includeTranslated,
         showMemberParts: false,
         showCallGuide: false,
-        isDark: isDark,
-        accent: accent,
+        isDark: widget.isDark,
+        accent: widget.accent,
       ),
     );
   }
@@ -677,7 +849,13 @@ class _InfoTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final songKey = (projectId: projectId, songId: songId);
-    final songState = ref.watch(musicSongDetailProvider(songKey));
+    final songState = _watchSongDetail(
+      ref,
+      projectId: projectId,
+      songId: songId,
+      eventId: eventId,
+      lang: lang,
+    );
     final versionsState = ref.watch(musicSongVersionsProvider(songKey));
     final difficultyState = ref.watch(musicSongDifficultyProvider(songKey));
     final mediaState = ref.watch(musicSongMediaLinksProvider(songKey));
@@ -730,7 +908,11 @@ class _InfoTab extends ConsumerWidget {
         children: [
           _TabSectionHeader(
             icon: Icons.headphones_rounded,
-            title: context.l10n(ko: '바로 듣기', en: 'Listen now', ja: '今すぐ聴く'),
+            title: context.l10n(
+              ko: '공식 서비스에서 듣기',
+              en: 'Listen on official services',
+              ja: '公式サービスで聴く',
+            ),
             isDark: isDark,
             accent: accent,
           ),
@@ -788,16 +970,13 @@ class _InfoTab extends ConsumerWidget {
               data: (liveContext) {
                 final items = liveContext.setlistContext?.items ?? const [];
                 if (items.isEmpty) return const SizedBox.shrink();
-                return _RecordDisclosure(
-                  initiallyExpanded: true,
-                  icon: Icons.route_rounded,
+                return SpoilerGuard(
+                  contentId: (eventId, liveContext.setlistContext),
                   title: context.l10n(
                     ko: '이 공연의 세트리스트',
                     en: 'Setlist for this event',
                     ja: 'この公演のセットリスト',
                   ),
-                  isDark: isDark,
-                  accent: accent,
                   child: Column(
                     children: items
                         .map(
@@ -1106,6 +1285,24 @@ class _GuideTab extends ConsumerWidget {
               GBTSpacing.pageHorizontal,
               GBTSpacing.md,
               GBTSpacing.pageHorizontal,
+              0,
+            ),
+            sliver: SliverToBoxAdapter(
+              child: Text(
+                context.l10n(
+                  ko: '콜 출처는 제공되지 않았습니다. 현장 안내와 주변 관객을 배려해 주세요.',
+                  en: 'Call sources are not provided. Follow venue guidance and respect nearby fans.',
+                  ja: 'コールの出典は未提供です。会場の案内と周囲の観客に配慮してください。',
+                ),
+                style: GBTTypography.bodySmall,
+              ),
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(
+              GBTSpacing.pageHorizontal,
+              GBTSpacing.md,
+              GBTSpacing.pageHorizontal,
               GBTSpacing.sm,
             ),
             sliver: SliverToBoxAdapter(
@@ -1166,6 +1363,18 @@ class _GuideTab extends ConsumerWidget {
                 },
               ),
             ),
+          SliverPadding(
+            padding: const EdgeInsets.all(GBTSpacing.pageHorizontal),
+            sliver: SliverToBoxAdapter(
+              child: _SongPerformancesSection(
+                projectId: projectId,
+                songId: songId,
+                lang: lang,
+                isDark: isDark,
+                accent: accent,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -1244,7 +1453,6 @@ class _RecordDisclosure extends StatelessWidget {
     required this.isDark,
     required this.accent,
     required this.child,
-    this.initiallyExpanded = false,
   });
 
   final IconData icon;
@@ -1252,7 +1460,6 @@ class _RecordDisclosure extends StatelessWidget {
   final bool isDark;
   final Color accent;
   final Widget child;
-  final bool initiallyExpanded;
 
   @override
   Widget build(BuildContext context) {
@@ -1264,7 +1471,6 @@ class _RecordDisclosure extends StatelessWidget {
         borderRadius: BorderRadius.circular(GBTSpacing.radiusMd),
       ),
       child: ExpansionTile(
-        initiallyExpanded: initiallyExpanded,
         leading: Icon(icon, color: accent, size: 20),
         title: Text(
           title,
@@ -2955,46 +3161,38 @@ class _SongPerformancesSection extends ConsumerWidget {
         lang: lang,
       )),
     );
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _TabSectionHeader(
-          icon: Icons.mic_external_on_rounded,
-          title: context.l10n(
-            ko: '이 곡을 부른 라이브',
-            en: 'Lives featuring this song',
-            ja: 'この曲を披露したライブ',
-          ),
-          isDark: isDark,
-          accent: accent,
-        ),
-        const SizedBox(height: GBTSpacing.sm),
-        state.when(
-          data: (performances) => performances.isEmpty
-              ? _EmptyHint(
-                  text: context.l10n(
-                    ko: '아직 공연 기록이 없어요',
-                    en: 'No performances yet.',
-                    ja: 'まだ公演記録がありません。',
-                  ),
-                )
-              : Column(
-                  children: performances
-                      .map(
-                        (performance) => _PerformanceRow(
-                          performance: performance,
-                          isDark: isDark,
-                          accent: accent,
-                          onTap: () =>
-                              context.goToEventDetail(performance.eventId),
-                        ),
-                      )
-                      .toList(growable: false),
+    return SpoilerGuard(
+      contentId: (projectId, songId, state.valueOrNull),
+      title: context.l10n(
+        ko: '이 곡을 부른 라이브',
+        en: 'Lives featuring this song',
+        ja: 'この曲を披露したライブ',
+      ),
+      child: state.when(
+        data: (performances) => performances.isEmpty
+            ? _EmptyHint(
+                text: context.l10n(
+                  ko: '아직 공연 기록이 없어요',
+                  en: 'No performances yet.',
+                  ja: 'まだ公演記録がありません。',
                 ),
-          loading: () => const _InlineLoading(),
-          error: (e, _) => _InlineError(message: _errorText(context, e)),
-        ),
-      ],
+              )
+            : Column(
+                children: performances
+                    .map(
+                      (performance) => _PerformanceRow(
+                        performance: performance,
+                        isDark: isDark,
+                        accent: accent,
+                        onTap: () =>
+                            context.goToEventDetail(performance.eventId),
+                      ),
+                    )
+                    .toList(growable: false),
+              ),
+        loading: () => const _InlineLoading(),
+        error: (e, _) => _InlineError(message: _errorText(context, e)),
+      ),
     );
   }
 }
@@ -3061,6 +3259,16 @@ class _PerformanceRow extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 2),
+                      Text(
+                        context.l10n(
+                          ko: '실제 연주자 정보 미제공 · 곡 소속과 다를 수 있음',
+                          en: 'Performer not provided · may differ from the song artist',
+                          ja: '実演者情報なし・楽曲の所属と異なる場合があります',
+                        ),
+                        style: GBTTypography.caption.copyWith(
+                          color: textSecondary,
+                        ),
+                      ),
                       Wrap(
                         spacing: GBTSpacing.xs,
                         runSpacing: 2,

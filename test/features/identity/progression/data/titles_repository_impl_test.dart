@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-import 'package:oshi_log/core/cache/cache_manager.dart';
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/cache/cache_manager.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/identity/progression/data/datasources/titles_remote_data_source.dart';
 import 'package:oshi_log/features/identity/progression/data/dto/title_dto.dart';
 import 'package:oshi_log/features/identity/progression/data/repositories/titles_repository_impl.dart';

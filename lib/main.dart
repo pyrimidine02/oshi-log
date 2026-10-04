@@ -14,11 +14,11 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 
 import 'app.dart';
 import 'app/bootstrap/session_overrides.dart';
-import 'core/config/app_config.dart';
+import 'platform/config/app_config.dart';
 import 'package:oshi_log/features/identity/auth/application/session_state.dart';
-import 'core/logging/app_logger.dart';
-import 'core/providers/core_providers.dart';
-import 'core/theme/gbt_font_licenses.dart';
+import 'platform/logging/app_logger.dart';
+import 'platform/providers/core_providers.dart';
+import 'design_system/theme/gbt_font_licenses.dart';
 import 'platform/notifications/firebase_runtime_options.dart';
 import 'platform/notifications/remote_push_service.dart';
 

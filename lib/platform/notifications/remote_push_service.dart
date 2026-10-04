@@ -12,8 +12,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart' as widgets;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
-import '../../core/logging/app_logger.dart';
-import '../../core/storage/local_storage.dart';
+import '../logging/app_logger.dart';
+import '../storage/local_storage.dart';
 import 'firebase_runtime_options.dart';
 import 'local_notifications_service.dart';
 

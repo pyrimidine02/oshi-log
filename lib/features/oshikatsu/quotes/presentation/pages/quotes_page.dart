@@ -9,13 +9,13 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gal/gal.dart';
 
-import 'package:oshi_log/core/localization/locale_text.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
-import 'package:oshi_log/core/theme/gbt_colors.dart';
-import 'package:oshi_log/core/theme/gbt_spacing.dart';
-import 'package:oshi_log/core/theme/gbt_typography.dart';
-import 'package:oshi_log/core/widgets/feedback/gbt_loading.dart';
-import 'package:oshi_log/core/widgets/navigation/gbt_standard_app_bar.dart';
+import 'package:oshi_log/design_system/theme/gbt_colors.dart';
+import 'package:oshi_log/design_system/theme/gbt_spacing.dart';
+import 'package:oshi_log/design_system/theme/gbt_typography.dart';
+import 'package:oshi_log/design_system/widgets/feedback/gbt_loading.dart';
+import 'package:oshi_log/design_system/widgets/navigation/gbt_standard_app_bar.dart';
 import 'package:oshi_log/features/oshikatsu/quotes/application/quotes_controller.dart';
 import 'package:oshi_log/features/oshikatsu/quotes/domain/entities/quote_card.dart';
 

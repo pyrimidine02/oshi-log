@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/place/visits/application/visits_controller.dart';
 import 'package:oshi_log/features/place/visits/domain/entities/visit_entities.dart';
 import 'package:oshi_log/features/place/visits/domain/repositories/visits_repository.dart';

@@ -4,6 +4,10 @@ import 'package:oshi_log/features/oshikatsu/music/data/dto/music_dto.dart';
 import 'package:oshi_log/features/oshikatsu/music/data/mappers/music_entities_mappers.dart';
 
 void main() {
+  test('missing availability rights never default to permission', () {
+    final dto = MusicAvailabilityDto.fromJson({'isAvailableNow': true});
+    expect(dto.rightsPolicy, 'UNKNOWN');
+  });
   test('album summary keeps nullable release and track metadata', () {
     final dto = MusicAlbumSummaryDto.fromJson({
       'id': 'album-1',

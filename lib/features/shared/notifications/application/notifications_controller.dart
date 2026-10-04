@@ -8,14 +8,14 @@ import 'dart:math';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 
-import 'package:oshi_log/core/constants/api_constants.dart';
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/logging/app_logger.dart';
-import 'package:oshi_log/core/providers/core_providers.dart';
+import 'package:oshi_log/platform/constants/api_constants.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/platform/logging/app_logger.dart';
+import 'package:oshi_log/platform/providers/core_providers.dart';
 import 'package:oshi_log/features/identity/auth/application/session_state.dart';
-import 'package:oshi_log/core/realtime/sse_client.dart';
-import 'package:oshi_log/core/storage/local_storage.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/realtime/sse_client.dart';
+import 'package:oshi_log/platform/storage/local_storage.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/shared/notifications/data/datasources/notifications_remote_data_source.dart';
 import 'package:oshi_log/features/shared/notifications/data/repositories/notifications_repository_impl.dart';
 import 'package:oshi_log/features/shared/notifications/domain/entities/notification_entities.dart';
@@ -82,8 +82,6 @@ class NotificationsController
   final Set<String> _knownNotificationIds = <String>{};
   final Map<String, _NotificationNavigationHint> _navigationHintsById =
       <String, _NotificationNavigationHint>{};
-  bool _hasCheckedLocalPermission = false;
-  bool _canShowLocalAlerts = false;
 
   /// EN: Start realtime notification sync via SSE with polling fallback.
   /// KO: 폴링 폴백을 유지한 채 SSE 기반 실시간 알림 동기화를 시작합니다.
@@ -571,43 +569,51 @@ class NotificationsController
     await load(forceRefresh: true);
   }
 
-  /// EN: Optimistically remove a notification then call the delete API.
-  /// KO: 알림을 즉시 로컬에서 제거한 후 삭제 API를 호출합니다.
-  Future<void> deleteNotification(String notificationId) async {
+  /// EN: Remove a notification only after the server confirms deletion.
+  /// KO: 서버가 삭제를 확인한 후에만 알림을 제거합니다.
+  Future<Result<void>> deleteNotification(String notificationId) async {
     final isAuthenticated = _ref.read(isAuthenticatedProvider);
-    if (!isAuthenticated) return;
-
-    // EN: Optimistic remove from local state.
-    // KO: 로컬 상태에서 즉시 제거합니다.
-    final prev = state.valueOrNull;
-    if (prev != null) {
-      state = AsyncData(prev.where((e) => e.id != notificationId).toList());
-      _knownNotificationIds.remove(notificationId);
+    if (!isAuthenticated) {
+      return const Result.failure(
+        AuthFailure('Login required', code: 'auth_required'),
+      );
     }
 
     final repository = await _ref.read(notificationsRepositoryProvider.future);
     final result = await repository.deleteNotification(notificationId);
     if (result case Err<void>(:final failure)) {
       _handleUnauthorizedFailure(failure);
+    } else if (mounted) {
+      final current = state.valueOrNull;
+      if (current != null) {
+        state = AsyncData(
+          current.where((e) => e.id != notificationId).toList(),
+        );
+      }
+      _knownNotificationIds.remove(notificationId);
     }
+    return result;
   }
 
-  /// EN: Optimistically clear all notifications then call the delete-all API.
-  /// KO: 모든 알림을 즉시 로컬에서 제거한 후 전체 삭제 API를 호출합니다.
-  Future<void> deleteAllNotifications() async {
+  /// EN: Keep the inbox available until bulk deletion succeeds.
+  /// KO: 전체 삭제가 성공할 때까지 알림 목록을 유지합니다.
+  Future<Result<void>> deleteAllNotifications() async {
     final isAuthenticated = _ref.read(isAuthenticatedProvider);
-    if (!isAuthenticated) return;
-
-    // EN: Optimistic clear.
-    // KO: 즉시 전체 제거합니다.
-    state = const AsyncData([]);
-    _knownNotificationIds.clear();
+    if (!isAuthenticated) {
+      return const Result.failure(
+        AuthFailure('Login required', code: 'auth_required'),
+      );
+    }
 
     final repository = await _ref.read(notificationsRepositoryProvider.future);
     final result = await repository.deleteAllNotifications();
     if (result case Err<void>(:final failure)) {
       _handleUnauthorizedFailure(failure);
+    } else if (mounted) {
+      state = const AsyncData([]);
+      _knownNotificationIds.clear();
     }
+    return result;
   }
 
   /// EN: Detect newly arrived unread notifications and raise local alerts.
@@ -669,11 +675,11 @@ class NotificationsController
     if (!await _isPushEnabledByUserSetting()) {
       return;
     }
-    if (!await _ensureLocalPermission()) {
+    final localNotifier = _ref.read(localNotificationsServiceProvider);
+    if (await localNotifier.hasPermission() != true) {
       return;
     }
 
-    final localNotifier = _ref.read(localNotificationsServiceProvider);
     for (final item in newlyArrivedUnread.take(3)) {
       await showLocalNotificationItem(localNotifier, item);
     }
@@ -750,16 +756,6 @@ class NotificationsController
   Future<bool> _isPushEnabledByUserSetting() async {
     final storage = await _ref.read(localStorageProvider.future);
     return storage.getBool(LocalStorageKeys.notificationsEnabled) ?? true;
-  }
-
-  Future<bool> _ensureLocalPermission() async {
-    if (_hasCheckedLocalPermission) {
-      return _canShowLocalAlerts;
-    }
-    final localNotifier = _ref.read(localNotificationsServiceProvider);
-    _canShowLocalAlerts = await localNotifier.requestPermissions();
-    _hasCheckedLocalPermission = true;
-    return _canShowLocalAlerts;
   }
 
   @override

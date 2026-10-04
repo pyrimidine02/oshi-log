@@ -6,17 +6,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/localization/locale_text.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
 import 'package:oshi_log/features/identity/auth/application/session_state.dart';
-import 'package:oshi_log/core/router/app_router.dart';
-import 'package:oshi_log/core/theme/gbt_spacing.dart';
-import 'package:oshi_log/core/theme/gbt_typography.dart';
-import 'package:oshi_log/core/utils/result.dart';
-import 'package:oshi_log/core/widgets/common/gbt_image.dart';
-import 'package:oshi_log/core/widgets/dialogs/gbt_adaptive_dialog.dart';
-import 'package:oshi_log/core/widgets/feedback/gbt_loading.dart';
-import 'package:oshi_log/core/widgets/navigation/gbt_standard_app_bar.dart';
+import 'package:oshi_log/platform/router/app_router.dart';
+import 'package:oshi_log/design_system/theme/gbt_spacing.dart';
+import 'package:oshi_log/design_system/theme/gbt_typography.dart';
+import 'package:oshi_log/platform/utils/result.dart';
+import 'package:oshi_log/design_system/widgets/common/gbt_image.dart';
+import 'package:oshi_log/design_system/widgets/dialogs/gbt_adaptive_dialog.dart';
+import 'package:oshi_log/design_system/widgets/feedback/gbt_loading.dart';
+import 'package:oshi_log/design_system/widgets/feedback/gbt_empty_state.dart'
+    as empty;
+import 'package:oshi_log/design_system/widgets/navigation/gbt_standard_app_bar.dart';
 import 'package:oshi_log/features/identity/progression/application/fan_level_controller.dart';
 import 'package:oshi_log/features/oshikatsu/live/application/live_events_controller.dart';
 import 'package:oshi_log/features/identity/account/application/settings_controller.dart';
@@ -55,7 +57,7 @@ class FieldUserProfilePage extends ConsumerWidget {
 
     if (profile == null) {
       return _ProfileLoadState(
-        isLoading: publicState.isLoading || myProfileState.isLoading,
+        isLoading: publicState.isLoading,
         error: publicState.hasError ? publicState.error : null,
         onRetry: () => ref
             .read(userProfileByIdProvider(userId).notifier)
@@ -414,13 +416,18 @@ class _ProfileLoadState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final failure = error;
+    final isUnavailable =
+        failure is NotFoundFailure ||
+        (failure is Failure && failure.code == '404');
+    final isPrivate = failure is Failure && failure.code == '403';
     return Scaffold(
       appBar: gbtStandardAppBar(
         context,
         title: context.l10n(ko: '프로필 기록', en: 'Profile record', ja: 'プロフィール記録'),
       ),
       body: Center(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: GBTSpacing.paddingPage,
           child: isLoading
               ? GBTLoading(
@@ -430,15 +437,40 @@ class _ProfileLoadState extends StatelessWidget {
                     ja: 'プロフィールを読み込み中...',
                   ),
                 )
+              : isUnavailable || isPrivate
+              ? empty.GBTEmptyState(
+                  icon: isPrivate
+                      ? Icons.lock_outline
+                      : Icons.person_off_outlined,
+                  title: isPrivate
+                      ? context.l10n(
+                          ko: '이 프로필을 볼 수 없어요',
+                          en: 'This profile is unavailable',
+                          ja: 'このプロフィールは表示できません',
+                        )
+                      : context.l10n(
+                          ko: '프로필을 찾을 수 없어요',
+                          en: 'Profile not found',
+                          ja: 'プロフィールが見つかりません',
+                        ),
+                  subtitle: context.l10n(
+                    ko: '삭제되었거나 공개되지 않은 프로필일 수 있어요.',
+                    en: 'The profile may have been removed or may not be public.',
+                    ja: '削除されたか、公開されていないプロフィールの可能性があります。',
+                  ),
+                  actionLabel: context.l10n(
+                    ko: '커뮤니티로 돌아가기',
+                    en: 'Back to community',
+                    ja: 'コミュニティに戻る',
+                  ),
+                  onAction: () => context.go('/community'),
+                )
               : GBTErrorState(
-                  message: switch (error) {
-                    Failure(:final userMessage) => userMessage,
-                    _ => context.l10n(
-                      ko: '프로필을 불러오지 못했어요',
-                      en: 'Failed to load profile',
-                      ja: 'プロフィールを読み込めませんでした',
-                    ),
-                  },
+                  message: context.l10n(
+                    ko: '프로필을 불러오지 못했어요',
+                    en: 'Failed to load profile',
+                    ja: 'プロフィールを読み込めませんでした',
+                  ),
                   onRetry: onRetry,
                 ),
         ),

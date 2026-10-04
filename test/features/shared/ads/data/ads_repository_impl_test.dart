@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:oshi_log/core/config/app_config.dart';
-import 'package:oshi_log/core/constants/api_constants.dart';
-import 'package:oshi_log/core/network/api_client.dart';
-import 'package:oshi_log/core/security/secure_storage.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/config/app_config.dart';
+import 'package:oshi_log/platform/constants/api_constants.dart';
+import 'package:oshi_log/platform/network/api_client.dart';
+import 'package:oshi_log/platform/security/secure_storage.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/shared/ads/data/datasources/ads_remote_data_source.dart';
 import 'package:oshi_log/features/shared/ads/data/repositories/ads_repository_impl.dart';
 import 'package:oshi_log/features/shared/ads/domain/entities/ad_slot_entities.dart';

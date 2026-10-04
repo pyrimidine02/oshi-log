@@ -1,13 +1,234 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:oshi_log/core/config/app_config.dart';
-import 'package:oshi_log/core/constants/api_constants.dart';
-import 'package:oshi_log/core/network/api_client.dart';
-import 'package:oshi_log/core/security/secure_storage.dart';
+import 'package:oshi_log/platform/config/app_config.dart';
+import 'package:oshi_log/platform/constants/api_constants.dart';
+import 'package:oshi_log/platform/network/api_client.dart';
+import 'package:oshi_log/platform/security/secure_storage.dart';
 
 void main() {
+  for (final changedSession in [true, false]) {
+    test(
+      changedSession
+          ? 'late successful response never reaches repository decoding'
+          : 'current-session successful response reaches repository decoding',
+      () async {
+        AppConfig.instance.init(baseUrl: 'https://example.com');
+        final requestStarted = Completer<void>();
+        final response = Completer<ResponseBody>();
+        final adapter = _RecordingAdapter(
+          onFetch: (_) {
+            requestStarted.complete();
+            return response.future;
+          },
+        );
+        final dio = Dio()..httpClientAdapter = adapter;
+        var generation = 0;
+        var decoded = 0;
+        final client = ApiClient(
+          secureStorage: _ControlledSecureStorage(),
+          dio: dio,
+          currentSessionGeneration: () => generation,
+          isSessionGenerationCurrent: (captured) => captured == generation,
+        );
+        final resultFuture = client.get<String>(
+          '/private-visits',
+          fromJson: (data) {
+            decoded++;
+            return (data as Map<String, dynamic>)['visit'] as String;
+          },
+        );
+        await requestStarted.future;
+        if (changedSession) generation++;
+        response.complete(
+          ResponseBody.fromString(
+            '{"data":{"visit":"owner-a-visit"}}',
+            200,
+            headers: {
+              Headers.contentTypeHeader: [Headers.jsonContentType],
+            },
+          ),
+        );
+        final result = await resultFuture;
+        if (changedSession) {
+          expect(result.failureOrNull?.code, 'cancelled');
+          expect(result.dataOrNull, isNull);
+          expect(decoded, 0);
+        } else {
+          expect(result.dataOrNull, 'owner-a-visit');
+          expect(decoded, 1);
+        }
+      },
+    );
+  }
+
+  for (final boundary in ['expiry', 'access', 'refresh']) {
+    test(
+      'account change during $boundary read cancels before dispatch',
+      () async {
+        AppConfig.instance.init(baseUrl: 'https://example.com');
+        final storage = _ControlledSecureStorage(
+          blockedAt: boundary,
+          expired: boundary != 'access',
+        );
+        final adapter = _RecordingAdapter();
+        final dio = Dio()..httpClientAdapter = adapter;
+        var generation = 0;
+        ApiClient(
+          secureStorage: storage,
+          dio: dio,
+          currentSessionGeneration: () => generation,
+          isSessionGenerationCurrent: (captured) => captured == generation,
+        );
+        final result = expectLater(
+          dio.post<dynamic>('/private-upload'),
+          throwsA(
+            isA<DioException>().having(
+              (error) => error.type,
+              'type',
+              DioExceptionType.cancel,
+            ),
+          ),
+        );
+        await storage.blocked.future;
+        generation++;
+        storage.resume.complete();
+        await result;
+        expect(adapter.paths, isEmpty);
+        expect(storage.tokensSaved, isFalse);
+        expect(storage.tokensCleared, isFalse);
+      },
+    );
+  }
+
+  for (final refreshStatus in [200, 401]) {
+    test(
+      'late refresh $refreshStatus cannot alter or dispatch a new session',
+      () async {
+        AppConfig.instance.init(baseUrl: 'https://example.com');
+        final storage = _ControlledSecureStorage(expired: true);
+        final refreshStarted = Completer<void>();
+        final refreshResponse = Completer<ResponseBody>();
+        final adapter = _RecordingAdapter(
+          onFetch: (options) {
+            if (options.path == ApiEndpoints.refresh) {
+              refreshStarted.complete();
+              return refreshResponse.future;
+            }
+            return Future.value(ResponseBody.fromString('{}', 200));
+          },
+        );
+        final dio = Dio()..httpClientAdapter = adapter;
+        var generation = 0;
+        var refreshed = 0;
+        var unauthorized = 0;
+        ApiClient(
+          secureStorage: storage,
+          dio: dio,
+          currentSessionGeneration: () => generation,
+          isSessionGenerationCurrent: (captured) => captured == generation,
+          onTokenRefreshed: () => refreshed++,
+          onUnauthorized: () => unauthorized++,
+        );
+        final result = expectLater(
+          dio.post<dynamic>('/private-upload'),
+          throwsA(
+            isA<DioException>().having(
+              (error) => error.type,
+              'type',
+              DioExceptionType.cancel,
+            ),
+          ),
+        );
+        await refreshStarted.future;
+        generation++;
+        refreshResponse.complete(_refreshResponse(refreshStatus));
+        await result;
+        expect(adapter.paths, [ApiEndpoints.refresh]);
+        expect(storage.tokensSaved, isFalse);
+        expect(storage.tokensCleared, isFalse);
+        expect(refreshed, 0);
+        expect(unauthorized, 0);
+      },
+    );
+  }
+
+  test(
+    'late protected 401 never refreshes or retries for a new session',
+    () async {
+      AppConfig.instance.init(baseUrl: 'https://example.com');
+      final storage = _ControlledSecureStorage();
+      final requestStarted = Completer<void>();
+      final response = Completer<ResponseBody>();
+      final adapter = _RecordingAdapter(
+        onFetch: (options) {
+          if (options.path == ApiEndpoints.refresh) {
+            return Future.value(_refreshResponse(200));
+          }
+          if (!requestStarted.isCompleted) {
+            requestStarted.complete();
+            return response.future;
+          }
+          return Future.value(ResponseBody.fromString('{}', 200));
+        },
+      );
+      final dio = Dio()..httpClientAdapter = adapter;
+      var generation = 0;
+      ApiClient(
+        secureStorage: storage,
+        dio: dio,
+        currentSessionGeneration: () => generation,
+        isSessionGenerationCurrent: (captured) => captured == generation,
+      );
+      final result = expectLater(
+        dio.post<dynamic>('/private-upload'),
+        throwsA(isA<DioException>()),
+      );
+      await requestStarted.future;
+      generation++;
+      response.complete(ResponseBody.fromString('{}', 401));
+      await result;
+      expect(adapter.paths, ['/private-upload']);
+      expect(storage.tokensSaved, isFalse);
+    },
+  );
+
+  test(
+    'current session still refreshes once and retries the original request',
+    () async {
+      AppConfig.instance.init(baseUrl: 'https://example.com');
+      final storage = _ControlledSecureStorage();
+      var protectedCalls = 0;
+      final adapter = _RecordingAdapter(
+        onFetch: (options) async {
+          if (options.path == ApiEndpoints.refresh) {
+            return _refreshResponse(200);
+          }
+          return ResponseBody.fromString(
+            '{}',
+            ++protectedCalls == 1 ? 401 : 200,
+          );
+        },
+      );
+      final dio = Dio()..httpClientAdapter = adapter;
+      ApiClient(
+        secureStorage: storage,
+        dio: dio,
+        currentSessionGeneration: () => 1,
+        isSessionGenerationCurrent: (captured) => captured == 1,
+      );
+      await dio.post<dynamic>('/private-upload');
+      expect(adapter.paths, [
+        '/private-upload',
+        ApiEndpoints.refresh,
+        '/private-upload',
+      ]);
+      expect(storage.tokensSaved, isTrue);
+    },
+  );
+
   test('account recovery requests bypass stale authentication state', () async {
     AppConfig.instance.init(baseUrl: 'https://example.com');
     final adapter = _RecordingAdapter();
@@ -119,7 +340,10 @@ class _FailIfReadSecureStorage extends SecureStorage {
 }
 
 class _RecordingAdapter implements HttpClientAdapter {
+  _RecordingAdapter({this.onFetch});
+  final Future<ResponseBody> Function(RequestOptions)? onFetch;
   RequestOptions? lastRequest;
+  final paths = <String>[];
 
   @override
   Future<ResponseBody> fetch(
@@ -128,9 +352,70 @@ class _RecordingAdapter implements HttpClientAdapter {
     Future<void>? cancelFuture,
   ) async {
     lastRequest = options;
+    paths.add(options.path);
+    if (onFetch != null) return onFetch!(options);
     return ResponseBody.fromString('{}', 200);
   }
 
   @override
   void close({bool force = false}) {}
+}
+
+ResponseBody _refreshResponse(int status) => ResponseBody.fromString(
+  status == 200
+      ? '{"data":{"accessToken":"refreshed-test-access","refreshToken":"refreshed-test-refresh","expiresIn":3600}}'
+      : '{"error":{"code":"INVALID_REFRESH_TOKEN"}}',
+  status,
+  headers: {
+    Headers.contentTypeHeader: [Headers.jsonContentType],
+  },
+);
+
+class _ControlledSecureStorage extends SecureStorage {
+  _ControlledSecureStorage({this.blockedAt, this.expired = false});
+  final String? blockedAt;
+  final bool expired;
+  final blocked = Completer<void>();
+  final resume = Completer<void>();
+  bool tokensSaved = false;
+  bool tokensCleared = false;
+
+  Future<void> _pause(String boundary) async {
+    if (blockedAt != boundary) return;
+    if (!blocked.isCompleted) blocked.complete();
+    await resume.future;
+  }
+
+  @override
+  Future<bool> isTokenExpired() async {
+    await _pause('expiry');
+    return expired;
+  }
+
+  @override
+  Future<String?> getAccessToken() async {
+    await _pause('access');
+    return 'test-access';
+  }
+
+  @override
+  Future<String?> getRefreshToken() async {
+    await _pause('refresh');
+    return 'test-refresh';
+  }
+
+  @override
+  Future<void> saveTokens({
+    required String accessToken,
+    required String refreshToken,
+    DateTime? expiresAt,
+  }) async {
+    tokensSaved = true;
+  }
+
+  @override
+  Future<void> saveTokenExpiry(DateTime expiry) async {}
+
+  @override
+  Future<void> clearTokens() async => tokensCleared = true;
 }

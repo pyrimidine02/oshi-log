@@ -2,11 +2,11 @@
 /// KO: 캐싱을 포함한 업로드 리포지토리 구현.
 library;
 
-import 'package:oshi_log/core/cache/cache_manager.dart';
-import 'package:oshi_log/core/cache/cache_profiles.dart';
-import 'package:oshi_log/core/error/error_handler.dart';
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/cache/cache_manager.dart';
+import 'package:oshi_log/platform/cache/cache_profiles.dart';
+import 'package:oshi_log/platform/error/error_handler.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/shared/uploads/domain/entities/upload_entity.dart';
 import 'package:oshi_log/features/shared/uploads/domain/repositories/uploads_repository.dart';
 import 'package:oshi_log/features/shared/uploads/data/datasources/uploads_remote_data_source.dart';

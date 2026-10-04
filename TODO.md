@@ -1,49 +1,33 @@
 # TODO
 
-- OAuth redirect: carry-over from login-return redirect contract (2026-10-02).
-  - App currently requires explicit redirect to app routes; OAuth flows hardcoded
-    to `/home` per server endpoint design.
-  - If server adds redirect-to-home redirection, client may auto-comply without
-    design change; verify after server API expansion.
+- Verify external OAuth return on installed devices (2026-10-04):
+  - Callback restores the validated original in-app URI kept in memory. External
+    browser OAuth cancels pending automatic actions; users repeat the action.
+  - Verify cancellation, provider errors and return navigation on iOS/Android.
+    Process-death restoration is not guaranteed.
+  - Remove after device QA passes; local redirect/session regressions pass.
 
-- core/router/app_router.dart export shim (2026-10-02):
-  - Routes exported from `lib/app/router/` for backward compatibility during
-    PR 3 (router split). Re-export will be removed in PR 8 (namespace cleanup).
-  - Current allowlist entries: 133. Track usage to confirm re-export can be
-    safely deleted.
+- Shared namespace and dependency cleanup completed (2026-10-04):
+  - `lib/core` and the old app-router re-export are removed. Shared contracts
+    live in `platform`; reusable UI lives in `design_system`.
+  - Dependency allowlist is empty; architecture tests reject new violations.
 
-- Dependency allowlist must reach 0 by PR 8 (2026-10-02):
-  - Baseline: 133 violations recorded in `test/architecture/layer_import_boundary_test.dart`.
-  - Each PR should maintain or decrease allowlist size. New violations cause test
-    failure. By-PR targets:
-    - PR 1 (legacy delete): ≤120
-    - PR 2 (boundary expand): ≤120 (no new)
-    - PR 6 (feed split): ≤80
-    - PR 8 (final): **0**
+- Verify Japanese rendering with CI SDK and device fonts (2026-10-04):
+  - JA/KO light/dark and compact 200% golden coverage is implemented using
+    repository fonts. Actual Japanese OS glyphs still need installed-device QA.
+  - Rerun goldens with CI Flutter 3.41.0; local verification uses 3.47.2.
+  - Remove after both CI and real-device rendering checks pass.
 
-- Japanese golden baselines not yet added (2026-10-02):
-  - Core screens (home, places_map, live_event_detail, place_detail, song_detail)
-    need ja golden tests with light/dark modes and 320dp/200% text scaling.
-  - Cherry-pick from existing ko golden snapshots and adapt text/metrics.
-  - Defer until PR 4 (Japanese localization base) implementation review.
-
-- Account switch: selectedProjectId leak risk (2026-10-02):
-  - `logout()` calls `clearUserScopedMutations()` which targets inferred provider
-    keys; however `selectedProjectId` is not member-scoped in the controller.
-  - When switching from Account A (Project X) → Account B, selectedProjectId
-    stays X if B also has access to X.
-  - Full cleanup via `clearAllStates()` handles it correctly; currently only
-    logout triggers full cleanup.
-  - If user-initiated account switch UI added (instead of logout-relogin), must
-    ensure selectedProjectId is reset or validated against Account B's accessible
-    projects.
-  - Tests cover logout/relogin case; account-switch UI case remains TODO.
+- Recheck project selection if a direct account-switch UI is added (2026-10-04):
+  - Current logout and token-owner replacement clear account state. A future
+    switch without logout must reset or validate the selected project against
+    the destination account before issuing requests.
 
 - Backup branches: delete after redesign merge (2026-10-02):
   - `backup/lost-stash-20261002` — uncommitted changes from 2026-10-02
   - `backup/stash0?` — transient stash slot (confirm before delete)
   - `backup/stash2-20261002` — second uncommitted stash
-  - Keep until PR 8 complete, then prune.
+  - Keep until the redesign is merged; pruning remains a separate action.
 
 - Verify place associations in the next installed build (2026-09-13):
   - A place linked to one band must not list every project band; a place without
@@ -1304,7 +1288,8 @@
 - Enable OAuth once backend is ready by providing authorize URLs and deep-link redirects.
 - Confirm `HomeSummaryDto` field mapping with backend response and adjust parsing keys if needed.
 - Confirm `PlaceDetailDto`/`PlaceSummaryDto` field mapping with backend response and adjust parsing keys if needed.
-- Implement bounds-based refresh for Places map (current map uses the full list + region filter).
+- Completed bounds-based refresh for Places map (2026-10-04); native map tiles
+  and viewport interactions still need the device QA recorded below.
 - Confirm whether Places Regions endpoints accept project slug; currently retrying with UUID when the slug call fails.
 - Confirm whether visit stats should use `/api/v1/users/me/visits/summary` per place and expand UI if backend adds aggregate stats.
 - Provide Android `MAPS_API_KEY` via `local.properties`/CI secrets for Google Maps rendering.
@@ -1488,7 +1473,7 @@
   - replace placeholders in `docs/legal/이용약관_v2026.03.12.md`,
     `docs/legal/개인정보처리방침_v2026.03.12.md`,
     `docs/legal/위치정보이용약관_v2026.03.12.md` with real operator/contact data.
-  - run legal review and then align app policy constants/version (`lib/core/constants/legal_policy_constants.dart`).
+  - run legal review and then align app policy constants/version (`lib/platform/constants/legal_policy_constants.dart`).
 - Add widget tests for music tab unit classification:
   - selecting unit chip filters both album cards and track cards.
   - stale selected unit should fallback to `All` when option disappears.
@@ -1497,3 +1482,26 @@
   - tap part badge selects member and toggles line emphasis.
   - `lyricLineId` missing segments map to lyric line via time-overlap fallback.
   - `DUET/UNISON/HARMONY` lines render mixed-color gradient state.
+
+## 2026-10-02 구조 재설계 후속 (보류 결정)
+
+- **feature 간 application 직접 참조 94건(43쌍)**: 세션 상태·선택 프로젝트 같은 공개 provider 조회가 대부분이라 R2를 `<sub>/<sub>.dart` 배럴 전용으로 좁히지 않았다. 제거 기준: 특정 feature 내부 controller 구현 변경이 다른 feature 테스트를 깨뜨리는 사례가 생기면 해당 쌍부터 배럴로 전환.
+- **PR8c 완료(2026-10-04)**: PR21 화면 통합 후 `core`를 `platform`/`design_system`으로 이동. 기능 역참조 금지 검사에 두 경로를 포함했다.
+- **reviews 매퍼 중복**: `travel_review_mappers.dart`에 posts 매퍼 일부(PostSummaryDto/PostDetailDto → domain)를 복제했다. posts 매퍼 변경 시 함께 수정. 제거 기준: posts 공개 배럴에 매퍼를 노출하거나 서버 계약이 분리될 때.
+- **post_dto.dart를 platform/models에서 공유**: reviews와 posts가 공유하는 wire DTO. 제거 기준: 서버 S9(공연 단독 레포) 회신 후 리뷰 DTO가 독립하면 posts로 복귀.
+
+
+## 2026-10-04 화면 재설계 검증 후속
+
+- 가사 지역 제한은 확인된 이용 지역 계약이 생길 때 연결한다. 앱 표시 언어로
+  국가를 추정하지 않으며 현재는 국가 제한 콘텐츠의 가사를 표시하지 않는다.
+- 서버 S1/S2/S4/S9/S19 응답 후 공개 읽기·공연 상태·참가 예정·공연 단독
+  레포·서버 앨범 동기화 연결. 현재 계약을 임의 확장하지 않는다.
+- CI의 Flutter 3.41.0에서 전체 테스트/golden 재검증. 로컬 SDK 3.47.2와
+  차이가 있으면 실제 렌더링 차이를 확인하고 검증 기준을 맞춘다.
+- iOS/Android 실기기에서 일본어 글리프, 지도 타일 실패·목록 대안,
+  위치/알림 권한 거절, 외부 OAuth 복귀, 스크롤 성능 확인.
+- 외부 OAuth 도중 프로세스가 종료되면 메모리 복귀 URI를 잃는다.
+  재실행 후 기본 화면 복귀를 허용하며 자동 보호 행동은 재개하지 않는다.
+- 비공개 여행/사진은 이 기기 계정별 로컬 저장이다. 앱 삭제·기기 교체 시
+  복구/동기화를 보장하지 않는다. 서버 S19 확정 후 별도 이전 설계.

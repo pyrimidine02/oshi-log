@@ -2,6 +2,8 @@
 /// KO: 캘린더 이벤트의 도메인 엔티티.
 library;
 
+import '../event_time_policy.dart';
+
 /// EN: Type of calendar event.
 /// KO: 캘린더 이벤트 유형.
 enum CalendarEventType {
@@ -69,6 +71,16 @@ class CalendarEvent {
     this.isRecurringAnnually = false,
     this.scheduleStatus,
   });
+
+  /// EN: Calendar-only occasions preserve their civil date without zone conversion.
+  /// KO: 종일 일정은 시간대 변환 없이 달력 날짜를 유지합니다.
+  bool get isAllDay =>
+      type == CalendarEventType.characterBirthday ||
+      type == CalendarEventType.voiceActorBirthday ||
+      type == CalendarEventType.release;
+  DateTime get scheduleDate => isAllDay
+      ? DateTime.utc(date.year, date.month, date.day)
+      : EventTimePolicy.inJst(date);
 
   final String id;
   final String title;

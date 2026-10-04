@@ -5,13 +5,13 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:oshi_log/core/localization/locale_text.dart';
-import 'package:oshi_log/core/router/app_router.dart';
-import 'package:oshi_log/core/theme/theme.dart';
-import 'package:oshi_log/core/utils/date_utils.dart';
-import 'package:oshi_log/core/widgets/feedback/gbt_loading.dart';
-import 'package:oshi_log/core/widgets/layout/gbt_page_header.dart';
-import 'package:oshi_log/core/widgets/navigation/gbt_standard_app_bar.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
+import 'package:oshi_log/platform/router/app_router.dart';
+import 'package:oshi_log/design_system/theme/theme.dart';
+import 'package:oshi_log/platform/utils/date_utils.dart';
+import 'package:oshi_log/design_system/widgets/feedback/gbt_loading.dart';
+import 'package:oshi_log/design_system/widgets/layout/gbt_page_header.dart';
+import 'package:oshi_log/design_system/widgets/navigation/gbt_standard_app_bar.dart';
 import '../../application/projects_controller.dart';
 import '../../domain/entities/project_entities.dart';
 
@@ -91,7 +91,11 @@ class UnitDossierView extends StatelessWidget {
         slivers: [
           SliverToBoxAdapter(
             child: GBTPageHeader(
-              eyebrow: 'UNIT DOSSIER',
+              eyebrow: context.l10n(
+                ko: '밴드 · 유닛',
+                en: 'BAND · UNIT',
+                ja: 'バンド・ユニット',
+              ),
               title: unit.displayName,
               description: metadata.isEmpty ? null : metadata,
             ),

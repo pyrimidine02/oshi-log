@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:oshi_log/core/theme/gbt_theme.dart';
+import 'package:oshi_log/design_system/theme/gbt_theme.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/presentation/pages/member_detail_page.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/domain/entities/project_entities.dart';
 
@@ -22,7 +22,7 @@ void main() {
       ),
     );
 
-    expect(find.text('MEMBER DOSSIER'), findsOneWidget);
+    expect(find.text('CHARACTER'), findsOneWidget);
     expect(find.text('高松 燈'), findsOneWidget);
     expect(find.text('PROFILE'), findsOneWidget);
     expect(find.text('VOICE CAST'), findsOneWidget);

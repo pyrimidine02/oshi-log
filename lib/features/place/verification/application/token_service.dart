@@ -7,8 +7,8 @@ import 'package:jose/jose.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import 'package:oshi_log/core/location/location_service.dart';
-import 'package:oshi_log/core/providers/core_providers.dart';
+import 'package:oshi_log/platform/location/location_service.dart';
+import 'package:oshi_log/platform/providers/core_providers.dart';
 import 'package:oshi_log/features/place/verification/domain/repositories/verification_repository.dart';
 import 'verification_controller.dart';
 import 'verification_key_service.dart';

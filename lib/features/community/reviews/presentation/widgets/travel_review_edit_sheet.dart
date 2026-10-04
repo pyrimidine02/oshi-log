@@ -5,13 +5,13 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:oshi_log/core/localization/locale_text.dart';
-import 'package:oshi_log/core/theme/gbt_spacing.dart';
-import 'package:oshi_log/core/theme/gbt_typography.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
+import 'package:oshi_log/design_system/theme/gbt_spacing.dart';
+import 'package:oshi_log/design_system/theme/gbt_typography.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/community/reviews/application/travel_reviews_controller.dart';
 import 'package:oshi_log/features/community/reviews/domain/entities/travel_review.dart';
-import 'package:oshi_log/core/widgets/compose/post_compose_document_editor.dart';
+import 'package:oshi_log/design_system/widgets/compose/post_compose_document_editor.dart';
 
 class TravelReviewEditSheet extends ConsumerStatefulWidget {
   const TravelReviewEditSheet({
@@ -55,6 +55,7 @@ class _TravelReviewEditSheetState extends ConsumerState<TravelReviewEditSheet> {
   }
 
   Future<void> _submit() async {
+    if (_submitting) return;
     if (_titleController.text.trim().isEmpty ||
         _contentController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -71,27 +72,44 @@ class _TravelReviewEditSheetState extends ConsumerState<TravelReviewEditSheet> {
       return;
     }
     setState(() => _submitting = true);
-    final result = await ref
-        .read(travelReviewMutationControllerProvider.notifier)
-        .update(
-          projectCode: widget.projectCode,
-          reviewId: widget.review.id,
-          patch: TravelReviewPatch(
-            title: _titleController.text.trim(),
-            content: _contentController.text.trim(),
-            routeNote: _routeNoteController.text.trim(),
-          ),
-        );
-    if (!mounted) return;
-    setState(() => _submitting = false);
-    switch (result) {
-      case Success():
-        Navigator.of(context).pop(true);
-      case Err(:final failure):
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(failure.userMessage)));
+    try {
+      final result = await ref
+          .read(travelReviewMutationControllerProvider.notifier)
+          .update(
+            projectCode: widget.projectCode,
+            reviewId: widget.review.id,
+            patch: TravelReviewPatch(
+              title: _titleController.text.trim(),
+              content: _contentController.text.trim(),
+              routeNote: _routeNoteController.text.trim(),
+            ),
+          );
+      if (!mounted) return;
+      switch (result) {
+        case Success():
+          Navigator.of(context).pop(true);
+        case Err():
+          _showSubmitFailure();
+      }
+    } catch (_) {
+      if (mounted) _showSubmitFailure();
+    } finally {
+      if (mounted) setState(() => _submitting = false);
     }
+  }
+
+  void _showSubmitFailure() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          context.l10n(
+            ko: '저장하지 못했어요. 입력한 내용은 유지됩니다. 다시 시도해주세요.',
+            en: 'Could not save. Your input is still here. Please try again.',
+            ja: '保存できませんでした。入力内容は残っています。もう一度お試しください。',
+          ),
+        ),
+      ),
+    );
   }
 
   @override

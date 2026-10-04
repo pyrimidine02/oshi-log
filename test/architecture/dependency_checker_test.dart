@@ -152,6 +152,24 @@ void main() {
     );
   });
 
+  test('R4 rejects feature imports and re-exports from design_system', () {
+    expect(
+      findDependencyViolations({
+        'lib/design_system/widgets/shared.dart':
+            "export '../../features/a/domain/model.dart';",
+        'lib/design_system/theme/theme.dart':
+            "import '../widgets/shared.dart';",
+        'lib/features/a/domain/model.dart': '',
+      }),
+      {
+        'lib/design_system/widgets/shared.dart -> '
+            'lib/features/a/domain/model.dart : R4',
+        'lib/design_system/theme/theme.dart -> '
+            'lib/features/a/domain/model.dart : R4',
+      },
+    );
+  });
+
   test('R3 rejects a feature importing app, but permits sibling imports', () {
     expect(
       findDependencyViolations({

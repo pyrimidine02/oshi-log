@@ -9,10 +9,10 @@ import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'package:oshi_log/core/config/app_config.dart';
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/security/secure_storage.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/config/app_config.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/platform/security/secure_storage.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/identity/auth/domain/entities/oauth_provider.dart';
 
 /// EN: URL launcher abstraction for testability.

@@ -2,7 +2,7 @@
 /// KO: 앨범/곡/라이브 세트리스트 컨텍스트용 악곡 리포지토리 인터페이스입니다.
 library;
 
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/oshikatsu/music/domain/entities/music_entities.dart';
 
 abstract class MusicRepository {

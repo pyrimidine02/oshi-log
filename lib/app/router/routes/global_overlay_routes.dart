@@ -8,8 +8,9 @@
 library;
 
 import 'package:go_router/go_router.dart';
+import '../../compositions/onboarding/preferences_page.dart';
 
-import '../../../core/router/app_router.dart' show AppRoutes;
+import '../../../platform/router/app_router.dart' show AppRoutes;
 import '../../compositions/live/live_host.dart';
 import 'package:oshi_log/features/oshikatsu/live/presentation/pages/cheer_guide_detail_page.dart';
 import 'package:oshi_log/features/oshikatsu/live/presentation/pages/cheer_guides_page.dart';
@@ -20,7 +21,7 @@ import '../../../features/community/news/presentation/pages/news_detail_page.dar
 import 'package:oshi_log/features/community/posts/presentation/pages/post_bookmarks_page.dart';
 import '../../compositions/posts/post_detail_route.dart';
 import 'package:oshi_log/features/identity/social/presentation/pages/user_connections_page.dart';
-import 'package:oshi_log/features/oshikatsu/live/presentation/field_events/field_live_event_detail_page.dart';
+
 import 'package:oshi_log/features/oshikatsu/music/presentation/pages/music_song_detail_page.dart';
 import 'package:oshi_log/features/shared/notifications/presentation/pages/notifications_page.dart';
 import '../../compositions/places/place_verification_flow.dart';
@@ -38,6 +39,14 @@ import '../../compositions/collections/collections_host.dart';
 import '../route_helpers.dart';
 
 List<RouteBase> buildGlobalOverlayRoutes() => [
+  GoRoute(
+    path: '/preferences',
+    name: AppRoutes.preferences,
+    pageBuilder: (context, state) => buildAdaptiveOverlayPage(
+      key: state.pageKey,
+      child: const PreferencesPage(),
+    ),
+  ),
   GoRoute(
     path: '/search',
     name: AppRoutes.search,
@@ -107,7 +116,7 @@ List<RouteBase> buildGlobalOverlayRoutes() => [
     name: AppRoutes.cheerGuides,
     pageBuilder: (context, state) => buildAdaptiveOverlayPage(
       key: state.pageKey,
-      child: const CheerGuidesPage(),
+      child: CheerGuidesPage(projectId: state.uri.queryParameters['project']),
     ),
     routes: [
       GoRoute(
@@ -199,7 +208,7 @@ List<RouteBase> buildGlobalOverlayRoutes() => [
       final eventId = state.pathParameters['eventId']!;
       return buildAdaptiveDetailPage(
         key: state.pageKey,
-        child: FieldLiveEventDetailPage(eventId: eventId),
+        child: buildFieldLiveEventDetailPage(eventId: eventId),
       );
     },
   ),
@@ -265,7 +274,7 @@ List<RouteBase> buildGlobalOverlayRoutes() => [
       final tab = state.uri.queryParameters['tab'];
       final initialKind = tab == 'live'
           ? FieldVisitLedgerKind.events
-          : FieldVisitLedgerKind.places;
+          : FieldVisitLedgerKind.all;
       return FieldVisitLedgerPage(initialKind: initialKind);
     },
     routes: [

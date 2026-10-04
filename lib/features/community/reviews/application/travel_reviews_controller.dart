@@ -4,8 +4,8 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:oshi_log/core/providers/core_providers.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/providers/core_providers.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/oshikatsu/live/domain/entities/live_event_entities.dart';
 import 'package:oshi_log/features/place/visits/domain/entities/visit_entities.dart';
 import 'package:oshi_log/features/community/reviews/data/datasources/travel_reviews_remote_data_source.dart';

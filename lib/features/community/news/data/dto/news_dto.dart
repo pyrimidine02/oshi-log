@@ -2,7 +2,7 @@
 /// KO: Swagger 스키마에 맞춘 뉴스 DTO.
 library;
 
-import 'package:oshi_log/core/models/image_meta_dto.dart';
+import 'package:oshi_log/platform/models/image_meta_dto.dart';
 
 class NewsSummaryDto {
   const NewsSummaryDto({

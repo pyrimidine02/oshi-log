@@ -5,12 +5,13 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:oshi_log/core/theme/theme.dart';
+import 'package:oshi_log/design_system/theme/theme.dart';
 import 'package:oshi_log/features/oshikatsu/live/application/live_events_controller.dart';
 import 'package:oshi_log/features/oshikatsu/live/domain/entities/live_event_entities.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/domain/entities/project_entities.dart';
 import 'package:oshi_log/features/place/visits/domain/entities/visit_entities.dart';
 import 'field_event_ledger.dart';
+import 'unified_record_timeline.dart';
 import 'field_place_ledger.dart';
 import 'field_visit_ledger_common.dart';
 import 'field_visit_ledger_view_data.dart';
@@ -79,6 +80,25 @@ class _FieldVisitLedgerBodyState extends State<FieldVisitLedgerBody> {
       },
       onOpenStats: widget.onOpenStats,
     );
+
+    if (_selectedKind == FieldVisitLedgerKind.all) {
+      return UnifiedRecordTimeline(
+        header: header,
+        visitsState: widget.visitsState,
+        placesMapState: widget.placesMapState,
+        attendanceState: widget.attendanceState,
+        projectNames: {
+          for (final project in widget.projects) project.code: project.name,
+          for (final project in widget.projects) project.id: project.name,
+        },
+        onRefreshPlaces: widget.onRefreshPlaces,
+        onRefreshEvents: widget.onRefreshEvents,
+        onLoadMoreEvents: widget.onLoadMoreEvents,
+        onOpenVisit: widget.onOpenVisit,
+        onOpenEvent: widget.onOpenEvent,
+        bottomClearance: bottomClearance,
+      );
+    }
 
     if (_selectedKind == FieldVisitLedgerKind.events) {
       return FieldEventLedger(

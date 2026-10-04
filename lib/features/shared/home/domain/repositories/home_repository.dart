@@ -2,7 +2,7 @@
 /// KO: 홈 리포지토리 인터페이스.
 library;
 
-import '../../../../../core/utils/result.dart';
+import '../../../../../platform/utils/result.dart';
 import '../entities/home_summary.dart';
 
 abstract class HomeRepository {

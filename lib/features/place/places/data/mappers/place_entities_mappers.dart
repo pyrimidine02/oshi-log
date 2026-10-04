@@ -33,7 +33,12 @@ extension PlaceSummaryDtoDomainMapper on PlaceSummaryDto {
 }
 
 extension PlaceDetailDtoDomainMapper on PlaceDetailDto {
-  PlaceDetail toDomain({PlaceStatsDto? stats}) {
+  PlaceDetail toDomain({
+    PlaceStatsDto? stats,
+    DateTime? savedAt,
+    bool isFromCache = false,
+    bool isCacheStale = false,
+  }) {
     final dto = this;
 
     final imageUrls = dto.images.map((image) => image.url).toList();
@@ -59,6 +64,9 @@ extension PlaceDetailDtoDomainMapper on PlaceDetailDto {
       unitIds: List.unmodifiable(dto.unitIds),
       projectIds: List.unmodifiable(dto.projectIds),
       characterIds: List.unmodifiable(dto.characterIds),
+      savedAt: savedAt,
+      isFromCache: isFromCache,
+      isCacheStale: isCacheStale,
     );
   }
 }

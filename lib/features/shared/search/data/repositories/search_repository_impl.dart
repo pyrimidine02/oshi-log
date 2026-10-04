@@ -2,11 +2,11 @@
 /// KO: 캐시를 포함한 검색 리포지토리 구현.
 library;
 
-import '../../../../../core/cache/cache_manager.dart';
-import '../../../../../core/cache/cache_profiles.dart';
-import '../../../../../core/error/error_handler.dart';
-import '../../../../../core/error/failure.dart';
-import '../../../../../core/utils/result.dart';
+import '../../../../../platform/cache/cache_manager.dart';
+import '../../../../../platform/cache/cache_profiles.dart';
+import '../../../../../platform/error/error_handler.dart';
+import '../../../../../platform/error/failure.dart';
+import '../../../../../platform/utils/result.dart';
 import '../../domain/entities/search_entities.dart';
 import '../../domain/repositories/search_repository.dart';
 import '../datasources/search_remote_data_source.dart';

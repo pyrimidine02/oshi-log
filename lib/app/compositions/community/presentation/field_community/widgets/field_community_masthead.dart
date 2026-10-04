@@ -4,9 +4,9 @@ library;
 
 import 'package:flutter/material.dart';
 
-import 'package:oshi_log/core/localization/locale_text.dart';
-import 'package:oshi_log/core/widgets/layout/gbt_page_header.dart';
-import 'package:oshi_log/core/widgets/navigation/gbt_app_bar_icon_button.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
+import 'package:oshi_log/design_system/widgets/layout/gbt_page_header.dart';
+import 'package:oshi_log/design_system/widgets/navigation/gbt_app_bar_icon_button.dart';
 
 /// EN: Establishes the shared-notes identity without a generic app bar.
 /// KO: 일반 앱 바 없이 공유 노트의 정체성을 보여줍니다.

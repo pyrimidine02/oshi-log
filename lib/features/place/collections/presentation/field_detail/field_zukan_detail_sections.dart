@@ -5,11 +5,12 @@ library;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import 'package:oshi_log/core/localization/locale_text.dart';
-import 'package:oshi_log/core/router/app_router.dart';
-import 'package:oshi_log/core/theme/theme.dart';
-import 'package:oshi_log/core/widgets/common/gbt_image.dart';
-import 'package:oshi_log/core/widgets/common/gbt_stamp_badge.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
+import 'package:oshi_log/platform/router/app_router.dart';
+import 'package:oshi_log/design_system/theme/theme.dart';
+import 'package:oshi_log/design_system/widgets/common/gbt_image.dart';
+import 'package:oshi_log/design_system/widgets/common/gbt_stamp_badge.dart';
+import 'package:oshi_log/design_system/widgets/common/spoiler_guard.dart';
 import 'package:oshi_log/features/place/collections/domain/entities/zukan_collection.dart';
 
 /// EN: Scrollable specimen file with a ruled station index.
@@ -37,8 +38,22 @@ class FieldZukanDetailBody extends StatelessWidget {
         ],
         const SizedBox(height: GBTSpacing.lg),
         const _StationIndexHeading(),
-        for (final (index, stamp) in collection.stamps.indexed)
+        Text(
+          context.l10n(
+            ko: '스폿집의 표시 순서입니다. 추천 이동 순서·경로·소요 시간이 아닙니다.',
+            en: 'Collection display order. It does not specify a travel route, visit order or duration.',
+            ja: 'スポット集の表示順です。推奨の移動順・経路・所要時間を示すものではありません。',
+          ),
+        ),
+        for (final (index, stamp) in collection.stamps.indexed) ...[
           _StationIndexRow(stamp: stamp, stationNumber: index + 1),
+          if (stamp.episodeHint?.trim().isNotEmpty == true)
+            SpoilerGuard(
+              key: ValueKey('zukan-scene-${stamp.id}'),
+              contentId: '${collection.id}:${stamp.id}:${stamp.episodeHint}',
+              child: Text(stamp.episodeHint!),
+            ),
+        ],
       ],
     );
   }
@@ -69,9 +84,9 @@ class _SpecimenHeader extends StatelessWidget {
       container: true,
       header: true,
       label: context.l10n(
-        ko: '도감 표본 파일, ${collection.title}, $progressLabel, $statusLabel',
-        en: 'Zukan specimen file, ${collection.title}, $progressLabel, $statusLabel',
-        ja: '図鑑標本ファイル、${collection.title}、$progressLabel、$statusLabel',
+        ko: '스폿집, ${collection.title}, $progressLabel, $statusLabel',
+        en: 'Spot collection, ${collection.title}, $progressLabel, $statusLabel',
+        ja: 'スポット集、${collection.title}、$progressLabel、$statusLabel',
       ),
       child: ExcludeSemantics(
         child: Column(
@@ -278,11 +293,7 @@ class _StationIndexRow extends StatelessWidget {
     final isStamped = stamp.isStamped;
     final statusLabel = _stampStatusLabel(context, stamp);
     final dateLabel = _formatStampDate(stamp.visitedAt);
-    final detailParts = [
-      statusLabel,
-      if (dateLabel.isNotEmpty) dateLabel,
-      if (stamp.episodeHint?.trim().isNotEmpty == true) stamp.episodeHint!,
-    ];
+    final detailParts = [statusLabel, if (dateLabel.isNotEmpty) dateLabel];
     final semanticsLabel = [
       stationNumber.toString().padLeft(2, '0'),
       stamp.placeName,
@@ -326,10 +337,11 @@ class _StationIndexRow extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(
-                    width: 34,
+                  Padding(
+                    padding: const EdgeInsets.only(right: GBTSpacing.md),
                     child: Text(
                       stationNumber.toString().padLeft(2, '0'),
+                      softWrap: false,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         color: colors.onSurfaceVariant,
                         fontWeight: FontWeight.w800,
@@ -352,17 +364,6 @@ class _StationIndexRow extends StatelessWidget {
                           style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(fontWeight: FontWeight.w700),
                         ),
-                        if (stamp.episodeHint?.trim().isNotEmpty == true) ...[
-                          const SizedBox(height: GBTSpacing.xs),
-                          Text(
-                            stamp.episodeHint!,
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  color: colors.onSurfaceVariant,
-                                  height: 1.35,
-                                ),
-                          ),
-                        ],
                         const SizedBox(height: GBTSpacing.xs2),
                         Wrap(
                           spacing: GBTSpacing.sm,

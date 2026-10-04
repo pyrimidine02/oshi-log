@@ -10,13 +10,15 @@ import 'package:apple_maps_flutter/apple_maps_flutter.dart' as amaps;
 import 'package:google_maps_flutter/google_maps_flutter.dart' as gmaps;
 
 import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
-import 'package:oshi_log/core/theme/gbt_map_styles.dart';
-import 'package:oshi_log/core/theme/gbt_spacing.dart';
-import 'package:oshi_log/core/theme/gbt_typography.dart';
-import 'package:oshi_log/core/widgets/layout/gbt_page_header.dart';
-import 'package:oshi_log/core/widgets/navigation/gbt_standard_app_bar.dart';
-import 'package:oshi_log/core/localization/locale_text.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/design_system/theme/gbt_map_styles.dart';
+import 'package:oshi_log/design_system/theme/gbt_spacing.dart';
+import 'package:oshi_log/design_system/theme/gbt_typography.dart';
+import 'package:oshi_log/design_system/widgets/layout/gbt_page_header.dart';
+import 'package:oshi_log/design_system/widgets/navigation/gbt_standard_app_bar.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
+import 'package:oshi_log/platform/utils/result.dart';
+import 'package:oshi_log/platform/providers/core_providers.dart';
+import 'package:oshi_log/features/identity/auth/application/session_state.dart';
 import 'package:oshi_log/features/oshikatsu/live/application/live_events_controller.dart';
 import 'package:oshi_log/features/oshikatsu/live/domain/entities/live_event_entities.dart';
 import 'package:oshi_log/features/place/places/domain/entities/place_entities.dart';
@@ -25,7 +27,9 @@ import 'package:oshi_log/features/place/visits/application/visits_controller.dar
 import 'package:oshi_log/features/place/visits/domain/entities/visit_entities.dart';
 import 'package:oshi_log/features/community/reviews/application/travel_reviews_controller.dart';
 import 'package:oshi_log/features/community/reviews/domain/entities/travel_review.dart';
-import 'package:oshi_log/core/widgets/compose/post_compose_document_editor.dart';
+import 'package:oshi_log/features/community/reviews/domain/entities/travel_review_selection_seed.dart';
+import 'package:oshi_log/features/shared/uploads/application/uploads_controller.dart';
+import 'package:oshi_log/design_system/widgets/compose/post_compose_document_editor.dart';
 import 'package:oshi_log/features/community/reviews/presentation/widgets/travel_review_compose_sections.dart';
 import 'package:oshi_log/features/community/reviews/presentation/widgets/travel_review_place_picker_sheet.dart';
 
@@ -54,7 +58,9 @@ List<T> removeTravelReviewItem<T>(List<T> items, int index) {
 /// EN: Travel Review creation page.
 /// KO: 여행 후기 작성 페이지.
 class TravelReviewCreatePage extends ConsumerStatefulWidget {
-  const TravelReviewCreatePage({super.key});
+  const TravelReviewCreatePage({super.key, this.selectionSeed});
+
+  final TravelReviewSelectionSeed? selectionSeed;
 
   @override
   ConsumerState<TravelReviewCreatePage> createState() =>
@@ -77,6 +83,11 @@ class _TravelReviewCreatePageState
   DateTime? _tripEndedOn;
 
   bool _isSubmitting = false;
+  bool _seedReady = false;
+  bool _seedRejected = false;
+  int? _seedSessionGeneration;
+  final List<String> _selectedPhotoPaths = [];
+  final Map<String, String> _uploadedPhotoIds = {};
 
   bool get _isAppleMap => !kIsWeb && Platform.isIOS;
 
@@ -84,6 +95,8 @@ class _TravelReviewCreatePageState
       _titleController.text.trim().isNotEmpty &&
       _contentController.text.trim().isNotEmpty &&
       _selectedPlaces.isNotEmpty &&
+      _seedReady &&
+      !_seedRejected &&
       !_isSubmitting;
 
   @override
@@ -91,6 +104,92 @@ class _TravelReviewCreatePageState
     super.initState();
     _titleController.addListener(_updateState);
     _contentController.addListener(_updateState);
+    _seedReady = widget.selectionSeed == null;
+    if (!_seedReady) unawaited(_applySelectionSeed());
+  }
+
+  Future<bool> _seedMatchesSession() async {
+    if (!mounted) return false;
+    final seed = widget.selectionSeed;
+    if (seed == null) return true;
+    final generation = ref.read(apiSessionGenerationProvider)();
+    final owner = await ref.read(secureStorageProvider).getUserId();
+    if (!mounted) return false;
+    return seed.ownerUserId.trim().isNotEmpty &&
+        owner == seed.ownerUserId &&
+        ref.read(isAuthenticatedProvider) &&
+        ref.read(selectedProjectKeyProvider)?.trim() ==
+            seed.projectCode.trim() &&
+        ref.read(apiSessionGenerationProvider)() == generation &&
+        (_seedSessionGeneration == null ||
+            _seedSessionGeneration == generation);
+  }
+
+  Future<void> _applySelectionSeed() async {
+    final seed = widget.selectionSeed!;
+    try {
+      if (!await _seedMatchesSession()) {
+        if (mounted) setState(() => _seedRejected = true);
+        return;
+      }
+      if (!mounted) return;
+      setState(() {
+        _seedSessionGeneration = ref.read(apiSessionGenerationProvider)();
+        _selectedPlaces = seed.places.toList();
+        _selectedEvents.addAll(seed.events);
+        _tripStartedOn = seed.tripStartedOn;
+        _tripEndedOn = seed.tripEndedOn;
+        _selectedPhotoPaths.addAll(seed.photoPaths.toSet());
+        _seedReady = true;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _seedRejected = true);
+    }
+  }
+
+  Future<bool> _checkSeedBeforePublishing() async {
+    if (_seedRejected) return false;
+    if (await _seedMatchesSession()) return true;
+    if (mounted) setState(() => _seedRejected = true);
+    return false;
+  }
+
+  Future<List<String>?> _uploadSelectedPhotos() async {
+    final ids = <String>[];
+    for (final path in _selectedPhotoPaths) {
+      if (!await _checkSeedBeforePublishing()) return null;
+      var uploadId = _uploadedPhotoIds[path];
+      if (uploadId == null) {
+        final bytes = await File(path).readAsBytes();
+        if (!await _checkSeedBeforePublishing()) return null;
+        final result = await ref
+            .read(uploadsControllerProvider.notifier)
+            .uploadImageBytes(
+              bytes: bytes,
+              filename: 'travel-review-photo-${ids.length + 1}.png',
+              contentType: 'image/png',
+              isCurrentOperation: () =>
+                  mounted &&
+                  !_seedRejected &&
+                  ref.read(isAuthenticatedProvider) &&
+                  ref.read(selectedProjectKeyProvider)?.trim() ==
+                      widget.selectionSeed?.projectCode.trim() &&
+                  ref.read(apiSessionGenerationProvider)() ==
+                      _seedSessionGeneration,
+            );
+        if (!mounted || !await _checkSeedBeforePublishing()) return null;
+        switch (result) {
+          case Success(:final data):
+            uploadId = data.uploadId.trim();
+            if (uploadId.isEmpty) throw StateError('Missing upload ID');
+            _uploadedPhotoIds[path] = uploadId;
+          case Err():
+            throw StateError('Photo upload failed');
+        }
+      }
+      ids.add(uploadId);
+    }
+    return ids;
   }
 
   void _updateState() => setState(() {});
@@ -149,6 +248,7 @@ class _TravelReviewCreatePageState
   }
 
   Future<void> _submit() async {
+    if (_isSubmitting || !_seedReady || _seedRejected) return;
     if (_titleController.text.trim().isEmpty ||
         _contentController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -212,80 +312,203 @@ class _TravelReviewCreatePageState
     }
 
     setState(() => _isSubmitting = true);
-    if (ref.read(userVisitsControllerProvider).valueOrNull == null) {
-      await ref.read(userVisitsControllerProvider.notifier).load();
+    try {
+      if (!await _checkSeedBeforePublishing()) return;
+      if (ref.read(userVisitsControllerProvider).valueOrNull == null) {
+        await ref.read(userVisitsControllerProvider.notifier).load();
+        if (!mounted) return;
+      }
+      final visits =
+          ref.read(userVisitsControllerProvider).valueOrNull ??
+          const <VisitEvent>[];
+      final attendanceRecords = await _loadAttendanceProofRecords();
       if (!mounted) return;
-    }
-    final visits =
-        ref.read(userVisitsControllerProvider).valueOrNull ??
-        const <VisitEvent>[];
-    final attendanceRecords = await _loadAttendanceProofRecords();
-    if (!mounted) return;
-    final result = await ref
-        .read(travelReviewMutationControllerProvider.notifier)
-        .create(
-          projectCode: projectCode,
-          draft: TravelReviewDraft(
-            title: _titleController.text.trim(),
-            content: _contentController.text.trim(),
-            stops: _selectedPlaces
-                .map(
-                  (place) => TravelReviewStopDraft(
-                    placeId: place.id,
-                    verifiedVisitId: verifiedVisitProofId(visits, place.id),
-                  ),
-                )
-                .toList(growable: false),
-            events: _selectedEvents
-                .map(
-                  (event) => TravelReviewEventDraft(
-                    liveEventId: event.id,
-                    verifiedAttendanceId: verifiedAttendanceProofId(
-                      attendanceRecords,
-                      event.id,
+      if (!await _checkSeedBeforePublishing()) return;
+      final imageUploadIds = await _uploadSelectedPhotos();
+      if (imageUploadIds == null || !mounted) return;
+      if (!await _checkSeedBeforePublishing()) return;
+      final result = await ref
+          .read(travelReviewMutationControllerProvider.notifier)
+          .create(
+            projectCode: projectCode,
+            draft: TravelReviewDraft(
+              title: _titleController.text.trim(),
+              content: _contentController.text.trim(),
+              stops: _selectedPlaces
+                  .map(
+                    (place) => TravelReviewStopDraft(
+                      placeId: place.id,
+                      verifiedVisitId: verifiedVisitProofId(visits, place.id),
                     ),
-                  ),
-                )
-                .toList(growable: false),
-            fanSubjectIds: _selectedSubjects
-                .map((subject) => subject.id)
-                .toList(growable: false),
-            tripStartedOn: _tripStartedOn,
-            tripEndedOn: _tripEndedOn,
-            routeNote: _routeNoteController.text.trim(),
-          ),
-        );
-    if (!mounted) return;
-    setState(() => _isSubmitting = false);
-    switch (result) {
-      case Success():
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              context.l10n(
-                ko: '여행 후기가 등록되었습니다.',
-                en: 'Your travel review has been posted.',
-                ja: '旅の記録を投稿しました。',
+                  )
+                  .toList(growable: false),
+              events: _selectedEvents
+                  .map(
+                    (event) => TravelReviewEventDraft(
+                      liveEventId: event.id,
+                      verifiedAttendanceId: verifiedAttendanceProofId(
+                        attendanceRecords,
+                        event.id,
+                      ),
+                    ),
+                  )
+                  .toList(growable: false),
+              fanSubjectIds: _selectedSubjects
+                  .map((subject) => subject.id)
+                  .toList(growable: false),
+              tripStartedOn: _tripStartedOn,
+              tripEndedOn: _tripEndedOn,
+              imageUploadIds: imageUploadIds,
+              routeNote: _routeNoteController.text.trim(),
+            ),
+          );
+      if (!await _checkSeedBeforePublishing()) return;
+      if (!mounted) return;
+      switch (result) {
+        case Success():
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                context.l10n(
+                  ko: '여행 후기가 등록되었습니다.',
+                  en: 'Your travel review has been posted.',
+                  ja: '旅の記録を投稿しました。',
+                ),
               ),
             ),
-          ),
-        );
-        context.pop();
-      case Err(:final failure):
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(failure.userMessage)));
+          );
+          context.pop();
+        case Err():
+          _showSubmitFailure();
+      }
+    } catch (_) {
+      if (mounted) _showSubmitFailure();
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
     }
+  }
+
+  void _showSubmitFailure() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          context.l10n(
+            ko: '저장하지 못했어요. 입력한 내용은 유지됩니다. 다시 시도해주세요.',
+            en: 'Could not save. Your input is still here. Please try again.',
+            ja: '保存できませんでした。入力内容は残っています。もう一度お試しください。',
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSelectionNotice() {
+    return Padding(
+      padding: const EdgeInsets.all(GBTSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (_seedRejected)
+            Text(
+              context.l10n(
+                ko: '여행 기록의 계정과 프로젝트를 확인할 수 없어요. 이전 화면으로 돌아가 같은 계정과 프로젝트에서 다시 선택해주세요.',
+                en: 'The account or project changed. Go back and select this trip again with its original account and project.',
+                ja: 'アカウントまたはプロジェクトが旅の記録と一致しません。前の画面に戻り、同じアカウントとプロジェクトで選び直してください。',
+              ),
+            )
+          else if (!_seedReady)
+            const Center(child: CircularProgressIndicator())
+          else ...[
+            Text(
+              context.l10n(
+                ko: '선택한 항목만 가져왔어요. 비공개 제목과 메모는 포함되지 않습니다. 공개할 제목과 내용을 직접 작성해주세요.',
+                en: 'Only your selections were copied. Your private title and notes stay private. Write a title and content for this public review.',
+                ja: '選んだ項目だけをコピーしました。非公開のタイトルとメモは含まれません。公開するタイトルと本文を入力してください。',
+              ),
+            ),
+            if (_selectedPhotoPaths.isNotEmpty) ...[
+              const SizedBox(height: GBTSpacing.sm),
+              Text(
+                context.l10n(
+                  ko: '선택한 사진 ${_selectedPhotoPaths.length}장 · 등록할 때 업로드됩니다.',
+                  en: '${_selectedPhotoPaths.length} selected photos · Uploaded when you post.',
+                  ja: '選択した写真${_selectedPhotoPaths.length}枚・投稿時にアップロードします。',
+                ),
+              ),
+              const SizedBox(height: GBTSpacing.sm),
+              Wrap(
+                spacing: GBTSpacing.sm,
+                runSpacing: GBTSpacing.sm,
+                children: [
+                  for (final (index, path) in _selectedPhotoPaths.indexed)
+                    SizedBox(
+                      width: 104,
+                      child: Column(
+                        children: [
+                          Image.file(
+                            File(path),
+                            width: 104,
+                            height: 80,
+                            fit: BoxFit.cover,
+                            cacheWidth: 208,
+                            excludeFromSemantics: true,
+                            errorBuilder: (_, error, stackTrace) =>
+                                const SizedBox(
+                                  height: 80,
+                                  child: Icon(Icons.broken_image_outlined),
+                                ),
+                          ),
+                          IconButton(
+                            key: ValueKey('travel-review-remove-photo-$index'),
+                            constraints: const BoxConstraints(
+                              minWidth: 48,
+                              minHeight: 48,
+                            ),
+                            tooltip: context.l10n(
+                              ko: '사진 ${index + 1} 제외',
+                              en: 'Remove photo ${index + 1}',
+                              ja: '写真${index + 1}を除外',
+                            ),
+                            onPressed: _isSubmitting
+                                ? null
+                                : () => setState(() {
+                                    _selectedPhotoPaths.remove(path);
+                                  }),
+                            icon: const Icon(Icons.close),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ],
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    if (widget.selectionSeed != null) {
+      ref.listen<bool>(isAuthenticatedProvider, (previous, authenticated) {
+        if (!authenticated && mounted) {
+          setState(() => _seedRejected = true);
+        }
+      });
+      ref.listen<String?>(selectedProjectKeyProvider, (previous, project) {
+        if (project?.trim() != widget.selectionSeed!.projectCode.trim() &&
+            mounted) {
+          setState(() => _seedRejected = true);
+        }
+      });
+    }
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final visits =
         ref.watch(userVisitsControllerProvider).valueOrNull ??
         const <VisitEvent>[];
-    final attendanceRecords = _selectedEvents.isEmpty
+    final attendanceRecords = _seedRejected || _selectedEvents.isEmpty
         ? const <LiveAttendanceHistoryRecord>[]
         : ref.watch(liveAttendanceHistoryControllerProvider).items;
     final verifiedEventIds = attendanceRecords
@@ -320,233 +543,248 @@ class _TravelReviewCreatePageState
           ),
         ],
       ),
-      body: Stack(
-        children: [
-          CustomScrollView(
-            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            slivers: [
-              SliverToBoxAdapter(
-                child: GBTPageHeader(
-                  title: context.l10n(
-                    ko: '오늘의 순례를 기록하세요',
-                    en: 'Record today’s pilgrimage',
-                    ja: '今日の聖地巡礼を記録しましょう',
-                  ),
-                  description: context.l10n(
-                    ko: '방문한 순서와 현장의 감정을 함께 남기면 다음 여행의 지도가 됩니다.',
-                    en: 'Note the order you visited and how it felt to become a map for your next trip.',
-                    ja: '訪れた順番とその場の感動を記録すると、次の旅の地図になります。',
-                  ),
-                ),
-              ),
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(
-                  GBTSpacing.md,
-                  GBTSpacing.lg,
-                  GBTSpacing.md,
-                  0,
-                ),
-                sliver: SliverList(
-                  delegate: SliverChildListDelegate([
-                    PostComposeDocumentEditor(
-                      titleController: _titleController,
-                      contentController: _contentController,
-                      enabled: !_isSubmitting,
-                      titleHintText: context.l10n(
-                        ko: '이번 여행은 어떠셨나요?',
-                        en: 'How was this trip?',
-                        ja: '今回の旅はいかがでしたか？',
-                      ),
-                      contentHintText: context.l10n(
-                        ko: '자세한 후기를 남겨주세요.',
-                        en: 'Share the details of your trip.',
-                        ja: '詳しいレビューを書いてください。',
-                      ),
-                      maxTitleLines: 2,
-                      minContentLines: 5,
-                      maxTitleLength: 255,
-                      maxContentLength: 20000,
-                    ),
-                    const SizedBox(height: GBTSpacing.xl2),
-                    TravelReviewComposeMetadata(
-                      routeNoteController: _routeNoteController,
-                      tripStartedOn: _tripStartedOn,
-                      tripEndedOn: _tripEndedOn,
-                      selectedEvents: _selectedEvents,
-                      verifiedEventIds: verifiedEventIds,
-                      selectedSubjects: _selectedSubjects,
-                      onPickStartDate: () => _pickDate(isStart: true),
-                      onPickEndDate: () => _pickDate(isStart: false),
-                      onPickEvents: _showEventPicker,
-                      onPickSubjects: _showFanSubjectPicker,
-                      onRemoveEvent: (eventId) => setState(
-                        () => _selectedEvents.removeWhere(
-                          (event) => event.id == eventId,
+      body: _seedRejected
+          ? SingleChildScrollView(child: _buildSelectionNotice())
+          : Stack(
+              children: [
+                CustomScrollView(
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  slivers: [
+                    SliverToBoxAdapter(
+                      child: GBTPageHeader(
+                        title: context.l10n(
+                          ko: '오늘의 순례를 기록하세요',
+                          en: 'Record today’s pilgrimage',
+                          ja: '今日の聖地巡礼を記録しましょう',
                         ),
-                      ),
-                      onRemoveSubject: (subjectId) => setState(
-                        () => _selectedSubjects.removeWhere(
-                          (subject) => subject.id == subjectId,
+                        description: context.l10n(
+                          ko: '장소를 1곳 이상 연결해주세요. 공연도 함께 기록할 수 있어요. 게시하면 즉시 공개됩니다.',
+                          en: 'Connect at least one place. You can also include live events. Your review is published immediately.',
+                          ja: '場所を1件以上つなげてください。ライブも一緒に記録できます。投稿するとすぐに公開されます。',
                         ),
                       ),
                     ),
-                    const SizedBox(height: GBTSpacing.xl2),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          context.l10n(
-                            ko: '방문 순서',
-                            en: 'Visit Order',
-                            ja: '訪問順',
-                          ),
-                          style: GBTTypography.titleLarge.copyWith(
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        const SizedBox(height: GBTSpacing.xs),
-                        Text(
-                          _selectedPlaces.isEmpty
-                              ? context.l10n(
-                                  ko: '장소를 추가하면 이동 순서를 지도에 그려드려요.',
-                                  en: 'Add places to draw your route on the map.',
-                                  ja: '場所を追加すると移動順を地図に描画します。',
-                                )
-                              : context.l10n(
-                                  ko: '총 ${_selectedPlaces.length}곳 · 길게 눌러 순서를 바꿀 수 있어요.',
-                                  en: '${_selectedPlaces.length} places total · Long-press to reorder.',
-                                  ja: '合計${_selectedPlaces.length}件・長押しで順番を変更できます。',
-                                ),
-                          style: GBTTypography.bodyMedium.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                        const SizedBox(height: GBTSpacing.sm),
-                        OutlinedButton.icon(
-                          onPressed: _showPlacePicker,
-                          icon: const Icon(Icons.add),
-                          label: Text(
-                            context.l10n(
-                              ko: '장소 추가',
-                              en: 'Add Place',
-                              ja: '場所を追加',
+                    if (widget.selectionSeed != null)
+                      SliverToBoxAdapter(child: _buildSelectionNotice()),
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(
+                        GBTSpacing.md,
+                        GBTSpacing.lg,
+                        GBTSpacing.md,
+                        0,
+                      ),
+                      sliver: SliverList(
+                        delegate: SliverChildListDelegate([
+                          PostComposeDocumentEditor(
+                            titleController: _titleController,
+                            contentController: _contentController,
+                            enabled: !_isSubmitting,
+                            titleHintText: context.l10n(
+                              ko: '이번 여행은 어떠셨나요?',
+                              en: 'How was this trip?',
+                              ja: '今回の旅はいかがでしたか？',
                             ),
+                            contentHintText: context.l10n(
+                              ko: '자세한 후기를 남겨주세요.',
+                              en: 'Share the details of your trip.',
+                              ja: '詳しいレビューを書いてください。',
+                            ),
+                            maxTitleLines: 2,
+                            minContentLines: 5,
+                            maxTitleLength: 255,
+                            maxContentLength: 20000,
                           ),
-                          style: OutlinedButton.styleFrom(
-                            minimumSize: const Size(0, 48),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                GBTSpacing.radiusSm,
+                          const SizedBox(height: GBTSpacing.xl2),
+                          TravelReviewComposeMetadata(
+                            routeNoteController: _routeNoteController,
+                            tripStartedOn: _tripStartedOn,
+                            tripEndedOn: _tripEndedOn,
+                            selectedEvents: _selectedEvents,
+                            verifiedEventIds: verifiedEventIds,
+                            selectedSubjects: _selectedSubjects,
+                            onPickStartDate: () => _pickDate(isStart: true),
+                            onPickEndDate: () => _pickDate(isStart: false),
+                            onPickEvents: _showEventPicker,
+                            onPickSubjects: _showFanSubjectPicker,
+                            onRemoveEvent: (eventId) => setState(
+                              () => _selectedEvents.removeWhere(
+                                (event) => event.id == eventId,
+                              ),
+                            ),
+                            onRemoveSubject: (subjectId) => setState(
+                              () => _selectedSubjects.removeWhere(
+                                (subject) => subject.id == subjectId,
                               ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: GBTSpacing.md),
-                  ]),
-                ),
-              ),
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: GBTSpacing.md),
-                sliver: SliverToBoxAdapter(
-                  child: _buildMapSection(colorScheme, isDark),
-                ),
-              ),
-              const SliverPadding(padding: EdgeInsets.only(top: GBTSpacing.sm)),
-              SliverReorderableList(
-                itemCount: _selectedPlaces.length,
-                // EN: Flutter 3.41 stable requires the legacy callback.
-                // KO: Flutter 3.41 stable은 기존 콜백을 필수로 요구합니다.
-                // ignore: deprecated_member_use
-                onReorder: _reorderPlaces,
-                itemBuilder: (context, index) {
-                  final place = _selectedPlaces[index];
-                  return DecoratedBox(
-                    key: ValueKey(place.id),
-                    decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(color: colorScheme.outlineVariant),
+                          const SizedBox(height: GBTSpacing.xl2),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                context.l10n(
+                                  ko: '방문 순서',
+                                  en: 'Visit Order',
+                                  ja: '訪問順',
+                                ),
+                                style: GBTTypography.titleLarge.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const SizedBox(height: GBTSpacing.xs),
+                              Text(
+                                _selectedPlaces.isEmpty
+                                    ? context.l10n(
+                                        ko: '장소를 추가하면 이동 순서를 지도에 그려드려요.',
+                                        en: 'Add places to draw your route on the map.',
+                                        ja: '場所を追加すると移動順を地図に描画します。',
+                                      )
+                                    : context.l10n(
+                                        ko: '총 ${_selectedPlaces.length}곳 · 길게 눌러 순서를 바꿀 수 있어요.',
+                                        en: '${_selectedPlaces.length} places total · Long-press to reorder.',
+                                        ja: '合計${_selectedPlaces.length}件・長押しで順番を変更できます。',
+                                      ),
+                                style: GBTTypography.bodyMedium.copyWith(
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                              const SizedBox(height: GBTSpacing.sm),
+                              OutlinedButton.icon(
+                                onPressed: _showPlacePicker,
+                                icon: const Icon(Icons.add),
+                                label: Text(
+                                  context.l10n(
+                                    ko: '장소 추가',
+                                    en: 'Add Place',
+                                    ja: '場所を追加',
+                                  ),
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  minimumSize: const Size(0, 48),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      GBTSpacing.radiusSm,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: GBTSpacing.md),
+                        ]),
                       ),
                     ),
-                    child: Padding(
+                    SliverPadding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: GBTSpacing.md,
                       ),
-                      child: ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        minVerticalPadding: GBTSpacing.sm,
-                        leading: SizedBox(
-                          width: 32,
-                          child: Text(
-                            '${index + 1}'.padLeft(2, '0'),
-                            style: GBTTypography.labelLarge.copyWith(
-                              color: colorScheme.primary,
-                              fontWeight: FontWeight.w800,
+                      sliver: SliverToBoxAdapter(
+                        child: _buildMapSection(colorScheme, isDark),
+                      ),
+                    ),
+                    const SliverPadding(
+                      padding: EdgeInsets.only(top: GBTSpacing.sm),
+                    ),
+                    SliverReorderableList(
+                      itemCount: _selectedPlaces.length,
+                      // EN: Flutter 3.41 stable requires the legacy callback.
+                      // KO: Flutter 3.41 stable은 기존 콜백을 필수로 요구합니다.
+                      // ignore: deprecated_member_use
+                      onReorder: _reorderPlaces,
+                      itemBuilder: (context, index) {
+                        final place = _selectedPlaces[index];
+                        return DecoratedBox(
+                          key: ValueKey(place.id),
+                          decoration: BoxDecoration(
+                            border: Border(
+                              bottom: BorderSide(
+                                color: colorScheme.outlineVariant,
+                              ),
                             ),
                           ),
-                        ),
-                        title: Text(
-                          place.name,
-                          style: GBTTypography.bodyMedium.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(place.address, style: GBTTypography.bodySmall),
-                            if (verifiedVisitProofId(visits, place.id) != null)
-                              Text(
-                                context.l10n(
-                                  ko: '인증된 방문 기록 연결',
-                                  en: 'Linked to verified visit',
-                                  ja: '認証済み訪問記録にリンク',
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: GBTSpacing.md,
+                            ),
+                            child: ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              minVerticalPadding: GBTSpacing.sm,
+                              leading: SizedBox(
+                                width: 32,
+                                child: Text(
+                                  '${index + 1}'.padLeft(2, '0'),
+                                  style: GBTTypography.labelLarge.copyWith(
+                                    color: colorScheme.primary,
+                                    fontWeight: FontWeight.w800,
+                                  ),
                                 ),
-                                style: GBTTypography.labelSmall.copyWith(
-                                  color: colorScheme.primary,
+                              ),
+                              title: Text(
+                                place.name,
+                                style: GBTTypography.bodyMedium.copyWith(
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
-                          ],
-                        ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.close, size: 20),
-                              onPressed: () => _removePlace(index),
-                              tooltip: context.l10n(
-                                ko: '${place.name} 제거',
-                                en: 'Remove ${place.name}',
-                                ja: '${place.name}を削除',
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    place.address,
+                                    style: GBTTypography.bodySmall,
+                                  ),
+                                  if (verifiedVisitProofId(visits, place.id) !=
+                                      null)
+                                    Text(
+                                      context.l10n(
+                                        ko: '인증된 방문 기록 연결',
+                                        en: 'Linked to verified visit',
+                                        ja: '認証済み訪問記録にリンク',
+                                      ),
+                                      style: GBTTypography.labelSmall.copyWith(
+                                        color: colorScheme.primary,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.close, size: 20),
+                                    onPressed: () => _removePlace(index),
+                                    tooltip: context.l10n(
+                                      ko: '${place.name} 제거',
+                                      en: 'Remove ${place.name}',
+                                      ja: '${place.name}を削除',
+                                    ),
+                                  ),
+                                  ReorderableDragStartListener(
+                                    index: index,
+                                    child: const SizedBox(
+                                      width: 48,
+                                      height: 48,
+                                      child: Icon(Icons.drag_handle),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            ReorderableDragStartListener(
-                              index: index,
-                              child: const SizedBox(
-                                width: 48,
-                                height: 48,
-                                child: Icon(Icons.drag_handle),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                          ),
+                        );
+                      },
                     ),
-                  );
-                },
-              ),
-              const SliverPadding(padding: EdgeInsets.only(bottom: 100)),
-            ],
-          ),
-          if (_isSubmitting)
-            Container(
-              color: Colors.black45,
-              child: const Center(child: CircularProgressIndicator()),
+                    const SliverPadding(padding: EdgeInsets.only(bottom: 100)),
+                  ],
+                ),
+                if (_isSubmitting)
+                  Container(
+                    color: Colors.black45,
+                    child: const Center(child: CircularProgressIndicator()),
+                  ),
+              ],
             ),
-        ],
-      ),
     );
   }
 

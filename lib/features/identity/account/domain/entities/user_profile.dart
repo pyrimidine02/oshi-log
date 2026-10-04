@@ -2,7 +2,7 @@
 /// KO: 사용자 프로필 도메인 엔티티.
 library;
 
-import 'package:oshi_log/core/security/user_access_level.dart' as access;
+import 'package:oshi_log/platform/security/user_access_level.dart' as access;
 
 class UserProfile {
   const UserProfile({

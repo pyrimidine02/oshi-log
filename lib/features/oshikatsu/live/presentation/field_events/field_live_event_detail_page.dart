@@ -5,17 +5,22 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
+import '../../domain/event_time_policy.dart';
+import 'event_preparation.dart';
+import 'package:oshi_log/features/identity/auth/application/auth_action_gate.dart';
+import 'package:oshi_log/features/identity/auth/application/session_state.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/localization/locale_text.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
-import 'package:oshi_log/core/router/app_router.dart';
-import 'package:oshi_log/core/theme/theme.dart';
-import 'package:oshi_log/core/widgets/common/gbt_image.dart';
-import 'package:oshi_log/core/widgets/common/registrant_credit_widget.dart';
-import 'package:oshi_log/core/widgets/feedback/gbt_loading.dart';
-import 'package:oshi_log/core/widgets/navigation/gbt_standard_app_bar.dart';
+import 'package:oshi_log/platform/router/app_router.dart';
+import 'package:oshi_log/design_system/theme/theme.dart';
+import 'package:oshi_log/design_system/widgets/common/gbt_image.dart';
+import 'package:oshi_log/design_system/widgets/common/registrant_credit_widget.dart';
+import 'package:oshi_log/design_system/widgets/feedback/gbt_loading.dart';
+import 'package:oshi_log/design_system/widgets/navigation/gbt_standard_app_bar.dart';
 import 'package:oshi_log/features/shared/favorites/application/favorites_controller.dart';
 import 'package:oshi_log/features/shared/favorites/domain/entities/favorite_entities.dart';
 import 'package:oshi_log/features/oshikatsu/music/application/music_controller.dart';
@@ -29,9 +34,14 @@ import 'live_schedule_status_badge.dart';
 /// EN: Event detail entry used by shell and overlay event routes.
 /// KO: 쉘 및 오버레이 이벤트 라우트에서 사용하는 이벤트 상세 진입점입니다.
 class FieldLiveEventDetailPage extends ConsumerWidget {
-  const FieldLiveEventDetailPage({super.key, required this.eventId});
+  const FieldLiveEventDetailPage({
+    super.key,
+    required this.eventId,
+    this.preparationBuilder,
+  });
 
   final String eventId;
+  final Widget Function(BuildContext, LiveEventDetail)? preparationBuilder;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -99,7 +109,10 @@ class FieldLiveEventDetailPage extends ConsumerWidget {
               .read(liveEventDetailControllerProvider(eventId).notifier)
               .load(forceRefresh: true),
         ),
-        data: (event) => _FieldEventDetailContent(event: event),
+        data: (event) => _FieldEventDetailContent(
+          event: event,
+          preparationBuilder: preparationBuilder,
+        ),
       ),
     );
   }
@@ -110,12 +123,27 @@ class FieldLiveEventDetailPage extends ConsumerWidget {
     LiveEventDetail event,
     bool isFavorite,
   ) async {
+    if (!ref.read(isAuthenticatedProvider) &&
+        !await ref.read(authenticationGateProvider)(context)) {
+      return;
+    }
+    if (!context.mounted) return;
+    final currentFavorite =
+        ref
+            .read(favoritesControllerProvider)
+            .valueOrNull
+            ?.any(
+              (item) =>
+                  item.entityId == event.id &&
+                  item.type == FavoriteType.liveEvent,
+            ) ??
+        isFavorite;
     final result = await ref
         .read(favoritesControllerProvider.notifier)
         .toggleFavorite(
           entityId: event.id,
           type: FavoriteType.liveEvent,
-          isCurrentlyFavorite: isFavorite,
+          isCurrentlyFavorite: currentFavorite,
         );
     if (!context.mounted || result.failureOrNull == null) return;
     ScaffoldMessenger.of(
@@ -125,9 +153,13 @@ class FieldLiveEventDetailPage extends ConsumerWidget {
 }
 
 class _FieldEventDetailContent extends ConsumerWidget {
-  const _FieldEventDetailContent({required this.event});
+  const _FieldEventDetailContent({
+    required this.event,
+    this.preparationBuilder,
+  });
 
   final LiveEventDetail event;
+  final Widget Function(BuildContext, LiveEventDetail)? preparationBuilder;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -161,120 +193,239 @@ class _FieldEventDetailContent extends ConsumerWidget {
     final ticketUrl = event.ticketUrl?.trim();
     final placeId = event.placeId?.trim();
     final rescheduledEventId = event.rescheduledEventId;
-    return RefreshIndicator(
-      onRefresh: () async {
-        final attendanceRefresh = attendanceContext == null
-            ? Future<void>.value()
-            : ref
-                  .read(
-                    liveAttendanceByProjectControllerProvider(
-                      attendanceContext,
-                    ).notifier,
-                  )
-                  .load(forceRefresh: true)
-                  .then<void>((_) {});
-        await Future.wait<void>([
-          ref
-              .read(liveEventDetailControllerProvider(event.id).notifier)
-              .load(forceRefresh: true),
-          attendanceRefresh,
-        ]);
-        if (projectId.isNotEmpty) {
-          ref.invalidate(
-            liveEventSetlistProvider((
-              projectId: projectId,
-              liveEventId: event.id,
-            )),
-          );
-        }
-      },
-      child: CustomScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        slivers: [
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(
-              GBTSpacing.md,
-              GBTSpacing.md,
-              GBTSpacing.md,
-              0,
-            ),
-            sliver: SliverList.list(
+    final phase = EventTimePolicy.phase(
+      start: event.showStartTime,
+      end: event.endTime,
+      now: DateTime.now(),
+    );
+    final address = event.address?.trim() ?? '';
+    final canTicket =
+        !event.isCancelled &&
+        ticketUrl != null &&
+        Uri.tryParse(ticketUrl)?.scheme == 'https';
+    void openDirections({bool returning = false}) {
+      _openTicket(
+        context,
+        Uri.https('www.google.com', '/maps/dir/', {
+          'api': '1',
+          returning ? 'origin' : 'destination': address,
+          'travelmode': 'transit',
+        }).toString(),
+      );
+    }
+
+    void openGuides() => context.pushNamed(
+      AppRoutes.cheerGuides,
+      queryParameters: {if (projectId.isNotEmpty) 'project': projectId},
+    );
+    void toggleAttendance() {
+      if (attendanceContext != null) {
+        _toggleAttendance(
+          context,
+          ref,
+          attendanceContext,
+          attendance.attendance.attended,
+        );
+      }
+    }
+
+    final recordEnabled =
+        attendanceContext != null &&
+        !attendance.isLoading &&
+        !attendance.isSubmitting &&
+        (attendance.failure == null || !ref.watch(isAuthenticatedProvider)) &&
+        (event.isAttendable || attendance.attendance.attended);
+    return Column(
+      children: [
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: () async {
+              await ref
+                  .read(liveEventDetailControllerProvider(event.id).notifier)
+                  .load(forceRefresh: true);
+              if (attendanceContext != null) {
+                ref
+                    .read(
+                      liveAttendanceByProjectControllerProvider(
+                        attendanceContext,
+                      ).notifier,
+                    )
+                    .load(forceRefresh: true);
+              }
+              if (projectId.isNotEmpty) {
+                ref.invalidate(
+                  liveEventSetlistProvider((
+                    projectId: projectId,
+                    liveEventId: event.id,
+                  )),
+                );
+              }
+            },
+            child: ListView(
+              padding: const EdgeInsets.all(GBTSpacing.md),
+              physics: const AlwaysScrollableScrollPhysics(),
               children: [
-                _EventPoster(event: event),
-                const SizedBox(height: GBTSpacing.lg),
                 FieldEventTicketDocument(
                   event: event,
                   attendance: attendance,
-                  onAttendanceToggle: attendanceContext == null
-                      ? null
-                      : () => _toggleAttendance(
-                          context,
-                          ref,
-                          attendanceContext,
-                          attendance.attendance.attended,
-                        ),
-                  onTicketTap: ticketUrl == null || ticketUrl.isEmpty
-                      ? null
-                      : () => _openTicket(context, ticketUrl),
-                  onVenueTap: placeId == null || placeId.isEmpty
-                      ? null
-                      : () => context.goToPlaceDetail(placeId),
+                  onAttendanceToggle: null,
+                  onTicketTap: null,
+                  showActions: false,
                   onRescheduledTap: rescheduledEventId == null
                       ? null
                       : () => context.goToEventDetail(rescheduledEventId),
                 ),
                 const SizedBox(height: GBTSpacing.xl),
-                FieldEventSectionHeading(
-                  eyebrow: context.l10n(
-                    ko: 'FIELD NOTES',
-                    en: 'FIELD NOTES',
-                    ja: 'FIELD NOTES',
-                  ),
-                  title: context.l10n(
-                    ko: '공연 정보',
-                    en: 'Event notes',
-                    ja: '公演情報',
-                  ),
+                EventAccessSection(
+                  event: event,
+                  collapsed: phase == EventPhase.after,
+                  onDirections: address.isEmpty ? null : openDirections,
+                  onVenue: placeId == null || placeId.isEmpty
+                      ? null
+                      : () => context.goToPlaceDetail(placeId),
                 ),
-                const SizedBox(height: GBTSpacing.md),
+                if (phase == EventPhase.today && canTicket)
+                  ExpansionTile(
+                    title: Text(
+                      context.l10n(ko: '티켓', en: 'Tickets', ja: 'チケット'),
+                    ),
+                    children: [
+                      TextButton.icon(
+                        onPressed: () => _openTicket(context, ticketUrl),
+                        icon: const Icon(Icons.open_in_new),
+                        label: Text(
+                          context.l10n(
+                            ko: '공식 티켓',
+                            en: 'Official tickets',
+                            ja: '公式チケット',
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                const SizedBox(height: GBTSpacing.xl),
                 Text(
-                  (event.description ?? '').trim().isEmpty
+                  context.l10n(
+                    ko: '내 참전 기록',
+                    en: 'My attendance record',
+                    ja: '私の参戦記録',
+                  ),
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: GBTSpacing.sm),
+                if (attendance.failure != null) ...[
+                  Text(attendance.failure!.userMessage),
+                  TextButton(
+                    onPressed: attendanceContext == null
+                        ? null
+                        : () => ref
+                              .read(
+                                liveAttendanceByProjectControllerProvider(
+                                  attendanceContext,
+                                ).notifier,
+                              )
+                              .load(forceRefresh: true),
+                    child: Text(
+                      context.l10n(
+                        ko: '기록 다시 불러오기',
+                        en: 'Retry attendance',
+                        ja: '記録を再読み込み',
+                      ),
+                    ),
+                  ),
+                ],
+                FieldAttendanceStamp(
+                  attended: attendance.attendance.attended,
+                  canUndo: attendance.attendance.canUndo,
+                  isBusy: attendance.isLoading || attendance.isSubmitting,
+                  onToggle: recordEnabled ? toggleAttendance : null,
+                ),
+                Text(
+                  attendance.attendance.isVerified
                       ? context.l10n(
-                          ko: '등록된 공연 설명이 없어요.',
-                          en: 'No event description has been registered.',
-                          ja: '公演説明は登録されていません。',
+                          ko: '위치 인증 완료 · 시스템 확인',
+                          en: 'Location verified by the system',
+                          ja: '位置認証済み・システム確認',
                         )
-                      : event.description!,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyLarge?.copyWith(height: 1.65),
+                      : context.l10n(
+                          ko: '직접 남기는 참전 기록입니다. 참가 예정과는 별개예요.',
+                          en: 'Self-reported attendance; separate from future plans.',
+                          ja: '自己申告の参戦記録です。参加予定とは別です。',
+                        ),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const SizedBox(height: GBTSpacing.xl),
+                EventPreparationSection(
+                  collapsed: phase == EventPhase.after,
+                  onCheerGuide: openGuides,
+                  onReturnRoute: address.isEmpty
+                      ? null
+                      : () => openDirections(returning: true),
+                  supplement: preparationBuilder?.call(context, event),
                 ),
                 const SizedBox(height: GBTSpacing.xl),
                 FieldEventSetlistSection(
+                  eventId: event.id,
                   state: setlist,
                   hasProjectContext: projectId.isNotEmpty,
+                  onRetry: projectId.isEmpty
+                      ? null
+                      : () => ref.invalidate(
+                          liveEventSetlistProvider((
+                            projectId: projectId,
+                            liveEventId: event.id,
+                          )),
+                        ),
                   onSongTap: (item) {
-                    if (!item.hasSongLink || projectId.isEmpty) return;
-                    context.goToSongDetail(
-                      item.songId!,
-                      projectId: projectId,
-                      eventId: event.id,
-                    );
+                    if (item.hasSongLink && projectId.isNotEmpty) {
+                      context.goToSongDetail(
+                        item.songId!,
+                        projectId: projectId,
+                        eventId: event.id,
+                      );
+                    }
                   },
                 ),
                 const SizedBox(height: GBTSpacing.xl),
-                Divider(color: Theme.of(context).colorScheme.outlineVariant),
+                if ((event.description ?? '').trim().isNotEmpty)
+                  ExpansionTile(
+                    title: Text(
+                      context.l10n(ko: '공연 정보', en: 'Event notes', ja: '公演情報'),
+                    ),
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(GBTSpacing.md),
+                        child: Text(event.description!),
+                      ),
+                    ],
+                  ),
+                ExpansionTile(
+                  title: Text(
+                    context.l10n(ko: '포스터', en: 'Poster', ja: 'ポスター'),
+                  ),
+                  children: [_EventPoster(event: event)],
+                ),
                 const SizedBox(height: GBTSpacing.md),
                 ContributorsCreditWidget(
                   entityType: 'lives',
                   entityId: event.id,
                 ),
-                const SizedBox(height: GBTSpacing.xxxl),
+                const SizedBox(height: GBTSpacing.xl),
               ],
             ),
           ),
-        ],
-      ),
+        ),
+        EventActionBar(
+          phase: phase,
+          onTicket: canTicket ? () => _openTicket(context, ticketUrl) : null,
+          onDirections: address.isEmpty ? null : openDirections,
+          onCheerGuide: openGuides,
+          onRecord: recordEnabled && !attendance.attendance.attended
+              ? toggleAttendance
+              : null,
+          onReport: () => context.goToPostCreate(),
+        ),
+      ],
     );
   }
 
@@ -284,11 +435,20 @@ class _FieldEventDetailContent extends ConsumerWidget {
     ({String projectId, String eventId}) attendanceContext,
     bool isAttended,
   ) async {
+    if (!ref.read(isAuthenticatedProvider) &&
+        !await ref.read(authenticationGateProvider)(context)) {
+      return;
+    }
+    if (!context.mounted) return;
+    final currentAttended = ref
+        .read(liveAttendanceByProjectControllerProvider(attendanceContext))
+        .attendance
+        .attended;
     final result = await ref
         .read(
           liveAttendanceByProjectControllerProvider(attendanceContext).notifier,
         )
-        .toggle(!isAttended);
+        .toggle(!currentAttended);
     if (!context.mounted || result.failureOrNull == null) return;
     final failure = result.failureOrNull!;
     final message = isLiveNotAttendableFailure(failure)
@@ -321,9 +481,9 @@ class _FieldEventDetailContent extends ConsumerWidget {
       SnackBar(
         content: Text(
           context.l10n(
-            ko: '티켓 링크를 열 수 없어요.',
-            en: 'Could not open the ticket link.',
-            ja: 'チケットリンクを開けませんでした。',
+            ko: '외부 링크를 열 수 없어요.',
+            en: 'Could not open the external link.',
+            ja: '外部リンクを開けませんでした。',
           ),
         ),
       ),
@@ -386,294 +546,144 @@ class FieldEventTicketDocument extends StatelessWidget {
     required this.onTicketTap,
     this.onVenueTap,
     this.onRescheduledTap,
+    this.showActions = true,
+    this.now,
   });
-
   final LiveEventDetail event;
   final LiveAttendanceViewState attendance;
   final VoidCallback? onAttendanceToggle;
   final VoidCallback? onTicketTap;
   final VoidCallback? onVenueTap;
-
-  /// EN: Opens the replacement event of a postponed show.
-  /// KO: 연기된 공연의 새 일정 이벤트를 엽니다.
   final VoidCallback? onRescheduledTap;
+  final bool showActions;
+  final DateTime? now;
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
     final locale = Localizations.localeOf(context).toLanguageTag();
-    final startsAt = event.showStartTime.toLocal();
-    final endTime = event.endTime?.toLocal();
-    final scheduleNotice = _scheduleNotice(context);
-    // EN: Undo stays available so pre-cancellation records can be removed.
-    // KO: 취소 전에 남긴 기록을 지울 수 있도록 되돌리기는 허용합니다.
+    final start = EventTimePolicy.inJst(event.showStartTime);
+    final phase = EventTimePolicy.phase(
+      start: event.showStartTime,
+      end: event.endTime,
+      now: now ?? DateTime.now(),
+    );
     final canToggle = event.isAttendable || attendance.attendance.attended;
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(GBTSpacing.radiusCard),
-        border: Border.all(color: colors.outline),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Container(height: 4, color: colors.primary),
-          Padding(
-            padding: const EdgeInsets.all(GBTSpacing.lg),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        event.status.toUpperCase(),
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: colors.primary,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1,
-                        ),
-                      ),
-                    ),
-                    LiveScheduleStatusBadge(status: event.scheduleStatus),
-                    const SizedBox(width: GBTSpacing.sm),
-                    Text(
-                      event.dDayLabel,
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: colors.primary,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: GBTSpacing.sm),
-                Text(
-                  event.title,
-                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: GBTSpacing.lg),
-                Divider(color: colors.outlineVariant),
-                const SizedBox(height: GBTSpacing.md),
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    final wide = constraints.maxWidth >= 480;
-                    final factWidth = wide
-                        ? (constraints.maxWidth - GBTSpacing.md) / 2
-                        : constraints.maxWidth;
-                    return Wrap(
-                      spacing: GBTSpacing.md,
-                      runSpacing: GBTSpacing.md,
-                      children: [
-                        SizedBox(
-                          width: factWidth,
-                          child: FieldEventFact(
-                            label: context.l10n(ko: '날짜', en: 'Date', ja: '日付'),
-                            value: DateFormat.yMMMMEEEEd(
-                              locale,
-                            ).format(startsAt),
-                            icon: Icons.calendar_today_outlined,
-                          ),
-                        ),
-                        SizedBox(
-                          width: factWidth,
-                          child: FieldEventFact(
-                            label: context.l10n(ko: '시간', en: 'Time', ja: '時間'),
-                            value: _timeLine(locale, startsAt, endTime),
-                            icon: Icons.schedule_rounded,
-                          ),
-                        ),
-                        SizedBox(
-                          width: factWidth,
-                          child: FieldEventFact(
-                            label: context.l10n(
-                              ko: '입장',
-                              en: 'Doors',
-                              ja: '開場',
-                            ),
-                            value: event.doorsOpenTime == null
-                                ? context.l10n(ko: '미정', en: 'TBD', ja: '未定')
-                                : DateFormat.Hm(
-                                    locale,
-                                  ).format(event.doorsOpenTime!.toLocal()),
-                            icon: Icons.meeting_room_outlined,
-                          ),
-                        ),
-                        SizedBox(
-                          width: factWidth,
-                          child: FieldEventFact(
-                            label: context.l10n(
-                              ko: '장소',
-                              en: 'Venue',
-                              ja: '会場',
-                            ),
-                            value: _eventVenueLabel(context, event),
-                            icon: Icons.place_outlined,
-                          ),
-                        ),
-                        SizedBox(
-                          width: factWidth,
-                          child: FieldEventFact(
-                            label: context.l10n(
-                              ko: '연결',
-                              en: 'Scope',
-                              ja: '連携',
-                            ),
-                            value: event.metaLabel,
-                            icon: Icons.groups_outlined,
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-                if (onVenueTap != null) ...[
-                  const SizedBox(height: GBTSpacing.md),
-                  Align(
-                    alignment: AlignmentDirectional.centerStart,
-                    child: TextButton.icon(
-                      onPressed: onVenueTap,
-                      icon: const Icon(Icons.map_outlined),
-                      label: Text(
-                        context.l10n(
-                          ko: '장소 상세 보기',
-                          en: 'View venue place',
-                          ja: '会場の場所を見る',
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
+    final times = <String>[
+      if (event.doorsOpenTime != null)
+        '${context.l10n(ko: '개장', en: 'Doors', ja: '開場')} ${DateFormat.Hm(locale).format(EventTimePolicy.inJst(event.doorsOpenTime!))}',
+      '${context.l10n(ko: '개연', en: 'Show', ja: '開演')} ${DateFormat.Hm(locale).format(start)}',
+      if (event.endTime != null && event.endTime!.isAfter(event.showStartTime))
+        '${context.l10n(ko: '종료', en: 'End', ja: '終演')} ${DateFormat.Hm(locale).format(EventTimePolicy.inJst(event.endTime!))}',
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        EventStatusBadges(
+          start: event.showStartTime,
+          end: event.endTime,
+          scheduleStatus: event.scheduleStatus,
+          attended: attendance.attendance.attended,
+          now: now,
+        ),
+        const SizedBox(height: GBTSpacing.md),
+        Text(
+          event.title,
+          style: Theme.of(
+            context,
+          ).textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.w900),
+        ),
+        const SizedBox(height: GBTSpacing.md),
+        FieldEventFact(
+          label: context.l10n(ko: '날짜 · JST', en: 'Date · JST', ja: '日付・JST'),
+          value: DateFormat.yMMMMEEEEd(locale).format(start),
+          icon: Icons.calendar_today_outlined,
+        ),
+        const SizedBox(height: GBTSpacing.md),
+        FieldEventFact(
+          label: context.l10n(
+            ko: '공연 시각 · JST',
+            en: 'Show times · JST',
+            ja: '公演時刻・JST',
           ),
-          _Perforation(color: colors.outlineVariant),
-          Padding(
-            padding: const EdgeInsets.all(GBTSpacing.md),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (scheduleNotice != null) ...[
-                  Text(
-                    scheduleNotice,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: event.isCancelled ? colors.error : colors.tertiary,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  if (event.rescheduledEventId != null &&
-                      onRescheduledTap != null)
-                    TextButton.icon(
-                      onPressed: onRescheduledTap,
-                      icon: const Icon(Icons.event_repeat_rounded),
-                      label: Text(
-                        context.l10n(
-                          ko: '새 일정 보기',
-                          en: 'View new date',
-                          ja: '新しい日程を見る',
-                        ),
-                      ),
-                    ),
-                  const SizedBox(height: GBTSpacing.sm),
-                ],
-                if (event.isAttendable) ...[
-                  Text(
-                    _attendanceStatusLabel(context, attendance),
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: colors.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: GBTSpacing.sm),
-                ],
-                FieldAttendanceStamp(
-                  attended: attendance.attendance.attended,
-                  canUndo: attendance.attendance.canUndo,
-                  isBusy: attendance.isLoading || attendance.isSubmitting,
-                  onToggle: canToggle ? onAttendanceToggle : null,
-                ),
-                if (!event.isCancelled) ...[
-                  const SizedBox(height: GBTSpacing.sm),
-                  OutlinedButton.icon(
-                    onPressed: onTicketTap,
-                    icon: const Icon(Icons.open_in_new_rounded),
-                    label: Text(
-                      onTicketTap == null
-                          ? context.l10n(
-                              ko: '티켓 정보 없음',
-                              en: 'No ticket information',
-                              ja: 'チケット情報なし',
-                            )
-                          : context.l10n(
-                              ko: '티켓 페이지 열기',
-                              en: 'Open ticket page',
-                              ja: 'チケットページを開く',
-                            ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
+          value: times.join('\n'),
+          icon: Icons.schedule,
+        ),
+        if (event.showStartTime.toLocal().timeZoneOffset !=
+            EventTimePolicy.jstOffset) ...[
+          const SizedBox(height: GBTSpacing.sm),
+          Text(
+            '${context.l10n(ko: '단말 현지 시각', en: 'Device local time', ja: '端末の現地時刻')}: ${DateFormat.yMd(locale).add_Hm().format(event.showStartTime.toLocal())} (${event.showStartTime.toLocal().timeZoneName})',
           ),
         ],
-      ),
+        if (event.isCancelled)
+          Padding(
+            padding: const EdgeInsets.only(top: GBTSpacing.md),
+            child: Text(liveCancelledMessage(context)),
+          ),
+        if (event.isPostponed)
+          Padding(
+            padding: const EdgeInsets.only(top: GBTSpacing.md),
+            child: Text(
+              context.l10n(
+                ko: event.rescheduledEventId == null
+                    ? '연기 — 새 일정 미정'
+                    : '연기 — 새 일정 확인',
+                en: event.rescheduledEventId == null
+                    ? 'Postponed — new date TBA'
+                    : 'Postponed — check the new date',
+                ja: event.rescheduledEventId == null
+                    ? '延期・新しい日程は未定'
+                    : '延期・新しい日程をご確認ください',
+              ),
+            ),
+          ),
+        if (event.isPostponed &&
+            event.rescheduledEventId != null &&
+            onRescheduledTap != null)
+          TextButton.icon(
+            onPressed: onRescheduledTap,
+            icon: const Icon(Icons.event_repeat),
+            label: Text(
+              context.l10n(ko: '새 일정 보기', en: 'View new date', ja: '新しい日程を見る'),
+            ),
+          ),
+        if (showActions) ...[
+          const SizedBox(height: GBTSpacing.md),
+          FieldEventFact(
+            label: context.l10n(ko: '장소', en: 'Venue', ja: '会場'),
+            value: _eventVenueLabel(context, event),
+            icon: Icons.place_outlined,
+          ),
+          if (onVenueTap != null)
+            TextButton(
+              onPressed: onVenueTap,
+              child: Text(
+                context.l10n(
+                  ko: '회장 상세',
+                  en: 'View venue place',
+                  ja: '会場の場所を見る',
+                ),
+              ),
+            ),
+          FieldAttendanceStamp(
+            attended: attendance.attendance.attended,
+            canUndo: attendance.attendance.canUndo,
+            isBusy: attendance.isLoading || attendance.isSubmitting,
+            onToggle: canToggle ? onAttendanceToggle : null,
+          ),
+          if (!event.isCancelled &&
+              phase != EventPhase.after &&
+              onTicketTap != null)
+            OutlinedButton.icon(
+              onPressed: onTicketTap,
+              icon: const Icon(Icons.open_in_new),
+              label: Text(
+                context.l10n(ko: '공식 티켓', en: 'Official tickets', ja: '公式チケット'),
+              ),
+            ),
+        ],
+      ],
     );
-  }
-
-  String _timeLine(String locale, DateTime startsAt, DateTime? endTime) {
-    final start = DateFormat.Hm(locale).format(startsAt);
-    if (endTime == null) return start;
-    return '$start – ${DateFormat.Hm(locale).format(endTime)}';
-  }
-
-  String? _scheduleNotice(BuildContext context) {
-    if (event.isCancelled) return liveCancelledMessage(context);
-    if (!event.isPostponed) return null;
-    if (event.rescheduledEventId == null) {
-      return context.l10n(
-        ko: '연기 — 새 일정 미정',
-        en: 'Postponed — new date TBA',
-        ja: '延期 — 新しい日程は未定',
-      );
-    }
-    return context.l10n(
-      ko: '이 공연은 연기되었습니다',
-      en: 'This show has been postponed',
-      ja: 'この公演は延期になりました',
-    );
-  }
-
-  String _attendanceStatusLabel(
-    BuildContext context,
-    LiveAttendanceViewState state,
-  ) {
-    if (state.isLoading) {
-      return context.l10n(
-        ko: '방문 상태를 확인하는 중입니다.',
-        en: 'Checking attendance status.',
-        ja: '参加状態を確認中です。',
-      );
-    }
-    return switch (LiveAttendanceStatus.normalize(state.attendance.status)) {
-      LiveAttendanceStatus.verified => context.l10n(
-        ko: '방문이 검증되었어요.',
-        en: 'Attendance is verified.',
-        ja: '参加が検証されました。',
-      ),
-      LiveAttendanceStatus.declared => context.l10n(
-        ko: '방문을 기록했어요. 검증 전입니다.',
-        en: 'Attendance is recorded and awaiting verification.',
-        ja: '参加を記録しました。検証待ちです。',
-      ),
-      _ => context.l10n(
-        ko: '이 공연을 여행 기록에 남겨보세요.',
-        en: 'Add this show to your travel record.',
-        ja: 'この公演を旅の記録に残しましょう。',
-      ),
-    };
   }
 }
 
@@ -693,41 +703,6 @@ String _eventVenueLabel(BuildContext context, LiveEventDetail event) {
     en: 'Not provided in event data',
     ja: 'イベントデータに未登録',
   );
-}
-
-class _Perforation extends StatelessWidget {
-  const _Perforation({required this.color});
-
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 12,
-          height: 24,
-          decoration: BoxDecoration(
-            color: Theme.of(context).scaffoldBackgroundColor,
-            borderRadius: const BorderRadius.horizontal(
-              right: Radius.circular(12),
-            ),
-          ),
-        ),
-        Expanded(child: Divider(color: color)),
-        Container(
-          width: 12,
-          height: 24,
-          decoration: BoxDecoration(
-            color: Theme.of(context).scaffoldBackgroundColor,
-            borderRadius: const BorderRadius.horizontal(
-              left: Radius.circular(12),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
 }
 
 class _EventDetailSkeleton extends StatelessWidget {

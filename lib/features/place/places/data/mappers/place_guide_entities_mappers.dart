@@ -20,3 +20,12 @@ extension PlaceGuideSummaryDtoDomainMapper on PlaceGuideSummaryDto {
     );
   }
 }
+
+extension PlaceGuideDetailDtoDomainMapper on PlaceGuideDetailDto {
+  PlaceGuideDetail toDomain() => PlaceGuideDetail(
+    id: id,
+    title: title,
+    contentMarkdown: contentMarkdown,
+    updatedAt: updatedAt,
+  );
+}

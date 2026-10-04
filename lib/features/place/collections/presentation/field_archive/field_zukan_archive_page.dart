@@ -6,12 +6,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:oshi_log/core/localization/locale_text.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
-import 'package:oshi_log/core/router/app_router.dart';
-import 'package:oshi_log/core/theme/theme.dart';
-import 'package:oshi_log/core/widgets/feedback/gbt_loading.dart';
-import 'package:oshi_log/core/widgets/navigation/gbt_standard_app_bar.dart';
+import 'package:oshi_log/platform/router/app_router.dart';
+import 'package:oshi_log/design_system/theme/theme.dart';
+import 'package:oshi_log/design_system/widgets/feedback/gbt_loading.dart';
+import 'package:oshi_log/design_system/widgets/navigation/gbt_standard_app_bar.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/projects_controller.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/domain/entities/project_entities.dart';
 import 'package:oshi_log/features/place/collections/application/zukan_controller.dart';
@@ -97,7 +97,7 @@ class FieldZukanArchivePage extends ConsumerWidget {
               ja: 'プロジェクトを読み込めませんでした',
             ),
             subtitle: context.l10n(
-              ko: '도감을 열려면 여행 프로젝트가 필요해요.',
+              ko: '스폿집을 열려면 여행 프로젝트가 필요해요.',
               en: 'A travel project is required to open the archive.',
               ja: 'アーカイブを開くには旅のプロジェクトが必要です。',
             ),
@@ -133,7 +133,7 @@ class FieldZukanArchivePage extends ConsumerWidget {
             return GBTEmptyState(
               icon: Icons.travel_explore_outlined,
               title: context.l10n(
-                ko: '도감을 열 프로젝트를 선택해 주세요',
+                ko: '스폿집을 열 프로젝트를 선택해 주세요',
                 en: 'Choose a project for the archive',
                 ja: 'アーカイブを開くプロジェクトを選択してください',
               ),

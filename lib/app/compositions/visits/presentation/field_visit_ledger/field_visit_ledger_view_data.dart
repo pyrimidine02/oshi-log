@@ -136,3 +136,42 @@ int _compareNewest(DateTime? a, DateTime? b) {
   final bValue = b ?? DateTime.fromMillisecondsSinceEpoch(0);
   return bValue.compareTo(aValue);
 }
+
+/// EN: A typed, namespaced record in the combined visit/attendance timeline.
+/// KO: 방문/참전 통합 타임라인의 유형과 네임스페이스를 가진 기록입니다.
+class UnifiedRecordEntry {
+  const UnifiedRecordEntry.visit(FieldPlaceLedgerEntry entry)
+    : visit = entry,
+      event = null;
+  const UnifiedRecordEntry.event(FieldEventLedgerEntry entry)
+    : event = entry,
+      visit = null;
+
+  final FieldPlaceLedgerEntry? visit;
+  final FieldEventLedgerEntry? event;
+  String get id => visit != null
+      ? 'visit:${visit!.visit.id}'
+      : 'attendance:${event!.record.projectKey}:${event!.record.attendanceId ?? event!.record.eventId}';
+  DateTime? get recordedAt => visit?.recordedAt ?? event?.recordedAt;
+}
+
+/// EN: Deduplicates within each source and sorts known dates newest first.
+/// KO: 소스별 중복을 제거하고 확인된 날짜를 최신순으로 정렬합니다.
+List<UnifiedRecordEntry> composeUnifiedRecords({
+  required Iterable<FieldPlaceLedgerEntry> visits,
+  required Iterable<FieldEventLedgerEntry> events,
+}) {
+  final records = <String, UnifiedRecordEntry>{};
+  for (final entry in [
+    ...visits.map(UnifiedRecordEntry.visit),
+    ...events.map(UnifiedRecordEntry.event),
+  ]) {
+    records[entry.id] = entry;
+  }
+  return List.unmodifiable(
+    records.values.toList()..sort((a, b) {
+      final dateOrder = _compareNewest(a.recordedAt, b.recordedAt);
+      return dateOrder == 0 ? a.id.compareTo(b.id) : dateOrder;
+    }),
+  );
+}

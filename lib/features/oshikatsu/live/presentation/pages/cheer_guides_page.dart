@@ -6,25 +6,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:oshi_log/core/localization/locale_text.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
-import 'package:oshi_log/core/theme/gbt_colors.dart';
-import 'package:oshi_log/core/theme/gbt_spacing.dart';
-import 'package:oshi_log/core/theme/gbt_typography.dart';
-import 'package:oshi_log/core/widgets/feedback/gbt_loading.dart';
-import 'package:oshi_log/core/widgets/navigation/gbt_standard_app_bar.dart';
+import 'package:oshi_log/design_system/theme/gbt_colors.dart';
+import 'package:oshi_log/design_system/theme/gbt_spacing.dart';
+import 'package:oshi_log/design_system/theme/gbt_typography.dart';
+import 'package:oshi_log/design_system/widgets/feedback/gbt_loading.dart';
+import 'package:oshi_log/design_system/widgets/navigation/gbt_standard_app_bar.dart';
 import 'package:oshi_log/features/oshikatsu/live/application/cheer_guides_controller.dart';
 import 'package:oshi_log/features/oshikatsu/live/domain/entities/cheer_guide.dart';
 
 /// EN: Displays the cheer guide list screen for the selected project.
 /// KO: 선택된 프로젝트의 응원 가이드 목록 화면을 표시합니다.
 class CheerGuidesPage extends ConsumerWidget {
-  const CheerGuidesPage({super.key});
+  const CheerGuidesPage({super.key, this.projectId});
+
+  final String? projectId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final projectId = ref.watch(selectedProjectKeyProvider);
+    final projectId = this.projectId ?? ref.watch(selectedProjectKeyProvider);
     final effectiveProjectId = projectId?.isNotEmpty == true ? projectId : null;
     final guidesAsync = ref.watch(cheerGuidesListProvider(effectiveProjectId));
 

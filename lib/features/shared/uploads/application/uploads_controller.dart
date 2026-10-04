@@ -6,17 +6,21 @@ import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:oshi_log/core/error/error_handler.dart';
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/logging/app_logger.dart';
-import 'package:oshi_log/core/providers/core_providers.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/error/error_handler.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/platform/logging/app_logger.dart';
+import 'package:oshi_log/platform/providers/core_providers.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/shared/uploads/data/datasources/uploads_remote_data_source.dart';
 import 'package:oshi_log/features/shared/uploads/data/repositories/uploads_repository_impl.dart';
 import 'package:oshi_log/features/shared/uploads/domain/entities/upload_entity.dart';
 import 'package:oshi_log/features/shared/uploads/domain/repositories/uploads_repository.dart';
 import 'upload_routing_policy.dart';
 import 'package:oshi_log/features/shared/uploads/utils/presigned_upload_helper.dart';
+
+const _staleUploadResult = Result<UploadInfo>.failure(
+  AuthFailure('Upload selection is no longer current', code: 'session_changed'),
+);
 
 /// EN: Controller for managing user uploads.
 /// KO: 사용자 업로드를 관리하는 컨트롤러.
@@ -71,11 +75,16 @@ class UploadsController extends StateNotifier<AsyncValue<List<UploadInfo>>> {
   ///
   /// EN: Image files (including GIF) always use direct multipart upload.
   /// KO: 이미지 파일(GIF 포함)은 항상 direct multipart 업로드를 사용합니다.
+  /// EN: An optional guard cancels stale selections before further I/O.
+  /// KO: 선택적 가드로 오래된 선택 항목의 후속 I/O를 중단합니다.
   Future<Result<UploadInfo>> uploadImageBytes({
     required Uint8List bytes,
     required String filename,
     required String contentType,
+    bool Function()? isCurrentOperation,
   }) async {
+    bool isCurrent() => mounted && (isCurrentOperation?.call() ?? true);
+    if (!isCurrent()) return _staleUploadResult;
     final normalizedFilename = filename.trim();
     final normalizedContentType = contentType.trim().toLowerCase();
     final validationFailure = _validateUploadRequest(
@@ -88,6 +97,7 @@ class UploadsController extends StateNotifier<AsyncValue<List<UploadInfo>>> {
     }
 
     final repository = await _ref.read(uploadsRepositoryProvider.future);
+    if (!isCurrent()) return _staleUploadResult;
 
     if (shouldUseDirectUploadForContentType(normalizedContentType)) {
       AppLogger.debug(
@@ -100,6 +110,7 @@ class UploadsController extends StateNotifier<AsyncValue<List<UploadInfo>>> {
         filename: normalizedFilename,
         contentType: normalizedContentType,
       );
+      if (!isCurrent()) return _staleUploadResult;
       if (directResult is Success<UploadInfo>) {
         _upsertUpload(directResult.data);
       }
@@ -113,7 +124,9 @@ class UploadsController extends StateNotifier<AsyncValue<List<UploadInfo>>> {
       bytes: bytes,
       filename: normalizedFilename,
       contentType: normalizedContentType,
+      isCurrentOperation: isCurrent,
     );
+    if (!isCurrent()) return _staleUploadResult;
 
     if (presignedResult is Success<UploadInfo>) {
       return presignedResult;
@@ -132,6 +145,7 @@ class UploadsController extends StateNotifier<AsyncValue<List<UploadInfo>>> {
           filename: normalizedFilename,
           contentType: normalizedContentType,
         );
+        if (!isCurrent()) return _staleUploadResult;
         if (directResult is Success<UploadInfo>) {
           _upsertUpload(directResult.data);
         }
@@ -201,12 +215,14 @@ class UploadsController extends StateNotifier<AsyncValue<List<UploadInfo>>> {
     required Uint8List bytes,
     required String filename,
     required String contentType,
+    required bool Function() isCurrentOperation,
   }) async {
     final presignedResult = await repository.requestPresignedUrl(
       filename: filename,
       contentType: contentType,
       size: bytes.length,
     );
+    if (!isCurrentOperation()) return _staleUploadResult;
     if (presignedResult is Err<PresignedUpload>) {
       return Result.failure(presignedResult.failure);
     }
@@ -226,8 +242,10 @@ class UploadsController extends StateNotifier<AsyncValue<List<UploadInfo>>> {
     } catch (e, stackTrace) {
       return Result.failure(ErrorHandler.mapException(e, stackTrace));
     }
+    if (!isCurrentOperation()) return _staleUploadResult;
 
     final confirmResult = await repository.confirmUpload(presigned.uploadId);
+    if (!isCurrentOperation()) return _staleUploadResult;
     if (confirmResult is Err<UploadConfirmation>) {
       return Result.failure(confirmResult.failure);
     }

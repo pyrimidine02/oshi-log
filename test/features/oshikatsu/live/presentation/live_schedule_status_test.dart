@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/theme/gbt_theme.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/design_system/theme/gbt_theme.dart';
 import 'package:oshi_log/features/oshikatsu/live/application/live_events_controller.dart';
 import 'package:oshi_log/features/oshikatsu/live/domain/entities/live_event_entities.dart';
 import 'package:oshi_log/features/oshikatsu/live/presentation/field_events/field_event_agenda_widgets.dart';
@@ -124,11 +124,11 @@ void main() {
       detail(LiveScheduleStatus.postponed, rescheduledId: 'live-2'),
     );
 
-    expect(find.text('연기'), findsOneWidget);
+    expect(find.text('변경 있음'), findsOneWidget);
     expect(find.text('새 일정 보기'), findsOneWidget);
     expect(taps.reschedules, 1);
     expect(taps.toggles, 0);
-    expect(find.text('티켓 페이지 열기'), findsOneWidget);
+    expect(find.text('공식 티켓'), findsOneWidget);
   });
 
   testWidgets('postponed detail without new event says date is TBA', (

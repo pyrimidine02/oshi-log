@@ -8,28 +8,29 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'package:oshi_log/core/constants/legal_policy_constants.dart';
-import 'package:oshi_log/core/localization/locale_text.dart';
-import 'package:oshi_log/core/location/location_notice_consent.dart';
-import 'package:oshi_log/core/providers/core_providers.dart';
+import 'package:oshi_log/platform/constants/legal_policy_constants.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
+import 'package:oshi_log/platform/location/location_notice_consent.dart';
+import 'package:oshi_log/platform/providers/core_providers.dart';
 import 'package:oshi_log/features/identity/auth/application/session_state.dart';
 import 'package:oshi_log/features/identity/account/application/app_preferences.dart';
 import 'package:oshi_log/features/identity/auth/application/legal_policies_provider.dart';
-import 'package:oshi_log/core/router/app_router.dart';
-import 'package:oshi_log/core/theme/gbt_colors.dart';
-import 'package:oshi_log/core/theme/gbt_spacing.dart';
-import 'package:oshi_log/core/theme/gbt_typography.dart';
-import 'package:oshi_log/core/utils/sensitive_text_utils.dart';
-import 'package:oshi_log/core/widgets/common/gbt_image.dart';
-import 'package:oshi_log/core/widgets/dialogs/gbt_adaptive_dialog.dart';
-import 'package:oshi_log/core/widgets/feedback/gbt_loading.dart';
-import 'package:oshi_log/core/widgets/navigation/gbt_app_bar_icon_button.dart';
-import 'package:oshi_log/core/widgets/navigation/gbt_standard_app_bar.dart';
+import 'package:oshi_log/platform/router/app_router.dart';
+import 'package:oshi_log/design_system/theme/gbt_colors.dart';
+import 'package:oshi_log/design_system/theme/gbt_spacing.dart';
+import 'package:oshi_log/design_system/theme/gbt_typography.dart';
+import 'package:oshi_log/platform/utils/sensitive_text_utils.dart';
+import 'package:oshi_log/design_system/widgets/common/gbt_image.dart';
+import 'package:oshi_log/design_system/widgets/dialogs/gbt_adaptive_dialog.dart';
+import 'package:oshi_log/design_system/widgets/feedback/gbt_loading.dart';
+import 'package:oshi_log/design_system/widgets/navigation/gbt_app_bar_icon_button.dart';
+import 'package:oshi_log/design_system/widgets/navigation/gbt_standard_app_bar.dart';
 import 'package:oshi_log/features/identity/auth/application/auth_controller.dart';
 import 'package:oshi_log/features/shared/ads/application/ads_controller.dart';
 import 'package:oshi_log/features/identity/account/application/settings_controller.dart';
 import 'package:oshi_log/features/identity/account/domain/entities/user_profile.dart';
 import 'package:oshi_log/features/identity/account/presentation/widgets/field_settings_components.dart';
+import '../widgets/locale_theme_sheet.dart';
 
 /// EN: Settings page widget with grouped layout and profile hero.
 /// KO: 그룹 레이아웃과 프로필 히어로가 있는 설정 페이지 위젯.
@@ -346,7 +347,7 @@ class SettingsPage extends ConsumerWidget {
                           : GBTColors.textTertiary,
                     ),
                   ),
-                  onTap: () => _showThemePicker(context, ref, themeMode),
+                  onTap: () => showLocaleThemeSheet(context),
                 ),
                 _SettingsRow(
                   icon: Icons.language_rounded,
@@ -360,7 +361,7 @@ class SettingsPage extends ConsumerWidget {
                           : GBTColors.textTertiary,
                     ),
                   ),
-                  onTap: () => _showLanguagePicker(context, ref, appLocale),
+                  onTap: () => showLocaleThemeSheet(context),
                   isLast: !isAuthenticated,
                 ),
                 if (isAuthenticated)
@@ -1061,293 +1062,6 @@ String _languageLabel(BuildContext context, Locale? locale) {
     'ja' => '日本語',
     _ => context.l10n(ko: '한국어', en: 'Korean', ja: '韓国語'),
   };
-}
-
-void _showThemePicker(BuildContext context, WidgetRef ref, String currentMode) {
-  final isDark = Theme.of(context).brightness == Brightness.dark;
-
-  showModalBottomSheet<void>(
-    context: context,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(
-        top: Radius.circular(GBTSpacing.radiusLg),
-      ),
-    ),
-    builder: (context) => SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: GBTSpacing.sm),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // EN: Drag handle
-            // KO: 드래그 핸들
-            Center(
-              child: Container(
-                width: 32,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: GBTSpacing.md),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? GBTColors.darkTextTertiary
-                      : GBTColors.textTertiary,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: GBTSpacing.md),
-              child: Text(
-                context.l10n(ko: '테마 설정', en: 'Theme', ja: 'テーマ設定'),
-                style: GBTTypography.titleSmall.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-            const SizedBox(height: GBTSpacing.sm),
-            _ThemeOption(
-              icon: Icons.settings_suggest_rounded,
-              label: context.l10n(ko: '시스템 설정', en: 'System', ja: 'システム'),
-              description: context.l10n(
-                ko: '기기 설정에 따라 자동 변경',
-                en: 'Follow device setting',
-                ja: '端末設定に合わせる',
-              ),
-              isSelected: currentMode == 'system',
-              onTap: () {
-                ref.read(themeModeProvider.notifier).state = 'system';
-                Navigator.of(context).pop();
-              },
-            ),
-            _ThemeOption(
-              icon: Icons.light_mode_rounded,
-              label: context.l10n(ko: '라이트 모드', en: 'Light mode', ja: 'ライトモード'),
-              description: context.l10n(
-                ko: '항상 밝은 테마 사용',
-                en: 'Always use light theme',
-                ja: '常にライトテーマを使用',
-              ),
-              isSelected: currentMode == 'light',
-              onTap: () {
-                ref.read(themeModeProvider.notifier).state = 'light';
-                Navigator.of(context).pop();
-              },
-            ),
-            _ThemeOption(
-              icon: Icons.dark_mode_rounded,
-              label: context.l10n(ko: '다크 모드', en: 'Dark mode', ja: 'ダークモード'),
-              description: context.l10n(
-                ko: '항상 어두운 테마 사용',
-                en: 'Always use dark theme',
-                ja: '常にダークテーマを使用',
-              ),
-              isSelected: currentMode == 'dark',
-              onTap: () {
-                ref.read(themeModeProvider.notifier).state = 'dark';
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
-}
-
-void _showLanguagePicker(BuildContext context, WidgetRef ref, Locale? current) {
-  final isDark = Theme.of(context).brightness == Brightness.dark;
-
-  showModalBottomSheet<void>(
-    context: context,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(
-        top: Radius.circular(GBTSpacing.radiusLg),
-      ),
-    ),
-    builder: (context) => SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: GBTSpacing.sm),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 32,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: GBTSpacing.md),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? GBTColors.darkTextTertiary
-                      : GBTColors.textTertiary,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: GBTSpacing.md),
-              child: Text(
-                context.l10n(ko: '언어 설정', en: 'Language', ja: '言語設定'),
-                style: GBTTypography.titleSmall.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-            const SizedBox(height: GBTSpacing.sm),
-            _ThemeOption(
-              icon: Icons.settings_suggest_rounded,
-              label: context.l10n(ko: '시스템 설정', en: 'System', ja: 'システム'),
-              description: context.l10n(
-                ko: '기기 언어 설정을 따릅니다',
-                en: 'Use device language',
-                ja: '端末の言語設定を使用',
-              ),
-              isSelected: current == null,
-              onTap: () async {
-                await ref.read(localeProvider.notifier).setLocale(null);
-                if (context.mounted) Navigator.of(context).pop();
-              },
-            ),
-            _ThemeOption(
-              icon: Icons.translate_rounded,
-              label: context.l10n(ko: '한국어', en: 'Korean', ja: '韓国語'),
-              description: context.l10n(
-                ko: '한국어로 표시합니다',
-                en: 'Display in Korean',
-                ja: '韓国語で表示します',
-              ),
-              isSelected: current?.languageCode == 'ko',
-              onTap: () async {
-                await ref
-                    .read(localeProvider.notifier)
-                    .setLocale(const Locale('ko', 'KR'));
-                if (context.mounted) Navigator.of(context).pop();
-              },
-            ),
-            _ThemeOption(
-              icon: Icons.translate_rounded,
-              label: 'English',
-              description: context.l10n(
-                ko: '영어로 표시합니다',
-                en: 'Display in English',
-                ja: '英語で表示します',
-              ),
-              isSelected: current?.languageCode == 'en',
-              onTap: () async {
-                await ref
-                    .read(localeProvider.notifier)
-                    .setLocale(const Locale('en', 'US'));
-                if (context.mounted) Navigator.of(context).pop();
-              },
-            ),
-            _ThemeOption(
-              icon: Icons.translate_rounded,
-              label: '日本語',
-              description: context.l10n(
-                ko: '일본어로 표시합니다',
-                en: 'Display in Japanese',
-                ja: '日本語で表示します',
-              ),
-              isSelected: current?.languageCode == 'ja',
-              onTap: () async {
-                await ref
-                    .read(localeProvider.notifier)
-                    .setLocale(const Locale('ja', 'JP'));
-                if (context.mounted) Navigator.of(context).pop();
-              },
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
-}
-
-/// EN: Theme option row with radio indicator.
-/// KO: 라디오 인디케이터가 있는 테마 옵션 행.
-class _ThemeOption extends StatelessWidget {
-  const _ThemeOption({
-    required this.icon,
-    required this.label,
-    required this.description,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final String description;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = isDark ? GBTColors.darkPrimary : GBTColors.primary;
-
-    return Semantics(
-      selected: isSelected,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: GBTSpacing.md,
-            vertical: GBTSpacing.sm + 2,
-          ),
-          child: Row(
-            children: [
-              Icon(
-                icon,
-                size: 22,
-                color: isSelected
-                    ? primaryColor
-                    : (isDark
-                          ? GBTColors.darkTextSecondary
-                          : GBTColors.textSecondary),
-              ),
-              const SizedBox(width: GBTSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      label,
-                      style: GBTTypography.bodyMedium.copyWith(
-                        fontWeight: isSelected
-                            ? FontWeight.w600
-                            : FontWeight.w400,
-                        color: isDark
-                            ? GBTColors.darkTextPrimary
-                            : GBTColors.textPrimary,
-                      ),
-                    ),
-                    Text(
-                      description,
-                      style: GBTTypography.labelSmall.copyWith(
-                        color: isDark
-                            ? GBTColors.darkTextTertiary
-                            : GBTColors.textTertiary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (isSelected)
-                Icon(Icons.check_circle_rounded, color: primaryColor, size: 22)
-              else
-                Icon(
-                  Icons.circle_outlined,
-                  color: isDark
-                      ? GBTColors.darkTextTertiary
-                      : GBTColors.textTertiary,
-                  size: 22,
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 Future<bool?> _showLogoutConfirm(BuildContext context) {

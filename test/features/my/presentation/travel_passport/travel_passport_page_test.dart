@@ -4,17 +4,59 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/oshikatsu/live/application/calendar_controller.dart';
 import 'package:oshi_log/features/oshikatsu/live/domain/entities/calendar_event.dart';
 import 'package:oshi_log/features/identity/progression/application/fan_level_controller.dart';
 import 'package:oshi_log/features/identity/progression/domain/entities/fan_level.dart';
 import 'package:oshi_log/features/identity/progression/domain/repositories/fan_level_repository.dart';
 import 'package:oshi_log/app/compositions/my/presentation/travel_passport/travel_passport_page.dart';
+import 'package:oshi_log/app/compositions/my/presentation/travel_passport/travel_passport_view.dart';
+import 'package:oshi_log/app/compositions/my/presentation/travel_passport/travel_passport_view_data.dart';
 import 'package:oshi_log/features/identity/account/application/settings_controller.dart';
 import 'package:oshi_log/features/identity/account/domain/entities/user_profile.dart';
 
 void main() {
+  testWidgets(
+    'one failed calendar month retains events and marks partial data unavailable',
+    (tester) async {
+      var calls = 0;
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            selectedProjectKeyProvider.overrideWith((ref) => 'band-project'),
+            userProfileControllerProvider.overrideWith(
+              (ref) => _StaticUserProfileController(ref, _profile()),
+            ),
+            fanLevelControllerProvider.overrideWith(
+              (ref) => _StaticFanLevelNotifier(_fanProfile()),
+            ),
+            calendarEventsProvider.overrideWith((ref, query) async {
+              if (++calls == 2) throw StateError('offline');
+              return [
+                CalendarEvent(
+                  id: 'event',
+                  title: 'Known event',
+                  date: DateTime.now().add(const Duration(days: 1)),
+                  type: CalendarEventType.live,
+                ),
+              ];
+            }),
+          ],
+          child: const MaterialApp(home: TravelPassportPage()),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final data = tester
+          .widget<TravelPassportView>(find.byType(TravelPassportView))
+          .data;
+      expect(data.scheduleStatus, PassportScheduleStatus.unavailable);
+      expect(data.upcomingStops.single.title, 'Known event');
+      expect(find.byKey(const Key('schedule-partial-failure')), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets('refresh stays active until both calendar months finish', (
     tester,
   ) async {

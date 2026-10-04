@@ -5,8 +5,8 @@ library;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:oshi_log/core/location/location_notice_consent.dart';
-import 'package:oshi_log/core/storage/local_storage.dart';
+import 'package:oshi_log/platform/location/location_notice_consent.dart';
+import 'package:oshi_log/platform/storage/local_storage.dart';
 
 Future<LocationNoticeConsentStore> buildStore() async {
   SharedPreferences.setMockInitialValues({});

@@ -4,6 +4,8 @@ library;
 
 import 'dart:collection';
 
+import '../../domain/event_time_policy.dart';
+
 import 'package:oshi_log/features/oshikatsu/live/domain/entities/live_event_entities.dart';
 
 /// EN: Event time horizon shown by the event desk.
@@ -40,14 +42,13 @@ class FieldEventFilter {
 /// EN: Returns the event end used to decide which desk it belongs to.
 /// KO: 이벤트가 어느 데스크에 속할지 결정할 때 사용하는 종료 시각입니다.
 ///
-/// EN: An end before the start is malformed and falls back to the start.
-/// KO: 시작보다 이른 종료 시각은 잘못된 값이므로 시작 시각으로 대체합니다.
+/// EN: Unknown or malformed ends stay visible through the JST event day.
+/// KO: 종료 미정 또는 잘못된 종료값은 공연일의 JST 자정까지 표시합니다.
 DateTime effectiveFieldEventEnd(LiveEventSummary event) {
-  final end = event.endTime;
-  if (end != null && !end.isBefore(event.showStartTime)) {
-    return end;
-  }
-  return event.showStartTime;
+  return EventTimePolicy.effectiveEnd(
+    start: event.showStartTime,
+    end: event.endTime,
+  );
 }
 
 /// EN: Keeps an event upcoming while its effective show window is open.
@@ -70,7 +71,7 @@ List<LiveEventSummary> selectFieldEvents(
         if (filter.mode == FieldEventMode.upcoming && !isUpcoming) return false;
         if (filter.mode == FieldEventMode.archive && isUpcoming) return false;
         if (filter.year != null &&
-            event.showStartTime.toLocal().year != filter.year) {
+            EventTimePolicy.inJst(event.showStartTime).year != filter.year) {
           return false;
         }
         if (filter.unitIds.isNotEmpty &&
@@ -98,7 +99,7 @@ List<int> completedFieldEventYears(
   final years =
       events
           .where((event) => !isFieldEventUpcoming(event, now: reference))
-          .map((event) => event.showStartTime.toLocal().year)
+          .map((event) => EventTimePolicy.inJst(event.showStartTime).year)
           .toSet()
           .toList()
         ..sort((first, second) => second.compareTo(first));

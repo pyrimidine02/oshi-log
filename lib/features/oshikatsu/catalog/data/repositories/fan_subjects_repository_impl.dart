@@ -2,7 +2,7 @@
 /// KO: 팬 대상 전송 계약을 불변 도메인 객체로 변환합니다.
 library;
 
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import '../../domain/entities/fan_subject.dart';
 import '../../domain/repositories/fan_subjects_repository.dart';
 import '../datasources/fan_subjects_remote_data_source.dart';

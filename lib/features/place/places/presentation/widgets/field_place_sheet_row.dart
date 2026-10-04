@@ -4,9 +4,9 @@ library;
 
 import 'package:flutter/material.dart';
 
-import 'package:oshi_log/core/localization/locale_text.dart';
-import 'package:oshi_log/core/theme/gbt_spacing.dart';
-import 'package:oshi_log/core/widgets/common/gbt_image.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
+import 'package:oshi_log/design_system/theme/gbt_spacing.dart';
+import 'package:oshi_log/design_system/widgets/common/gbt_image.dart';
 
 /// EN: Presents one place as an editorial row rather than a floating card.
 /// KO: 하나의 장소를 플로팅 카드가 아닌 에디토리얼 행으로 표시합니다.

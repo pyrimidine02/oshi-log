@@ -8,13 +8,56 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import 'package:oshi_log/core/providers/core_providers.dart'
+import 'package:oshi_log/platform/providers/core_providers.dart'
     show localStorageProvider;
 
 /// EN: Theme mode provider (light/dark/system)
 /// KO: 테마 모드 프로바이더 (라이트/다크/시스템)
-final themeModeProvider = StateProvider<String>((ref) {
-  return 'system';
+final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, String>((
+  ref,
+) {
+  return ThemeModeNotifier(ref);
+});
+
+/// EN: Restores and persists theme without overriding a newer user choice.
+/// KO: 새로운 사용자 선택을 덮지 않으면서 테마를 복원하고 저장합니다.
+class ThemeModeNotifier extends StateNotifier<String> {
+  ThemeModeNotifier(this._ref) : super('system') {
+    unawaited(_load());
+  }
+
+  final Ref _ref;
+  int _revision = 0;
+
+  Future<void> _load() async {
+    try {
+      final storage = await _ref.read(localStorageProvider.future);
+      if (!mounted || _revision != 0) return;
+      final saved = storage.getThemeMode();
+      state = saved == 'light' || saved == 'dark' ? saved! : 'system';
+    } on Object {
+      // EN: Storage failure keeps the usable system default.
+      // KO: 저장소 오류 시 사용 가능한 시스템 기본값을 유지합니다.
+    }
+  }
+
+  Future<void> setMode(String mode) async {
+    final value = mode == 'light' || mode == 'dark' ? mode : 'system';
+    final revision = ++_revision;
+    state = value;
+    final storage = await _ref.read(localStorageProvider.future);
+    if (revision != _revision) return;
+    if (!await storage.setThemeMode(value)) {
+      throw StateError('Theme preference could not be saved');
+    }
+  }
+}
+
+/// EN: Local first-run completion, independent of authentication.
+/// KO: 로그인 여부와 독립적인 로컬 첫 실행 완료 상태입니다.
+final firstRunCompletedProvider = FutureProvider<bool>((ref) async {
+  final storage = await ref.watch(localStorageProvider.future);
+  return storage.isOnboardingCompleted();
 });
 
 /// EN: Locale state notifier.
@@ -25,23 +68,33 @@ class LocaleNotifier extends StateNotifier<Locale?> {
   }
 
   final Ref _ref;
+  int _revision = 0;
 
   Future<void> _loadPersistedLocale() async {
-    final storage = await _ref.read(localStorageProvider.future);
-    final stored = storage.getLocale();
-    final locale = _parseStoredLocale(stored);
-    state = locale;
-    Intl.defaultLocale = _intlLocaleTag(locale);
+    try {
+      final storage = await _ref.read(localStorageProvider.future);
+      if (!mounted || _revision != 0) return;
+      final locale = _parseStoredLocale(storage.getLocale());
+      state = locale;
+      Intl.defaultLocale = _intlLocaleTag(locale);
+    } on Object {
+      // EN: Storage failure keeps the usable system default.
+      // KO: 저장소 오류 시 사용 가능한 시스템 기본값을 유지합니다.
+    }
   }
 
   /// EN: Set locale and persist user preference.
   /// KO: 로케일을 설정하고 사용자 선호도를 저장합니다.
   Future<void> setLocale(Locale? locale) async {
+    final revision = ++_revision;
     state = locale;
     Intl.defaultLocale = _intlLocaleTag(locale);
     final storage = await _ref.read(localStorageProvider.future);
+    if (revision != _revision) return;
     final value = locale == null ? 'system' : locale.languageCode;
-    await storage.setLocale(value);
+    if (!await storage.setLocale(value)) {
+      throw StateError('Language preference could not be saved');
+    }
   }
 
   /// EN: Set locale by language code (`ko`, `en`, `ja`), or `system`.

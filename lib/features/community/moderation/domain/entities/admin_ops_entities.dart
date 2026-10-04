@@ -2,7 +2,7 @@
 /// KO: 운영/관리자 기능 도메인 엔티티.
 library;
 
-import 'package:oshi_log/core/security/user_access_level.dart';
+import 'package:oshi_log/platform/security/user_access_level.dart';
 
 /// EN: Community report moderation status.
 /// KO: 커뮤니티 신고 처리 상태.

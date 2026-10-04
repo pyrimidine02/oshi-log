@@ -15,19 +15,20 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'app/bootstrap/push_auth_sync.dart';
+import 'app/compositions/onboarding/first_run_coordinator.dart';
 import 'app/compositions/notifications/in_app_notification_banner.dart';
 import 'app/compositions/notifications/notification_coordinator.dart';
-import 'core/connectivity/connectivity_service.dart';
-import 'core/localization/locale_resolution.dart';
-import 'core/localization/locale_text.dart';
-import 'core/providers/core_providers.dart';
-import 'core/telemetry/telemetry_event_types.dart';
-import 'core/telemetry/telemetry_service.dart';
+import 'platform/connectivity/connectivity_service.dart';
+import 'design_system/localization/locale_resolution.dart';
+import 'design_system/localization/locale_text.dart';
+import 'platform/providers/core_providers.dart';
+import 'platform/telemetry/telemetry_event_types.dart';
+import 'platform/telemetry/telemetry_service.dart';
 import 'app/router/app_router.dart';
-import 'core/theme/gbt_colors.dart';
-import 'core/theme/gbt_spacing.dart';
-import 'core/theme/gbt_typography.dart';
-import 'core/theme/gbt_theme.dart';
+import 'design_system/theme/gbt_colors.dart';
+import 'design_system/theme/gbt_spacing.dart';
+import 'design_system/theme/gbt_typography.dart';
+import 'design_system/theme/gbt_theme.dart';
 import 'package:oshi_log/features/identity/auth/application/session_state.dart';
 import 'package:oshi_log/features/shared/notifications/application/in_app_notification_queue.dart';
 import 'package:oshi_log/features/shared/notifications/application/notification_delivery.dart';
@@ -253,7 +254,10 @@ class GBTApp extends ConsumerWidget {
                     child: _TelemetryLifecycleBridge(
                       child: _NotificationsLifecycleBridge(
                         child: _ConnectivityWrapper(
-                          child: child ?? const SizedBox.shrink(),
+                          child: FirstRunCoordinator(
+                            router: router,
+                            child: child ?? const SizedBox.shrink(),
+                          ),
                         ),
                       ),
                     ),

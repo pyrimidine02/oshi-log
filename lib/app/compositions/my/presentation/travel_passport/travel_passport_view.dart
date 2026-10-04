@@ -4,10 +4,10 @@ library;
 
 import 'package:flutter/material.dart';
 
-import '../../../../../core/localization/locale_text.dart';
-import '../../../../../core/theme/gbt_colors.dart';
-import '../../../../../core/theme/gbt_spacing.dart';
-import '../../../../../core/widgets/layout/gbt_page_header.dart';
+import '../../../../../design_system/localization/locale_text.dart';
+import '../../../../../design_system/theme/gbt_colors.dart';
+import '../../../../../design_system/theme/gbt_spacing.dart';
+import '../../../../../design_system/widgets/layout/gbt_page_header.dart';
 import './passport_document.dart';
 import './passport_sections.dart';
 import './travel_passport_view_data.dart';
@@ -27,6 +27,8 @@ class TravelPassportView extends StatelessWidget {
     required this.onOpenCollection,
     required this.onOpenBookmarks,
     required this.onOpenFavorites,
+    this.onOpenToday,
+    this.onOpenTrips,
   });
 
   final TravelPassportViewData data;
@@ -39,6 +41,8 @@ class TravelPassportView extends StatelessWidget {
   final VoidCallback onOpenCollection;
   final VoidCallback onOpenBookmarks;
   final VoidCallback onOpenFavorites;
+  final VoidCallback? onOpenToday;
+  final VoidCallback? onOpenTrips;
 
   @override
   Widget build(BuildContext context) {
@@ -112,16 +116,21 @@ class TravelPassportView extends StatelessWidget {
                             _PassportLoadNotice(onRetry: onRefresh),
                           ],
                           const SizedBox(height: GBTSpacing.lg),
-                          JourneyLedger(
-                            data: data.ledger,
-                            profileStatus: data.profileStatus,
-                          ),
-                          const SizedBox(height: GBTSpacing.lg),
                           NextStopsSection(
                             stops: data.upcomingStops,
                             scheduleStatus: data.scheduleStatus,
                             onOpenCalendar: onOpenCalendar,
                             onOpenStop: onOpenStop,
+                          ),
+                          const SizedBox(height: GBTSpacing.lg),
+                          MySavedSection(
+                            onOpenFavorites: onOpenFavorites,
+                            onOpenBookmarks: onOpenBookmarks,
+                          ),
+                          const SizedBox(height: GBTSpacing.lg),
+                          JourneyLedger(
+                            data: data.ledger,
+                            profileStatus: data.profileStatus,
                           ),
                           const SizedBox(height: GBTSpacing.lg),
                           TravelArchiveSection(
@@ -131,6 +140,8 @@ class TravelPassportView extends StatelessWidget {
                             onOpenCollection: onOpenCollection,
                             onOpenBookmarks: onOpenBookmarks,
                             onOpenFavorites: onOpenFavorites,
+                            onOpenToday: onOpenToday,
+                            onOpenTrips: onOpenTrips,
                           ),
                         ],
                       ),

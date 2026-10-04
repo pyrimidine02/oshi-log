@@ -7,11 +7,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
-import '../../../../../core/router/app_router.dart';
+import '../../../../../platform/router/app_router.dart';
 import 'package:oshi_log/features/oshikatsu/live/application/calendar_controller.dart';
 import 'package:oshi_log/features/oshikatsu/live/domain/entities/calendar_event.dart';
 import 'package:oshi_log/features/identity/progression/application/fan_level_controller.dart';
 import 'package:oshi_log/features/identity/account/application/settings_controller.dart';
+import 'package:oshi_log/features/oshikatsu/live/domain/event_time_policy.dart';
 import './travel_passport_view.dart';
 import './travel_passport_view_data.dart';
 
@@ -23,16 +24,17 @@ class TravelPassportPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final now = DateTime.now();
+    final scheduleDay = EventTimePolicy.inJst(now);
     final selectedProjectKey = ref.watch(selectedProjectKeyProvider);
     final projectKey = selectedProjectKey?.isNotEmpty == true
         ? selectedProjectKey
         : null;
     final CalendarEventsQuery currentQuery = (
-      year: now.year,
-      month: now.month,
+      year: scheduleDay.year,
+      month: scheduleDay.month,
       projectKey: projectKey,
     );
-    final nextMonth = DateTime(now.year, now.month + 1);
+    final nextMonth = DateTime(scheduleDay.year, scheduleDay.month + 1);
     final CalendarEventsQuery nextQuery = (
       year: nextMonth.year,
       month: nextMonth.month,
@@ -53,12 +55,13 @@ class TravelPassportPage extends ConsumerWidget {
         currentEventsState.valueOrNull ?? const <CalendarEvent>[];
     final nextEvents = nextEventsState.valueOrNull ?? const <CalendarEvent>[];
     final hasCalendarEvents = currentEvents.isNotEmpty || nextEvents.isNotEmpty;
-    final scheduleStatus = hasCalendarEvents
+    final scheduleStatus =
+        currentEventsState.hasError || nextEventsState.hasError
+        ? PassportScheduleStatus.unavailable
+        : hasCalendarEvents
         ? PassportScheduleStatus.ready
         : currentEventsState.isLoading || nextEventsState.isLoading
         ? PassportScheduleStatus.loading
-        : currentEventsState.hasError || nextEventsState.hasError
-        ? PassportScheduleStatus.unavailable
         : PassportScheduleStatus.ready;
     final data = TravelPassportViewData.fromDomain(
       profile: profile,
@@ -100,6 +103,8 @@ class TravelPassportPage extends ConsumerWidget {
       onOpenCollection: () => context.pushNamed(AppRoutes.zukan),
       onOpenBookmarks: context.goToPostBookmarks,
       onOpenFavorites: () => context.pushNamed(AppRoutes.favorites),
+      onOpenToday: () => context.push('/mypage/today'),
+      onOpenTrips: () => context.push('/mypage/trips'),
     );
   }
 }

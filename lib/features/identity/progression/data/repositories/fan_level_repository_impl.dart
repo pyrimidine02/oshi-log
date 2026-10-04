@@ -2,9 +2,9 @@
 /// KO: 원격 API를 기반으로 한 [FanLevelRepository]의 구체적인 구현체.
 library;
 
-import 'package:oshi_log/core/error/error_handler.dart';
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/error/error_handler.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/identity/progression/domain/entities/fan_level.dart';
 import 'package:oshi_log/features/identity/progression/domain/repositories/fan_level_repository.dart';
 import 'package:oshi_log/features/identity/progression/data/datasources/fan_level_remote_data_source.dart';

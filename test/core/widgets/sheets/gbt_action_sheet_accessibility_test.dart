@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:oshi_log/core/theme/gbt_theme.dart';
-import 'package:oshi_log/core/widgets/sheets/gbt_bottom_sheet.dart';
+import 'package:oshi_log/design_system/theme/gbt_theme.dart';
+import 'package:oshi_log/design_system/widgets/sheets/gbt_bottom_sheet.dart';
 
 void main() {
   testWidgets('action menu scrolls to cancel at 320dp and 200 percent text', (

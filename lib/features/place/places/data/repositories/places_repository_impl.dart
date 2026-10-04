@@ -2,12 +2,12 @@
 /// KO: 캐시 정책을 포함한 장소 리포지토리 구현.
 library;
 
-import 'package:oshi_log/core/cache/cache_manager.dart';
-import 'package:oshi_log/core/cache/cache_profiles.dart';
-import 'package:oshi_log/core/constants/api_constants.dart';
-import 'package:oshi_log/core/error/error_handler.dart';
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/cache/cache_manager.dart';
+import 'package:oshi_log/platform/cache/cache_profiles.dart';
+import 'package:oshi_log/platform/constants/api_constants.dart';
+import 'package:oshi_log/platform/error/error_handler.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/place/places/domain/entities/place_comment_entities.dart';
 import 'package:oshi_log/features/place/places/domain/entities/place_entities.dart';
 import 'package:oshi_log/features/place/places/domain/entities/place_guide_entities.dart';
@@ -271,6 +271,12 @@ class PlacesRepositoryImpl implements PlacesRepository {
     final policy = profile.policyFor(forceRefresh: forceRefresh);
 
     try {
+      // EN: Capture the displayed snapshot before background revalidation.
+      // KO: 백그라운드 재검증 전에 표시할 스냅샷 시각을 보존합니다.
+      final previous = _cacheManager.getJsonEntry(
+        cacheKey,
+        fromJson: PlaceDetailDto.fromJson,
+      );
       final cacheResult = await _cacheManager.resolve<PlaceDetailDto>(
         key: cacheKey,
         policy: policy,
@@ -281,14 +287,35 @@ class PlacesRepositoryImpl implements PlacesRepository {
         fromJson: (json) => PlaceDetailDto.fromJson(json),
       );
 
+      final savedAt = cacheResult.isFromCache
+          ? previous?.cachedAt
+          : _cacheManager
+                .getJsonEntry(cacheKey, fromJson: PlaceDetailDto.fromJson)
+                ?.cachedAt;
       PlaceStatsDto? stats;
       try {
-        stats = await _fetchPlaceStats(projectId, placeId);
+        final result = await _cacheManager.resolve<PlaceStatsDto>(
+          key: 'place_stats:$projectId:$placeId',
+          policy: policy,
+          ttl: profile.ttl,
+          revalidateAfter: profile.revalidateAfter,
+          fetcher: () => _fetchPlaceStats(projectId, placeId),
+          toJson: (dto) => dto.toJson(),
+          fromJson: PlaceStatsDto.fromJson,
+        );
+        stats = result.data;
       } catch (_) {
         stats = null;
       }
 
-      return Result.success(cacheResult.data.toDomain(stats: stats));
+      return Result.success(
+        cacheResult.data.toDomain(
+          stats: stats,
+          savedAt: savedAt,
+          isFromCache: cacheResult.isFromCache,
+          isCacheStale: cacheResult.isStale,
+        ),
+      );
     } catch (e, stackTrace) {
       final failure = ErrorHandler.mapException(e, stackTrace);
       return Result.failure(failure);
@@ -441,6 +468,73 @@ class PlacesRepositoryImpl implements PlacesRepository {
       return Result.success(entities);
     } catch (e, stackTrace) {
       return Result.failure(ErrorHandler.mapException(e, stackTrace));
+    }
+  }
+
+  @override
+  Future<Result<PlaceGuideDetail>> getPlaceGuide({
+    required String placeId,
+    required String guideId,
+    bool forceRefresh = false,
+  }) async {
+    try {
+      final result = await _cacheManager.resolve<PlaceGuideDetailDto>(
+        key: 'place_guide:$placeId:$guideId',
+        policy: CacheProfiles.placeGuides.policyFor(forceRefresh: forceRefresh),
+        ttl: CacheProfiles.placeGuides.ttl,
+        revalidateAfter: CacheProfiles.placeGuides.revalidateAfter,
+        fetcher: () async {
+          final result = await _remoteDataSource.fetchPlaceGuide(
+            placeId: placeId,
+            guideId: guideId,
+          );
+          if (result is Success<PlaceGuideDetailDto>) return result.data;
+          throw (result as Err<PlaceGuideDetailDto>).failure;
+        },
+        toJson: (dto) => dto.toJson(),
+        fromJson: PlaceGuideDetailDto.fromJson,
+      );
+      return Result.success(result.data.toDomain());
+    } catch (e, stack) {
+      return Result.failure(ErrorHandler.mapException(e, stack));
+    }
+  }
+
+  @override
+  Future<Result<List<PlaceComment>>> getPlaceTips({
+    required String placeId,
+    required PlaceTipCategory category,
+    bool forceRefresh = false,
+  }) async {
+    try {
+      final result = await _cacheManager.resolve<List<PlaceCommentDetailDto>>(
+        key: 'place_tips:$placeId:${category.name}',
+        policy: CacheProfiles.placeComments.policyFor(
+          forceRefresh: forceRefresh,
+        ),
+        ttl: CacheProfiles.placeComments.ttl,
+        revalidateAfter: CacheProfiles.placeComments.revalidateAfter,
+        fetcher: () async {
+          final result = await _remoteDataSource.fetchPlaceTips(
+            placeId: placeId,
+            category: category,
+          );
+          if (result is Success<List<PlaceCommentDetailDto>>) {
+            return result.data;
+          }
+          throw (result as Err<List<PlaceCommentDetailDto>>).failure;
+        },
+        toJson: (items) => {'items': items.map((e) => e.toJson()).toList()},
+        fromJson: (json) => (json['items'] as List)
+            .map(
+              (item) =>
+                  PlaceCommentDetailDto.fromJson(item as Map<String, dynamic>),
+            )
+            .toList(),
+      );
+      return Result.success(result.data.map((dto) => dto.toDomain()).toList());
+    } catch (e, stack) {
+      return Result.failure(ErrorHandler.mapException(e, stack));
     }
   }
 

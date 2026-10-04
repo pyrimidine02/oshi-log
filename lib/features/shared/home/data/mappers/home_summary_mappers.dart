@@ -4,7 +4,7 @@
 library;
 
 import 'package:intl/intl.dart';
-import '../../../../../core/utils/media_url.dart';
+import '../../../../../platform/utils/media_url.dart';
 import '../dto/home_summary_dto.dart';
 import '../../domain/entities/home_summary.dart';
 

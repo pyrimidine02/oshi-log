@@ -6,12 +6,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-import 'package:oshi_log/core/providers/core_providers.dart';
+import 'package:oshi_log/platform/providers/core_providers.dart';
 import 'package:oshi_log/app/router/app_router.dart';
-import 'package:oshi_log/core/security/secure_storage.dart';
-import 'package:oshi_log/core/storage/local_storage.dart';
-import 'package:oshi_log/core/theme/gbt_theme.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/security/secure_storage.dart';
+import 'package:oshi_log/platform/storage/local_storage.dart';
+import 'package:oshi_log/design_system/theme/gbt_theme.dart';
+import 'package:oshi_log/features/identity/auth/application/session_state.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/community/news/application/field_guide_updates_provider.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/field_guide_artists_provider.dart';
 import 'package:oshi_log/features/oshikatsu/music/application/music_controller.dart';
@@ -117,6 +118,7 @@ void main() {
           ).thenAnswer((_) => lyricsResponse.future);
           final container = ProviderContainer(
             overrides: [
+              isAuthenticatedProvider.overrideWithValue(true),
               secureStorageProvider.overrideWithValue(SecureStorage()),
               localStorageProvider.overrideWith(
                 (ref) => Completer<LocalStorage>().future,
@@ -135,8 +137,9 @@ void main() {
             ],
           );
           addTearDown(container.dispose);
-          final router = container.read(appRouterProvider)..go('/information');
-          addTearDown(router.dispose);
+          final router = container.read(
+            appRouterProvider,
+          )..go('/live/music?archiveSection=${fromAlbum ? 'albums' : 'songs'}');
           await tester.pumpWidget(
             UncontrolledProviderScope(
               container: container,
@@ -154,12 +157,10 @@ void main() {
             ),
           );
           await tester.pumpAndSettle();
-          await tester.tap(find.byKey(const Key('field-guide-section-kit')));
-          await tester.pumpAndSettle();
-          await tester.tap(find.byKey(const Key('field-kit-route-music')));
-          await tester.pumpAndSettle();
-          await tester.tap(find.text(fromAlbum ? albumTitle : '곡'));
-          await tester.pumpAndSettle();
+          if (fromAlbum) {
+            await tester.tap(find.text(albumTitle));
+            await tester.pumpAndSettle();
+          }
           expect(find.text(songTitle), findsOneWidget);
           await tester.tap(find.text(songTitle));
           await tester.pump();

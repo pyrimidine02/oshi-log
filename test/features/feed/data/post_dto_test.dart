@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:oshi_log/core/models/post_dto.dart';
+import 'package:oshi_log/platform/models/post_dto.dart';
 
 void main() {
   test('PostSummaryDto parses swagger keys', () {

@@ -1,6 +1,6 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:oshi_log/core/security/secure_storage.dart';
+import 'package:oshi_log/platform/security/secure_storage.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

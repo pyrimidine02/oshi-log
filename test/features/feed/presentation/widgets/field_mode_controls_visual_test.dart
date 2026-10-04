@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
-import 'package:oshi_log/core/theme/gbt_theme.dart';
+import 'package:oshi_log/design_system/theme/gbt_theme.dart';
 import 'package:oshi_log/features/community/posts/application/board_controller.dart';
 import 'package:oshi_log/app/compositions/community/presentation/field_community/widgets/field_community_mode_bar.dart';
 import 'package:oshi_log/app/compositions/guide/presentation/field_guide/widgets/field_guide_section_switcher.dart';

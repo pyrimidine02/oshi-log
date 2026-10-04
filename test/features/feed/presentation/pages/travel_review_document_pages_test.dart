@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/utils/result.dart';
+import 'package:oshi_log/platform/error/failure.dart';
 import 'package:oshi_log/features/community/reviews/application/travel_reviews_controller.dart';
 import 'package:oshi_log/features/community/posts/domain/entities/feed_entities.dart';
 import 'package:oshi_log/features/community/reviews/domain/entities/travel_review.dart';
@@ -65,6 +66,8 @@ void main() {
       await tester.pump();
 
       expect(find.text('오늘의 순례를 기록하세요'), findsOneWidget);
+      expect(find.textContaining('장소를 1곳 이상'), findsOneWidget);
+      expect(find.textContaining('즉시 공개'), findsOneWidget);
       expect(find.text('FIELD REPORT'), findsNothing);
       expect(find.text('TRAVEL NOTE'), findsNothing);
       expect(find.text('TRIP CONTEXT'), findsNothing);
@@ -259,10 +262,54 @@ void main() {
     expect(find.byType(TravelReviewEditSheet), findsNothing);
     expect(tester.takeException(), isNull);
   });
+  for (final throws in [false, true]) {
+    testWidgets('failed review edit keeps input and retry (throws: $throws)', (
+      tester,
+    ) async {
+      final repository = _FakeTravelReviewsRepository()
+        ..failUpdate = true
+        ..throwUpdate = throws;
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            travelReviewsRepositoryProvider.overrideWithValue(repository),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: TravelReviewEditSheet(
+                projectCode: 'bang-dream',
+                review: _detail(),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.enterText(find.byType(TextField).at(0), 'Edited title');
+      await tester.enterText(find.byType(TextField).at(1), 'Retained body');
+      await tester.enterText(find.byType(TextField).at(2), 'Retained route');
+      await tester.ensureVisible(find.byType(FilledButton));
+      await tester.tap(find.byType(FilledButton));
+      await tester.pumpAndSettle();
+      expect(find.text('Edited title'), findsOneWidget);
+      expect(find.text('Retained body'), findsOneWidget);
+      expect(find.text('Retained route'), findsOneWidget);
+      expect(find.textContaining('Your input is still here'), findsOneWidget);
+      expect(
+        tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+        isNotNull,
+      );
+      await tester.tap(find.byType(FilledButton));
+      await tester.pumpAndSettle();
+      expect(repository.updateAttempts, 2);
+    });
+  }
 }
 
 class _FakeTravelReviewsRepository implements TravelReviewsRepository {
   String? lastDetailProjectCode;
+  bool failUpdate = false;
+  bool throwUpdate = false;
+  int updateAttempts = 0;
 
   @override
   Future<Result<TravelReviewDetail>> create({
@@ -297,7 +344,13 @@ class _FakeTravelReviewsRepository implements TravelReviewsRepository {
     required String projectCode,
     required String reviewId,
     required TravelReviewPatch patch,
-  }) async => Result.success(_detail());
+  }) async {
+    updateAttempts++;
+    if (throwUpdate) throw StateError('unexpected failure');
+    return failUpdate
+        ? const Result.failure(NetworkFailure('offline'))
+        : Result.success(_detail());
+  }
 }
 
 TravelReviewDetail _detail() {

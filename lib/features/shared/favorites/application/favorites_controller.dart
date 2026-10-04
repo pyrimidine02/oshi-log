@@ -4,13 +4,13 @@ library;
 
 import 'dart:async' show unawaited;
 
-import 'package:oshi_log/core/connectivity/connectivity_service.dart';
+import 'package:oshi_log/platform/connectivity/connectivity_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/providers/core_providers.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/platform/providers/core_providers.dart';
 import 'package:oshi_log/features/identity/auth/application/session_state.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/shared/favorites/data/datasources/favorites_remote_data_source.dart';
 import 'package:oshi_log/features/shared/favorites/data/repositories/favorites_repository_impl.dart';
 import 'package:oshi_log/features/shared/favorites/domain/entities/favorite_entities.dart';

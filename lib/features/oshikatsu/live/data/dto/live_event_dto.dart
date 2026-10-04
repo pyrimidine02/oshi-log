@@ -2,7 +2,7 @@
 /// KO: Swagger 스키마에 맞춘 라이브 이벤트 DTO.
 library;
 
-import 'package:oshi_log/core/models/image_meta_dto.dart';
+import 'package:oshi_log/platform/models/image_meta_dto.dart';
 
 class LiveEventSummaryDto {
   const LiveEventSummaryDto({

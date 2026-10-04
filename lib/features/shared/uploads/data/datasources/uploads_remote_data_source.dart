@@ -5,9 +5,9 @@ library;
 import 'package:dio/dio.dart';
 import 'package:http_parser/http_parser.dart';
 
-import 'package:oshi_log/core/constants/api_constants.dart';
-import 'package:oshi_log/core/network/api_client.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/constants/api_constants.dart';
+import 'package:oshi_log/platform/network/api_client.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/shared/uploads/data/dto/upload_dto.dart';
 
 /// EN: Handles upload-related API requests.

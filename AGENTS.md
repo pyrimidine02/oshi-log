@@ -21,7 +21,8 @@
 - `lib/` : 앱 소스 코드
   - `lib/main.dart` : 진입점
   - `lib/app.dart` : MaterialApp / Router 설정
-  - `lib/core/` : 공통 인프라 (theme, routing, error, utils, localization)
+  - `lib/platform/` : 공통 인프라 (network, cache, storage, router 계약)
+  - `lib/design_system/` : theme, 공용 위젯, localization, accessibility
   - `lib/features/` : 도메인/기능 모듈 (예: user, pilgrimage, live_schedule, stats 등)
 - `test/` : unit/widget 테스트
 - `integration_test/` : 통합 테스트 (플로우/네비게이션)

@@ -4,12 +4,12 @@ library;
 
 import 'package:flutter/material.dart';
 
-import '../../../../../core/localization/locale_text.dart';
-import '../../../../../core/theme/gbt_colors.dart';
-import '../../../../../core/theme/gbt_decorations.dart';
-import '../../../../../core/theme/gbt_spacing.dart';
-import '../../../../../core/theme/gbt_typography.dart';
-import '../../../../../core/widgets/common/gbt_icon_chip.dart';
+import '../../../../../design_system/localization/locale_text.dart';
+import '../../../../../design_system/theme/gbt_colors.dart';
+import '../../../../../design_system/theme/gbt_decorations.dart';
+import '../../../../../design_system/theme/gbt_spacing.dart';
+import '../../../../../design_system/theme/gbt_typography.dart';
+import '../../../../../design_system/widgets/common/gbt_icon_chip.dart';
 
 /// EN: Full-width tappable settings entry card.
 /// KO: 전체 너비 탭 가능한 설정 진입 카드.

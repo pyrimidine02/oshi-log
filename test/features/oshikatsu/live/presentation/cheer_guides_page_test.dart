@@ -9,7 +9,7 @@ import 'package:oshi_log/features/oshikatsu/live/presentation/pages/cheer_guides
 
 void main() {
   testWidgets(
-    'renders the indexed guide document at 320dp and 200 percent text',
+    'explicit event project overrides selected project at 320dp and 200 percent text',
     (tester) async {
       tester.view.physicalSize = const Size(640, 1280);
       tester.view.devicePixelRatio = 2;
@@ -30,7 +30,9 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            selectedProjectKeyProvider.overrideWith((ref) => 'project-1'),
+            selectedProjectKeyProvider.overrideWith(
+              (ref) => 'unrelated-project',
+            ),
             cheerGuidesListProvider(
               'project-1',
             ).overrideWith((ref) async => guides),
@@ -38,7 +40,7 @@ void main() {
           child: MaterialApp(
             home: MediaQuery(
               data: const MediaQueryData(textScaler: TextScaler.linear(2)),
-              child: const CheerGuidesPage(),
+              child: const CheerGuidesPage(projectId: 'project-1'),
             ),
           ),
         ),

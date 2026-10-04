@@ -5,11 +5,11 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:oshi_log/core/localization/locale_text.dart';
-import 'package:oshi_log/core/widgets/feedback/gbt_empty_state.dart';
-import 'package:oshi_log/core/widgets/feedback/gbt_loading.dart'
+import 'package:oshi_log/design_system/localization/locale_text.dart';
+import 'package:oshi_log/design_system/widgets/feedback/gbt_empty_state.dart';
+import 'package:oshi_log/design_system/widgets/feedback/gbt_loading.dart'
     hide GBTEmptyState;
-import 'package:oshi_log/core/widgets/navigation/gbt_standard_app_bar.dart';
+import 'package:oshi_log/design_system/widgets/navigation/gbt_standard_app_bar.dart';
 import 'package:oshi_log/features/place/collections/application/zukan_controller.dart';
 import 'package:oshi_log/features/place/collections/presentation/field_detail/field_zukan_detail_sections.dart';
 
@@ -35,16 +35,16 @@ class ZukanDetailPage extends ConsumerWidget {
         context,
         title: appBarTitle?.trim().isNotEmpty == true
             ? appBarTitle!
-            : context.l10n(ko: '도감', en: 'Collection', ja: '図鑑'),
+            : context.l10n(ko: '스폿집', en: 'Collection', ja: 'スポット集'),
       ),
       body: collectionAsync.when(
         loading: () => const Center(child: GBTLoading()),
         error: (_, __) => GBTEmptyState(
           icon: Icons.cloud_off_rounded,
           title: context.l10n(
-            ko: '도감을 불러오지 못했어요',
+            ko: '스폿집을 불러오지 못했어요',
             en: 'Could not load collection',
-            ja: '図鑑を読み込めませんでした',
+            ja: 'スポット集を読み込めませんでした',
           ),
           actionLabel: context.l10n(ko: '다시 시도', en: 'Retry', ja: '再試行'),
           onAction: () =>
@@ -54,9 +54,9 @@ class ZukanDetailPage extends ConsumerWidget {
             ? GBTEmptyState(
                 icon: Icons.search_off_rounded,
                 title: context.l10n(
-                  ko: '도감을 찾을 수 없어요',
+                  ko: '스폿집을 찾을 수 없어요',
                   en: 'Collection not found',
-                  ja: '図鑑が見つかりません',
+                  ja: 'スポット集が見つかりません',
                 ),
               )
             : FieldZukanDetailBody(collection: collection),

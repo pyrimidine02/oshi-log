@@ -4,10 +4,11 @@ library;
 
 import 'package:flutter/material.dart';
 
-import '../../../../../core/localization/locale_text.dart';
-import '../../../../../core/theme/gbt_colors.dart';
-import '../../../../../core/theme/gbt_spacing.dart';
+import '../../../../../design_system/localization/locale_text.dart';
+import '../../../../../design_system/theme/gbt_colors.dart';
+import '../../../../../design_system/theme/gbt_spacing.dart';
 import 'package:oshi_log/features/oshikatsu/live/domain/entities/calendar_event.dart';
+import 'package:oshi_log/features/oshikatsu/live/domain/event_time_policy.dart';
 import './passport_schedule_labels.dart';
 import './travel_passport_view_data.dart';
 
@@ -112,7 +113,7 @@ class JourneyLedger extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         PassportSectionHeading(
-          index: '01',
+          index: '03',
           title: context.l10n(ko: '여행 기록', en: 'Travel records', ja: '旅の記録'),
         ),
         const SizedBox(height: GBTSpacing.md),
@@ -295,11 +296,11 @@ class NextStopsSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         PassportSectionHeading(
-          index: '02',
+          index: '01',
           title: context.l10n(
-            ko: '다가오는 일정',
-            en: 'Upcoming schedule',
-            ja: '今後の予定',
+            ko: '프로젝트 일정',
+            en: 'Project schedule',
+            ja: 'プロジェクトの予定',
           ),
           actionLabel: context.l10n(ko: '전체보기', en: 'Calendar', ja: 'カレンダー'),
           onAction: onOpenCalendar,
@@ -320,6 +321,18 @@ class NextStopsSection extends StatelessWidget {
                 )
               : Column(
                   children: [
+                    if (scheduleStatus == PassportScheduleStatus.unavailable)
+                      Padding(
+                        key: const Key('schedule-partial-failure'),
+                        padding: const EdgeInsets.all(GBTSpacing.sm),
+                        child: Text(
+                          context.l10n(
+                            ko: '일부 일정을 불러오지 못했어요. 달력에서 다시 확인해주세요.',
+                            en: 'Some dates could not be loaded. Check again in the calendar.',
+                            ja: '一部の予定を読み込めませんでした。カレンダーで再確認してください。',
+                          ),
+                        ),
+                      ),
                     for (var index = 0; index < stops.length; index++) ...[
                       _NextStopRow(
                         stop: stops[index],
@@ -422,7 +435,7 @@ class _NextStopRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final date = stop.date.toLocal();
+    final date = EventTimePolicy.inJst(stop.date);
     final typeLabel = _eventTypeLabel(context, stop.type);
     return Semantics(
       button: true,
@@ -524,6 +537,8 @@ class TravelArchiveSection extends StatelessWidget {
     required this.onOpenCollection,
     required this.onOpenBookmarks,
     required this.onOpenFavorites,
+    this.onOpenToday,
+    this.onOpenTrips,
   });
 
   final JourneyLedgerData ledger;
@@ -532,6 +547,8 @@ class TravelArchiveSection extends StatelessWidget {
   final VoidCallback onOpenCollection;
   final VoidCallback onOpenBookmarks;
   final VoidCallback onOpenFavorites;
+  final VoidCallback? onOpenToday;
+  final VoidCallback? onOpenTrips;
 
   @override
   Widget build(BuildContext context) {
@@ -540,7 +557,11 @@ class TravelArchiveSection extends StatelessWidget {
       _ArchiveRowData(
         keyName: 'archive-visits',
         number: '01',
-        title: context.l10n(ko: '방문 여권', en: 'Visit passport', ja: '訪問パスポート'),
+        title: context.l10n(
+          ko: '방문·참전 기록',
+          en: 'Visits and attendances',
+          ja: '訪問・参加記録',
+        ),
         subtitle: _visitArchiveLabel(context),
         onTap: onOpenVisits,
       ),
@@ -555,28 +576,34 @@ class TravelArchiveSection extends StatelessWidget {
         subtitle: _collectionArchiveLabel(context),
         onTap: onOpenCollection,
       ),
-      _ArchiveRowData(
-        keyName: 'archive-bookmarks',
-        number: '03',
-        title: context.l10n(ko: '저장한 글', en: 'Saved posts', ja: '保存した投稿'),
-        subtitle: context.l10n(
-          ko: '커뮤니티에서 저장한 글',
-          en: 'Bookmarked community posts',
-          ja: 'ブックマークしたコミュニティ投稿',
+      if (onOpenToday != null)
+        _ArchiveRowData(
+          keyName: 'archive-today',
+          number: '03',
+          title: context.l10n(
+            ko: '오늘의 순례',
+            en: 'Today’s pilgrimage',
+            ja: '今日の巡礼',
+          ),
+          subtitle: context.l10n(
+            ko: '오늘 둘러볼 장소',
+            en: 'Places to explore today',
+            ja: '今日巡る場所',
+          ),
+          onTap: onOpenToday!,
         ),
-        onTap: onOpenBookmarks,
-      ),
-      _ArchiveRowData(
-        keyName: 'archive-favorites',
-        number: '04',
-        title: context.l10n(ko: '가고 싶은 곳', en: 'Saved places', ja: '行きたい場所'),
-        subtitle: context.l10n(
-          ko: '즐겨찾기한 성지',
-          en: 'Favorite pilgrimage places',
-          ja: 'お気に入りの聖地',
+      if (onOpenTrips != null)
+        _ArchiveRowData(
+          keyName: 'archive-trips',
+          number: '04',
+          title: context.l10n(ko: '나의 여행', en: 'My trips', ja: '私の旅'),
+          subtitle: context.l10n(
+            ko: '여행 후보와 비공개 앨범',
+            en: 'Trip ideas and private albums',
+            ja: '旅の候補と非公開アルバム',
+          ),
+          onTap: onOpenTrips!,
         ),
-        onTap: onOpenFavorites,
-      ),
     ];
 
     return Column(
@@ -584,7 +611,7 @@ class TravelArchiveSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         PassportSectionHeading(
-          index: '03',
+          index: '04',
           title: context.l10n(
             ko: '여행 보관함',
             en: 'Travel archive',
@@ -643,6 +670,61 @@ class TravelArchiveSection extends StatelessWidget {
       ),
     };
   }
+}
+
+/// EN: Supported favorites and post bookmarks remain separate from attendance plans.
+/// KO: 지원되는 즐겨찾기와 게시글 북마크를 참가 예정과 구분합니다.
+class MySavedSection extends StatelessWidget {
+  const MySavedSection({
+    super.key,
+    required this.onOpenFavorites,
+    required this.onOpenBookmarks,
+  });
+  final VoidCallback onOpenFavorites;
+  final VoidCallback onOpenBookmarks;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    key: const Key('my-saved-section'),
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      PassportSectionHeading(
+        index: '02',
+        title: context.l10n(ko: '저장', en: 'Saved', ja: '保存'),
+      ),
+      const SizedBox(height: GBTSpacing.sm),
+      _ArchiveRow(
+        row: _ArchiveRowData(
+          keyName: 'archive-favorites',
+          number: '01',
+          title: context.l10n(
+            ko: '장소·공연·뉴스',
+            en: 'Places, shows and news',
+            ja: '場所・ライブ・ニュース',
+          ),
+          subtitle: context.l10n(
+            ko: '저장한 공연은 참가 예정과 별개예요',
+            en: 'Saving a show does not mark planned attendance',
+            ja: '保存したライブは参加予定とは別です',
+          ),
+          onTap: onOpenFavorites,
+        ),
+      ),
+      _ArchiveRow(
+        row: _ArchiveRowData(
+          keyName: 'archive-bookmarks',
+          number: '02',
+          title: context.l10n(ko: '저장한 글', en: 'Saved posts', ja: '保存した投稿'),
+          subtitle: context.l10n(
+            ko: '커뮤니티에서 저장한 글',
+            en: 'Bookmarked community posts',
+            ja: 'ブックマークしたコミュニティ投稿',
+          ),
+          onTap: onOpenBookmarks,
+        ),
+      ),
+    ],
+  );
 }
 
 class _ArchiveRowData {
@@ -712,8 +794,6 @@ class _ArchiveRow extends StatelessWidget {
                       ),
                       Text(
                         row.subtitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                         style: Theme.of(
                           context,
                         ).textTheme.bodySmall?.copyWith(color: colors.mutedInk),

@@ -6,8 +6,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import 'package:oshi_log/core/localization/locale_text.dart';
-import 'package:oshi_log/core/theme/theme.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
+import 'package:oshi_log/design_system/theme/theme.dart';
 import '../../domain/entities/project_entities.dart';
 import 'fan_subject_preference_sheet.dart';
 

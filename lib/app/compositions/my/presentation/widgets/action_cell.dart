@@ -4,11 +4,11 @@ library;
 
 import 'package:flutter/material.dart';
 
-import '../../../../../core/theme/gbt_colors.dart';
-import '../../../../../core/theme/gbt_decorations.dart';
-import '../../../../../core/theme/gbt_spacing.dart';
-import '../../../../../core/theme/gbt_typography.dart';
-import '../../../../../core/widgets/common/gbt_icon_chip.dart';
+import '../../../../../design_system/theme/gbt_colors.dart';
+import '../../../../../design_system/theme/gbt_decorations.dart';
+import '../../../../../design_system/theme/gbt_spacing.dart';
+import '../../../../../design_system/theme/gbt_typography.dart';
+import '../../../../../design_system/widgets/common/gbt_icon_chip.dart';
 
 /// EN: Tappable action cell with icon, label, and subtitle for 2-column grids.
 /// KO: 2열 그리드용 아이콘·라벨·서브타이틀이 있는 탭 가능한 액션 셀.

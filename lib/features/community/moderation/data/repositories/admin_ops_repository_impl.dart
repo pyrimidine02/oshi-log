@@ -2,11 +2,11 @@
 /// KO: 운영/관리자 리포지토리 구현.
 library;
 
-import 'package:oshi_log/core/cache/cache_manager.dart';
-import 'package:oshi_log/core/cache/cache_profiles.dart';
-import 'package:oshi_log/core/error/error_handler.dart';
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/cache/cache_manager.dart';
+import 'package:oshi_log/platform/cache/cache_profiles.dart';
+import 'package:oshi_log/platform/error/error_handler.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/community/moderation/domain/entities/admin_ops_entities.dart';
 import 'package:oshi_log/features/community/moderation/domain/repositories/admin_ops_repository.dart';
 import 'package:oshi_log/features/community/moderation/data/datasources/admin_ops_remote_data_source.dart';

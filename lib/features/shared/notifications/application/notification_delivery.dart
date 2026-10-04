@@ -13,7 +13,7 @@ library;
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:oshi_log/core/providers/core_providers.dart';
+import 'package:oshi_log/platform/providers/core_providers.dart';
 import 'package:oshi_log/platform/notifications/local_notifications_service.dart';
 import 'package:oshi_log/features/shared/notifications/data/notification_device_registration.dart';
 import 'package:oshi_log/features/shared/notifications/domain/entities/notification_entities.dart';

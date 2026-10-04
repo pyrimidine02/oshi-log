@@ -4,8 +4,8 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:oshi_log/core/providers/core_providers.dart';
-import 'package:oshi_log/core/storage/local_storage.dart';
+import 'package:oshi_log/platform/providers/core_providers.dart';
+import 'package:oshi_log/platform/storage/local_storage.dart';
 
 /// EN: Provider for the post compose draft store.
 /// KO: 게시글 임시저장 스토어 프로바이더입니다.

@@ -7,16 +7,16 @@ import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:oshi_log/app/session/session_cleanup.dart';
-import 'package:oshi_log/core/analytics/analytics_service.dart';
-import 'package:oshi_log/core/cache/cache_manager.dart';
-import 'package:oshi_log/core/config/app_config.dart';
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/providers/core_providers.dart';
-import 'package:oshi_log/core/router/navigation_state.dart';
+import 'package:oshi_log/platform/analytics/analytics_service.dart';
+import 'package:oshi_log/platform/cache/cache_manager.dart';
+import 'package:oshi_log/platform/config/app_config.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/platform/providers/core_providers.dart';
+import 'package:oshi_log/platform/router/navigation_state.dart';
 import 'package:oshi_log/features/identity/auth/application/session_state.dart';
-import 'package:oshi_log/core/security/secure_storage.dart';
-import 'package:oshi_log/core/storage/local_storage.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/security/secure_storage.dart';
+import 'package:oshi_log/platform/storage/local_storage.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/identity/auth/application/auth_controller.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
 import 'package:oshi_log/features/identity/auth/application/native_social_login_service.dart';
@@ -128,6 +128,38 @@ void main() {
     expect(harness.container.read(selectedProjectIdProvider), isNull);
     expect(harness.container.read(selectedUnitIdsProvider), isEmpty);
     expect(harness.container.read(currentNavIndexProvider), 0);
+  });
+
+  test('successful login never requests notification permission', () async {
+    final repository = _FakeAuthRepository();
+    final harness = await _AuthHarness.create(repository);
+    addTearDown(harness.dispose);
+    repository.loginHandler = (_, __) async {
+      await harness.activeSecureStorage.saveTokens(
+        accessToken: 'test-access',
+        refreshToken: 'test-refresh',
+      );
+      return const Result.success(
+        AuthTokens(accessToken: 'test-access', refreshToken: 'test-refresh'),
+      );
+    };
+    expect(
+      await harness.controller.login(
+        username: 'user',
+        password: _fixtureCredential,
+      ),
+      isA<Success<void>>(),
+    );
+    await Future<void>.delayed(Duration.zero);
+    verifyNever(
+      () => harness.container
+          .read(localNotificationsServiceProvider)
+          .requestPermissions(),
+    );
+    verifyNever(
+      () =>
+          harness.container.read(remotePushServiceProvider).requestPermission(),
+    );
   });
 
   test(

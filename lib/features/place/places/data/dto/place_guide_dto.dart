@@ -71,3 +71,34 @@ DateTime? _dateTime(dynamic value) {
   }
   return null;
 }
+
+/// EN: Public guide detail response fields used by the reader.
+/// KO: 가이드 읽기에서 사용하는 공개 상세 응답 필드입니다.
+class PlaceGuideDetailDto {
+  const PlaceGuideDetailDto({
+    required this.id,
+    required this.title,
+    required this.contentMarkdown,
+    this.updatedAt,
+  });
+
+  final String id;
+  final String title;
+  final String contentMarkdown;
+  final DateTime? updatedAt;
+
+  factory PlaceGuideDetailDto.fromJson(Map<String, dynamic> json) =>
+      PlaceGuideDetailDto(
+        id: json['id'] as String? ?? '',
+        title: json['title'] as String? ?? '',
+        contentMarkdown: json['contentMarkdown'] as String? ?? '',
+        updatedAt: _dateTime(json['updatedAt']),
+      );
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'title': title,
+    'contentMarkdown': contentMarkdown,
+    'updatedAt': updatedAt?.toIso8601String(),
+  };
+}

@@ -823,7 +823,7 @@ class MusicAvailabilityDto {
       availableUntil: _dateTimeOrNull(map['availableUntil']),
       allowedCountries: _stringList(map['allowedCountries']),
       blockedCountries: _stringList(map['blockedCountries']),
-      rightsPolicy: _string(map['rightsPolicy'], fallback: 'OK'),
+      rightsPolicy: _string(map['rightsPolicy'], fallback: 'UNKNOWN'),
     );
   }
 

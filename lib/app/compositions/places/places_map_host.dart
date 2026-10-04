@@ -6,6 +6,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:oshi_log/features/identity/auth/application/session_state.dart';
 
 import 'package:oshi_log/features/oshikatsu/catalog/domain/entities/project_entities.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/presentation/widgets/band_filter_sheet.dart';
@@ -45,9 +46,11 @@ class _PlacesMapHostState extends ConsumerState<PlacesMapHost> {
   @override
   void initState() {
     super.initState();
-    Future<void>.microtask(
-      () => ref.read(userVisitsControllerProvider.notifier).load(),
-    );
+    Future<void>.microtask(() {
+      if (mounted && ref.read(isAuthenticatedProvider)) {
+        ref.read(userVisitsControllerProvider.notifier).load();
+      }
+    });
   }
 
   Future<void> _showBandFilter(
@@ -79,7 +82,12 @@ class _PlacesMapHostState extends ConsumerState<PlacesMapHost> {
 
   @override
   Widget build(BuildContext context) {
-    final visits = ref.watch(userVisitsControllerProvider).valueOrNull;
+    ref.listen(isAuthenticatedProvider, (_, next) {
+      if (next) ref.read(userVisitsControllerProvider.notifier).load();
+    });
+    final visits = ref.watch(isAuthenticatedProvider)
+        ? ref.watch(userVisitsControllerProvider).valueOrNull
+        : null;
     final visitedPlaceIds = Set<String>.unmodifiable(
       (visits ?? const []).map((visit) => visit.placeId),
     );

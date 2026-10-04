@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:oshi_log/core/widgets/common/gbt_linkified_text.dart';
+import 'package:oshi_log/design_system/widgets/common/gbt_linkified_text.dart';
 
 void main() {
   testWidgets('linkifies HTTPS and www URLs surrounded by whitespace', (

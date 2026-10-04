@@ -8,11 +8,11 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../../core/localization/locale_text.dart';
-import '../../../../../core/theme/gbt_colors.dart';
-import '../../../../../core/theme/gbt_spacing.dart';
-import '../../../../../core/theme/gbt_typography.dart';
-import '../../../../../core/widgets/common/gbt_icon_chip.dart';
+import '../../../../../design_system/localization/locale_text.dart';
+import '../../../../../design_system/theme/gbt_colors.dart';
+import '../../../../../design_system/theme/gbt_spacing.dart';
+import '../../../../../design_system/theme/gbt_typography.dart';
+import '../../../../../design_system/widgets/common/gbt_icon_chip.dart';
 import 'package:oshi_log/features/identity/account/application/settings_controller.dart';
 
 /// EN: Bento stat grid — big visits tile (left) + stacked stamps/posts

@@ -2,11 +2,11 @@
 /// KO: 캐시를 포함한 홈 리포지토리 구현.
 library;
 
-import '../../../../../core/cache/cache_manager.dart';
-import '../../../../../core/cache/cache_profiles.dart';
-import '../../../../../core/error/error_handler.dart';
-import '../../../../../core/error/failure.dart';
-import '../../../../../core/utils/result.dart';
+import '../../../../../platform/cache/cache_manager.dart';
+import '../../../../../platform/cache/cache_profiles.dart';
+import '../../../../../platform/error/error_handler.dart';
+import '../../../../../platform/error/failure.dart';
+import '../../../../../platform/utils/result.dart';
 import '../../domain/entities/home_summary.dart';
 import '../../domain/repositories/home_repository.dart';
 import '../datasources/home_remote_data_source.dart';

@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:oshi_log/core/localization/locale_resolution.dart';
+import 'package:oshi_log/design_system/localization/locale_resolution.dart';
 
 void main() {
   const supportedLocales = [

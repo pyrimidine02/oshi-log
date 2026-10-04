@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:oshi_log/core/theme/gbt_theme.dart';
+import 'package:oshi_log/design_system/theme/gbt_theme.dart';
 import 'package:oshi_log/features/place/places/presentation/widgets/place_description_body.dart';
 
 const description = '''클럽 치타는 가와사키의 라이브홀입니다. 공연마다 입장 시간을 확인하세요.

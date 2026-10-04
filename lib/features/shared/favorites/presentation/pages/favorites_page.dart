@@ -6,19 +6,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/localization/locale_text.dart';
-import 'package:oshi_log/core/router/app_router.dart';
-import 'package:oshi_log/core/theme/gbt_colors.dart';
-import 'package:oshi_log/core/theme/gbt_spacing.dart';
-import 'package:oshi_log/core/theme/gbt_typography.dart';
-import 'package:oshi_log/core/widgets/common/gbt_image.dart';
-import 'package:oshi_log/core/widgets/feedback/gbt_empty_state.dart';
-import 'package:oshi_log/core/widgets/feedback/gbt_loading.dart'
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
+import 'package:oshi_log/platform/router/app_router.dart';
+import 'package:oshi_log/design_system/theme/gbt_colors.dart';
+import 'package:oshi_log/design_system/theme/gbt_spacing.dart';
+import 'package:oshi_log/design_system/theme/gbt_typography.dart';
+import 'package:oshi_log/design_system/widgets/common/gbt_image.dart';
+import 'package:oshi_log/design_system/widgets/feedback/gbt_empty_state.dart';
+import 'package:oshi_log/design_system/widgets/feedback/gbt_loading.dart'
     hide GBTEmptyState;
-import 'package:oshi_log/core/widgets/navigation/gbt_app_bar_icon_button.dart';
-import 'package:oshi_log/core/widgets/navigation/gbt_segmented_tab_bar.dart';
-import 'package:oshi_log/core/widgets/navigation/gbt_standard_app_bar.dart';
+import 'package:oshi_log/design_system/widgets/navigation/gbt_app_bar_icon_button.dart';
+import 'package:oshi_log/design_system/widgets/navigation/gbt_segmented_tab_bar.dart';
+import 'package:oshi_log/design_system/widgets/navigation/gbt_standard_app_bar.dart';
 import 'package:oshi_log/features/shared/favorites/application/favorites_controller.dart';
 import 'package:oshi_log/features/shared/favorites/domain/entities/favorite_entities.dart';
 

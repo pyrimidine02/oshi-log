@@ -2,7 +2,7 @@
 /// KO: 인증 리포지토리 인터페이스.
 library;
 
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/identity/auth/domain/entities/auth_tokens.dart';
 import 'package:oshi_log/features/identity/auth/domain/entities/oauth_provider.dart';
 import 'package:oshi_log/features/identity/auth/domain/entities/register_consent.dart';

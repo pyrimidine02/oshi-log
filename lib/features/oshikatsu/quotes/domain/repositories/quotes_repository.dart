@@ -2,7 +2,7 @@
 /// KO: 명대사 카드 리포지토리 인터페이스.
 library;
 
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/oshikatsu/quotes/domain/entities/quote_card.dart';
 
 /// EN: Contract for fetching and mutating quote cards.

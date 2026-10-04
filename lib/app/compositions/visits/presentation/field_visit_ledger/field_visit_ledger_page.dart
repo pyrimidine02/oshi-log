@@ -6,10 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:oshi_log/core/localization/locale_text.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
-import 'package:oshi_log/core/router/app_router.dart';
-import 'package:oshi_log/core/widgets/navigation/gbt_standard_app_bar.dart';
+import 'package:oshi_log/platform/router/app_router.dart';
+import 'package:oshi_log/design_system/widgets/navigation/gbt_standard_app_bar.dart';
 import 'package:oshi_log/features/oshikatsu/live/application/live_events_controller.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/projects_controller.dart';
 import 'package:oshi_log/features/place/visits/application/visits_controller.dart';
@@ -22,7 +22,7 @@ class FieldVisitLedgerPage extends ConsumerStatefulWidget {
   const FieldVisitLedgerPage({
     super.key,
     this.embedded = false,
-    this.initialKind = FieldVisitLedgerKind.places,
+    this.initialKind = FieldVisitLedgerKind.all,
     this.bottomClearance,
     this.onOpenMap,
     this.onOpenEvents,

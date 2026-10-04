@@ -4,8 +4,8 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:oshi_log/core/security/secure_storage.dart';
-import 'package:oshi_log/core/providers/core_providers.dart'
+import 'package:oshi_log/platform/security/secure_storage.dart';
+import 'package:oshi_log/platform/providers/core_providers.dart'
     show secureStorageProvider;
 
 /// EN: Auth state enumeration

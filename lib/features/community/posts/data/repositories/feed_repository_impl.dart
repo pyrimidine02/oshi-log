@@ -2,17 +2,17 @@
 /// KO: 캐시를 포함한 피드 리포지토리 구현.
 library;
 
-import 'package:oshi_log/core/cache/cache_manager.dart';
-import 'package:oshi_log/core/cache/cache_profiles.dart';
-import 'package:oshi_log/core/error/error_handler.dart';
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/cache/cache_manager.dart';
+import 'package:oshi_log/platform/cache/cache_profiles.dart';
+import 'package:oshi_log/platform/error/error_handler.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/community/posts/domain/entities/feed_entities.dart';
 import 'package:oshi_log/features/community/posts/domain/repositories/feed_repository.dart';
 import 'package:oshi_log/features/community/posts/data/datasources/feed_remote_data_source.dart';
 import 'package:oshi_log/features/community/posts/data/dto/community_translation_dto.dart';
 import 'package:oshi_log/features/community/posts/data/dto/post_comment_dto.dart';
-import 'package:oshi_log/core/models/post_dto.dart';
+import 'package:oshi_log/platform/models/post_dto.dart';
 import 'package:oshi_log/features/community/posts/data/mappers/feed_entities_mappers.dart';
 
 class FeedRepositoryImpl implements FeedRepository {

@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/security/secure_storage.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/platform/security/secure_storage.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/identity/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:oshi_log/features/identity/auth/data/dto/account_recovery_password_request.dart';
 import 'package:oshi_log/features/identity/auth/data/dto/login_request.dart';

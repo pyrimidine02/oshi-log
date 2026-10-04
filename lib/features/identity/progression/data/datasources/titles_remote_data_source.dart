@@ -2,9 +2,9 @@
 /// KO: 칭호(Title) API 호출을 위한 원격 데이터 소스.
 library;
 
-import 'package:oshi_log/core/constants/api_constants.dart';
-import 'package:oshi_log/core/network/api_client.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/constants/api_constants.dart';
+import 'package:oshi_log/platform/network/api_client.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/identity/progression/data/dto/title_dto.dart';
 
 /// EN: Remote data source that communicates with the titles endpoints.

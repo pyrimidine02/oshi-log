@@ -2,7 +2,7 @@
 /// KO: 프로젝트 범위 여행 후기 저장소 계약입니다.
 library;
 
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/community/reviews/domain/entities/travel_review.dart';
 
 abstract interface class TravelReviewsRepository {

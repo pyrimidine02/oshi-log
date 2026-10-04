@@ -7,13 +7,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:oshi_log/core/providers/core_providers.dart';
+import 'package:oshi_log/platform/providers/core_providers.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
-import 'package:oshi_log/core/router/app_router.dart';
-import 'package:oshi_log/core/storage/local_storage.dart';
-import 'package:oshi_log/core/theme/gbt_colors.dart';
-import 'package:oshi_log/core/theme/gbt_theme.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/router/app_router.dart';
+import 'package:oshi_log/platform/storage/local_storage.dart';
+import 'package:oshi_log/design_system/theme/gbt_colors.dart';
+import 'package:oshi_log/design_system/theme/gbt_theme.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/projects_controller.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/domain/entities/project_entities.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/domain/repositories/projects_repository.dart';
@@ -104,7 +104,7 @@ void main() {
 
     expect(requestedProject, 'girls-band-cry');
     expect(find.byType(AppBar), findsNothing);
-    expect(find.text('여행 표본 아카이브'), findsOneWidget);
+    expect(find.text('스폿집'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('field-zukan-featured-route-notes')),
       findsOneWidget,
@@ -201,7 +201,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('TRAVEL SPECIMEN ARCHIVE'), findsOneWidget);
+    expect(find.text('SPOT COLLECTIONS'), findsOneWidget);
     await tester.scrollUntilVisible(
       find.byKey(const ValueKey('field-zukan-row-station-index')),
       280,
@@ -393,7 +393,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('도감을 열 프로젝트를 선택해 주세요'), findsOneWidget);
+      expect(find.text('스폿집을 열 프로젝트를 선택해 주세요'), findsOneWidget);
       expect(find.text('프로젝트 선택'), findsOneWidget);
 
       await tester.tap(find.text('프로젝트 선택'));
@@ -404,7 +404,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(requestedProject, 'girls-band-cry');
-      expect(find.text('여행 표본 아카이브'), findsOneWidget);
+      expect(find.text('스폿집'), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
   );
@@ -464,7 +464,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(requestedProject, 'girls-band-cry');
-    expect(find.text('여행 표본 아카이브'), findsOneWidget);
+    expect(find.text('스폿집'), findsOneWidget);
   });
 }
 

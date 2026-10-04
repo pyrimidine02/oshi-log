@@ -60,14 +60,17 @@ void main() {
 
     expect(isFieldEventUpcoming(ongoing, now: now), isTrue);
     expect(isFieldEventUpcoming(endedAtBoundary, now: now), isFalse);
-    expect(effectiveFieldEventEnd(malformed), malformed.showStartTime);
+    expect(
+      effectiveFieldEventEnd(malformed),
+      DateTime.parse('2026-07-15T15:00:00Z'),
+    );
     expect(
       selectFieldEvents(
         [ongoing, endedAtBoundary, malformed],
         filter: FieldEventFilter(mode: FieldEventMode.upcoming),
         now: now,
       ).map((event) => event.id),
-      ['ongoing'],
+      ['ongoing', 'malformed-end'],
     );
   });
 }

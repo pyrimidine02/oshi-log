@@ -3,16 +3,19 @@
 library;
 
 import 'package:flutter/material.dart';
+import '../../application/auth_action_gate.dart';
+import 'package:oshi_log/platform/router/app_router.dart'
+    show safeRedirectTarget;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/localization/locale_text.dart';
-import 'package:oshi_log/core/theme/gbt_spacing.dart';
-import 'package:oshi_log/core/theme/gbt_typography.dart';
-import 'package:oshi_log/core/utils/result.dart';
-import 'package:oshi_log/core/widgets/feedback/gbt_loading.dart';
-import 'package:oshi_log/core/widgets/navigation/gbt_standard_app_bar.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
+import 'package:oshi_log/design_system/theme/gbt_spacing.dart';
+import 'package:oshi_log/design_system/theme/gbt_typography.dart';
+import 'package:oshi_log/platform/utils/result.dart';
+import 'package:oshi_log/design_system/widgets/feedback/gbt_loading.dart';
+import 'package:oshi_log/design_system/widgets/navigation/gbt_standard_app_bar.dart';
 import 'package:oshi_log/features/identity/auth/application/auth_controller.dart';
 import 'package:oshi_log/features/identity/auth/domain/entities/oauth_provider.dart';
 
@@ -105,7 +108,9 @@ class _OAuthCallbackPageState extends ConsumerState<OAuthCallbackPage> {
       return;
     }
 
-    context.go('/home');
+    final target = safeRedirectTarget(ref.read(externalLoginReturnProvider));
+    ref.read(externalLoginReturnProvider.notifier).state = null;
+    context.go(target ?? '/home');
   }
 
   @override
@@ -169,7 +174,27 @@ class _OAuthCallbackPageState extends ConsumerState<OAuthCallbackPage> {
                     ja: 'ログインページに戻る',
                   ),
                   child: ElevatedButton.icon(
-                    onPressed: () => context.go('/login'),
+                    onPressed: () {
+                      final redirect =
+                          safeRedirectTarget(
+                            ref.read(externalLoginReturnProvider),
+                          ) ??
+                          safeRedirectTarget(
+                            GoRouterState.of(
+                              context,
+                            ).uri.queryParameters['redirect'],
+                          );
+                      ref.read(externalLoginReturnProvider.notifier).state =
+                          null;
+                      context.go(
+                        redirect == null
+                            ? '/login'
+                            : Uri(
+                                path: '/login',
+                                queryParameters: {'redirect': redirect},
+                              ).toString(),
+                      );
+                    },
                     icon: const Icon(Icons.arrow_back, size: 18),
                     label: Text(
                       context.l10n(

@@ -1,11 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:oshi_log/core/error/failure.dart';
+import 'package:oshi_log/platform/error/failure.dart';
 import 'package:oshi_log/features/identity/auth/application/session_state.dart';
 import 'package:oshi_log/features/place/verification/application/verification_controller.dart';
 import 'package:oshi_log/features/place/verification/domain/entities/verification_entities.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 
 void main() {
   group('VerificationController', () {

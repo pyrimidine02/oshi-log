@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:oshi_log/core/router/navigation_state.dart';
+import 'package:oshi_log/platform/router/navigation_state.dart';
 import 'package:oshi_log/app/compositions/explore/presentation/field_explore/field_explore_mode_dock.dart';
 import 'package:oshi_log/app/compositions/explore/presentation/field_explore/field_explore_page.dart';
 import 'package:oshi_log/app/compositions/places/places_map_host.dart';

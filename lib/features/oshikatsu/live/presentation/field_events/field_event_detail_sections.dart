@@ -3,11 +3,12 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:oshi_log/design_system/widgets/common/spoiler_guard.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/localization/locale_text.dart';
-import 'package:oshi_log/core/theme/theme.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
+import 'package:oshi_log/design_system/theme/theme.dart';
 import 'package:oshi_log/features/oshikatsu/music/domain/entities/music_entities.dart';
 
 /// EN: Numbered setlist rail backed by the existing music provider.
@@ -18,11 +19,15 @@ class FieldEventSetlistSection extends StatelessWidget {
     required this.state,
     required this.onSongTap,
     this.hasProjectContext = true,
+    this.onRetry,
+    this.eventId,
   });
 
   final AsyncValue<MusicLiveSetlist?> state;
   final ValueChanged<MusicSetlistItem> onSongTap;
   final bool hasProjectContext;
+  final VoidCallback? onRetry;
+  final String? eventId;
 
   @override
   Widget build(BuildContext context) {
@@ -41,15 +46,27 @@ class FieldEventSetlistSection extends StatelessWidget {
         const SizedBox(height: GBTSpacing.md),
         state.when(
           loading: () => const LinearProgressIndicator(),
-          error: (error, _) => Text(
-            error is Failure
-                ? error.userMessage
-                : context.l10n(
-                    ko: '세트리스트를 불러오지 못했어요.',
-                    en: 'Could not load the setlist.',
-                    ja: 'セットリストを読み込めませんでした。',
+          error: (error, _) => Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                error is Failure
+                    ? error.userMessage
+                    : context.l10n(
+                        ko: '세트리스트를 불러오지 못했어요.',
+                        en: 'Could not load the setlist.',
+                        ja: 'セットリストを読み込めませんでした。',
+                      ),
+                style: TextStyle(color: colors.onSurfaceVariant),
+              ),
+              if (onRetry != null)
+                TextButton(
+                  onPressed: onRetry,
+                  child: Text(
+                    context.l10n(ko: '다시 시도', en: 'Retry', ja: '再試行'),
                   ),
-            style: TextStyle(color: colors.onSurfaceVariant),
+                ),
+            ],
           ),
           data: (setlist) {
             if (setlist == null || setlist.items.isEmpty) {
@@ -62,15 +79,18 @@ class FieldEventSetlistSection extends StatelessWidget {
                 style: TextStyle(color: colors.onSurfaceVariant),
               );
             }
-            return Column(
-              children: [
-                for (final item in setlist.items)
-                  _SetlistRow(
-                    item: item,
-                    hasProjectContext: hasProjectContext,
-                    onTap: () => onSongTap(item),
-                  ),
-              ],
+            return SpoilerGuard(
+              contentId: (eventId ?? setlist.liveEventId, setlist),
+              child: Column(
+                children: [
+                  for (final item in setlist.items)
+                    _SetlistRow(
+                      item: item,
+                      hasProjectContext: hasProjectContext,
+                      onTap: () => onSongTap(item),
+                    ),
+                ],
+              ),
             );
           },
         ),

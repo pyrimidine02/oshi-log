@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:oshi_log/core/theme/gbt_colors.dart';
-import 'package:oshi_log/core/theme/gbt_theme.dart';
-import 'package:oshi_log/core/widgets/layout/gbt_field_primitives.dart';
+import 'package:oshi_log/design_system/theme/gbt_colors.dart';
+import 'package:oshi_log/design_system/theme/gbt_theme.dart';
+import 'package:oshi_log/design_system/widgets/layout/gbt_field_primitives.dart';
 
 void main() {
   testWidgets('plain service headings reserve no decorative label space', (

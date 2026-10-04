@@ -6,27 +6,38 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/localization/locale_text.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
-import 'package:oshi_log/core/router/app_router.dart';
-import 'package:oshi_log/core/theme/theme.dart';
-import 'package:oshi_log/core/widgets/common/gbt_image.dart';
-import 'package:oshi_log/core/widgets/feedback/gbt_empty_state.dart';
-import 'package:oshi_log/core/widgets/feedback/gbt_loading.dart'
+import 'package:oshi_log/platform/router/app_router.dart';
+import 'package:oshi_log/design_system/theme/theme.dart';
+import 'package:oshi_log/design_system/widgets/common/gbt_image.dart';
+import 'package:oshi_log/design_system/widgets/feedback/gbt_empty_state.dart';
+import 'package:oshi_log/design_system/widgets/feedback/gbt_loading.dart'
     hide GBTEmptyState;
-import 'package:oshi_log/core/widgets/layout/gbt_field_primitives.dart';
-import 'package:oshi_log/core/widgets/navigation/gbt_standard_app_bar.dart';
+import 'package:oshi_log/design_system/widgets/layout/gbt_field_primitives.dart';
+import 'package:oshi_log/design_system/widgets/navigation/gbt_standard_app_bar.dart';
 import 'package:oshi_log/features/oshikatsu/live/presentation/field_events/live_schedule_status_badge.dart';
 import 'package:oshi_log/features/oshikatsu/live/application/calendar_controller.dart';
 import 'package:oshi_log/features/oshikatsu/live/domain/entities/calendar_event.dart';
 import 'calendar_view_data.dart';
 import 'field_month_grid.dart';
+import '../../domain/event_time_policy.dart';
+import '../../domain/entities/live_event_entities.dart';
+import '../../application/live_events_controller.dart';
+import '../field_events/field_event_agenda_widgets.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/application/projects_controller.dart';
 
 /// EN: Calendar answers what is happening and when.
 /// KO: 언제 무슨 일이 있는지 답하는 일정 화면입니다.
 class FieldCalendarPage extends ConsumerStatefulWidget {
-  const FieldCalendarPage({super.key, required this.projectLens});
+  const FieldCalendarPage({
+    super.key,
+    required this.projectLens,
+    this.embedded = false,
+  });
+
+  final bool embedded;
 
   /// EN: Injectable to avoid a direct catalog presentation dependency.
   /// KO: catalog presentation 직접 의존을 피하기 위한 주입 지점입니다.
@@ -39,17 +50,28 @@ class FieldCalendarPage extends ConsumerStatefulWidget {
 class _FieldCalendarPageState extends ConsumerState<FieldCalendarPage> {
   late DateTime _visibleMonth;
   DateTime? _selectedDate;
+  bool _showCalendar = false;
+  String? _unitId;
+  String? _region;
   Set<CalendarEventType> _selectedTypes = const {};
 
   @override
   void initState() {
     super.initState();
-    final now = DateTime.now();
+    final now = EventTimePolicy.inJst(DateTime.now());
     _visibleMonth = DateTime(now.year, now.month);
   }
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(selectedProjectKeyProvider, (previous, next) {
+      if (previous != next) {
+        setState(() {
+          _unitId = null;
+          _region = null;
+        });
+      }
+    });
     final projectKey = ref.watch(selectedProjectKeyProvider);
     final query = (
       year: _visibleMonth.year,
@@ -59,61 +81,112 @@ class _FieldCalendarPageState extends ConsumerState<FieldCalendarPage> {
     final eventsAsync = ref.watch(calendarEventsProvider(query));
     final events = eventsAsync.valueOrNull ?? const <CalendarEvent>[];
     final gridEvents = filterCalendarGridEvents(
-      events,
+      _refineEvents(events),
       selectedTypes: _selectedTypes,
     );
 
     return Scaffold(
-      appBar: gbtStandardAppBar(
-        context,
-        title: context.l10n(ko: '일정', en: 'Schedule', ja: '予定'),
-      ),
-      body: CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(
-            child: _CalendarPageWidth(
-              top: GBTSpacing.sm,
-              child: widget.projectLens,
+      appBar: widget.embedded
+          ? null
+          : gbtStandardAppBar(
+              context,
+              title: context.l10n(ko: '일정', en: 'Schedule', ja: '予定'),
             ),
-          ),
-          SliverToBoxAdapter(
-            child: _CalendarPageWidth(
-              top: GBTSpacing.md,
-              child: _MonthNavigation(
-                month: _visibleMonth,
-                onPrevious: () => _changeMonth(-1),
-                onNext: () => _changeMonth(1),
-                onToday: _goToToday,
+      body: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(calendarEventsProvider(query));
+          await ref.read(calendarEventsProvider(query).future);
+        },
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(
+              child: _CalendarPageWidth(
+                top: GBTSpacing.sm,
+                child: widget.projectLens,
               ),
             ),
-          ),
-          SliverToBoxAdapter(
-            child: _CalendarPageWidth(
-              horizontalGutter: 4,
-              top: GBTSpacing.sm,
-              child: FieldMonthGrid(
-                visibleMonth: _visibleMonth,
-                events: gridEvents,
-                selectedDate: _selectedDate,
-                onSelectDate: _toggleDate,
+            SliverToBoxAdapter(
+              child: _CalendarPageWidth(
+                top: GBTSpacing.md,
+                child: _MonthNavigation(
+                  month: _visibleMonth,
+                  onPrevious: () => _changeMonth(-1),
+                  onNext: () => _changeMonth(1),
+                  onToday: _goToToday,
+                ),
               ),
             ),
-          ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.only(top: GBTSpacing.md),
-              child: FieldCalendarEventTypeRail(
-                selectedTypes: _selectedTypes,
-                onToggle: _toggleType,
-                onClear: () => setState(() => _selectedTypes = const {}),
+            SliverToBoxAdapter(
+              child: _CalendarPageWidth(
+                top: GBTSpacing.sm,
+                child: Align(
+                  alignment: AlignmentDirectional.centerEnd,
+                  child: IconButton.filledTonal(
+                    tooltip: _showCalendar
+                        ? context.l10n(
+                            ko: '월별 목록',
+                            en: 'Month list',
+                            ja: '月の一覧',
+                          )
+                        : context.l10n(
+                            ko: '월 캘린더',
+                            en: 'Month calendar',
+                            ja: '月カレンダー',
+                          ),
+                    icon: Icon(
+                      _showCalendar
+                          ? Icons.view_list_outlined
+                          : Icons.calendar_month,
+                    ),
+                    onPressed: () => setState(() {
+                      _showCalendar = !_showCalendar;
+                      _selectedDate = null;
+                    }),
+                  ),
+                ),
               ),
             ),
-          ),
-          ..._buildAgendaSlivers(context, query, eventsAsync),
-          SliverToBoxAdapter(
-            child: SizedBox(height: GBTSpacing.bottomNavClearanceOf(context)),
-          ),
-        ],
+            if (_showCalendar)
+              SliverToBoxAdapter(
+                child: _CalendarPageWidth(
+                  horizontalGutter: 4,
+                  top: GBTSpacing.sm,
+                  child: FieldMonthGrid(
+                    visibleMonth: _visibleMonth,
+                    events: gridEvents,
+                    selectedDate: _selectedDate,
+                    onSelectDate: _toggleDate,
+                  ),
+                ),
+              ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.only(top: GBTSpacing.md),
+                child: FieldCalendarEventTypeRail(
+                  selectedTypes: _selectedTypes,
+                  onToggle: _toggleType,
+                  onClear: () => setState(() => _selectedTypes = const {}),
+                ),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: _CalendarPageWidth(
+                top: GBTSpacing.sm,
+                child: _ScheduleRefinements(
+                  unitId: _unitId,
+                  region: _region,
+                  onUnit: (value) => setState(() => _unitId = value),
+                  onRegion: (value) => setState(() => _region = value),
+                ),
+              ),
+            ),
+            ..._buildAgendaSlivers(context, query, eventsAsync),
+            SliverToBoxAdapter(
+              child: SizedBox(height: GBTSpacing.bottomNavClearanceOf(context)),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -155,8 +228,18 @@ class _FieldCalendarPageState extends ConsumerState<FieldCalendarPage> {
       ];
     }
 
+    final liveEvents =
+        ref.watch(liveEventsListControllerProvider).valueOrNull ??
+        const <LiveEventSummary>[];
+    final liveById = {for (final live in liveEvents) live.id: live};
+    final attendedIds = ref
+        .watch(liveAttendanceHistoryControllerProvider)
+        .items
+        .where((item) => item.attended && !item.isNone)
+        .map((item) => item.eventId)
+        .toSet();
     final filtered = filterCalendarEvents(
-      eventsAsync.valueOrNull ?? const [],
+      _refineEvents(eventsAsync.valueOrNull ?? const []),
       selectedDate: _selectedDate,
       selectedTypes: _selectedTypes,
     );
@@ -167,10 +250,16 @@ class _FieldCalendarPageState extends ConsumerState<FieldCalendarPage> {
           child: _CalendarPageWidth(
             top: GBTSpacing.lg,
             child: _InlineCalendarEmpty(
-              hasFilters: _selectedDate != null || _selectedTypes.isNotEmpty,
+              hasFilters:
+                  _selectedDate != null ||
+                  _selectedTypes.isNotEmpty ||
+                  _unitId != null ||
+                  _region != null,
               onClear: () => setState(() {
                 _selectedDate = null;
                 _selectedTypes = const {};
+                _unitId = null;
+                _region = null;
               }),
             ),
           ),
@@ -200,14 +289,24 @@ class _FieldCalendarPageState extends ConsumerState<FieldCalendarPage> {
             ),
             sliver: SliverList.builder(
               itemCount: group.events.length,
-              itemBuilder: (context, index) => _FieldEventTicket(
-                event: group.events[index],
-                onTap: _eventDestination(group.events[index]) == null
-                    ? null
-                    : () => context.goToEventDetail(
-                        _eventDestination(group.events[index])!,
-                      ),
-              ),
+              itemBuilder: (context, index) {
+                final calendarEvent = group.events[index];
+                final destination = _eventDestination(calendarEvent);
+                final live = liveById[destination];
+                if (live != null) {
+                  return FieldEventAgendaRow(
+                    event: live,
+                    attended: attendedIds.contains(live.id),
+                    onTap: () => context.goToEventDetail(live.id),
+                  );
+                }
+                return _FieldEventTicket(
+                  event: calendarEvent,
+                  onTap: destination == null
+                      ? null
+                      : () => context.goToEventDetail(destination),
+                );
+              },
             ),
           ),
         );
@@ -223,6 +322,20 @@ class _FieldCalendarPageState extends ConsumerState<FieldCalendarPage> {
     return id;
   }
 
+  Iterable<CalendarEvent> _refineEvents(Iterable<CalendarEvent> events) {
+    if (_unitId == null && _region == null) return events;
+    final liveEvents =
+        ref.watch(liveEventsListControllerProvider).valueOrNull ??
+        const <LiveEventSummary>[];
+    final liveById = {for (final live in liveEvents) live.id: live};
+    return events.where((event) {
+      final live = liveById[_eventDestination(event)];
+      return live != null &&
+          (_unitId == null || live.unitIds.contains(_unitId)) &&
+          (_region == null || live.regionCodes.contains(_region));
+    });
+  }
+
   void _changeMonth(int delta) {
     setState(() {
       _visibleMonth = DateTime(_visibleMonth.year, _visibleMonth.month + delta);
@@ -231,7 +344,7 @@ class _FieldCalendarPageState extends ConsumerState<FieldCalendarPage> {
   }
 
   void _goToToday() {
-    final now = DateTime.now();
+    final now = EventTimePolicy.inJst(DateTime.now());
     setState(() {
       _visibleMonth = DateTime(now.year, now.month);
       _selectedDate = DateTime(now.year, now.month, now.day);
@@ -387,7 +500,7 @@ class _FieldEventTicket extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final accent = calendarEventTypeColor(event.type, context);
-    final local = event.date.toLocal();
+    final local = calendarEventDate(event);
     final locale = Localizations.localeOf(context).toLanguageTag();
     final scheduleLabel = liveScheduleStatusLabel(
       context,
@@ -449,7 +562,9 @@ class _FieldEventTicket extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Row(
+                  Wrap(
+                    spacing: GBTSpacing.xs,
+                    runSpacing: GBTSpacing.xs,
                     children: [
                       Icon(_eventTypeIcon(event.type), size: 15, color: accent),
                       const SizedBox(width: GBTSpacing.xs),
@@ -466,6 +581,12 @@ class _FieldEventTicket extends StatelessWidget {
                         LiveScheduleStatusBadge(status: event.scheduleStatus),
                       ],
                     ],
+                  ),
+                  const SizedBox(height: GBTSpacing.xs),
+                  Text(
+                    isAllDayCalendarEvent(event)
+                        ? context.l10n(ko: '종일', en: 'All day', ja: '終日')
+                        : '${DateFormat.Hm(locale).format(local)} JST',
                   ),
                   const SizedBox(height: GBTSpacing.xs),
                   Text(
@@ -647,4 +768,78 @@ String _eventTypeLabel(BuildContext context, CalendarEventType type) {
       ja: '一般',
     ),
   };
+}
+
+class _ScheduleRefinements extends ConsumerWidget {
+  const _ScheduleRefinements({
+    required this.unitId,
+    required this.region,
+    required this.onUnit,
+    required this.onRegion,
+  });
+  final String? unitId;
+  final String? region;
+  final ValueChanged<String?> onUnit;
+  final ValueChanged<String?> onRegion;
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final project =
+        ref.watch(selectedProjectKeyProvider) ??
+        ref.watch(selectedProjectIdProvider);
+    final units = project == null || project.isEmpty
+        ? null
+        : ref.watch(projectUnitsControllerProvider(project)).valueOrNull;
+    final events =
+        ref.watch(liveEventsListControllerProvider).valueOrNull ??
+        const <LiveEventSummary>[];
+    final regions = events.expand((event) => event.regionCodes).toSet().toList()
+      ..sort();
+    if ((units == null || units.isEmpty) && regions.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return Wrap(
+      spacing: GBTSpacing.md,
+      runSpacing: GBTSpacing.sm,
+      children: [
+        if (units != null && units.isNotEmpty)
+          DropdownButton<String>(
+            isExpanded: true,
+            value: units.any((unit) => unit.id == unitId) ? unitId : null,
+            hint: Text(
+              context.l10n(ko: '모든 밴드', en: 'All bands', ja: 'すべてのバンド'),
+            ),
+            onChanged: onUnit,
+            items: [
+              DropdownMenuItem<String>(
+                value: null,
+                child: Text(
+                  context.l10n(ko: '모든 밴드', en: 'All bands', ja: 'すべてのバンド'),
+                ),
+              ),
+              for (final unit in units)
+                DropdownMenuItem(value: unit.id, child: Text(unit.displayName)),
+            ],
+          ),
+        if (regions.isNotEmpty)
+          DropdownButton<String>(
+            isExpanded: true,
+            value: regions.contains(region) ? region : null,
+            hint: Text(
+              context.l10n(ko: '모든 지역', en: 'All areas', ja: 'すべての地域'),
+            ),
+            onChanged: onRegion,
+            items: [
+              DropdownMenuItem<String>(
+                value: null,
+                child: Text(
+                  context.l10n(ko: '모든 지역', en: 'All areas', ja: 'すべての地域'),
+                ),
+              ),
+              for (final code in regions)
+                DropdownMenuItem(value: code, child: Text(code)),
+            ],
+          ),
+      ],
+    );
+  }
 }

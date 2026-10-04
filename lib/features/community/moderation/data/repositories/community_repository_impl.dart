@@ -2,9 +2,9 @@
 /// KO: 커뮤니티 신고/차단 리포지토리 구현.
 library;
 
-import '../../../../../core/error/error_handler.dart';
-import '../../../../../core/error/failure.dart';
-import '../../../../../core/utils/result.dart';
+import '../../../../../platform/error/error_handler.dart';
+import '../../../../../platform/error/failure.dart';
+import '../../../../../platform/utils/result.dart';
 import '../../domain/entities/community_moderation.dart';
 import '../../domain/repositories/community_repository.dart';
 import '../datasources/community_remote_data_source.dart';

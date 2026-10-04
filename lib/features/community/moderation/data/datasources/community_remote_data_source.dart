@@ -2,10 +2,10 @@
 /// KO: 커뮤니티 신고/차단 원격 데이터 소스.
 library;
 
-import '../../../../../core/constants/api_constants.dart';
-import '../../../../../core/error/failure.dart';
-import '../../../../../core/network/api_client.dart';
-import '../../../../../core/utils/result.dart';
+import '../../../../../platform/constants/api_constants.dart';
+import '../../../../../platform/error/failure.dart';
+import '../../../../../platform/network/api_client.dart';
+import '../../../../../platform/utils/result.dart';
 import '../dto/community_moderation_dto.dart';
 
 class CommunityRemoteDataSource {

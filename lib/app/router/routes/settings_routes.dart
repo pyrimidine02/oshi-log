@@ -4,7 +4,7 @@ library;
 
 import 'package:go_router/go_router.dart';
 
-import '../../../core/router/app_router.dart' show AppRoutes;
+import '../../../platform/router/app_router.dart' show AppRoutes;
 import 'package:oshi_log/features/community/moderation/presentation/pages/admin_ops_page.dart';
 import 'package:oshi_log/features/identity/auth/presentation/pages/change_password_page.dart';
 import 'package:oshi_log/features/identity/auth/presentation/pages/forgot_password_page.dart';

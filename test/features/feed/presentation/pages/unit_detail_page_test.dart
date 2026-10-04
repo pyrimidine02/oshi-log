@@ -3,7 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:oshi_log/core/theme/gbt_theme.dart';
+import 'package:oshi_log/design_system/theme/gbt_theme.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/presentation/pages/unit_detail_page.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/domain/entities/project_entities.dart';
 
@@ -31,7 +31,7 @@ void main() {
       ),
     );
 
-    expect(find.text('UNIT DOSSIER'), findsOneWidget);
+    expect(find.text('밴드 · 유닛'), findsOneWidget);
     expect(find.text('MyGO!!!!!'), findsOneWidget);
     expect(find.text('멤버 · 성우'), findsOneWidget);
     expect(find.byType(SliverAppBar), findsNothing);

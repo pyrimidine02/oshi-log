@@ -2,7 +2,7 @@
 /// KO: 방문 기록 리포지토리 인터페이스.
 library;
 
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/place/visits/domain/entities/visit_entities.dart';
 
 abstract class VisitsRepository {

@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:oshi_log/core/config/app_config.dart';
-import 'package:oshi_log/core/utils/media_url.dart';
+import 'package:oshi_log/platform/config/app_config.dart';
+import 'package:oshi_log/platform/utils/media_url.dart';
 
 void main() {
   setUpAll(() {

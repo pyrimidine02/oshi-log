@@ -4,6 +4,10 @@ library;
 
 import 'package:intl/intl.dart';
 
+/// EN: Existing server-side comment filters, independent of user tags.
+/// KO: 사용자 태그와 별개인 기존 서버 댓글 필터입니다.
+enum PlaceTipCategory { access, routes, advice, pinned }
+
 class PlaceComment {
   const PlaceComment({
     required this.id,
@@ -16,6 +20,10 @@ class PlaceComment {
     required this.tags,
     required this.photoUploadIds,
     required this.photoUrls,
+    this.bestRoute,
+    this.advice,
+    this.accessibility,
+    this.isPreview = false,
   });
 
   final String id;
@@ -28,6 +36,10 @@ class PlaceComment {
   final List<String> tags;
   final List<String> photoUploadIds;
   final List<String> photoUrls;
+  final String? bestRoute;
+  final String? advice;
+  final String? accessibility;
+  final bool isPreview;
 
   String get createdAtLabel {
     if (createdAt == null) return '';

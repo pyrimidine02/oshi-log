@@ -2,7 +2,7 @@
 /// KO: 일반화된 팬 대상 탐색·선택 저장소 계약입니다.
 library;
 
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import '../entities/fan_subject.dart';
 
 abstract interface class FanSubjectsRepository {

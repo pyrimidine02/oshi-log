@@ -2,9 +2,9 @@
 /// KO: 홈 요약용 원격 데이터 소스.
 library;
 
-import '../../../../../core/constants/api_constants.dart';
-import '../../../../../core/network/api_client.dart';
-import '../../../../../core/utils/result.dart';
+import '../../../../../platform/constants/api_constants.dart';
+import '../../../../../platform/network/api_client.dart';
+import '../../../../../platform/utils/result.dart';
 import '../dto/home_summary_dto.dart';
 
 class HomeRemoteDataSource {

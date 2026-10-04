@@ -4,9 +4,9 @@ library;
 
 import 'package:flutter/material.dart';
 
-import '../../../../../core/localization/locale_text.dart';
-import '../../../../../core/theme/gbt_spacing.dart';
-import '../../../../../core/theme/gbt_typography.dart';
+import '../../../../../design_system/localization/locale_text.dart';
+import '../../../../../design_system/theme/gbt_spacing.dart';
+import '../../../../../design_system/theme/gbt_typography.dart';
 import '../../domain/entities/community_moderation.dart';
 
 class CommunityReportPayload {
@@ -66,6 +66,15 @@ class _CommunityReportSheetState extends State<CommunityReportSheet> {
                 context.l10n(ko: '신고하기', en: 'Report', ja: '通報'),
                 style: GBTTypography.titleSmall,
               ),
+              const SizedBox(height: GBTSpacing.sm),
+              Text(
+                context.l10n(
+                  ko: '게시물의 규칙 위반을 신고합니다. 주소·영업시간 등 장소 정보 수정은 장소 상세에서 요청해주세요.',
+                  en: 'Report content that breaks community rules. Request address or opening-hour corrections from the place detail page.',
+                  ja: '投稿のルール違反を通報します。住所・営業時間などの場所情報の修正は、場所の詳細から依頼してください。',
+                ),
+                style: GBTTypography.bodyMedium,
+              ),
               const SizedBox(height: GBTSpacing.md),
               RadioGroup<CommunityReportReason>(
                 groupValue: _selectedReason,
@@ -110,6 +119,7 @@ class _CommunityReportSheetState extends State<CommunityReportSheet> {
               SizedBox(
                 width: double.infinity,
                 child: FilledButton(
+                  style: FilledButton.styleFrom(minimumSize: const Size(0, 48)),
                   onPressed: () {
                     final description = _descriptionController.text.trim();
                     Navigator.of(context).pop(

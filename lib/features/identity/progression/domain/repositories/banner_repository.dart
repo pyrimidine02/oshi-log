@@ -2,7 +2,7 @@
 /// KO: 배너 작업을 위한 추상 리포지토리 인터페이스.
 library;
 
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/identity/progression/domain/entities/banner_entities.dart';
 
 /// EN: Contract that all banner repository implementations must fulfill.

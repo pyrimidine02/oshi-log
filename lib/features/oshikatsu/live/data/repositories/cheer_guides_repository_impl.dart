@@ -2,9 +2,9 @@
 /// KO: [CheerGuidesRepository]의 구체적인 구현체.
 library;
 
-import 'package:oshi_log/core/error/error_handler.dart';
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/error/error_handler.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/oshikatsu/live/domain/entities/cheer_guide.dart';
 import 'package:oshi_log/features/oshikatsu/live/domain/repositories/cheer_guides_repository.dart';
 import 'package:oshi_log/features/oshikatsu/live/data/datasources/cheer_guides_remote_data_source.dart';

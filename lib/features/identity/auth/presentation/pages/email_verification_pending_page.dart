@@ -10,13 +10,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
-import 'package:oshi_log/core/localization/locale_text.dart';
-import 'package:oshi_log/core/theme/gbt_colors.dart';
-import 'package:oshi_log/core/theme/gbt_spacing.dart';
-import 'package:oshi_log/core/theme/gbt_typography.dart';
-import 'package:oshi_log/core/utils/result.dart';
-import 'package:oshi_log/core/widgets/buttons/gbt_button.dart';
-import 'package:oshi_log/core/widgets/navigation/gbt_standard_app_bar.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
+import 'package:oshi_log/platform/router/app_router.dart'
+    show safeRedirectTarget;
+import 'package:oshi_log/design_system/theme/gbt_colors.dart';
+import 'package:oshi_log/design_system/theme/gbt_spacing.dart';
+import 'package:oshi_log/design_system/theme/gbt_typography.dart';
+import 'package:oshi_log/platform/utils/result.dart';
+import 'package:oshi_log/design_system/widgets/buttons/gbt_button.dart';
+import 'package:oshi_log/design_system/widgets/navigation/gbt_standard_app_bar.dart';
 import 'package:oshi_log/features/identity/auth/application/auth_controller.dart';
 import 'email_verification_args.dart';
 
@@ -54,6 +56,18 @@ class _EmailVerificationPendingPageState
   final _codeFocusNode = FocusNode();
   bool _isVerifying = false;
   String? _codeError;
+
+  String get _loginLocation {
+    final redirect = safeRedirectTarget(
+      GoRouterState.of(context).uri.queryParameters['redirect'],
+    );
+    return redirect == null
+        ? '/login'
+        : Uri(
+            path: '/login',
+            queryParameters: {'redirect': redirect},
+          ).toString();
+  }
 
   @override
   void dispose() {
@@ -192,7 +206,7 @@ class _EmailVerificationPendingPageState
       );
       // EN: Navigate to login after successful verification.
       // KO: 인증 완료 후 로그인 화면으로 이동합니다.
-      context.go('/login');
+      context.go(_loginLocation);
       return;
     }
 
@@ -283,7 +297,7 @@ class _EmailVerificationPendingPageState
           TextButton(
             onPressed: () {
               Navigator.of(ctx).pop();
-              context.go('/login');
+              context.go(_loginLocation);
             },
             child: Text(
               context.l10n(ko: '로그인으로', en: 'Go to Login', ja: 'ログインへ'),
@@ -310,7 +324,7 @@ class _EmailVerificationPendingPageState
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/login'),
+          onPressed: () => context.go(_loginLocation),
           tooltip: context.l10n(ko: '로그인으로 이동', en: 'Go to login', ja: 'ログインへ'),
         ),
       ),
@@ -574,7 +588,7 @@ class _EmailVerificationPendingPageState
                   ja: 'ログインページへ',
                 ),
                 child: TextButton(
-                  onPressed: () => context.go('/login'),
+                  onPressed: () => context.go(_loginLocation),
                   style: TextButton.styleFrom(
                     minimumSize: const Size(
                       GBTSpacing.touchTarget,

@@ -4,10 +4,10 @@ library;
 
 import 'package:flutter/material.dart';
 
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/localization/locale_text.dart';
-import 'package:oshi_log/core/theme/theme.dart';
-import 'package:oshi_log/core/widgets/layout/gbt_field_primitives.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
+import 'package:oshi_log/design_system/theme/theme.dart';
+import 'package:oshi_log/design_system/widgets/layout/gbt_field_primitives.dart';
 import 'package:oshi_log/features/oshikatsu/live/application/live_events_controller.dart';
 import 'package:oshi_log/features/oshikatsu/live/domain/entities/live_event_entities.dart';
 import 'field_visit_ledger_common.dart';
@@ -206,9 +206,9 @@ class FieldEventLedgerRow extends StatelessWidget {
         ja: '認証済み',
       ),
       LiveAttendanceStatus.declared => context.l10n(
-        ko: '출석 기록',
-        en: 'DECLARED',
-        ja: '参加記録',
+        ko: '자기신고',
+        en: 'Self-reported',
+        ja: '自己申告',
       ),
       _ => context.l10n(ko: '기록', en: 'RECORDED', ja: '記録'),
     };
@@ -288,8 +288,9 @@ class FieldEventLedgerRow extends StatelessWidget {
                               ),
                         ),
                         const SizedBox(height: GBTSpacing.xs),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
+                        Wrap(
+                          spacing: GBTSpacing.xs,
+                          runSpacing: GBTSpacing.xs,
                           children: [
                             GBTFieldBadge(
                               label: statusLabel,
@@ -300,17 +301,12 @@ class FieldEventLedgerRow extends StatelessWidget {
                             ),
                             if (record.verificationMethod?.trim().isNotEmpty ==
                                 true) ...[
-                              const SizedBox(width: GBTSpacing.xs),
-                              Expanded(
-                                child: Text(
-                                  record.verificationMethod!,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(context).textTheme.labelSmall
-                                      ?.copyWith(
-                                        color: colors.onSurfaceVariant,
-                                      ),
-                                ),
+                              Text(
+                                record.verificationMethod!,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.labelSmall
+                                    ?.copyWith(color: colors.onSurfaceVariant),
                               ),
                             ],
                           ],

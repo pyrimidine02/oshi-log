@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart' hide VerificationResult;
 
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/place/verification/data/datasources/verification_remote_data_source.dart';
 import 'package:oshi_log/features/place/verification/data/dto/verification_dto.dart';
 import 'package:oshi_log/features/place/verification/data/repositories/verification_repository_impl.dart';

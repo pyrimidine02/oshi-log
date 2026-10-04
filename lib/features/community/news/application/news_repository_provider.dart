@@ -4,7 +4,7 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:oshi_log/core/providers/core_providers.dart';
+import 'package:oshi_log/platform/providers/core_providers.dart';
 import '../data/datasources/news_remote_data_source.dart';
 import '../data/repositories/news_repository_impl.dart';
 import '../domain/repositories/news_repository.dart';

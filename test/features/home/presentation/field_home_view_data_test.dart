@@ -51,6 +51,27 @@ void main() {
   group('selectUpcomingHomeEvents', () {
     final now = DateTime(2026, 7, 15, 12);
 
+    test('retains a started show until midnight in JST without end time', () {
+      final event = _event('today', DateTime.utc(2026, 7, 15, 9));
+      expect(
+        selectUpcomingHomeEvents([
+          event,
+        ], now: DateTime.utc(2026, 7, 15, 14, 59)),
+        [event],
+      );
+      expect(
+        selectUpcomingHomeEvents([event], now: DateTime.utc(2026, 7, 15, 15)),
+        isEmpty,
+      );
+      expect(
+        resolveFieldHomeContentState(
+          _summary(events: [event]),
+          now: DateTime.utc(2026, 7, 15, 12),
+        ),
+        FieldHomeContentState.content,
+      );
+    });
+
     test('drops past events and orders the remaining itinerary', () {
       final events = [
         _event('later', DateTime(2026, 7, 18)),

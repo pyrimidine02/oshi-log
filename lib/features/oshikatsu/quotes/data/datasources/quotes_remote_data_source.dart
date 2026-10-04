@@ -2,9 +2,9 @@
 /// KO: 명대사 카드의 원격 데이터 소스.
 library;
 
-import 'package:oshi_log/core/constants/api_constants.dart';
-import 'package:oshi_log/core/network/api_client.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/constants/api_constants.dart';
+import 'package:oshi_log/platform/network/api_client.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/oshikatsu/quotes/data/dto/quote_card_dto.dart';
 
 /// EN: Fetches quote card data from the remote API.

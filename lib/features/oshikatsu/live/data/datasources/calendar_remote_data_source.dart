@@ -2,9 +2,11 @@
 /// KO: 캘린더 이벤트의 원격 데이터 소스.
 library;
 
-import 'package:oshi_log/core/constants/api_constants.dart';
-import 'package:oshi_log/core/network/api_client.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import '../../domain/event_time_policy.dart';
+
+import 'package:oshi_log/platform/constants/api_constants.dart';
+import 'package:oshi_log/platform/network/api_client.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/oshikatsu/live/data/dto/calendar_event_dto.dart';
 
 /// EN: Fetches calendar events from the remote API.
@@ -63,8 +65,14 @@ class CalendarRemoteDataSource {
     //     can still be projected when its end time overlaps the visible month.
     // KO: 이전 달에 시작해 현재 달까지 이어지는 이벤트도 투영할 수 있도록
     //     조회 시작 범위에 이전 달을 포함합니다.
-    final rangeStart = DateTime(year, month - 1);
-    final nextMonthStart = DateTime(year, month + 1);
+    final rangeStart = DateTime.utc(
+      year,
+      month - 1,
+    ).subtract(EventTimePolicy.jstOffset);
+    final nextMonthStart = DateTime.utc(
+      year,
+      month + 1,
+    ).subtract(EventTimePolicy.jstOffset);
     final rangeEnd = nextMonthStart.subtract(const Duration(microseconds: 1));
     const pageSize = 100;
     const maxPages = 20;

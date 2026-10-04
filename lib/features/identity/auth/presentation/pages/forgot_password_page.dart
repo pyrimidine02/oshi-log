@@ -6,14 +6,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/localization/locale_text.dart';
-import 'package:oshi_log/core/theme/gbt_spacing.dart';
-import 'package:oshi_log/core/theme/gbt_typography.dart';
-import 'package:oshi_log/core/utils/result.dart';
-import 'package:oshi_log/core/widgets/buttons/gbt_button.dart';
-import 'package:oshi_log/core/widgets/inputs/gbt_text_field.dart';
-import 'package:oshi_log/core/widgets/navigation/gbt_standard_app_bar.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
+import 'package:oshi_log/platform/router/app_router.dart'
+    show safeRedirectTarget;
+import 'package:oshi_log/design_system/theme/gbt_spacing.dart';
+import 'package:oshi_log/design_system/theme/gbt_typography.dart';
+import 'package:oshi_log/platform/utils/result.dart';
+import 'package:oshi_log/design_system/widgets/buttons/gbt_button.dart';
+import 'package:oshi_log/design_system/widgets/inputs/gbt_text_field.dart';
+import 'package:oshi_log/design_system/widgets/navigation/gbt_standard_app_bar.dart';
 import 'package:oshi_log/features/identity/auth/application/auth_controller.dart';
 import 'package:oshi_log/features/identity/auth/presentation/widgets/field_auth_components.dart';
 
@@ -31,6 +33,18 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
   final _emailController = TextEditingController();
   bool _isSubmitting = false;
   bool _emailSent = false;
+
+  String get _resetLocation {
+    final redirect = safeRedirectTarget(
+      GoRouterState.of(context).uri.queryParameters['redirect'],
+    );
+    return redirect == null
+        ? '/reset-password'
+        : Uri(
+            path: '/reset-password',
+            queryParameters: {'redirect': redirect},
+          ).toString();
+  }
 
   @override
   void dispose() {
@@ -157,7 +171,7 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
           // KO: 이미 코드를 받은 경우 입력 화면으로 이동
           Center(
             child: TextButton(
-              onPressed: () => context.push('/reset-password'),
+              onPressed: () => context.push(_resetLocation),
               style: TextButton.styleFrom(
                 minimumSize: const Size(
                   GBTSpacing.touchTarget,
@@ -221,7 +235,7 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
         GBTButton(
           label: context.l10n(ko: '코드 입력하기', en: 'Enter code', ja: 'コードを入力する'),
           isFullWidth: true,
-          onPressed: () => context.push('/reset-password'),
+          onPressed: () => context.push(_resetLocation),
         ),
         const SizedBox(height: GBTSpacing.md),
         Center(

@@ -9,23 +9,28 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../../core/error/failure.dart';
-import '../../../../../core/localization/locale_text.dart';
-import '../../../../../core/providers/core_providers.dart';
+import '../../../../../platform/error/failure.dart';
+import '../../../../../design_system/localization/locale_text.dart';
+import '../../../../../platform/providers/core_providers.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
-import '../../../../../core/router/app_router.dart';
-import '../../../../../core/theme/theme.dart';
-import '../../../../../core/widgets/feedback/gbt_empty_state.dart';
-import '../../../../../core/widgets/feedback/gbt_loading.dart'
+import '../../../../../platform/router/app_router.dart';
+import '../../../../../design_system/theme/theme.dart';
+import '../../../../../design_system/widgets/feedback/gbt_empty_state.dart';
+import '../../../../../design_system/widgets/feedback/gbt_loading.dart'
     hide GBTEmptyState;
-import '../../../../../core/widgets/navigation/gbt_profile_action.dart';
+import '../../../../../design_system/widgets/navigation/gbt_profile_action.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/projects_controller.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/domain/entities/project_entities.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/presentation/widgets/field_project_lens.dart';
 import 'package:oshi_log/features/identity/account/application/settings_controller.dart';
 import '../../../../../features/shared/home/application/home_controller.dart';
 import '../../../../../features/shared/home/domain/entities/home_summary.dart';
+import 'package:oshi_log/features/identity/auth/application/session_state.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/application/fan_subjects_controller.dart';
+import 'package:oshi_log/features/oshikatsu/catalog/presentation/widgets/fan_subject_preference_sheet.dart';
+import 'package:oshi_log/features/oshikatsu/live/domain/event_time_policy.dart';
 import './field_home_view_data.dart';
+import './widgets/home_entry_sections.dart';
 import './widgets/field_home_components.dart';
 
 /// EN: Home answers one question: where should the fan go next?
@@ -36,32 +41,100 @@ class FieldHomePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(projectSelectionControllerProvider);
-    final state = ref.watch(homeControllerProvider);
+    final authenticated = ref.watch(isAuthenticatedProvider);
+    final state = authenticated ? ref.watch(homeControllerProvider) : null;
     final projects = ref.watch(projectsControllerProvider);
     final projectKey = ref.watch(selectedProjectKeyProvider);
-    final profile = ref.watch(userProfileControllerProvider).valueOrNull;
+    final profile = authenticated
+        ? ref.watch(userProfileControllerProvider).valueOrNull
+        : null;
+    final subjects = authenticated
+        ? ref.watch(myFanSubjectsControllerProvider)
+        : null;
+    final projectId = ref.watch(selectedProjectIdProvider);
 
     return Scaffold(
       body: SafeArea(
         bottom: false,
         child: RefreshIndicator(
-          onRefresh: () => ref
-              .read(homeControllerProvider.notifier)
-              .load(forceRefresh: true),
+          onRefresh: () async {
+            if (authenticated) {
+              await ref
+                  .read(homeControllerProvider.notifier)
+                  .load(forceRefresh: true);
+            } else {
+              await ref
+                  .read(projectsControllerProvider.notifier)
+                  .load(forceRefresh: true);
+            }
+          },
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
               SliverToBoxAdapter(
                 child: _FieldHomeHeader(avatarUrl: profile?.avatarUrl),
               ),
-              if (projectKey == null || projectKey.isEmpty)
-                _projectGate(context, ref, projects)
-              else
-                ...state.when(
-                  loading: () => const [_HomeLoadingSliver()],
-                  error: (error, _) => [_HomeErrorSliver(error: error)],
-                  data: (summary) => _buildSummary(context, ref, summary),
+              if (!authenticated)
+                const SliverToBoxAdapter(
+                  child: _ResponsivePage(child: HomeGuestSections()),
+                )
+              else ...[
+                if (subjects?.hasValue == true &&
+                    subjects!.value!.isEmpty &&
+                    projectId != null)
+                  SliverToBoxAdapter(
+                    child: _ResponsivePage(
+                      child: HomeEntryPrompt(
+                        title: context.l10n(
+                          ko: '좋아하는 대상을 골라보세요',
+                          en: 'Choose your favorites',
+                          ja: '推しを選んでみましょう',
+                        ),
+                        message: context.l10n(
+                          ko: '나중에 골라도 괜찮아요. 지금은 선택한 프로젝트를 둘러보세요.',
+                          en: 'You can choose later. Explore the selected project now.',
+                          ja: 'あとで選んでも大丈夫。まずは選択中のプロジェクトを見てみましょう。',
+                        ),
+                        actionLabel: context.l10n(
+                          ko: '관심 대상 선택',
+                          en: 'Choose interests',
+                          ja: '推しを選ぶ',
+                        ),
+                        onAction: () => showFanSubjectPreferenceSheet(
+                          context: context,
+                          projectId: projectId,
+                        ),
+                        dismissible: true,
+                      ),
+                    ),
+                  ),
+                SliverToBoxAdapter(
+                  child: _ResponsivePage(
+                    child: Text(
+                      context.l10n(
+                        ko: '선택한 프로젝트의 공연·장소·뉴스',
+                        en: 'Shows, places and news in the selected project',
+                        ja: '選択中プロジェクトの公演・場所・ニュース',
+                      ),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ),
                 ),
+                if (projectKey == null || projectKey.isEmpty)
+                  _projectGate(context, ref, projects)
+                else
+                  ...state!.when(
+                    loading: () => const [_HomeLoadingSliver()],
+                    error: (error, _) => [_HomeErrorSliver(error: error)],
+                    data: (summary) => _buildSummary(context, ref, summary),
+                  ),
+              ],
+              const SliverToBoxAdapter(
+                child: _ResponsivePage(
+                  top: GBTSpacing.lg,
+                  child: HomeMusicShortcut(),
+                ),
+              ),
               SliverToBoxAdapter(
                 child: SizedBox(
                   height: GBTSpacing.bottomNavClearanceOf(context),
@@ -96,7 +169,22 @@ class FieldHomePage extends ConsumerWidget {
             ),
           );
         }
-        return const _HomeLoadingSliver();
+        return SliverToBoxAdapter(
+          child: _ResponsivePage(
+            child: HomeEntryPrompt(
+              title: context.l10n(
+                ko: '프로젝트를 선택해주세요',
+                en: 'Choose a project',
+                ja: 'プロジェクトを選んでください',
+              ),
+              message: context.l10n(
+                ko: '위의 프로젝트 이름을 눌러 둘러볼 작품을 선택할 수 있어요.',
+                en: 'Use the project selector above to choose what to explore.',
+                ja: '上のプロジェクト名から、見たい作品を選べます。',
+              ),
+            ),
+          ),
+        );
       },
     );
   }
@@ -127,9 +215,9 @@ class FieldHomePage extends ConsumerWidget {
                 FieldSectionHeader(
                   eyebrow: '',
                   title: context.l10n(
-                    ko: '다음 여행',
-                    en: 'Your next trip',
-                    ja: '次の旅',
+                    ko: '가까운 공연과 장소',
+                    en: 'Shows and places to explore',
+                    ja: '近日開催のライブと場所',
                   ),
                 ),
                 const SizedBox(height: GBTSpacing.md),
@@ -137,9 +225,9 @@ class FieldHomePage extends ConsumerWidget {
                   JourneyBriefCard(
                     markerLabel: _eventMarker(heroEvent, now: now),
                     eyebrow: context.l10n(
-                      ko: '가장 가까운 일정',
-                      en: 'Nearest event',
-                      ja: 'もっとも近い予定',
+                      ko: '선택한 프로젝트의 공연',
+                      en: 'Show in this project',
+                      ja: 'このプロジェクトの公演',
                     ),
                     title: heroEvent.title,
                     meta: _eventDateTime(context, heroEvent),
@@ -391,19 +479,24 @@ class _EventsSection extends ConsumerWidget {
 
 String _eventDate(BuildContext context, HomeEventItem event) {
   final locale = Localizations.localeOf(context).toLanguageTag();
-  return DateFormat.MMMd(locale).format(event.startsAt.toLocal());
+  return DateFormat.MMMd(locale).format(EventTimePolicy.inJst(event.startsAt));
 }
 
 String _eventDateTime(BuildContext context, HomeEventItem event) {
   final locale = Localizations.localeOf(context).toLanguageTag();
-  return DateFormat.MMMEd(locale).add_Hm().format(event.startsAt.toLocal());
+  final jst = DateFormat.MMMEd(
+    locale,
+  ).add_Hm().format(EventTimePolicy.inJst(event.startsAt));
+  final local = event.startsAt.toLocal();
+  if (local.timeZoneOffset == EventTimePolicy.jstOffset) return '$jst JST';
+  final localLabel = DateFormat.MMMEd(locale).add_Hm().format(local);
+  final device = context.l10n(ko: '기기 시간', en: 'device time', ja: '端末時間');
+  return '$jst JST · $localLabel ($device)';
 }
 
 String _eventMarker(HomeEventItem event, {required DateTime now}) {
-  final localEvent = event.startsAt.toLocal();
-  final eventDay = DateTime(localEvent.year, localEvent.month, localEvent.day);
-  final localNow = now.toLocal();
-  final today = DateTime(localNow.year, localNow.month, localNow.day);
+  final eventDay = EventTimePolicy.dateInJst(event.startsAt);
+  final today = EventTimePolicy.dateInJst(now);
   final days = eventDay.difference(today).inDays;
   return days == 0 ? 'D-DAY' : 'D-$days';
 }
@@ -524,12 +617,14 @@ class _HomeErrorSliver extends ConsumerWidget {
             en: 'Could not load the field desk',
             ja: 'ホーム情報を読み込めませんでした',
           );
-    return SliverFillRemaining(
-      hasScrollBody: false,
-      child: GBTErrorState(
-        message: message,
-        onRetry: () =>
-            ref.read(homeControllerProvider.notifier).load(forceRefresh: true),
+    return SliverToBoxAdapter(
+      child: _ResponsivePage(
+        child: GBTErrorState(
+          message: message,
+          onRetry: () => ref
+              .read(homeControllerProvider.notifier)
+              .load(forceRefresh: true),
+        ),
       ),
     );
   }

@@ -16,13 +16,18 @@ import 'package:oshi_log/features/community/posts/application/reaction_controlle
 import 'package:oshi_log/features/oshikatsu/live/application/live_events_controller.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
 import 'package:oshi_log/features/identity/account/application/settings_controller.dart';
-import '../../core/router/navigation_state.dart';
+import '../../platform/router/navigation_state.dart';
+import 'action_login_sheet.dart';
+import 'package:oshi_log/features/identity/auth/application/auth_action_gate.dart';
+import 'package:oshi_log/features/place/visits/application/visits_controller.dart';
 
 /// EN: Reset project/tab selection and invalidate user-scoped feature
 ///     providers on logout/session reset.
 /// KO: 로그아웃/세션 초기화 시 프로젝트/탭 선택을 초기화하고 사용자 범위
 ///     feature 프로바이더를 무효화합니다.
 void appSessionCleanup(Ref ref) {
+  ref.read(pendingLoginActionProvider).cancel();
+  ref.read(externalLoginReturnProvider.notifier).state = null;
   // EN: Reset project/unit selection state.
   // KO: 프로젝트/유닛 선택 상태 초기화.
   ref.read(selectedProjectKeyProvider.notifier).state = null;
@@ -33,6 +38,7 @@ void appSessionCleanup(Ref ref) {
   // EN: Invalidate user profile providers.
   // KO: 사용자 프로필 프로바이더 초기화.
   ref.invalidate(userProfileControllerProvider);
+  ref.invalidate(userVisitsControllerProvider);
   ref.invalidate(notificationSettingsControllerProvider);
 
   // EN: Dispose user mutation queues and local bookmarks so callbacks

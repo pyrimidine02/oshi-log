@@ -7,7 +7,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
-import 'package:oshi_log/core/config/ad_config.dart';
+import 'package:oshi_log/platform/config/ad_config.dart';
 
 /// EN: Result of preparing the optional ads SDK.
 /// KO: 선택적 광고 SDK 준비 결과입니다.

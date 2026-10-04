@@ -8,7 +8,7 @@ import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.
 import 'package:oshi_log/features/oshikatsu/catalog/application/projects_controller.dart';
 import 'package:oshi_log/features/place/places/application/places_controller.dart';
 import 'package:oshi_log/features/place/places/domain/entities/place_entities.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 
 /// EN: Map of place ID to summary for visit screens.
 /// KO: 방문 화면에서 사용할 장소 요약 맵.

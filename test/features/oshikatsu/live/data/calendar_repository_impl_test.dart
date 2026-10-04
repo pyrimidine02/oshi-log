@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/oshikatsu/live/data/datasources/calendar_remote_data_source.dart';
 import 'package:oshi_log/features/oshikatsu/live/data/dto/calendar_event_dto.dart';
 import 'package:oshi_log/features/oshikatsu/live/data/repositories/calendar_repository_impl.dart';
@@ -49,40 +49,43 @@ void main() {
     expect(events.last.relatedEntityId, 'live-1');
   });
 
-  test('normalizes UTC live start times to the device calendar date', () async {
-    final utcLive = CalendarEventDto(
-      id: 'live:utc-live',
-      title: 'UTC live',
-      date: DateTime.parse('2026-07-17T15:00:00Z'),
-      type: 'live',
-      relatedEntityId: 'utc-live',
-      relatedEntityType: 'live_event',
-    );
-    when(
-      () => remoteDataSource.fetchEvents(
+  test(
+    'preserves live instant and groups it by the JST calendar date',
+    () async {
+      final utcLive = CalendarEventDto(
+        id: 'live:utc-live',
+        title: 'UTC live',
+        date: DateTime.parse('2026-07-17T15:00:00Z'),
+        type: 'live',
+        relatedEntityId: 'utc-live',
+        relatedEntityType: 'live_event',
+      );
+      when(
+        () => remoteDataSource.fetchEvents(
+          year: 2026,
+          month: 7,
+          projectKey: 'bang-dream',
+        ),
+      ).thenAnswer((_) async => const Result.success([]));
+      when(
+        () => remoteDataSource.fetchLiveEvents(
+          year: 2026,
+          month: 7,
+          projectKey: 'bang-dream',
+        ),
+      ).thenAnswer((_) async => Result.success([utcLive]));
+
+      final result = await repository.fetchEvents(
         year: 2026,
         month: 7,
         projectKey: 'bang-dream',
-      ),
-    ).thenAnswer((_) async => const Result.success([]));
-    when(
-      () => remoteDataSource.fetchLiveEvents(
-        year: 2026,
-        month: 7,
-        projectKey: 'bang-dream',
-      ),
-    ).thenAnswer((_) async => Result.success([utcLive]));
+      );
 
-    final result = await repository.fetchEvents(
-      year: 2026,
-      month: 7,
-      projectKey: 'bang-dream',
-    );
-
-    final event = result.dataOrNull!.single;
-    expect(event.date, utcLive.date.toLocal());
-    expect(event.date.isUtc, isFalse);
-  });
+      final event = result.dataOrNull!.single;
+      expect(event.date, utcLive.date);
+      expect(event.scheduleDate, DateTime.utc(2026, 7, 18));
+    },
+  );
 
   test(
     'keeps live schedules available when fan calendar is unauthorized',
@@ -204,7 +207,7 @@ void main() {
 
       final events = result.dataOrNull!;
       expect(events, hasLength(2));
-      expect(events.map((event) => event.date.day), [18, 19]);
+      expect(events.map((event) => event.scheduleDate.day), [18, 19]);
       expect(events.map((event) => event.relatedEntityId).toSet(), {
         'mygo-9th',
       });
@@ -242,9 +245,9 @@ void main() {
 
     final events = result.dataOrNull!;
     expect(events, hasLength(31));
-    expect(events.first.date, DateTime(2026, 7, 1));
-    expect(events.last.date, DateTime(2026, 7, 31));
-    expect(events.every((event) => event.date.year == 2026), isTrue);
+    expect(events.first.scheduleDate, DateTime.utc(2026, 7, 1));
+    expect(events.last.scheduleDate, DateTime.utc(2026, 7, 31));
+    expect(events.every((event) => event.scheduleDate.year == 2026), isTrue);
   });
 
   test(

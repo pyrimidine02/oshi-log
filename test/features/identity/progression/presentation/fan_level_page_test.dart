@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/identity/progression/application/fan_level_controller.dart';
 import 'package:oshi_log/features/identity/progression/domain/entities/fan_level.dart';
 import 'package:oshi_log/features/identity/progression/domain/repositories/fan_level_repository.dart';

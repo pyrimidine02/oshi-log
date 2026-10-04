@@ -2,9 +2,9 @@
 /// KO: 인증 리포지토리 구현.
 library;
 
-import 'package:oshi_log/core/error/error_handler.dart';
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/error/error_handler.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/place/verification/domain/entities/verification_entities.dart';
 import 'package:oshi_log/features/place/verification/domain/repositories/verification_repository.dart';
 import 'package:oshi_log/features/place/verification/data/datasources/verification_remote_data_source.dart';

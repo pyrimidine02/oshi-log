@@ -6,11 +6,11 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/providers/core_providers.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/platform/providers/core_providers.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
-import 'package:oshi_log/core/router/navigation_state.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/router/navigation_state.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/projects_controller.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/domain/entities/project_entities.dart';
 import 'package:oshi_log/features/place/places/data/datasources/places_remote_data_source.dart';
@@ -48,6 +48,7 @@ class PlacesListController
       if (_isApplyingFilterBatch || !_isPlacesTabActive(_ref)) {
         return;
       }
+      _ref.read(selectedPlaceBoundsProvider.notifier).state = null;
       unawaited(load(forceRefresh: true));
     });
     _ref.listen<List<String>>(selectedPlaceBandIdsProvider, (_, __) {
@@ -60,6 +61,7 @@ class PlacesListController
       if (_isApplyingFilterBatch || !_isPlacesTabActive(_ref)) {
         return;
       }
+      _ref.read(selectedPlaceBoundsProvider.notifier).state = null;
       unawaited(load(forceRefresh: true));
     });
     _ref.listen<int>(currentNavIndexProvider, (previous, next) {
@@ -84,6 +86,7 @@ class PlacesListController
     _invalidateRequests();
     _isApplyingFilterBatch = true;
     try {
+      _ref.read(selectedPlaceBoundsProvider.notifier).state = null;
       if (_ref.read(placeListModeProvider) != PlaceListMode.all) {
         _ref.read(placeListModeProvider.notifier).state = PlaceListMode.all;
       }
@@ -101,6 +104,20 @@ class PlacesListController
     if (reload && _isPlacesTabActive(_ref)) {
       unawaited(load(forceRefresh: true));
     }
+  }
+
+  /// EN: A viewport replaces geographic filters while retaining the band.
+  /// KO: 지도 영역은 지역 필터를 대체하며 선택한 밴드는 유지합니다.
+  Future<void> searchBounds(PlaceSearchBounds bounds) async {
+    _isApplyingFilterBatch = true;
+    try {
+      _ref.read(selectedPlaceRegionCodesProvider.notifier).state = const [];
+      _ref.read(placeListModeProvider.notifier).state = PlaceListMode.all;
+      _ref.read(selectedPlaceBoundsProvider.notifier).state = bounds;
+    } finally {
+      _isApplyingFilterBatch = false;
+    }
+    await load(forceRefresh: true);
   }
 
   void _handleProjectChanged() {
@@ -160,9 +177,20 @@ class PlacesListController
     final bandIds = _ref.read(selectedPlaceBandIdsProvider);
     final regionCodes = _ref.read(selectedPlaceRegionCodesProvider);
     final listMode = _ref.read(placeListModeProvider);
+    final bounds = _ref.read(selectedPlaceBoundsProvider);
 
     Result<List<PlaceSummary>> result;
-    if (regionCodes.isNotEmpty) {
+    if (bounds != null) {
+      result = await repository.getPlacesWithinBounds(
+        projectId: resolvedProjectKey,
+        swLat: bounds.south,
+        swLng: bounds.west,
+        neLat: bounds.north,
+        neLng: bounds.east,
+        unitIds: bandIds,
+        forceRefresh: forceRefresh,
+      );
+    } else if (regionCodes.isNotEmpty) {
       result = await repository.getPlacesByRegionFilter(
         projectId: resolvedProjectKey,
         regionCodes: regionCodes,
@@ -351,9 +379,15 @@ class PlaceDetailController extends StateNotifier<AsyncValue<PlaceDetail>> {
   final Ref _ref;
   final String placeId;
   int _requestGeneration = 0;
+  String? _resolvedProjectKey;
+
+  /// EN: Project key of the displayed successful detail, including fallback.
+  /// KO: fallback을 포함해 현재 표시한 상세 조회에 성공한 프로젝트 키입니다.
+  String? get resolvedProjectKey => _resolvedProjectKey;
 
   Future<void> load({bool forceRefresh = false}) async {
     final generation = ++_requestGeneration;
+    _resolvedProjectKey = null;
     final resolvedProjectKey = await _resolveProjectKey();
     if (!_isCurrentRequest(generation)) return;
     if (resolvedProjectKey == null || resolvedProjectKey.isEmpty) {
@@ -373,6 +407,7 @@ class PlaceDetailController extends StateNotifier<AsyncValue<PlaceDetail>> {
     final repository = await _ref.read(placesRepositoryProvider.future);
     if (!_isCurrentRequest(generation)) return;
 
+    String? sourceProjectKey = resolvedProjectKey;
     var result = await repository.getPlaceDetail(
       projectId: resolvedProjectKey,
       placeId: placeId,
@@ -386,6 +421,7 @@ class PlaceDetailController extends StateNotifier<AsyncValue<PlaceDetail>> {
         selectedProjectId.isNotEmpty &&
         selectedProjectId != resolvedProjectKey) {
       attemptedProjectKeys.add(selectedProjectId);
+      sourceProjectKey = selectedProjectId;
       result = await repository.getPlaceDetail(
         projectId: selectedProjectId,
         placeId: placeId,
@@ -399,17 +435,20 @@ class PlaceDetailController extends StateNotifier<AsyncValue<PlaceDetail>> {
       );
       if (!_isCurrentRequest(generation)) return;
       if (fallbackProjectKeys.isNotEmpty) {
-        result = await _resolvePlaceDetailFromFallbackProjects(
+        final fallback = await _resolvePlaceDetailFromFallbackProjects(
           repository: repository,
           projectKeys: fallbackProjectKeys,
           forceRefresh: forceRefresh,
         );
         if (!_isCurrentRequest(generation)) return;
+        result = fallback.result;
+        sourceProjectKey = fallback.projectKey;
       }
     }
 
     if (!_isCurrentRequest(generation)) return;
     if (result is Success<PlaceDetail>) {
+      _resolvedProjectKey = sourceProjectKey;
       state = AsyncData(result.data);
     } else if (result is Err<PlaceDetail>) {
       state = AsyncError(result.failure, StackTrace.current);
@@ -474,21 +513,26 @@ class PlaceDetailController extends StateNotifier<AsyncValue<PlaceDetail>> {
     return keys;
   }
 
-  Future<Result<PlaceDetail>> _resolvePlaceDetailFromFallbackProjects({
+  Future<({Result<PlaceDetail> result, String? projectKey})>
+  _resolvePlaceDetailFromFallbackProjects({
     required PlacesRepository repository,
     required List<String> projectKeys,
     required bool forceRefresh,
   }) async {
     if (projectKeys.isEmpty) {
-      return const Result.failure(
-        UnknownFailure(
-          'Unable to resolve place detail project',
-          code: 'place_detail_project_unresolved',
+      return (
+        result: const Result<PlaceDetail>.failure(
+          UnknownFailure(
+            'Unable to resolve place detail project',
+            code: 'place_detail_project_unresolved',
+          ),
         ),
+        projectKey: null,
       );
     }
 
-    final completer = Completer<Result<PlaceDetail>>();
+    final completer =
+        Completer<({Result<PlaceDetail> result, String? projectKey})>();
     Err<PlaceDetail>? lastError;
     var remaining = projectKeys.length;
 
@@ -502,7 +546,7 @@ class PlaceDetailController extends StateNotifier<AsyncValue<PlaceDetail>> {
 
         if (candidate is Success<PlaceDetail>) {
           if (!completer.isCompleted) {
-            completer.complete(candidate);
+            completer.complete((result: candidate, projectKey: projectKey));
           }
         } else if (candidate is Err<PlaceDetail>) {
           lastError = candidate;
@@ -511,16 +555,20 @@ class PlaceDetailController extends StateNotifier<AsyncValue<PlaceDetail>> {
         remaining -= 1;
         if (remaining == 0 && !completer.isCompleted) {
           if (lastError != null) {
-            completer.complete(Result.failure(lastError!.failure));
+            completer.complete((
+              result: Result<PlaceDetail>.failure(lastError!.failure),
+              projectKey: null,
+            ));
           } else {
-            completer.complete(
-              const Result.failure(
+            completer.complete((
+              result: const Result<PlaceDetail>.failure(
                 UnknownFailure(
                   'Unable to resolve place detail project',
                   code: 'place_detail_project_unresolved',
                 ),
               ),
-            );
+              projectKey: null,
+            ));
           }
         }
       }());
@@ -667,6 +715,19 @@ final placeListModeProvider = StateProvider<PlaceListMode>((ref) {
   return PlaceListMode.all;
 });
 
+/// EN: Native viewport bounds; no device location or fabricated radius needed.
+/// KO: 기기 위치나 임의 반경 없이 사용하는 네이티브 지도 영역입니다.
+typedef PlaceSearchBounds = ({
+  double south,
+  double west,
+  double north,
+  double east,
+});
+
+final selectedPlaceBoundsProvider = StateProvider<PlaceSearchBounds?>(
+  (ref) => null,
+);
+
 /// EN: Place detail controller provider.
 /// KO: 장소 상세 컨트롤러 프로바이더.
 final placeDetailControllerProvider = StateNotifierProvider.autoDispose
@@ -694,4 +755,34 @@ final placeCommentsControllerProvider = StateNotifierProvider.autoDispose
       placeId,
     ) {
       return PlaceCommentsController(ref, placeId)..load();
+    });
+
+/// EN: Full guide and scoped Tips load independently from place identity.
+/// KO: 가이드 본문과 분류별 팁은 장소 기본 정보와 독립적으로 조회합니다.
+final placeGuideDetailProvider = FutureProvider.autoDispose
+    .family<PlaceGuideDetail, ({String placeId, String guideId})>((
+      ref,
+      key,
+    ) async {
+      final repository = await ref.watch(placesRepositoryProvider.future);
+      final result = await repository.getPlaceGuide(
+        placeId: key.placeId,
+        guideId: key.guideId,
+      );
+      if (result is Success<PlaceGuideDetail>) return result.data;
+      throw (result as Err<PlaceGuideDetail>).failure;
+    });
+
+final placeTipsProvider = FutureProvider.autoDispose
+    .family<List<PlaceComment>, ({String placeId, PlaceTipCategory category})>((
+      ref,
+      key,
+    ) async {
+      final repository = await ref.watch(placesRepositoryProvider.future);
+      final result = await repository.getPlaceTips(
+        placeId: key.placeId,
+        category: key.category,
+      );
+      if (result is Success<List<PlaceComment>>) return result.data;
+      throw (result as Err<List<PlaceComment>>).failure;
     });

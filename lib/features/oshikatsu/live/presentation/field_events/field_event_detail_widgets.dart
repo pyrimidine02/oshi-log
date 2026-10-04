@@ -4,8 +4,8 @@ library;
 
 import 'package:flutter/material.dart';
 
-import 'package:oshi_log/core/localization/locale_text.dart';
-import 'package:oshi_log/core/theme/theme.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
+import 'package:oshi_log/design_system/theme/theme.dart';
 
 /// EN: A tactile attendance action that clearly exposes locked verification.
 /// KO: 검증 잠금 상태를 명확히 표시하는 촉각적 방문 액션입니다.

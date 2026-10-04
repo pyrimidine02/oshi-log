@@ -9,14 +9,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/localization/locale_text.dart';
-import 'package:oshi_log/core/theme/gbt_colors.dart';
-import 'package:oshi_log/core/theme/gbt_spacing.dart';
-import 'package:oshi_log/core/theme/gbt_typography.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
+import 'package:oshi_log/design_system/theme/gbt_colors.dart';
+import 'package:oshi_log/design_system/theme/gbt_spacing.dart';
+import 'package:oshi_log/design_system/theme/gbt_typography.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/identity/auth/application/auth_controller.dart';
 import 'account_recovery_dialog.dart';
+import '../../application/auth_action_gate.dart';
+import 'package:oshi_log/platform/router/app_router.dart'
+    show safeRedirectTarget;
 
 /// EN: OAuth buttons group with official brand styling.
 ///     Google button is shown on all platforms.
@@ -25,7 +28,18 @@ import 'account_recovery_dialog.dart';
 ///     Google 버튼은 전 플랫폼에 표시됩니다.
 ///     Apple 버튼은 iOS에서만 표시됩니다 (Apple 정책).
 class OAuthButtonsSection extends ConsumerStatefulWidget {
-  const OAuthButtonsSection({super.key});
+  const OAuthButtonsSection({
+    super.key,
+    this.onAuthenticated,
+    this.onExternalLogin,
+    this.redirectTarget,
+    this.disabled = false,
+  });
+
+  final VoidCallback? onAuthenticated;
+  final VoidCallback? onExternalLogin;
+  final String? redirectTarget;
+  final bool disabled;
 
   @override
   ConsumerState<OAuthButtonsSection> createState() =>
@@ -38,9 +52,13 @@ class _OAuthButtonsSectionState extends ConsumerState<OAuthButtonsSection> {
   bool _twitterLoading = false;
 
   bool get _anyLoading => _googleLoading || _appleLoading || _twitterLoading;
+  bool get _blocked =>
+      widget.disabled ||
+      _anyLoading ||
+      ref.read(authControllerProvider).isLoading;
 
   Future<void> _handleGoogleLogin() async {
-    if (_anyLoading) return;
+    if (_blocked) return;
     setState(() => _googleLoading = true);
     try {
       final result = await ref
@@ -57,7 +75,7 @@ class _OAuthButtonsSectionState extends ConsumerState<OAuthButtonsSection> {
   }
 
   Future<void> _handleAppleLogin() async {
-    if (_anyLoading) return;
+    if (_blocked) return;
     setState(() => _appleLoading = true);
     try {
       final result = await ref
@@ -74,7 +92,7 @@ class _OAuthButtonsSectionState extends ConsumerState<OAuthButtonsSection> {
   }
 
   Future<void> _handleTwitterLogin() async {
-    if (_anyLoading) return;
+    if (_blocked) return;
     setState(() => _twitterLoading = true);
     try {
       // EN: Opens the X auth page in the browser; the result comes back
@@ -83,15 +101,20 @@ class _OAuthButtonsSectionState extends ConsumerState<OAuthButtonsSection> {
       // KO: X 인증 페이지를 브라우저에서 엽니다. 결과는 딥링크 →
       //     OAuthCallbackPage → completeTwitterLogin() 경로로 전달됩니다.
       //     이 호출은 브라우저 실행 후 즉시 완료됩니다 (로그인 완료 시점이 아님).
-      final result = await ref
-          .read(authControllerProvider.notifier)
-          .startTwitterLogin();
+      final controller = ref.read(authControllerProvider.notifier);
+      ref.read(externalLoginReturnProvider.notifier).state = safeRedirectTarget(
+        widget.redirectTarget,
+      );
+      final result = await controller.startTwitterLogin();
       if (!mounted) return;
       if (result is Err<void>) {
+        ref.read(externalLoginReturnProvider.notifier).state = null;
         await _handleSocialLoginResult(result);
+      } else {
+        widget.onExternalLogin?.call();
       }
-      // EN: On success, do nothing here — OAuthCallbackPage navigates to /home.
-      // KO: 성공 시 아무것도 하지 않음 — OAuthCallbackPage가 /home으로 이동합니다.
+      // EN: The external callback owns the validated return navigation.
+      // KO: 외부 콜백이 검증된 복귀 경로 이동을 담당합니다.
     } finally {
       if (mounted) setState(() => _twitterLoading = false);
     }
@@ -101,12 +124,17 @@ class _OAuthButtonsSectionState extends ConsumerState<OAuthButtonsSection> {
     Result<void> result, {
     Future<Result<void>> Function()? recover,
   }) async {
+    if (!mounted || ModalRoute.of(context)?.isCurrent != true) return;
     if (result is Success<void>) {
       // EN: OAuth login succeeded (new or existing OAuth account).
       //     Push merge page so the user can optionally merge with a local account.
       // KO: OAuth 로그인 성공 (신규 또는 기존 OAuth 계정).
       //     사용자가 로컬 계정과 합칠 수 있도록 merge 페이지를 push합니다.
-      context.push('/oauth/merge');
+      if (widget.onAuthenticated != null) {
+        widget.onAuthenticated!();
+      } else {
+        context.push('/oauth/merge');
+      }
       return;
     }
     if (result is Err<void>) {
@@ -121,11 +149,19 @@ class _OAuthButtonsSectionState extends ConsumerState<OAuthButtonsSection> {
       if (failure.code == 'EMAIL_ACCOUNT_CONFLICT') return;
       if (failure.code == 'ACCOUNT_INACTIVE' && recover != null) {
         final confirmed = await showAccountRecoveryDialog(context);
-        if (!mounted || !confirmed) return;
+        if (!mounted ||
+            !confirmed ||
+            ModalRoute.of(context)?.isCurrent != true) {
+          return;
+        }
         final recoveryResult = await recover();
-        if (!mounted) return;
+        if (!mounted || ModalRoute.of(context)?.isCurrent != true) return;
         if (recoveryResult is Success<void>) {
-          context.go('/home');
+          if (widget.onAuthenticated != null) {
+            widget.onAuthenticated!();
+          } else {
+            context.go('/home');
+          }
         }
         return;
       }
@@ -139,6 +175,10 @@ class _OAuthButtonsSectionState extends ConsumerState<OAuthButtonsSection> {
   @override
   Widget build(BuildContext context) {
     final isIos = Platform.isIOS;
+    final disabled =
+        widget.disabled ||
+        _anyLoading ||
+        ref.watch(authControllerProvider).isLoading;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -161,19 +201,19 @@ class _OAuthButtonsSectionState extends ConsumerState<OAuthButtonsSection> {
         const SizedBox(height: GBTSpacing.md),
         _GoogleSignInButton(
           isLoading: _googleLoading,
-          onPressed: _handleGoogleLogin,
+          onPressed: disabled ? null : _handleGoogleLogin,
         ),
         if (isIos) ...[
           const SizedBox(height: GBTSpacing.sm),
           _AppleSignInButton(
             isLoading: _appleLoading,
-            onPressed: _handleAppleLogin,
+            onPressed: disabled ? null : _handleAppleLogin,
           ),
         ],
         const SizedBox(height: GBTSpacing.sm),
         _XSignInButton(
           isLoading: _twitterLoading,
-          onPressed: _handleTwitterLogin,
+          onPressed: disabled ? null : _handleTwitterLogin,
         ),
       ],
     );
@@ -219,7 +259,7 @@ String _buildSocialLoginErrorMessage(BuildContext context, Failure failure) {
 class _GoogleSignInButton extends StatelessWidget {
   const _GoogleSignInButton({required this.onPressed, required this.isLoading});
 
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final bool isLoading;
 
   @override
@@ -236,6 +276,7 @@ class _GoogleSignInButton extends StatelessWidget {
 
     return Semantics(
       button: true,
+      enabled: !isLoading && onPressed != null,
       label: context.l10n(
         ko: 'Google로 계속하기',
         en: 'Continue with Google',
@@ -305,7 +346,7 @@ class _GoogleSignInButton extends StatelessWidget {
 class _AppleSignInButton extends StatelessWidget {
   const _AppleSignInButton({required this.onPressed, required this.isLoading});
 
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final bool isLoading;
 
   @override
@@ -319,6 +360,7 @@ class _AppleSignInButton extends StatelessWidget {
 
     return Semantics(
       button: true,
+      enabled: !isLoading && onPressed != null,
       label: context.l10n(
         ko: 'Apple로 로그인',
         en: 'Sign in with Apple',
@@ -378,7 +420,7 @@ class _AppleSignInButton extends StatelessWidget {
 class _XSignInButton extends StatelessWidget {
   const _XSignInButton({required this.onPressed, required this.isLoading});
 
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final bool isLoading;
 
   @override
@@ -392,6 +434,7 @@ class _XSignInButton extends StatelessWidget {
 
     return Semantics(
       button: true,
+      enabled: !isLoading && onPressed != null,
       label: context.l10n(ko: 'X로 로그인', en: 'Sign in with X', ja: 'Xでログイン'),
       child: Material(
         color: bgColor,

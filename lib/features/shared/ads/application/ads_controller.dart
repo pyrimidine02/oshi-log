@@ -4,8 +4,8 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:oshi_log/core/providers/core_providers.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/providers/core_providers.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/shared/ads/data/datasources/ads_remote_data_source.dart';
 import 'package:oshi_log/features/shared/ads/data/repositories/ads_repository_impl.dart';
 import 'package:oshi_log/features/shared/ads/domain/entities/ad_slot_entities.dart';

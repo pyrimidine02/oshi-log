@@ -6,14 +6,14 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:oshi_log/core/connectivity/connectivity_service.dart';
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/logging/app_logger.dart';
-import 'package:oshi_log/core/providers/core_providers.dart';
+import 'package:oshi_log/platform/connectivity/connectivity_service.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/platform/logging/app_logger.dart';
+import 'package:oshi_log/platform/providers/core_providers.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/project_context.dart';
-import 'package:oshi_log/core/router/navigation_state.dart';
+import 'package:oshi_log/platform/router/navigation_state.dart';
 import 'package:oshi_log/features/identity/auth/application/session_state.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/projects_controller.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/domain/entities/project_entities.dart';
 import 'package:oshi_log/features/oshikatsu/live/data/datasources/live_events_remote_data_source.dart';
@@ -543,21 +543,26 @@ class LiveAttendanceViewState {
     required this.attendance,
     this.isSubmitting = false,
     this.isLoading = false,
+    this.failure,
   });
 
   final LiveAttendanceState attendance;
   final bool isSubmitting;
   final bool isLoading;
+  final Failure? failure;
 
   LiveAttendanceViewState copyWith({
     LiveAttendanceState? attendance,
     bool? isSubmitting,
     bool? isLoading,
+    Failure? failure,
+    bool clearFailure = false,
   }) {
     return LiveAttendanceViewState(
       attendance: attendance ?? this.attendance,
       isSubmitting: isSubmitting ?? this.isSubmitting,
       isLoading: isLoading ?? this.isLoading,
+      failure: clearFailure ? null : (failure ?? this.failure),
     );
   }
 }
@@ -594,12 +599,13 @@ class LiveAttendanceController extends StateNotifier<LiveAttendanceViewState> {
           attendance: empty,
           isSubmitting: false,
           isLoading: false,
+          clearFailure: true,
         );
       }
       return Result.success(empty);
     }
 
-    state = state.copyWith(isLoading: true);
+    state = state.copyWith(isLoading: true, clearFailure: true);
     final repository = await _ref.read(liveEventsRepositoryProvider.future);
     final result = await repository.getLiveAttendanceState(
       projectId: projectKey,
@@ -630,7 +636,7 @@ class LiveAttendanceController extends StateNotifier<LiveAttendanceViewState> {
       return Result.success(resolved);
     }
 
-    state = state.copyWith(isLoading: false);
+    state = state.copyWith(isLoading: false, failure: result.failureOrNull);
     return result;
   }
 

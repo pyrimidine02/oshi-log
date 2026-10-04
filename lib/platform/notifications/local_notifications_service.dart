@@ -131,6 +131,29 @@ class LocalNotificationsService {
     _initialized = true;
   }
 
+  /// EN: Read existing permission without displaying a system prompt.
+  /// Returns null when the current platform cannot report permission.
+  /// KO: 시스템 팝업 없이 기존 권한을 조회합니다.
+  /// 현재 플랫폼에서 조회할 수 없으면 null을 반환합니다.
+  Future<bool?> hasPermission() async {
+    final android = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+    if (android != null) return android.areNotificationsEnabled();
+    final ios = _plugin
+        .resolvePlatformSpecificImplementation<
+          IOSFlutterLocalNotificationsPlugin
+        >();
+    if (ios != null) return (await ios.checkPermissions())?.isEnabled;
+    final mac = _plugin
+        .resolvePlatformSpecificImplementation<
+          MacOSFlutterLocalNotificationsPlugin
+        >();
+    if (mac != null) return (await mac.checkPermissions())?.isEnabled;
+    return null;
+  }
+
   /// EN: Request runtime notification permissions.
   /// KO: 런타임 알림 권한을 요청합니다.
   Future<bool> requestPermissions() async {

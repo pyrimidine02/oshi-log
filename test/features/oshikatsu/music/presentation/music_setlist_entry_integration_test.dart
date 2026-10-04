@@ -7,15 +7,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
-import 'package:oshi_log/core/connectivity/connectivity_service.dart';
-import 'package:oshi_log/core/providers/core_providers.dart';
-import 'package:oshi_log/core/providers/registrant_provider.dart';
+import 'package:oshi_log/platform/connectivity/connectivity_service.dart';
+import 'package:oshi_log/platform/providers/core_providers.dart';
+import 'package:oshi_log/platform/providers/registrant_provider.dart';
 import 'package:oshi_log/app/router/app_router.dart';
-import 'package:oshi_log/core/router/app_router.dart';
-import 'package:oshi_log/core/security/secure_storage.dart';
-import 'package:oshi_log/core/storage/local_storage.dart';
-import 'package:oshi_log/core/theme/gbt_theme.dart';
-import 'package:oshi_log/core/utils/result.dart';
+import 'package:oshi_log/platform/router/app_router.dart';
+import 'package:oshi_log/platform/security/secure_storage.dart';
+import 'package:oshi_log/platform/storage/local_storage.dart';
+import 'package:oshi_log/design_system/theme/gbt_theme.dart';
+import 'package:oshi_log/platform/utils/result.dart';
 import 'package:oshi_log/features/community/news/application/field_guide_updates_provider.dart';
 import 'package:oshi_log/features/oshikatsu/catalog/application/field_guide_artists_provider.dart';
 import 'package:oshi_log/features/oshikatsu/live/application/live_events_controller.dart';
@@ -167,7 +167,7 @@ class _Harness {
 
   Future<void> openSetlistSong(WidgetTester tester) async {
     await tester.scrollUntilVisible(
-      find.text(_songTitle),
+      find.text('스포일러 보기'),
       300,
       scrollable: find
           .descendant(
@@ -177,7 +177,11 @@ class _Harness {
           .first,
     );
     await tester.pumpAndSettle();
+    expect(find.text(_songTitle), findsNothing);
+    await tester.tap(find.text('스포일러 보기'));
+    await tester.pumpAndSettle();
     expect(find.text(_songTitle), findsOneWidget);
+    await tester.ensureVisible(find.text(_songTitle));
     await tester.tap(find.text(_songTitle));
     await tester.pump();
     await tester.pumpAndSettle();
@@ -190,11 +194,17 @@ class _Harness {
   }
 
   void dispose() {
-    router.dispose();
     container.dispose();
   }
 
   void _stubMusic() {
+    when(
+      () => music.getSongPerformances(
+        projectId: _projectId,
+        songId: _songId,
+        lang: any(named: 'lang'),
+      ),
+    ).thenAnswer((_) async => const Success([]));
     when(
       () => music.getLiveSetlist(projectId: _projectId, liveEventId: _eventId),
     ).thenAnswer((_) async => const Success(_setlist));
@@ -211,7 +221,23 @@ class _Harness {
         includeRomanized: true,
         includeTranslated: true,
       ),
-    ).thenAnswer((_) async => const Success(MusicSongLiveContext()));
+    ).thenAnswer(
+      (_) async => const Success(
+        MusicSongLiveContext(
+          song: _song,
+          parts: MusicPartsPayload(
+            songId: _songId,
+            version: 'FULL',
+            segments: [],
+          ),
+          callGuide: MusicCallGuidePayload(
+            songId: _songId,
+            version: 'FULL',
+            cues: [],
+          ),
+        ),
+      ),
+    );
     when(
       () => music.getSongLyrics(
         projectId: _projectId,

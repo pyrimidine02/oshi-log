@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:oshi_log/core/localization/locale_text.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
 
 void main() {
   Future<String> l10nUnder(

@@ -86,6 +86,9 @@ class PlaceDetail {
     this.unitIds = const [],
     this.projectIds = const [],
     this.characterIds = const [],
+    this.savedAt,
+    this.isFromCache = false,
+    this.isCacheStale = false,
   });
 
   final String id;
@@ -105,6 +108,12 @@ class PlaceDetail {
   final List<String> unitIds;
   final List<String> projectIds;
   final List<String> characterIds;
+
+  /// EN: Local snapshot time, never an on-site verification timestamp.
+  /// KO: 로컬 저장 시각이며 현장 확인 시각이 아닙니다.
+  final DateTime? savedAt;
+  final bool isFromCache;
+  final bool isCacheStale;
 }
 
 class PlaceDirectionProvider {

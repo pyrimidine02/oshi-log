@@ -6,11 +6,11 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
-import 'package:oshi_log/core/localization/locale_text.dart';
-import 'package:oshi_log/core/theme/gbt_colors.dart';
-import 'package:oshi_log/core/theme/gbt_spacing.dart';
-import 'package:oshi_log/core/theme/gbt_typography.dart';
-import 'package:oshi_log/core/widgets/common/gbt_image.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
+import 'package:oshi_log/design_system/theme/gbt_colors.dart';
+import 'package:oshi_log/design_system/theme/gbt_spacing.dart';
+import 'package:oshi_log/design_system/theme/gbt_typography.dart';
+import 'package:oshi_log/design_system/widgets/common/gbt_image.dart';
 
 /// EN: Appends markdown image blocks to post content.
 /// KO: 게시글 본문 뒤에 이미지 마크다운 블록을 추가합니다.
@@ -32,10 +32,10 @@ String appendImageMarkdownContent(String content, List<String> urls) {
 const int kPostMaxTagCount = 5;
 
 // EN: PostComposeDocumentEditor moved to
-// lib/core/widgets/compose/post_compose_document_editor.dart (feature-
+// lib/design_system/widgets/compose/post_compose_document_editor.dart (feature-
 // agnostic, reused by reviews' compose flows too).
 // KO: PostComposeDocumentEditor는 feature에 종속되지 않도록
-// lib/core/widgets/compose/post_compose_document_editor.dart로 이동했습니다
+// lib/design_system/widgets/compose/post_compose_document_editor.dart로 이동했습니다
 // (reviews 작성 플로우에서도 재사용).
 /// EN: Normalizes user-entered tag text into API-friendly token.
 /// KO: 사용자 입력 태그를 API 전송 가능한 토큰으로 정규화합니다.

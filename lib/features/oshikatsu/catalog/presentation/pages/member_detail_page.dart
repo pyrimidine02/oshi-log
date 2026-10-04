@@ -5,13 +5,13 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:oshi_log/core/localization/locale_text.dart';
-import 'package:oshi_log/core/router/app_router.dart';
-import 'package:oshi_log/core/theme/theme.dart';
-import 'package:oshi_log/core/utils/date_utils.dart';
-import 'package:oshi_log/core/widgets/common/gbt_image.dart';
-import 'package:oshi_log/core/widgets/layout/gbt_page_header.dart';
-import 'package:oshi_log/core/widgets/navigation/gbt_standard_app_bar.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
+import 'package:oshi_log/platform/router/app_router.dart';
+import 'package:oshi_log/design_system/theme/theme.dart';
+import 'package:oshi_log/platform/utils/date_utils.dart';
+import 'package:oshi_log/design_system/widgets/common/gbt_image.dart';
+import 'package:oshi_log/design_system/widgets/layout/gbt_page_header.dart';
+import 'package:oshi_log/design_system/widgets/navigation/gbt_standard_app_bar.dart';
 import '../../application/projects_controller.dart';
 import '../../domain/entities/project_entities.dart';
 
@@ -96,7 +96,7 @@ class MemberDossierView extends StatelessWidget {
         slivers: [
           SliverToBoxAdapter(
             child: GBTPageHeader(
-              eyebrow: 'MEMBER DOSSIER',
+              eyebrow: context.l10n(ko: '캐릭터', en: 'CHARACTER', ja: 'キャラクター'),
               title: member.name,
               description: metadata.isEmpty ? null : metadata,
             ),

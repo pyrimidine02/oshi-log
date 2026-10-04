@@ -4,8 +4,8 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:oshi_log/core/providers/core_providers.dart';
-import 'package:oshi_log/core/storage/local_storage.dart';
+import 'package:oshi_log/platform/providers/core_providers.dart';
+import 'package:oshi_log/platform/storage/local_storage.dart';
 import 'package:oshi_log/features/place/verification/domain/entities/failed_verification_attempt.dart';
 
 /// EN: Retention window for failed verification attempts (30 days).

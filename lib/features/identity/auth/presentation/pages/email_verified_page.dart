@@ -5,9 +5,11 @@ library;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:oshi_log/core/localization/locale_text.dart';
-import 'package:oshi_log/core/theme/gbt_spacing.dart';
-import 'package:oshi_log/core/widgets/buttons/gbt_button.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
+import 'package:oshi_log/platform/router/app_router.dart'
+    show safeRedirectTarget;
+import 'package:oshi_log/design_system/theme/gbt_spacing.dart';
+import 'package:oshi_log/design_system/widgets/buttons/gbt_button.dart';
 import 'package:oshi_log/features/identity/auth/presentation/widgets/field_auth_components.dart';
 
 /// EN: Success screen displayed after email verification is completed via deeplink.
@@ -17,6 +19,15 @@ class EmailVerifiedPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final redirect = safeRedirectTarget(
+      GoRouterState.of(context).uri.queryParameters['redirect'],
+    );
+    final loginLocation = redirect == null
+        ? '/login'
+        : Uri(
+            path: '/login',
+            queryParameters: {'redirect': redirect},
+          ).toString();
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -51,7 +62,7 @@ class EmailVerifiedPage extends StatelessWidget {
                   ja: 'ログインへ',
                 ),
                 isFullWidth: true,
-                onPressed: () => context.go('/login'),
+                onPressed: () => context.go(loginLocation),
               ),
             ],
           ),

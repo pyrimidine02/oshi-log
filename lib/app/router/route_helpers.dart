@@ -6,9 +6,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/theme/gbt_animations.dart';
-import '../../core/widgets/feedback/gbt_navigation_error_view.dart';
-import '../../core/widgets/navigation/gbt_standard_app_bar.dart';
+import '../../design_system/theme/gbt_animations.dart';
+import '../../design_system/widgets/feedback/gbt_navigation_error_view.dart';
+import '../../design_system/widgets/navigation/gbt_standard_app_bar.dart';
 
 Page<void> buildAdaptiveDetailPage({
   required LocalKey key,

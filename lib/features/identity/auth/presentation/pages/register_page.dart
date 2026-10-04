@@ -7,21 +7,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:oshi_log/core/constants/legal_policy_constants.dart';
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/router/app_router.dart';
-import 'package:oshi_log/core/localization/locale_text.dart';
-import 'package:oshi_log/core/providers/core_providers.dart';
+import 'package:oshi_log/platform/constants/legal_policy_constants.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/platform/router/app_router.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
+import 'package:oshi_log/platform/providers/core_providers.dart';
 import 'package:oshi_log/features/identity/auth/application/legal_policies_provider.dart';
-import 'package:oshi_log/core/storage/local_storage.dart';
-import 'package:oshi_log/core/theme/gbt_colors.dart';
-import 'package:oshi_log/core/theme/gbt_spacing.dart';
-import 'package:oshi_log/core/theme/gbt_typography.dart';
-import 'package:oshi_log/core/utils/result.dart';
-import 'package:oshi_log/core/widgets/buttons/gbt_button.dart';
-import 'package:oshi_log/core/widgets/inputs/gbt_text_field.dart';
-import 'package:oshi_log/core/widgets/legal/legal_policy_links_section.dart';
-import 'package:oshi_log/core/widgets/navigation/gbt_standard_app_bar.dart';
+import 'package:oshi_log/platform/storage/local_storage.dart';
+import 'package:oshi_log/design_system/theme/gbt_colors.dart';
+import 'package:oshi_log/design_system/theme/gbt_spacing.dart';
+import 'package:oshi_log/design_system/theme/gbt_typography.dart';
+import 'package:oshi_log/platform/utils/result.dart';
+import 'package:oshi_log/design_system/widgets/buttons/gbt_button.dart';
+import 'package:oshi_log/design_system/widgets/inputs/gbt_text_field.dart';
+import 'package:oshi_log/design_system/widgets/legal/legal_policy_links_section.dart';
+import 'package:oshi_log/design_system/widgets/navigation/gbt_standard_app_bar.dart';
 import 'package:oshi_log/features/identity/auth/application/auth_controller.dart';
 import 'package:oshi_log/features/identity/auth/domain/entities/register_consent.dart';
 import 'package:oshi_log/features/identity/auth/domain/entities/register_result.dart';
@@ -433,6 +433,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
 
   Future<void> _handleRegister() async {
     if (!_formKey.currentState!.validate()) return;
+    final redirect = safeRedirectTarget(
+      GoRouterState.of(context).uri.queryParameters['redirect'],
+    );
     if (!_hasRequiredConsents) {
       _showConsentRequiredMessage();
       return;
@@ -470,13 +473,14 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
             result.data.pendingEmail ?? _emailController.text.trim();
         context.pushNamed(
           AppRoutes.emailVerificationPending,
+          queryParameters: {if (redirect != null) 'redirect': redirect},
           extra: EmailVerificationArgs(
             email: pendingEmail,
             verificationExpiresAt: result.data.verificationExpiresAt,
           ),
         );
       } else {
-        context.go('/home');
+        context.go(redirect ?? '/home');
       }
     }
   }

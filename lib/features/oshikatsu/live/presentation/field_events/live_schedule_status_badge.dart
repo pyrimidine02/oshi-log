@@ -3,10 +3,11 @@
 library;
 
 import 'package:flutter/material.dart';
+import '../../domain/event_time_policy.dart';
 
-import 'package:oshi_log/core/error/failure.dart';
-import 'package:oshi_log/core/localization/locale_text.dart';
-import 'package:oshi_log/core/widgets/layout/gbt_field_primitives.dart';
+import 'package:oshi_log/platform/error/failure.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
+import 'package:oshi_log/design_system/widgets/layout/gbt_field_primitives.dart';
 import 'package:oshi_log/features/oshikatsu/live/domain/entities/live_event_entities.dart';
 
 /// EN: Returns the badge label, or null for a regular scheduled event.
@@ -66,4 +67,99 @@ class LiveScheduleStatusBadge extends StatelessWidget {
       color: cancelled ? colors.error : colors.tertiary,
     );
   }
+}
+
+/// EN: One badge per independent schedule, time and attendance axis.
+/// KO: 일정 변경, 공연 시간, 참전 기록의 각 독립 축별 배지입니다.
+class EventStatusBadges extends StatelessWidget {
+  const EventStatusBadges({
+    super.key,
+    required this.start,
+    this.end,
+    this.scheduleStatus,
+    this.attended = false,
+    this.now,
+  });
+  final DateTime start;
+  final DateTime? end;
+  final String? scheduleStatus;
+  final bool attended;
+  final DateTime? now;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final schedule = LiveScheduleStatus.normalize(scheduleStatus);
+    final label = eventTimeStatusLabel(
+      context,
+      start: start,
+      end: end,
+      now: now,
+    );
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        if (schedule == LiveScheduleStatus.postponed)
+          GBTFieldBadge(
+            label: context.l10n(ko: '변경 있음', en: 'Changed', ja: '変更あり'),
+            icon: Icons.update,
+            color: colors.tertiary,
+          ),
+        if (schedule == LiveScheduleStatus.cancelled)
+          LiveScheduleStatusBadge(status: schedule)
+        else if (schedule != LiveScheduleStatus.postponed)
+          GBTFieldBadge(
+            label: label,
+            icon: Icons.schedule,
+            color: colors.primary,
+          ),
+        if (attended)
+          GBTFieldBadge(
+            label: context.l10n(
+              ko: '참전 기록됨',
+              en: 'Attendance recorded',
+              ja: '参戦済み',
+            ),
+            icon: Icons.check,
+            color: colors.secondary,
+          ),
+      ],
+    );
+  }
+}
+
+String eventTimeStatusLabel(
+  BuildContext context, {
+  required DateTime start,
+  DateTime? end,
+  DateTime? now,
+}) {
+  return switch (EventTimePolicy.status(
+    start: start,
+    end: end,
+    now: now ?? DateTime.now(),
+  )) {
+    EventTimeStatus.upcoming => context.l10n(
+      ko: '공연 전',
+      en: 'Upcoming',
+      ja: '開催前',
+    ),
+    EventTimeStatus.today => context.l10n(
+      ko: '오늘 · 종료 미정',
+      en: 'Today · end unknown',
+      ja: '本日・終演未定',
+    ),
+    EventTimeStatus.ongoing => context.l10n(
+      ko: '진행 중',
+      en: 'Ongoing',
+      ja: '開催中',
+    ),
+    EventTimeStatus.ended => context.l10n(ko: '종료', en: 'Ended', ja: '終了'),
+    EventTimeStatus.past => context.l10n(
+      ko: '지난 일정',
+      en: 'Past date',
+      ja: '過去の日程',
+    ),
+  };
 }

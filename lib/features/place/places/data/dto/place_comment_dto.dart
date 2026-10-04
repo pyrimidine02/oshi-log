@@ -2,7 +2,7 @@
 /// KO: 장소 댓글 DTO.
 library;
 
-import 'package:oshi_log/core/models/image_meta_dto.dart';
+import 'package:oshi_log/platform/models/image_meta_dto.dart';
 
 class PlaceCommentDetailDto {
   const PlaceCommentDetailDto({
@@ -17,6 +17,10 @@ class PlaceCommentDetailDto {
     required this.isAdminNote,
     required this.isPinnedByAdmin,
     required this.createdAt,
+    this.bestRoute,
+    this.advice,
+    this.accessibility,
+    this.isPreview = false,
   });
 
   final String id;
@@ -30,12 +34,19 @@ class PlaceCommentDetailDto {
   final bool isAdminNote;
   final bool isPinnedByAdmin;
   final DateTime? createdAt;
+  final String? bestRoute;
+  final String? advice;
+  final String? accessibility;
+  final bool isPreview;
 
   factory PlaceCommentDetailDto.fromJson(Map<String, dynamic> json) {
     return PlaceCommentDetailDto(
       id: json['id'] as String? ?? '',
       authorSubjectId: json['authorSubjectId'] as String? ?? '',
-      bodyMarkdown: json['bodyMarkdown'] as String? ?? '',
+      bodyMarkdown:
+          json['bodyMarkdown'] as String? ??
+          json['bodyPreview'] as String? ??
+          '',
       bodyHtml: json['bodyHtml'] as String?,
       tags: _stringList(json['tags']),
       photoUploadIds: _stringList(json['photoUploadIds']),
@@ -44,6 +55,13 @@ class PlaceCommentDetailDto {
       isAdminNote: json['isAdminNote'] as bool? ?? false,
       isPinnedByAdmin: json['isPinnedByAdmin'] as bool? ?? false,
       createdAt: _dateTime(json['createdAt']),
+      bestRoute: json['bestRoute'] as String?,
+      advice: json['advice'] as String?,
+      accessibility: json['accessibility'] as String?,
+      isPreview:
+          json['isPreview'] as bool? ??
+          (!json.containsKey('bodyMarkdown') &&
+              json.containsKey('bodyPreview')),
     );
   }
 
@@ -60,6 +78,10 @@ class PlaceCommentDetailDto {
       'isAdminNote': isAdminNote,
       'isPinnedByAdmin': isPinnedByAdmin,
       'createdAt': createdAt?.toIso8601String(),
+      'bestRoute': bestRoute,
+      'advice': advice,
+      'accessibility': accessibility,
+      'isPreview': isPreview,
     };
   }
 }

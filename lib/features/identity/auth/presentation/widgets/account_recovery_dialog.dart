@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:oshi_log/core/localization/locale_text.dart';
+import 'package:oshi_log/design_system/localization/locale_text.dart';
 
 /// EN: Requests explicit consent before reactivating an inactive account.
 /// KO: 비활성 계정을 다시 활성화하기 전 명시적 동의를 요청합니다.
