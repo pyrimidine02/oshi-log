@@ -15,7 +15,8 @@
 - Verify Japanese rendering with CI SDK and device fonts (2026-10-04):
   - JA/KO light/dark and compact 200% golden coverage is implemented using
     repository fonts. Actual Japanese OS glyphs still need installed-device QA.
-  - Rerun goldens with CI Flutter 3.41.0; local verification uses 3.47.2.
+  - CI Flutter 3.41.0 local suite passes all 1,112 tests after reviewed golden
+    updates. Hosted Linux checks and installed-device rendering are separate.
   - Remove after both CI and real-device rendering checks pass.
 
 - Recheck project selection if a direct account-switch UI is added (2026-10-04):
@@ -1497,8 +1498,8 @@
   국가를 추정하지 않으며 현재는 국가 제한 콘텐츠의 가사를 표시하지 않는다.
 - 서버 S1/S2/S4/S9/S19 응답 후 공개 읽기·공연 상태·참가 예정·공연 단독
   레포·서버 앨범 동기화 연결. 현재 계약을 임의 확장하지 않는다.
-- CI의 Flutter 3.41.0에서 전체 테스트/golden 재검증. 로컬 SDK 3.47.2와
-  차이가 있으면 실제 렌더링 차이를 확인하고 검증 기준을 맞춘다.
+- CI Flutter 3.41.0 격리 SDK의 로컬 전체 테스트/golden 재검증 완료:
+  1,112개 통과, 커버리지 45.07%. 호스팅 Linux CI 결과는 main push 실행에서 확인.
 - iOS/Android 실기기에서 일본어 글리프, 지도 타일 실패·목록 대안,
   위치/알림 권한 거절, 외부 OAuth 복귀, 스크롤 성능 확인.
 - 외부 OAuth 도중 프로세스가 종료되면 메모리 복귀 URI를 잃는다.

@@ -3,9 +3,10 @@
 User authorized completion of the approved PR9–21 plan and deferred PR8c.
 Workspace: `/Users/sonhoyoung/dev/oshi-log-redesign`.
 Branch: `feature/oshilog-redesign`; starting commit: `497ef46`.
-The original `girlsbandtabi_app` checkout was left untouched. Existing PR9 dirty
-work was preserved; its patch and untracked files are backed up in the evidence
-directory below. Root remains the only Git writer.
+Feature implementation preserved the original `girlsbandtabi_app` checkout and
+existing PR9 dirty work. Its patch and untracked files are backed up in the
+evidence directory below. The authorized main integration is recorded at the
+end of this handoff. Root remains the only Git writer.
 
 ## Implemented
 
@@ -31,7 +32,8 @@ directory below. Root remains the only Git writer.
 
 - Baseline isolated with initial dirty work: 808 passed, 5 pre-existing failures;
   line coverage 18,578 / 47,638 = 39.00%.
-- Final full suite: `flutter test --coverage --concurrency=1 --no-pub` —
+- Initial final suite (Flutter 3.47.2):
+  `flutter test --coverage --concurrency=1 --no-pub` —
   1,112 passed, 0 failed (6m50s). Line coverage: 22,708 / 50,385 = 45.07%,
   up 6.07 percentage points. Architecture violations and allowlist: zero.
 - Formatting: 581 changed Dart files checked, no formatting changes needed.
@@ -53,9 +55,32 @@ directory below. Root remains the only Git writer.
   the pending action. Process-death restoration is not guaranteed.
 - Local private data has no server recovery after app-data removal. Offline
   Today downloads contain text only, not map tiles or media.
-- Flutter 3.47.2 / Dart 3.13.2 installed; CI pins Flutter 3.41.0 and still needs
-  verification there. Goldens use repository fonts and prove layout, not actual
+- Global Flutter 3.47.2 / Dart 3.13.2 remains unchanged. Main release checks use
+  isolated CI Flutter 3.41.0 below. Goldens prove layout, not actual
   Japanese OS glyphs. Real map tiles, permission/OAuth UI and native performance
   need device QA. No web target exists; bundle compilation is not a signed build.
 
-No push, deployment, server/DB mutation, credential or native-signing change.
+## Main release follow-up
+
+The user subsequently authorized remaining app verification and main push.
+Remote main `4d280db` is integrated in the current merge; its event status and
+song-performance behavior was already ported and is preserved. A cancellation
+regression now uses a fixed clock and current ticket label.
+
+An isolated SDK from official tag `3.41.0` (revision `44a626f4f0`, Dart 3.11.0)
+is available at `/tmp/oshilog-main-release-20261004/flutter-3.41.0`.
+Global Flutter remains unchanged. SDK-pinned dependencies are aligned in the
+lockfile. CI-SDK analysis passes (26.1s), and bundle compilation exits 0.
+The first CI-SDK run passed 1,092 tests and differed on 20 golden references
+only. Independent pixel review found chip edges and one-pixel dividers, with
+no layout or wrapping changes. Those 20 references were regenerated on 3.41.0;
+comparison tolerances are unchanged. The final coverage suite passed all 1,112
+tests (0 failures, 6m47s). Coverage: 22,711 / 50,387 = 45.07%, above the 39.00%
+baseline. The changed Dart test is formatted; independent integration review
+found no blocking issues. Bundle artifact hashes and test receipts are in the
+follow-up evidence directory.
+
+Main push triggers the existing Google Play internal staging distribution after
+quality checks. Workflow/signing changes, server/DB work remain outside this
+release. No reachable physical device; native device QA remains unverified.
+Evidence: `/tmp/oshilog-main-release-20261004/`.

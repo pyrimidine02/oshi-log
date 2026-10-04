@@ -41,6 +41,7 @@ void main() {
       host(
         FieldEventTicketDocument(
           event: event,
+          now: DateTime.utc(2026, 11, 19),
           attendance: LiveAttendanceViewState(
             attendance: LiveAttendanceState.none(event.id),
           ),
@@ -112,7 +113,7 @@ void main() {
 
     expect(find.text('취소'), findsOneWidget);
     expect(find.text('이 공연은 취소되었습니다'), findsOneWidget);
-    expect(find.text('티켓 페이지 열기'), findsNothing);
+    expect(find.text('공식 티켓'), findsNothing);
     expect(find.text('새 일정 보기'), findsNothing);
     expect(taps.toggles, 0);
     expect(tester.takeException(), isNull);

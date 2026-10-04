@@ -18,6 +18,10 @@
   server features stay documented in the implementation status report.
 - Final validation and device/server follow-ups are recorded in
   `docs/product/redesign-implementation-status-20261004.md`.
+- Integrated main's event-status and song-performance release into the redesign.
+  Aligned SDK-pinned dependencies with CI Flutter 3.41.0 and refreshed 20 golden
+  references after reviewing chip-edge and divider raster differences; comparison
+  tolerances remain unchanged. Fixed the cancellation fixture's clock and label.
 
 
 ## 2026-10-02

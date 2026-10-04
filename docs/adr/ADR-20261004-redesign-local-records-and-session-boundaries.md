@@ -69,3 +69,11 @@ handoff. JA/KO, light/dark, 320dp, and 200% text fixtures check layout. Golden
 fixtures do not prove device Japanese font rendering, native map tiles, permission
 dialogs, OAuth provider UI, or device performance. Final suite, coverage, analysis,
 architecture, and build outcomes are recorded in the implementation status.
+
+The main release is checked with the workflow's Flutter 3.41.0 / Dart 3.11.0,
+using an isolated SDK from official tag `3.41.0` (revision `44a626f4f0`). The
+global Flutter 3.47.2 installation remains unchanged. SDK-pinned dependencies
+follow the CI resolver. Reviewed golden differences use that SDK's reference
+images without increasing comparison tolerances. See the
+[official Flutter SDK archive](https://docs.flutter.dev/install/archive) and
+[3.41.0 source tag](https://github.com/flutter/flutter/tree/3.41.0).
