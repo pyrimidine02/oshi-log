@@ -14,6 +14,7 @@ import 'package:oshi_log/features/shared/search/application/search_controller.da
 import 'package:oshi_log/features/shared/search/domain/entities/search_entities.dart';
 
 import '../../../testing/tolerant_local_file_comparator.dart';
+import '../../../testing/platform_golden.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -97,7 +98,9 @@ void main() {
         expect(tester.takeException(), isNull);
         await expectLater(
           find.byKey(const ValueKey('search-states-golden')),
-          matchesGoldenFile('goldens/search_category_empty_$variant.png'),
+          matchesGoldenFile(
+            '$platformGoldenDirectory/search_category_empty_$variant.png',
+          ),
         );
         await tester.tap(all);
         await tester.pumpAndSettle();
@@ -149,7 +152,9 @@ void main() {
           expect(tester.takeException(), isNull);
           await expectLater(
             find.byKey(const ValueKey('search-states-golden')),
-            matchesGoldenFile('goldens/search_error_$variant.png'),
+            matchesGoldenFile(
+              '$platformGoldenDirectory/search_error_$variant.png',
+            ),
           );
           await tester.tap(retry);
           await tester.pumpAndSettle();
@@ -191,7 +196,9 @@ void main() {
           expect(tester.takeException(), isNull);
           await expectLater(
             find.byKey(const ValueKey('search-states-golden')),
-            matchesGoldenFile('goldens/search_no_results_$variant.png'),
+            matchesGoldenFile(
+              '$platformGoldenDirectory/search_no_results_$variant.png',
+            ),
           );
           await tester.tap(edit);
           final field = tester.widget<TextField>(find.byType(TextField));

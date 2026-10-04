@@ -84,3 +84,37 @@ Main push triggers the existing Google Play internal staging distribution after
 quality checks. Workflow/signing changes, server/DB work remain outside this
 release. No reachable physical device; native device QA remains unverified.
 Evidence: `/tmp/oshilog-main-release-20261004/`.
+
+## Hosted Linux CI follow-up
+
+Main commit `d6d3b71` was pushed. Hosted Ubuntu run `37186790921` passed
+analysis, then failed 3 timezone fixtures and 100 visual comparisons; distribution
+was skipped. The timezone fixtures assumed the host was JST. They now specify
+JST offsets / UTC instants; before the change UTC reproduced 3 failures, and
+afterward the 14 focused tests pass under both UTC and Asia/Seoul. App source
+and date behavior are unchanged.
+
+The existing Home OS-specific golden policy now applies to the affected screen
+matrices through one test helper. Linux uses `goldens/linux`; other hosts retain
+the existing references. Missing references fail explicitly, with no fallback or
+tolerance increase. Independent artifact reviews covered all 100 failed pairs,
+with representative visual checks showing host glyph/wrapping/raster changes
+and no lost controls or new overflow. Added 100 reviewed CI actuals plus 10
+references already passing on that runner; preserved the existing 3 Linux Home
+references and every non-Linux reference. These are not device-font proof.
+Analysis passes (6.4s). Hosted rerun must pass before release verification is complete.
+
+Golden profiles are macOS / Asia/Seoul and hosted Linux / UTC. Event preparation
+intentionally adds device-local time outside JST, as required by the screen
+specification, so changing only the host timezone changes that screen. Linux
+references include the extra UTC row; Mac references retain the JST view.
+Timezone logic tests run in both zones; visual comparisons use their declared
+profile. This is not a production date-logic change.
+
+Post-fix validation: analysis reports no issues (6.4s). The full UTC Mac run
+passes 1,108 tests and differs on exactly the 4 intentional event-preparation
+JST/UTC views (6m29s). Running that file in its declared Asia/Seoul profile passes
+all 6 tests. The three timezone fixture files pass all 14 tests in each zone.
+Independent reference review confirms no missing Linux images and matching
+SHA-256 for all 100 adopted actuals. App source, native files, workflow, lockfile
+and comparison tolerances have no changes in this follow-up.

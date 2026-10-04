@@ -77,3 +77,23 @@ follow the CI resolver. Reviewed golden differences use that SDK's reference
 images without increasing comparison tolerances. See the
 [official Flutter SDK archive](https://docs.flutter.dev/install/archive) and
 [3.41.0 source tag](https://github.com/flutter/flutter/tree/3.41.0).
+
+Hosted Ubuntu CI revealed font metrics, wrapping and raster differences beyond
+the local SDK-only changes. Extend the existing Home host-specific reference
+policy to the affected matrices: Linux uses `goldens/linux`, other hosts keep
+`goldens`. One test helper selects the directory; missing references still fail.
+Review actual/master/diff artifacts before adopting Linux references. Do not
+increase comparison tolerances or replace the Mac references. Native Japanese
+glyph quality remains device QA, not a claim established by these fixtures.
+
+Calendar and passport fixtures must express JST civil dates using explicit
+`+09:00` offsets and compare transport ranges as UTC instants. Host timezone
+must not change the assertions. The three fixture fixes reproduce failure under
+UTC first and pass the 14 focused tests under both UTC and Asia/Seoul afterward.
+
+Golden profiles are macOS / Asia/Seoul and hosted Linux / UTC. Event preparation
+intentionally adds device-local time outside JST, as required by the screen
+specification, so changing only the host timezone changes that screen. Linux
+references include the extra UTC row; Mac references retain the JST view.
+Timezone logic tests run in both zones; visual comparisons use their declared
+profile. This is not a production date-logic change.

@@ -9,6 +9,7 @@ import 'package:oshi_log/features/place/places/domain/entities/place_entities.da
 import 'package:oshi_log/features/place/places/presentation/widgets/place_onsite_sections.dart';
 
 import '../../../../../testing/tolerant_local_file_comparator.dart';
+import '../../../../../testing/platform_golden.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -79,7 +80,7 @@ void main() {
           expect(tester.takeException(), isNull);
           await expectLater(
             find.byKey(const ValueKey('onsite-golden')),
-            matchesGoldenFile('goldens/$name.png'),
+            matchesGoldenFile('$platformGoldenDirectory/$name.png'),
           );
         });
       }

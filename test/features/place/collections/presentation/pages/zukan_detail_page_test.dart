@@ -14,6 +14,7 @@ import 'package:oshi_log/features/place/collections/application/zukan_controller
 import 'package:oshi_log/features/place/collections/domain/entities/zukan_collection.dart';
 import 'package:oshi_log/features/place/collections/presentation/pages/zukan_detail_page.dart';
 import '../../../../../testing/tolerant_local_file_comparator.dart';
+import '../../../../../testing/platform_golden.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -266,7 +267,7 @@ void main() {
           );
           await expectLater(
             find.byKey(const ValueKey('collection-golden')),
-            matchesGoldenFile('goldens/$name.png'),
+            matchesGoldenFile('$platformGoldenDirectory/$name.png'),
           );
           await tester.dragUntilVisible(
             find.byKey(const ValueKey('field-zukan-stamp-row-river-bank')),

@@ -178,8 +178,8 @@ void main() {
       final multiDayLive = CalendarEventDto(
         id: 'live:mygo-9th',
         title: 'MyGO!!!!! 9th LIVE',
-        date: DateTime(2026, 7, 18),
-        endDate: DateTime(2026, 7, 19, 23, 59),
+        date: DateTime.parse('2026-07-18T00:00:00+09:00'),
+        endDate: DateTime.parse('2026-07-19T23:59:00+09:00'),
         type: 'live',
         relatedEntityId: 'mygo-9th',
         relatedEntityType: 'live_event',

@@ -41,7 +41,7 @@ void main() {
         CalendarEvent(
           id: 'late',
           title: 'Late live',
-          date: DateTime(2026, 7, 28),
+          date: DateTime.parse('2026-07-28T00:00:00+09:00'),
           type: CalendarEventType.live,
           relatedEntityId: 'live-28',
           relatedEntityType: 'LIVE_EVENT',
@@ -49,19 +49,19 @@ void main() {
         CalendarEvent(
           id: 'past',
           title: 'Past live',
-          date: DateTime(2026, 7, 14),
+          date: DateTime.parse('2026-07-14T00:00:00+09:00'),
           type: CalendarEventType.live,
         ),
         CalendarEvent(
           id: 'today',
           title: 'Today ticket sale',
-          date: DateTime(2026, 7, 15, 9),
+          date: DateTime.parse('2026-07-15T09:00:00+09:00'),
           type: CalendarEventType.ticketSale,
         ),
         CalendarEvent(
           id: 'next',
           title: 'Next release',
-          date: DateTime(2026, 7, 19),
+          date: DateTime.utc(2026, 7, 19),
           type: CalendarEventType.release,
         ),
       ];
@@ -70,7 +70,7 @@ void main() {
         profile: _profile(),
         fanProfile: null,
         calendarEvents: events,
-        now: DateTime(2026, 7, 15, 18),
+        now: DateTime.parse('2026-07-15T18:00:00+09:00'),
       );
 
       expect(data.upcomingStops.map((stop) => stop.eventId), [

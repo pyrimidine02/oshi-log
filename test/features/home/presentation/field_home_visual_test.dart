@@ -10,6 +10,7 @@ import 'package:oshi_log/design_system/theme/gbt_theme.dart';
 import 'package:oshi_log/design_system/widgets/layout/gbt_field_primitives.dart';
 import 'package:oshi_log/app/compositions/home/presentation/field_home/widgets/field_home_components.dart';
 import '../../../testing/tolerant_local_file_comparator.dart';
+import '../../../testing/platform_golden.dart';
 
 void main() {
   testWidgets('field home composition is legible in light mode', (
@@ -18,7 +19,7 @@ void main() {
     await _pumpShowcase(tester, theme: GBTTheme.light, width: 390);
     await expectLater(
       find.byKey(const ValueKey('field-home-visual-light')),
-      matchesGoldenFile(_homeGoldenPath('field_home_light.png')),
+      matchesGoldenFile('$platformGoldenDirectory/field_home_light.png'),
     );
   });
 
@@ -28,7 +29,7 @@ void main() {
     await _pumpShowcase(tester, theme: GBTTheme.dark, width: 390);
     await expectLater(
       find.byKey(const ValueKey('field-home-visual-dark')),
-      matchesGoldenFile(_homeGoldenPath('field_home_dark.png')),
+      matchesGoldenFile('$platformGoldenDirectory/field_home_dark.png'),
     );
   });
 
@@ -46,7 +47,7 @@ void main() {
     expect(tester.takeException(), isNull);
     await expectLater(
       find.byKey(const ValueKey('field-home-visual-compact')),
-      matchesGoldenFile(_homeGoldenPath('field_home_compact.png')),
+      matchesGoldenFile('$platformGoldenDirectory/field_home_compact.png'),
     );
   });
 
@@ -66,7 +67,9 @@ void main() {
         );
         await expectLater(
           find.byKey(ValueKey('field-home-visual-$themeName')),
-          matchesGoldenFile('goldens/field_home_ja_$themeName.png'),
+          matchesGoldenFile(
+            '$platformGoldenDirectory/field_home_ja_$themeName.png',
+          ),
         );
       });
 
@@ -88,7 +91,10 @@ void main() {
             const ValueKey('field-home-visual-compact'),
           );
           final name = 'field_home_${language}_${themeName}_compact_200';
-          await expectLater(boundary, matchesGoldenFile('goldens/$name.png'));
+          await expectLater(
+            boundary,
+            matchesGoldenFile('$platformGoldenDirectory/$name.png'),
+          );
 
           final lastAction = find.byType(FieldDispatchRow);
           await tester.ensureVisible(lastAction);
@@ -96,7 +102,7 @@ void main() {
           expect(tester.takeException(), isNull);
           await expectLater(
             boundary,
-            matchesGoldenFile('goldens/${name}_bottom.png'),
+            matchesGoldenFile('$platformGoldenDirectory/${name}_bottom.png'),
           );
           await tester.tap(lastAction);
           expect(openedLastAction, isTrue);
@@ -105,12 +111,6 @@ void main() {
       }
     }
   });
-}
-
-/// EN: Selects a baseline for the host renderer used by Flutter golden tests.
-/// KO: Flutter 골든 테스트에서 실행 호스트 렌더러에 맞는 기준 이미지를 선택합니다.
-String _homeGoldenPath(String fileName) {
-  return Platform.isLinux ? 'goldens/linux/$fileName' : 'goldens/$fileName';
 }
 
 Future<void> _pumpShowcase(

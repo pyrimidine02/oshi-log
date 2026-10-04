@@ -13,6 +13,7 @@ import 'package:oshi_log/platform/error/failure.dart';
 import 'package:oshi_log/features/identity/account/application/settings_controller.dart';
 
 import '../../../../testing/tolerant_local_file_comparator.dart';
+import '../../../../testing/platform_golden.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -129,7 +130,9 @@ void main() {
             expect(tester.takeException(), isNull);
             await expectLater(
               find.byKey(const ValueKey('profile-states-golden')),
-              matchesGoldenFile('goldens/profile_${stateName}_$variant.png'),
+              matchesGoldenFile(
+                '$platformGoldenDirectory/profile_${stateName}_$variant.png',
+              ),
             );
             await tester.tap(exit);
             await tester.pumpAndSettle();

@@ -14,6 +14,7 @@ import 'package:oshi_log/design_system/widgets/common/spoiler_guard.dart';
 import 'package:oshi_log/features/oshikatsu/music/application/music_controller.dart';
 import 'package:oshi_log/features/oshikatsu/music/domain/entities/music_entities.dart';
 import 'package:oshi_log/features/oshikatsu/music/presentation/pages/music_song_detail_page.dart';
+import '../../../../testing/platform_golden.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -86,7 +87,7 @@ void main() {
         await expectLater(
           find.byKey(const ValueKey('song-detail-golden')),
           matchesGoldenFile(
-            'goldens/song_guide_${language}_${dark ? 'dark' : 'light'}_320_200.png',
+            '$platformGoldenDirectory/song_guide_${language}_${dark ? 'dark' : 'light'}_320_200.png',
           ),
         );
         await tester.drag(

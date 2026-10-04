@@ -18,6 +18,7 @@ import 'package:oshi_log/features/shared/notifications/presentation/pages/notifi
 import 'package:oshi_log/platform/notifications/local_notifications_service.dart';
 
 import '../../../../testing/tolerant_local_file_comparator.dart';
+import '../../../../testing/platform_golden.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -169,7 +170,7 @@ void main() {
         await expectLater(
           find.byKey(const ValueKey('notifications-states-golden')),
           matchesGoldenFile(
-            'goldens/notifications_denied_unread_empty_$variant.png',
+            '$platformGoldenDirectory/notifications_denied_unread_empty_$variant.png',
           ),
         );
         await tester.tap(all);
@@ -237,7 +238,9 @@ void main() {
           expect(tester.takeException(), isNull);
           await expectLater(
             find.byKey(const ValueKey('notifications-states-golden')),
-            matchesGoldenFile('goldens/notifications_error_$variant.png'),
+            matchesGoldenFile(
+              '$platformGoldenDirectory/notifications_error_$variant.png',
+            ),
           );
           await tester.tap(retry);
           await tester.pumpAndSettle();

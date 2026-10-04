@@ -9,6 +9,7 @@ import 'package:oshi_log/features/oshikatsu/live/domain/event_time_policy.dart';
 import 'package:oshi_log/features/oshikatsu/live/presentation/field_events/event_preparation.dart';
 import 'package:oshi_log/features/oshikatsu/live/presentation/field_events/field_event_detail_sections.dart';
 import 'package:oshi_log/features/oshikatsu/live/presentation/field_events/field_live_event_detail_page.dart';
+import '../../../../testing/platform_golden.dart';
 
 void main() {
   testWidgets('before, day and after expose only their primary actions', (
@@ -138,7 +139,7 @@ void main() {
         await expectLater(
           find.byKey(const ValueKey('preparation')),
           matchesGoldenFile(
-            'goldens/event_preparation_${locale}_${dark ? 'dark' : 'light'}_320_200.png',
+            '$platformGoldenDirectory/event_preparation_${locale}_${dark ? 'dark' : 'light'}_320_200.png',
           ),
         );
       });

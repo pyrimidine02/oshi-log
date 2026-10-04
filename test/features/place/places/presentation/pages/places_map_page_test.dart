@@ -23,6 +23,7 @@ import 'package:oshi_log/features/place/places/presentation/pages/places_map_pag
 import 'package:oshi_log/features/place/places/presentation/widgets/field_map_controls.dart';
 import 'package:oshi_log/features/place/places/presentation/widgets/field_place_sheet_row.dart';
 import '../../../../../testing/tolerant_local_file_comparator.dart';
+import '../../../../../testing/platform_golden.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -202,7 +203,7 @@ void main() {
           await pump(tester, locale: locale, dark: dark, compact: compact);
           await expectLater(
             find.byKey(const ValueKey('map-golden')),
-            matchesGoldenFile('goldens/$name.png'),
+            matchesGoldenFile('$platformGoldenDirectory/$name.png'),
           );
           expect(tester.takeException(), isNull);
           debugDefaultTargetPlatformOverride = null;

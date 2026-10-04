@@ -43,7 +43,7 @@ void main() {
     expect(captured, isNot(contains('projectId')));
   });
 
-  test('requests live events with a previous-month overlap buffer', () async {
+  test('requests JST months with a previous-month overlap buffer', () async {
     await dataSource.fetchLiveEvents(
       year: 2026,
       month: 7,
@@ -59,11 +59,11 @@ void main() {
               ),
             ).captured.single
             as Map<String, dynamic>;
-    final from = DateTime.parse(captured['from'] as String).toLocal();
-    final to = DateTime.parse(captured['to'] as String).toLocal();
+    final from = DateTime.parse(captured['from'] as String);
+    final to = DateTime.parse(captured['to'] as String);
 
-    expect(from, DateTime(2026, 6));
-    expect(to.add(const Duration(microseconds: 1)), DateTime(2026, 8));
+    expect(from, DateTime.utc(2026, 5, 31, 15));
+    expect(to, DateTime.utc(2026, 7, 31, 14, 59, 59, 999, 999));
     expect(captured['page'], 0);
     expect(captured['size'], 100);
   });

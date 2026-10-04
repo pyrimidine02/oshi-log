@@ -23,6 +23,9 @@
   references after reviewing chip-edge and divider raster differences; comparison
   tolerances remain unchanged. Fixed the cancellation fixture's clock and label.
 
+- Fixed three timezone-dependent test fixtures with explicit JST/UTC instants.
+  Separated Linux visual references for the affected screen matrices, preserving
+  existing host references and comparison tolerances.
 
 ## 2026-10-02
 

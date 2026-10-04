@@ -17,6 +17,7 @@ import 'package:oshi_log/features/oshikatsu/music/application/music_controller.d
 import 'package:oshi_log/features/oshikatsu/music/domain/entities/music_entities.dart';
 import 'package:oshi_log/design_system/widgets/layout/gbt_page_header.dart';
 import 'package:oshi_log/app/compositions/guide/presentation/field_guide/field_guide_music_page.dart';
+import '../../../../testing/platform_golden.dart';
 
 void main() {
   testWidgets('archive restores selections and emits only supported filters', (
@@ -176,7 +177,7 @@ void main() {
             await expectLater(
               find.byKey(const ValueKey('music-archive-preview')),
               matchesGoldenFile(
-                'goldens/music_archive_${language}_${section}_'
+                '$platformGoldenDirectory/music_archive_${language}_${section}_'
                 '${dark ? 'dark' : 'light'}_320_200.png',
               ),
             );
